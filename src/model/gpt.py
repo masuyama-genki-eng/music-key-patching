@@ -62,8 +62,16 @@ class TonalGPT(nn.Module):
     @torch.no_grad()
     def generate(self, ids: torch.Tensor, n_new: int, temperature: float = 1.0,
                  top_p: float = 0.95, editors: dict | None = None,
-                 rng: torch.Generator | None = None) -> torch.Tensor:
+                 rng: torch.Generator | None = None,
+                 edit_from: int | None = None) -> torch.Tensor:
+        """edit_from: ABSOLUTE sequence position t*; editors' from_position is
+        re-derived each step in window coordinates so the edit region stays correct
+        when the context window slides past ctx (prompt+16 bars can exceed 512)."""
         for _ in range(n_new):
+            if editors is not None and edit_from is not None:
+                off = max(0, ids.shape[1] - self.ctx)
+                for ed in editors.values():
+                    ed.from_position = max(0, edit_from - off)
             logits = self.forward(ids[:, -self.ctx:], editors=editors)[:, -1] / temperature
             probs = F.softmax(logits, dim=-1)
             sp, si = torch.sort(probs, descending=True, dim=-1)
