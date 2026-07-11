@@ -1,0 +1,19 @@
+# Phase A probing (SPEC §3). Decision rules DR-H1 / DR-H2b are frozen in SPEC.
+layers: all                    # 0..7
+probes:
+  linear: { type: multinomial_logistic }        # primary
+  mlp:    { type: mlp, hidden: 256, layers: 2 } # secondary
+split: by_sequence             # train/val/test split at sequence level
+metric: macro_f1_24            # + tonic-12 / mode-2 decomposition
+controls:
+  c1_shuffle: true             # selectivity: labels shuffled within sequence
+  c2_untrained: true           # same probe on randomly initialized M-CTRL
+  c3_windows: [8, 16, 32, 64]  # input baselines: PC-histogram LR + KS per window
+ambiguity:
+  window: 16                   # KS posterior entropy window (SPEC A2)
+  high_bin_quantile: 0.75      # top 25% = high-ambiguity stratum
+  modulation_margin: 8         # ±8 tokens around modulation points
+equivariance:
+  estimator: procrustes        # R_k per layer; cyclicity error eps_cyc
+bootstrap: { n: 10000, ci: 0.95, method: bca, unit: sequence }
+seed: 0

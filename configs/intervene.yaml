@@ -1,0 +1,23 @@
+# Phase B intervention (SPEC §4). delta_ppl guard MUST be frozen from val stats and
+# ledgered BEFORE any real edit run (P4 gate). K2 sham bit-identity gate: P0/P4.
+subspaces:
+  v_probe: { rank: 24 }                # probe weight row space, orthonormalized
+  v_mean:  { rank: 24 }                # class-conditional mean space
+  v_das:   { ranks: [8, 24] }          # interchange-trained, held-out evaluated
+protocol:
+  prompt_bars: 8                       # key-stable prefix, key = kappa_src
+  continuation_bars: 16
+  edit: sustained                      # from bar boundary t* onward (one-shot = Phase C)
+  targets: fifths_distance_1_to_6      # 12 tonics, mode major primary / minor secondary
+  n_prompts: 100                       # per condition, >= SPEC minimum
+  layers: all                          # stride 1 (fallback: stride 2 + peak refinement, ledger it)
+controls:
+  k1_random_matched: true              # rank/norm-matched random subspace
+  k2_sham: true                        # must be bit-identical to clean
+  k3_layer_shuffle: true
+  k4_transposed_prompt: true           # behavioral upper reference
+guard:
+  delta_ppl_percentile: 90             # of natural post-modulation PPL rise on D-SYN val
+  delta_ppl_value: TBD_P4_frozen_before_edits
+grammar_stats: [range_violation_rate, extreme_repeat_rate]
+seed: 0

@@ -1,0 +1,100 @@
+"""Tests for the scientific core. Run: python -m pytest tests/ -q  (from repo root).
+
+These are the P0/P1 gates from CLAUDE.md:
+  1. vocab contains no key/chord leakage
+  2. generator labels align with tokens; pitches are diatonic to their labeled key
+  3. determinism under seed
+  4. KS estimator recovers the key of clean diatonic material (round trip)
+  5. fifths-distance sanity
+"""
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import numpy as np
+from src.tokenizer.vocab import VOCAB, FORBIDDEN_SUBSTRINGS, pitch_of
+from src.datagen.generator import GenConfig, generate_piece, Key, triad_pcs, fifths_distance
+from src.eval.keyest import estimate_key, in_key_ratio, key_posterior_entropy
+
+
+def test_vocab_no_leak():
+    for tok in VOCAB:
+        for bad in FORBIDDEN_SUBSTRINGS:
+            assert bad not in tok.upper().replace("PITCH", "").replace("POS", ""), \
+                f"leaky token: {tok}"
+
+
+def test_label_alignment_and_diatonicity():
+    for seed in range(20):
+        tokens, labels, _ = generate_piece(GenConfig(seed=seed))
+        assert len(tokens) == len(labels)
+        for tok, lab in zip(tokens, labels):
+            p = pitch_of(tok)
+            if p is None:
+                continue
+            # every pitch must be diatonic to its labeled key (in_key_ratio == 1 per note)
+            assert in_key_ratio([p], lab) == 1.0, f"seed={seed} tok={tok} key={lab}"
+
+
+def test_determinism():
+    a = generate_piece(GenConfig(seed=7))
+    b = generate_piece(GenConfig(seed=7))
+    assert a[0] == b[0] and a[1] == b[1]
+    c = generate_piece(GenConfig(seed=8))
+    assert a[0] != c[0]
+
+
+def test_ks_round_trip_no_modulation():
+    """KS has DOCUMENTED confusions with closely related keys (dominant/subdominant:
+    fifths distance 1; relative major/minor). Diagnosed in-container 2026-07-11:
+    seed=0 is perfectly diatonic Bb major but KS picks F major because degree-V roots
+    outnumber the tonic pc — estimator limitation, not a generator bug (SPEC §4.3 note).
+    Honest criteria: every miss must be closely related; exact recovery >= 60%."""
+    hits, total = 0, 0
+    for seed in range(40):
+        cfg = GenConfig(seed=seed, p_modulate=0.0, n_bars=16)
+        tokens, labels, events = generate_piece(cfg)
+        pitches = [n for e in events for n in e["notes"]]
+        est = estimate_key(pitches)
+        true = labels[0]
+        total += 1
+        if est == true:
+            hits += 1
+        else:
+            # closely related (standard theory): tonics within fifths-distance 1
+            # (dominant/subdominant, any mode), relative, or parallel
+            same_mode = (est >= 12) == (true >= 12)
+            fifth_ok = fifths_distance(est % 12, true % 12) <= 1
+            rel_ok = (not same_mode) and (est % 12 - true % 12) % 12 in (3, 9)
+            par_ok = (not same_mode) and est % 12 == true % 12
+            assert fifth_ok or rel_ok or par_ok, \
+                f"seed={seed}: est={est} true={true} not closely related"
+    assert hits / total >= 0.6, f"KS exact-recovery too low: {hits}/{total}"
+
+
+def test_ks_synthetic_scales():
+    c_major = [60, 62, 64, 65, 67, 69, 71, 72]
+    assert estimate_key(c_major) == 0
+    a_harm_minor = [57, 59, 60, 62, 64, 65, 68, 69]
+    est = estimate_key(a_harm_minor)
+    assert est == 9 + 12, f"expected A minor (21), got {est}"
+
+
+def test_ambiguity_orders_sensibly():
+    clear = [60, 64, 67] * 8                       # C major triad, very clear
+    murky = [60, 61, 62, 63, 64, 65, 66, 67]       # chromatic cluster
+    assert key_posterior_entropy(clear) < key_posterior_entropy(murky)
+
+
+def test_fifths_distance():
+    assert fifths_distance(0, 7) == 1              # C -> G
+    assert fifths_distance(0, 5) == 1              # C -> F
+    assert fifths_distance(0, 6) == 6              # C -> F#
+    assert fifths_distance(0, 0) == 0
+
+
+def test_triads_are_diatonic():
+    for tonic in range(12):
+        for mode in ("maj", "min"):
+            k = Key(tonic, mode)
+            for d in range(1, 8):
+                assert set(triad_pcs(k, d)) <= set(k.scale)

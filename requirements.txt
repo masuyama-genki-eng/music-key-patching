@@ -1,0 +1,9 @@
+numpy>=1.26
+torch>=2.2
+pandas>=2.0
+pyarrow
+scipy>=1.11
+statsmodels
+pyyaml
+pytest
+# music21   # D-REAL sanity only; install in P7 after license check

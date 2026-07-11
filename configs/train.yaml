@@ -1,0 +1,25 @@
+# M-CTRL / M-REF training (SPEC §2). Optimizer values are P0 stubs — finalize in P2
+# BEFORE the first ledgered training run (any later change goes to CHANGELOG.md).
+model:
+  d: 512
+  n_layers: 8
+  n_heads: 8
+  ctx: 512
+  dropout: 0.1
+
+regimes:                       # operated variable (SPEC §2.1)
+  R-NoAug: { transpose_aug: false, seeds: [0, 1] }
+  R-Aug:   { transpose_aug: true,  seeds: [0, 1] }
+
+m_ref:                         # SPEC §2.2: separate seed AND separate data split
+  seed: 100
+  split_seed: 100
+
+optim:                         # stub — finalize in P2
+  lr: 3.0e-4
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+  warmup_steps: 1000
+  max_steps: TBD_P2
+  batch_size: TBD_P2
+  grad_clip: 1.0

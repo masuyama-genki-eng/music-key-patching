@@ -1,0 +1,9 @@
+n_train: 200000
+n_val: 10000
+n_test: 10000
+n_bars: 24
+chords_per_bar: 2
+p_modulate: 0.35
+max_modulations: 3
+melody: true
+base_seed: 20260711
