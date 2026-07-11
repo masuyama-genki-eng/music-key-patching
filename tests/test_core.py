@@ -51,7 +51,7 @@ def test_ks_round_trip_no_modulation():
     Honest criteria: every miss must be closely related; exact recovery >= 60%."""
     hits, total = 0, 0
     for seed in range(40):
-        cfg = GenConfig(seed=seed, p_modulate=0.0, n_bars=16)
+        cfg = GenConfig(seed=seed, p_modulate=0.0, n_bars_min=16, n_bars_max=16)
         tokens, labels, events = generate_piece(cfg)
         pitches = [n for e in events for n in e["notes"]]
         est = estimate_key(pitches)

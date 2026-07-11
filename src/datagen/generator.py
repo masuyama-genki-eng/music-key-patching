@@ -7,9 +7,21 @@ SPEC §1.1. Deterministic under seed. Implements:
   - render to token stream (vocab.py) with an ALIGNED key label per token
 
 Ground truth: key(t) is defined by the generator, not estimated.
-STATUS: verified in container (label-alignment + KS round-trip tests pass).
 Sequential modulation is implemented as two equal-interval direct shifts one bar
-apart (documented simplification; refine in P1 if needed).
+apart (documented simplification).
+
+P1 revisions (2026-07-11, before any data was generated or trained on):
+  - n_bars is sampled per piece from [n_bars_min, n_bars_max] so token length stays
+    within SPEC §1.1's 256-512 (the P0 default of 24 fixed bars + melody gave 554
+    tokens, exceeding both the SPEC range and ctx=512).
+  - pivot-chord modulations now EMIT the pivot chord as the first chord of the
+    modulation bar (P0 starter recorded it in `events` only, so pivot was
+    indistinguishable from direct in the token stream). The pivot triad is diatonic
+    in both keys by construction; the whole bar is labeled with the NEW key, so the
+    label convention (key changes at the BAR token) is uniform across all types.
+  - key changes append a marker event {"modulation": type, "from": k, "to": k'}
+    (notes=[]) so corpus stats can report realized modulation types. A pivot with no
+    shared diatonic triad degrades to "direct_fallback" and is counted as such.
 """
 from __future__ import annotations
 import dataclasses
@@ -84,7 +96,8 @@ def voice_chord(pcs: list[int], prev: list[int] | None, rng: np.random.Generator
 # ---------------------------------------------------------------- generator
 @dataclasses.dataclass
 class GenConfig:
-    n_bars: int = 24
+    n_bars_min: int = 12                # 12..22 bars -> 278..508 tokens (SPEC: 256-512)
+    n_bars_max: int = 22
     chords_per_bar: int = 2
     p_modulate: float = 0.35            # probability the piece modulates at all
     max_modulations: int = 3
@@ -116,6 +129,7 @@ def generate_piece(cfg: GenConfig):
     """Returns (tokens: list[str], key_labels: list[int 0..23] aligned to tokens,
     events: list of dicts for inspection)."""
     rng = np.random.default_rng(cfg.seed)
+    n_bars = int(rng.integers(cfg.n_bars_min, cfg.n_bars_max + 1))
     key = _sample_key(rng)
     func, prev_voicing = "T", None
 
@@ -123,48 +137,66 @@ def generate_piece(cfg: GenConfig):
     plan = {}
     if rng.random() < cfg.p_modulate:
         n_mod = int(rng.integers(1, cfg.max_modulations + 1))
-        bars = sorted(rng.choice(np.arange(4, cfg.n_bars - 2), size=n_mod, replace=False).tolist())
+        bars = sorted(rng.choice(np.arange(4, n_bars - 2), size=n_mod, replace=False).tolist())
         for b in bars:
             plan[b] = (str(rng.choice(["pivot", "direct", "sequential"])), None)
 
     tokens, labels, events = ["BOS"], [key.index24], []
     seq_pending = None                                   # (interval, bars_left) for sequential
+    pending_pivot = None                                 # degree (in NEW key) to emit as first chord
 
-    for bar in range(cfg.n_bars):
+    def _mark(mtype: str, old: Key, new: Key, bar: int) -> None:
+        events.append({"bar": bar, "pos": 0, "notes": [], "modulation": mtype,
+                       "from": old.index24, "to": new.index24})
+
+    for bar in range(n_bars):
         # -------- modulation bookkeeping at bar start
         if seq_pending is not None:
             interval, left = seq_pending
+            old = key
             key = Key((key.tonic + interval) % 12, key.mode)
+            _mark("sequential_step", old, key, bar)
             seq_pending = (interval, left - 1) if left > 1 else None
             func = "T"
         elif bar in plan:
             mtype, _ = plan[bar]
             dst = _sample_target_key(key, rng)
+            old = key
             if mtype == "pivot":
                 pd = _pivot_degree(key, dst, rng)
-                if pd is not None:
-                    # pivot chord spoken in OLD key label, then switch
-                    pcs = triad_pcs(dst, pd)
-                    prev_voicing = voice_chord(pcs, prev_voicing, rng)
-                    events.append({"bar": bar, "pos": 1, "notes": list(prev_voicing), "key": key.index24})
                 key = dst
+                if pd is not None:
+                    # emit pivot chord (diatonic in BOTH keys) as this bar's 1st chord
+                    pending_pivot = pd
+                    _mark("pivot", old, key, bar)
+                else:                                    # no shared triad -> direct
+                    func = "T"
+                    _mark("direct_fallback", old, key, bar)
             elif mtype == "sequential":
                 interval = (dst.tonic - key.tonic) % 12
                 half = interval // 2 if interval % 2 == 0 and interval != 0 else interval
                 key = Key((key.tonic + half) % 12, key.mode)
                 if half != interval:
                     seq_pending = (interval - half, 1)
+                func = "T"
+                _mark("sequential", old, key, bar)
             else:                                        # direct
                 key = dst
-            func = "T" if bar in plan and plan[bar][0] != "pivot" else func
+                func = "T"
+                _mark("direct", old, key, bar)
 
         tokens.append("BAR"); labels.append(key.index24)
 
         # -------- chords within the bar
         for c in range(cfg.chords_per_bar):
-            func = str(rng.choice(NEXT_FUNC[func], p=NEXT_FUNC_P[func]))
-            degree = int(rng.choice(DEGREES_OF_FUNC[func], p=DEGREE_P[func]))
-            if c == cfg.chords_per_bar - 1 and bar == cfg.n_bars - 1:
+            if c == 0 and pending_pivot is not None:
+                degree = pending_pivot
+                func = FUNCTION_OF[degree]
+                pending_pivot = None
+            else:
+                func = str(rng.choice(NEXT_FUNC[func], p=NEXT_FUNC_P[func]))
+                degree = int(rng.choice(DEGREES_OF_FUNC[func], p=DEGREE_P[func]))
+            if c == cfg.chords_per_bar - 1 and bar == n_bars - 1:
                 degree, func = 1, "T"                    # end on tonic
             pcs = triad_pcs(key, degree)
             voicing = voice_chord(pcs, prev_voicing, rng)

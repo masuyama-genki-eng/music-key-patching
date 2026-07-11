@@ -1,7 +1,11 @@
+# D-SYN corpus (SPEC §1.1). Deterministic: piece_seed = base_seed + split_offset + idx
+# (offsets in scripts/00_gen_data.py; M-REF split range reserved for P2).
 n_train: 200000
 n_val: 10000
 n_test: 10000
-n_bars: 24
+n_bars_min: 12          # 12..22 bars -> 278..508 tokens, inside SPEC §1.1's 256-512
+n_bars_max: 22          # (P0 stub had fixed 24 bars = 554 tokens > ctx 512; fixed in P1
+                        #  before any generation/training run — see git history)
 chords_per_bar: 2
 p_modulate: 0.35
 max_modulations: 3
