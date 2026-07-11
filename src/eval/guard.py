@@ -25,15 +25,33 @@ PAD = VOCAB["PAD"]
 
 
 @torch.no_grad()
-def token_nlls(model, ids: torch.Tensor, device: str) -> torch.Tensor:
-    """(B, T) -> (B, T-1) per-token NLL under the reference model (teacher-forced)."""
-    ids = ids.to(device)
+def _nll_pass(model, ids: torch.Tensor, device: str) -> torch.Tensor:
     x, y = ids[:, :-1], ids[:, 1:]
     with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
                         enabled=device == "cuda"):
         logits = model(x)
     nll = F.cross_entropy(logits.transpose(1, 2).float(), y, reduction="none")
     return nll.masked_fill(y == PAD, float("nan"))
+
+
+@torch.no_grad()
+def token_nlls(model, ids: torch.Tensor, device: str) -> torch.Tensor:
+    """(B, T) -> (B, T-1) per-token NLL under the reference model (teacher-forced).
+
+    Sequences longer than ctx are scored in two passes (prefix + suffix window),
+    so later tokens see the most recent ctx-1 tokens of history — the same sliding
+    window the model uses during generation. Supports T <= 2*ctx."""
+    ids = ids.to(device)
+    B, T = ids.shape
+    ctx = model.ctx
+    if T <= ctx:
+        return _nll_pass(model, ids, device)
+    assert T <= 2 * ctx, f"T={T} exceeds two-pass limit {2 * ctx}"
+    out = torch.full((B, T - 1), float("nan"), device=device)
+    out[:, : ctx - 1] = _nll_pass(model, ids[:, :ctx], device)
+    start = T - ctx
+    out[:, ctx - 1:] = _nll_pass(model, ids[:, start:], device)[:, ctx - 1 - start:]
+    return out
 
 
 def window_ppl(nll_row: np.ndarray, lo: int, hi: int) -> float | None:

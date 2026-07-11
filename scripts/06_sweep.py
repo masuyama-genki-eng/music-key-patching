@@ -67,6 +67,7 @@ def main() -> None:
     ap.add_argument("--k4", action="store_true", help="transposed-prompt reference")
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--outdir", default=None, help="override results/sweep/<name> (smoke)")
     ap.add_argument("--no-ledger", action="store_true")
     args = ap.parse_args()
 
@@ -74,7 +75,7 @@ def main() -> None:
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     name = Path(args.model_dir).name
-    outdir = REPO / "results/sweep" / name
+    outdir = (Path(args.outdir) if args.outdir else REPO / "results/sweep") / name
     outdir.mkdir(parents=True, exist_ok=True)
     layers = [int(x) for x in args.layers.split(",")]
     methods = args.methods.split(",")

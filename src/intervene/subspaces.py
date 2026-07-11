@@ -117,5 +117,5 @@ def train_das(model, layer: int, seqs_ids: torch.Tensor, key_labels: torch.Tenso
         opt.step()
         if step % 50 == 0:
             log.info("DAS layer %d rank %d step %d loss %.4f", layer, rank, step,
-                     float(loss))
+                     loss.item())
     return das.basis().detach().cpu().numpy().astype(np.float32)
