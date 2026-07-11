@@ -16,3 +16,11 @@ mathematically the identity, the sham editor now computes the projection (exerci
 the full editor path: attachment, projection, position masking) and returns `x`
 unchanged. The bit-identity criterion itself is unchanged and now passes. The real
 (replace) edit path is unaffected.
+
+## 2026-07-11 — M-REF training regime: R-Aug (SPEC §2.2 gap-fill, decided before training)
+
+SPEC §2.2 fixes M-REF's architecture, separate seed, and separate data split, but is
+silent on whether M-REF trains with transposition augmentation. Decision: **R-Aug**,
+because M-REF's sole role is perplexity measurement of continuations that may sit in
+any of 12 keys post-edit; a key-agnostic reference avoids penalizing rare keys for
+reasons unrelated to musicality. Decided and recorded before any P2 training run.

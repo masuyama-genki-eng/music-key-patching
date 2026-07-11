@@ -42,8 +42,10 @@ def _rel(path: Path) -> str:
     except ValueError:
         return str(path)
 
-# Disjoint seed ranges per split; 30_000_000+ reserved for the M-REF split (P2).
-SPLIT_OFFSET = {"train": 0, "val": 10_000_000, "test": 20_000_000}
+# Disjoint seed ranges per split; ref_* are the M-REF training split (SPEC §2.2:
+# separate seed AND separate data split from M-CTRL).
+SPLIT_OFFSET = {"train": 0, "val": 10_000_000, "test": 20_000_000,
+                "ref_train": 30_000_000, "ref_val": 40_000_000}
 
 SCHEMA = pa.schema([
     ("idx", pa.int32()),
@@ -61,6 +63,13 @@ SCHEMA = pa.schema([
 def _gen_cfg(cfg: dict) -> GenConfig:
     fields = {f.name for f in dataclasses.fields(GenConfig)} - {"seed"}
     return GenConfig(**{k: cfg[k] for k in fields}, seed=0)
+
+
+def _split_cfg(cfg: dict, split: str, n: int) -> dict:
+    """The subset of config a single split's bytes depend on (idempotency key)."""
+    fields = {f.name for f in dataclasses.fields(GenConfig)} - {"seed"}
+    return {k: cfg[k] for k in fields} | {"base_seed": cfg["base_seed"],
+                                          "split": split, "n": n}
 
 
 def _make_row(args: tuple[int, int, dict]) -> dict:
@@ -135,12 +144,18 @@ def main() -> None:
     stats: dict = {"config_hash": cfg_hash, "splits": {}}
     artifacts, verified, skipped = [], [], []
 
-    for split, n in (("train", cfg["n_train"]), ("val", cfg["n_val"]), ("test", cfg["n_test"])):
+    splits = [("train", cfg["n_train"]), ("val", cfg["n_val"]), ("test", cfg["n_test"])]
+    for ref in ("ref_train", "ref_val"):
+        if cfg.get(f"n_{ref}"):
+            splits.append((ref, cfg[f"n_{ref}"]))
+
+    for split, n in splits:
         path = outdir / f"{split}.parquet"
         meta_path = Path(str(path) + ".meta.json")
+        split_hash = sha256_config(_split_cfg(cfg, split, n))
         if path.exists() and meta_path.exists():
             meta = json.loads(meta_path.read_text())
-            if meta.get("config_hash") == cfg_hash:
+            if meta.get("config_hash") == split_hash:
                 log.info("%s: exists with matching config hash — skipping", split)
                 skipped.append(split)
                 continue
@@ -163,7 +178,7 @@ def main() -> None:
             verified.append(split)
 
         stats["splits"][split] = split_stats(rows) | {"sha256": file_hash}
-        snapshot(path, cfg, seeds=[cfg["base_seed"]])
+        snapshot(path, _split_cfg(cfg, split, n), seeds=[cfg["base_seed"]])
         artifacts.append(_rel(path))
         del rows
 
