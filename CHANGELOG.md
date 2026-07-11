@@ -24,3 +24,23 @@ silent on whether M-REF trains with transposition augmentation. Decision: **R-Au
 because M-REF's sole role is perplexity measurement of continuations that may sit in
 any of 12 keys post-edit; a key-agnostic reference avoids penalizing rare keys for
 reasons unrelated to musicality. Decided and recorded before any P2 training run.
+
+## 2026-07-11 — C1 selectivity control: two variants (decided before any Phase A run)
+
+SPEC §3 A1 words C1 as "labels shuffled within sequence". ~65% of D-SYN pieces never
+modulate, so a positional within-sequence shuffle is the identity there and the
+control cannot fail — it under-corrects nothing and over-corrects everything. We
+therefore compute BOTH: C1a = SPEC's literal positional shuffle (reported), and
+C1b = per-sequence random permutation of the 24 key identities (Hewitt & Liang-style
+control task; structure preserved, content decoupled). DR-H1's "selectivity-corrected
+probe F1" uses C1b; C1a is reported alongside in probe_report.json. Decided and
+recorded before any Phase A analysis was run.
+
+## 2026-07-11 — DR-H2b test units (decided before any Phase A run)
+
+SPEC §3 A3 specifies a one-sided Wilcoxon "across seeds" for eps_cyc(R-Aug) <
+eps_cyc(R-NoAug). With 2 seeds per regime (train.yaml), a seed-level Wilcoxon has
+n=2 and a minimum one-sided p of 0.25 — it cannot reach α=.05 regardless of the
+data. DR-H2b is therefore evaluated on seed x layer pairs (n=16), pairing layers
+across regimes within seed order; per-seed means are reported alongside. If a third
+seed is trained later, the seed-level test will be reported too.
