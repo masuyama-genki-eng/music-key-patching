@@ -5,3 +5,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 
 ---
 
+## 2026-07-11T21:04:48+09:00 — P0 skeleton complete
+- git: `34a8b552f64941ed676a1ea004d883b7726df2b3`
+- config_hash: `a7606d5e52035e0d3f2a1d1c15fa64fdba7a8fc97b8b2485ed0f510f6ef0f9ec`
+- seeds: n/a
+- artifacts: n/a
+- note: pytest 17/17 green (vocab-leak, label-alignment, determinism, KS sanity, model smoke, K2 sham bit-identity). Env: python 3.12, torch 2.13.0+cu130, RTX 6000 Ada 48GB. Fix: sham edit made exact identity (CHANGELOG 2026-07-11). No result artifacts in P0.
+
