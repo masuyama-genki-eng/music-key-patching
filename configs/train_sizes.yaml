@@ -1,0 +1,19 @@
+# Size-sweep for the emergence-curve model comparison (added 2026-07-12, user
+# request: top-conference robustness). Same data, optimizer, and protocol as
+# train.yaml; only capacity varies. Regime fixed to R-Aug (paper main line).
+sizes:
+  L2d128:  { d: 128, n_layers: 2,  n_heads: 4,  ctx: 512, dropout: 0.1 }   # ~1.6M
+  L4d256:  { d: 256, n_layers: 4,  n_heads: 4,  ctx: 512, dropout: 0.1 }   # ~6M
+  # L8d512 = the existing R-Aug_s0/s1 models (25M), reused as-is
+  L12d768: { d: 768, n_layers: 12, n_heads: 12, ctx: 512, dropout: 0.1 }   # ~85M
+seeds: [0, 1]
+regime: R-Aug
+
+optim:                      # identical to train.yaml (frozen P2 values)
+  lr: 3.0e-4
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+  warmup_steps: 1000
+  max_steps: 12000
+  batch_size: 64
+  grad_clip: 1.0
