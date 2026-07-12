@@ -45,6 +45,12 @@ def main() -> None:
          lambda p: F.fig_fifths_curve(sweep, "v_probe", args.layer, p)),
         ("fig_ambiguity.pdf",
          lambda p: F.fig_ambiguity(probing, args.model, args.layer, p)),
+        ("fig_framework.pdf",
+         lambda p: F.fig_framework(REPO / "results/samples", p)),
+        ("fig_equivariance.pdf",
+         lambda p: F.fig_equivariance(REPO / "results/equivariance", p)),
+        ("fig_intervention_bars.pdf",
+         lambda p: F.fig_intervention_bars(sweep, p)),
     ]
     written = []
     for name, fn in jobs:

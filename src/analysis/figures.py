@@ -164,6 +164,141 @@ def fig_fifths_curve(sweep_dir: Path, method: str, layer: int, out: Path) -> Non
     plt.close(fig)
 
 
+# ------------------------------------------------------------------ Fig: framework
+def _pianoroll(ax, ids: list[int], plen: int, cont_color: str, label: str) -> None:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from src.utils.notes import ids_to_notes
+    prompt_notes = ids_to_notes(ids[:plen])
+    # continuation bars start after the prompt's 8 bars
+    all_notes = ids_to_notes(ids)
+    cont_notes = all_notes[len(prompt_notes):]
+    for notes, color in ((prompt_notes, GRAY), (cont_notes, cont_color)):
+        for s, d, p in notes:
+            ax.broken_barh([(s, d)], (p - 0.45, 0.9), color=color, lw=0)
+    ax.axvline(8 * 16, color="black", lw=0.8, ls="--")
+    ax.set_xlim(0, 24 * 16)
+    ax.set_ylim(38, 92)
+    ax.set_yticks([48, 60, 72, 84], ["C3", "C4", "C5", "C6"])
+    ax.set_xticks(range(0, 24 * 16 + 1, 64), [str(b) for b in range(0, 25, 4)])
+    ax.text(0.01, 0.88, label, transform=ax.transAxes, fontsize=7)
+
+
+def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
+                  edit_target: int = 4) -> None:
+    """MetaOthello-Fig.1-style overview with REAL data: the same prompt continued
+    (a) clean and (b) with the key subspace edited at L4, plus the edit equation.
+    Continuation keys are re-estimated from the plotted pitches (KS)."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from src.eval.keyest import estimate_key
+    from src.utils.notes import ids_to_notes
+
+    demo = json.loads((samples_dir / "demo_tokens.json").read_text())
+    p = demo["prompts"][prompt_idx]
+    plen = len(p["ids"])
+    clean = p["ids"] + demo["conts"]["clean"][prompt_idx]
+    edited = p["ids"] + demo["conts"][f"edit_T{edit_target}"][prompt_idx]
+    src = KEY_NAMES[p["src_key"] % 12]
+    tgt = KEY_NAMES[edit_target % 12]
+
+    def est(full_ids: list[int]) -> str:
+        pitches = [n[2] for n in ids_to_notes(full_ids)
+                   if n[0] >= 8 * 16]              # continuation notes only
+        k = estimate_key(pitches)
+        return KEY_NAMES[k % 12] + (" minor" if k >= 12 else " major")
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 2.7), sharex=True)
+    _pianoroll(ax1, clean, plen, BLUE,
+               f"(a) clean:  {src} major prompt $\\to$ est. {est(clean)}")
+    _pianoroll(ax2, edited, plen, VERM,
+               f"(b) key state edited to {tgt} $\\to$ est. {est(edited)}")
+    for ax in (ax1, ax2):
+        ax.set_xlim(0, 18 * 16)
+        ax.set_xticks(range(0, 18 * 16 + 1, 64), [str(b) for b in range(0, 19, 4)])
+    ax2.set_xlabel("bar")
+    ax1.annotate("$h \\leftarrow h - P_V h + P_V\\,\\mu_{%s}$  (L4, sustained)" % tgt,
+                 xy=(8 * 16, 90), xytext=(8 * 16 + 14, 99), fontsize=7,
+                 annotation_clip=False,
+                 arrowprops=dict(arrowstyle="->", lw=0.7))
+    fig.savefig(out)
+    plt.close(fig)
+
+
+# ------------------------------------------------------------------ Fig: equivariance
+def fig_equivariance(equi_root: Path, out: Path) -> None:
+    """MetaOthello-Fig.2-style per-layer bars with a random-map reference:
+    cyclicity error per layer for R-Aug vs R-NoAug (mean over seeds, seed dots)."""
+    import numpy.linalg as la
+    groups = {"R-Aug": [], "R-NoAug": []}
+    for p in sorted(equi_root.glob("*/equivariance.json")):
+        r = json.loads(p.read_text())
+        for g in groups:
+            if r["model"].startswith(g + "_"):
+                groups[g].append(np.array(r["eps_cyc_per_layer"]))
+    L = len(next(iter(groups.values()))[0])
+    # random-orthogonal reference (analytic reference, not a stored result):
+    rng = np.random.default_rng(0)
+    d = 128                                       # ratio is dimension-stable
+    errs = []
+    for _ in range(20):
+        Q1, _ = la.qr(rng.standard_normal((d, d)))
+        Qk, _ = la.qr(rng.standard_normal((d, d)))
+        errs.append(la.norm(Qk - Q1) / la.norm(Qk))
+    rand_ref = float(np.mean(errs))
+
+    x = np.arange(L)
+    w = 0.38
+    fig, ax = plt.subplots(figsize=(3.5, 2.0))
+    for off, (g, color) in zip((-w / 2, w / 2), (("R-Aug", BLUE), ("R-NoAug", ORANGE))):
+        arr = np.stack(groups[g])                 # (seeds, L)
+        ax.bar(x + off, arr.mean(0), w, color=color, label=g)
+        for srow in arr:
+            ax.scatter(x + off, srow, s=4, color="black", zorder=3)
+    ax.axhline(rand_ref, color=GRAY, lw=1, ls="--")
+    ax.text(L - 0.6, rand_ref + 0.03, "random orthogonal maps", color=GRAY,
+            ha="right", fontsize=7)
+    ax.set_xticks(x, [str(i) for i in range(L)])
+    ax.set_xlabel("layer")
+    ax.set_ylabel("cyclicity error $\\varepsilon_{\\mathrm{cyc}}$")
+    ax.set_ylim(0, 1.55)
+    ax.legend(frameon=False, loc="lower right", ncols=2)
+    fig.savefig(out)
+    plt.close(fig)
+
+
+# ------------------------------------------------------------------ Fig: bars
+def fig_intervention_bars(sweep_dir: Path, out: Path) -> None:
+    """MetaOthello-Fig.3-style labeled bars: best edit conditions vs controls."""
+    conds = [
+        ("K1\nrandom", "k1_r24_L*.parquet", GRAY),
+        ("K3\nshuffled", "k3_*.parquet", GRAY),
+        ("V-DAS\n(L4)", "v_das24_L4_*.parquet", ORANGE),
+        ("V-MEAN\n(L2)", "v_mean_L2_*.parquet", ORANGE),
+        ("V-PROBE\n(L4)", "v_probe_L4_*.parquet", VERM),
+        ("K4\ntransp.", "k4_T*.parquet", GREEN),
+    ]
+    vals = []
+    for label, pat, color in conds:
+        df = _load_sweep(sweep_dir, pat)
+        if pat.startswith("k4"):
+            vals.append(df["tkr_strict"].fillna(False).mean())
+        else:
+            vals.append(df["succ"].mean())
+    fig, ax = plt.subplots(figsize=(3.5, 2.0))
+    bars = ax.bar(range(len(conds)), vals, 0.62,
+                  color=[c for _, _, c in conds])
+    for b, v in zip(bars, vals):
+        ax.annotate(f"{v:.2f}", (b.get_x() + b.get_width() / 2, v),
+                    ha="center", va="bottom", fontsize=7)
+    ax.axhline(1 / 12, color=GRAY, lw=0.7, ls=":")   # chance (named in caption)
+    ax.set_xticks(range(len(conds)), [l for l, _, _ in conds], fontsize=7)
+    ax.set_ylabel("guarded strict TKR")
+    ax.set_ylim(0, 0.78)
+    fig.savefig(out)
+    plt.close(fig)
+
+
 # ------------------------------------------------------------------ Fig: ambiguity
 def fig_ambiguity(probing_root: Path, highlight: str, layer: int, out: Path) -> None:
     r = json.loads((probing_root / highlight / "probe_report.json").read_text())

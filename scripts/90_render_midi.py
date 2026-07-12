@@ -37,25 +37,7 @@ def key_name(k: int) -> str:
     return KEY_NAMES[k % 12] + ("m" if k >= 12 else "")
 
 
-def tokens_to_notes(ids: list[int]) -> list[tuple[int, int, int]]:
-    """token ids -> [(start_16th, dur_16th, pitch)]"""
-    notes, bar, pos = [], -1, 1
-    i = 0
-    toks = [IVOCAB[t] for t in ids]
-    while i < len(toks):
-        t = toks[i]
-        if t == "BAR":
-            bar += 1
-        elif t.startswith("POS_"):
-            pos = int(t[4:])
-        elif t.startswith("PITCH_") and i + 1 < len(toks) and toks[i + 1].startswith("DUR_"):
-            if bar >= 0:
-                notes.append((bar * 16 + pos - 1, int(toks[i + 1][4:]), int(t[6:])))
-            i += 1
-        elif t == "EOS":
-            break
-        i += 1
-    return notes
+from src.utils.notes import ids_to_notes as tokens_to_notes  # shared with figures
 
 
 def _varint(n: int) -> bytes:
@@ -110,6 +92,7 @@ def main() -> None:
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     written = []
+    token_dump: dict = {"layer": args.layer, "model": name, "prompts": [], "conts": {}}
 
     def render(pi: int, suffix: str, cont: list[int]) -> None:
         full = prompts[pi].ids + cont
@@ -119,18 +102,26 @@ def main() -> None:
         log.info("wrote %s (%d tokens)", p.name, len(full))
 
     clean = SW.generate_batch(model, prompts, lambda plen: None, gen_cfg, device, 8, 0)
+    token_dump["prompts"] = [{"ids": p.ids, "src_key": p.src_key} for p in prompts]
+    token_dump["conts"]["clean"] = clean
     for pi, p in enumerate(prompts):
         render(pi, f"src{key_name(p.src_key)}_clean", clean[pi])
     for tgt in [int(x) for x in args.targets.split(",")]:
         editor = SW.make_editor(V, mu[tgt], device)
         conts = SW.generate_batch(model, prompts, lambda plen: {args.layer: editor},
                                   gen_cfg, device, 8, 0)
+        token_dump["conts"][f"edit_T{tgt}"] = conts
         for pi, p in enumerate(prompts):
             render(pi, f"src{key_name(p.src_key)}_edit{key_name(tgt)}_L{args.layer}", conts[pi])
 
+    import json
+    dump_path = outdir / "demo_tokens.json"
+    dump_path.write_text(json.dumps(token_dump))
+    written.append(str(dump_path.relative_to(REPO)))
     append_entry(stage="DEMO midi render", config=vars(args), seeds=[0],
                  artifacts=written,
-                 note="listenable clean-vs-edited pairs; demo only, not a SPEC metric")
+                 note="listenable clean-vs-edited pairs + token dump; demo only, "
+                      "not a SPEC metric")
 
 
 if __name__ == "__main__":

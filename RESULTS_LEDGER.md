@@ -271,3 +271,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-07-12T23:52:23+09:00 — DEMO midi render
+- git: `6e53a10625cabbce460a8b9e07d0dce4e50aad96+DIRTY`
+- config_hash: `04f2190d827ca8e35ded42b2b29943f3abbf99d5845dc0078bfa3dc35b3e3826`
+- seeds: [0]
+- artifacts: `results/samples/prompt0_srcBb_clean.mid`, `results/samples/prompt1_srcD_clean.mid`, `results/samples/prompt0_srcBb_editG_L4.mid`, `results/samples/prompt1_srcD_editG_L4.mid`, `results/samples/prompt0_srcBb_editE_L4.mid`, `results/samples/prompt1_srcD_editE_L4.mid`, `results/samples/demo_tokens.json`
+- note: listenable clean-vs-edited pairs + token dump; demo only, not a SPEC metric
+
+## 2026-07-12T23:54:02+09:00 — P5 figures
+- git: `6e53a10625cabbce460a8b9e07d0dce4e50aad96+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-12T23:59:59+09:00 — P5 figures
+- git: `6e53a10625cabbce460a8b9e07d0dce4e50aad96+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+

@@ -175,8 +175,16 @@ count as successes. DR-H3 requires $\tkr(\text{edit})>\tkr(\text{K1})$ with
 Holm-corrected Wilcoxon $p<.05$ in $\geq 8/12$ targets at the best in-budget
 condition.
 
-% Fig.1 (concrete score example of an edited continuation, per writing norms)
-% is TBD: requires notation rendering of the demo MIDI pairs.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_framework.pdf}
+\caption{The claim in one example (real model output, deterministic seed). The
+same 8-bar B$\flat$-major prompt, continued (a)~clean and (b)~with the key
+component of layer-4 activations replaced by the E-major class mean from bar~9
+onward. Nothing in the input changes; the continuation's estimated key follows
+the injected internal state.}
+\label{fig:framework}
+\end{figure}
 
 \begin{figure}[t]
 \centering
@@ -243,10 +251,21 @@ vs.\ none for the chromatic ordering (0.00), at every probed layer
 Transposition acts as a linear map: Procrustes $R_k$ fit on half the
 sequences aligns held-out activations with $0.05$--$0.11$ relative error.
 Yet the family $\{R_k\}$ is far from cyclic
-($\varepsilon_{\mathrm{cyc}}\approx 0.98$ against $\approx1.41$ for random
-orthogonal maps), and --- our pre-registered negative result --- transposition
-augmentation does not improve it (3 seeds per regime: R-Aug $0.983$ vs.\
-R-NoAug $0.981$, one-sided $p=0.83$): DR-H2b is \emph{not supported}. The
+(Fig.~\ref{fig:equi}: $\varepsilon_{\mathrm{cyc}}\approx 0.98$ against
+$\approx1.41$ for random orthogonal maps), and --- our pre-registered negative
+result --- transposition augmentation does not improve it (3 seeds per regime:
+R-Aug $0.983$ vs.\ R-NoAug $0.981$, one-sided $p=0.83$): DR-H2b is \emph{not
+supported}. The
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{fig_equivariance.pdf}
+\caption{Cyclicity error of the transposition maps per layer (bars: mean of 3
+seeds per regime; dots: individual seeds; dashed: random-orthogonal
+reference). Transposition augmentation leaves the (non-cyclic) structure
+unchanged --- the pre-registered DR-H2b is not supported.}
+\label{fig:equi}
+\end{figure}
 representation is transposition-equivariant in effect but not organized as a
 cyclic group, and the training-data key diversity appears to suffice.
 
@@ -272,8 +291,8 @@ K4 transposed prompt (upper ref.) & --- & 0.652 \; (tolerant 0.985)\\
 \bottomrule
 \end{tabular}
 \end{table}
-Table~\ref{tab:tkr}: at the best in-budget condition (V-PROBE, L4),
-$\tkr(\text{edit})-\tkr(\text{K1})>0$ holds for \textbf{12/12} targets
+Table~\ref{tab:tkr} and Fig.~\ref{fig:bars}: at the best in-budget condition
+(V-PROBE, L4), $\tkr(\text{edit})-\tkr(\text{K1})>0$ holds for \textbf{12/12} targets
 (Holm-corrected $p<10^{-4}$ each, rank-biserial $r=0.64$--$1.00$): DR-H3 is
 \textbf{supported}, with $\geq 8/12$ pre-registered as the bar. Pitch content
 triangulates the same conclusion without the key estimator:
@@ -286,6 +305,15 @@ band; success decreases gently with target distance on the circle of fifths
 while random edits collapse to zero once the identity target is excluded.
 The edit reaches
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{fig_intervention_bars.pdf}
+\caption{Guarded strict $\tkr$ across conditions [s0] (dotted line: chance
+$1/12$): the probe-subspace edit at its best layer moves the composed key at
+$5.6\times$ the matched random control and reaches $58\%$ of the
+transposed-prompt behavioral reference.}
+\label{fig:bars}
+\end{figure}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_specificity.pdf}
