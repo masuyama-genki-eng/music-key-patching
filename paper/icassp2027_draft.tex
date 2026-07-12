@@ -42,8 +42,8 @@ tokens --- and test the world-model hypothesis at three levels, under a
 pre-registered protocol with frozen decision rules. (i)~\emph{Existence}:
 linear probes decode the running key from mid-layer activations at
 0.93 macro-$F_1$, exceeding the strongest input-side baseline (0.79) in all
-trained models, with the margin widening exactly where surface statistics are
-least informative. (ii)~\emph{Geometry}: the twelve tonic directions
+six trained models, with the margin widening exactly where surface statistics
+are least informative. (ii)~\emph{Geometry}: the twelve tonic directions
 self-organize into a circle of fifths (neighbor agreement 1.0 vs.\ 0.0 for the
 chromatic circle); transposition acts as a generalizing linear map, yet these
 maps do not compose cyclically, and transposition augmentation does not change
@@ -129,8 +129,8 @@ absolute-MIDI \texttt{PITCH}, and \texttt{DUR} tokens; a unit test enforces
 the absence of key/chord/degree tokens. \textbf{Models.} M-CTRL is a GPT-2
 style decoder (8 layers, 8 heads, $d{=}512$, context 512, ${\sim}25$M
 parameters), trained 12k steps under two regimes --- with (R-Aug) and without
-(R-NoAug) uniform 12-fold transposition augmentation --- $\times$ 2 seeds
-(third seed: \TBD{training queued}). M-REF shares the architecture but a
+(R-NoAug) uniform 12-fold transposition augmentation --- $\times$ 3 seeds.
+M-REF shares the architecture but a
 disjoint seed and data split and is used exclusively for the musicality
 guard. All models pass a pre-frozen quality gate (val.\ next-token top-1
 $0.878$--$0.881$ vs.\ a $0.434$ constant-predictor rate; unconditional
@@ -182,7 +182,7 @@ results hold for all four M-CTRL models. Seed-1 sweep: \TBD{running}.
 \begin{table}[t]
 \centering\small
 \caption{Key decoding at the peak layer (L4, R-Aug seed 0), 24-class
-macro-$F_1$ on held-out sequences. DR-H1 supported in 4/4 models.}
+macro-$F_1$ on held-out sequences. DR-H1 supported in 6/6 models.}
 \label{tab:probe}
 \begin{tabular}{@{}lc@{}}
 \toprule
@@ -214,8 +214,8 @@ sequences aligns held-out activations with $0.05$--$0.11$ relative error.
 Yet the family $\{R_k\}$ is far from cyclic
 ($\varepsilon_{\mathrm{cyc}}\approx 0.98$ against $\approx1.41$ for random
 orthogonal maps), and --- our pre-registered negative result --- transposition
-augmentation does not improve it (R-Aug $0.979$ vs.\ R-NoAug $0.982$,
-one-sided $p=0.264$, $r=-0.19$): DR-H2b is \emph{not supported}. The
+augmentation does not improve it (3 seeds per regime: R-Aug $0.983$ vs.\
+R-NoAug $0.981$, one-sided $p=0.83$): DR-H2b is \emph{not supported}. The
 representation is transposition-equivariant in effect but not organized as a
 cyclic group, and the training-data key diversity appears to suffice.
 
