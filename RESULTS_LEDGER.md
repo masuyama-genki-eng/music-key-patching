@@ -159,3 +159,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/samples/prompt0_srcBb_clean.mid`, `results/samples/prompt1_srcD_clean.mid`, `results/samples/prompt0_srcBb_editG_L4.mid`, `results/samples/prompt1_srcD_editG_L4.mid`, `results/samples/prompt0_srcBb_editE_L4.mid`, `results/samples/prompt1_srcD_editE_L4.mid`
 - note: listenable clean-vs-edited pairs; demo only, not a SPEC metric
 
+## 2026-07-12T12:53:21+09:00 — P4 sweep R-Aug_s0
+- git: `2acfc06fc236b3c79b560810224447a579d6fa3f+DIRTY`
+- config_hash: `d30360d21b12213e7bce870d804041814385d9ab0bbf648ce41a3edb10131e56`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s0/parts`
+- note: 576 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-12T17:03:55+09:00 — P5 analysis R-Aug_s0 (DR-H3/H5)
+- git: `2acfc06fc236b3c79b560810224447a579d6fa3f+DIRTY`
+- config_hash: `a23663ddfb5fe3226dc5959f8a955fea7cc3a53e963edbfe0c0d573b721f5fe1`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s0/verdict_DR-H3_H5.json`
+- note: DR-H3 supported=True; DR-H5=True
+

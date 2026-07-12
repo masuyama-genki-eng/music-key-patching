@@ -53,7 +53,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
-    outdir = Path(args.sweep_dir)
+    outdir = Path(args.sweep_dir).resolve()
     name = outdir.name
     delta_ppl = json.loads(Path(args.guard).read_text())["delta_ppl"]
     df = load_parts(outdir)
