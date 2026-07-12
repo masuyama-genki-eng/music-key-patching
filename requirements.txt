@@ -6,4 +6,6 @@ scipy>=1.11
 statsmodels
 pyyaml
 pytest
-# music21   # D-REAL sanity only; install in P7 after license check
+matplotlib   # P5 figures (approved 2026-07-12)
+# music21   # deferred (user decision 2026-07-12): D-REAL implemented via direct
+#            MusicXML/RomanText parsing; revisit if that proves insufficient
