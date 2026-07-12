@@ -257,3 +257,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s0/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s0/metrics.json`
 - note: final val: loss 0.2985, ppl 1.348, top1 0.8783 (784897 tokens)
 
+## 2026-07-12T23:35:27+09:00 — P5 figures
+- git: `d66455deaa8a36b600caa4e7996c7556941f3b28+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-12T23:37:14+09:00 — P5 figures
+- git: `d66455deaa8a36b600caa4e7996c7556941f3b28+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+

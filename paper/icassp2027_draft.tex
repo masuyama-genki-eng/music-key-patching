@@ -14,6 +14,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\graphicspath{{../results/figures/}}   % figures are ledgered results/ artifacts
 \usepackage[hidelinks]{hyperref}
 \usepackage{multirow}
 
@@ -174,9 +175,22 @@ count as successes. DR-H3 requires $\tkr(\text{edit})>\tkr(\text{K1})$ with
 Holm-corrected Wilcoxon $p<.05$ in $\geq 8/12$ targets at the best in-budget
 condition.
 
+% Fig.1 (concrete score example of an edited continuation, per writing norms)
+% is TBD: requires notation rendering of the demo MIDI pairs.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_layer_profile.pdf}
+\caption{The key is read and used in the same middle layers. (a)~Linear-probe
+macro-$F_1$ per layer for all six M-CTRL models (thin lines; R-Aug seed 0
+highlighted) against the best input baseline. (b)~Causal effect [s0]: guarded
+strict $\tkr$ of the V-PROBE edit vs.\ the K1 matched random control.}
+\label{fig:layers}
+\end{figure}
+
 \section{Results}
 Unless noted, numbers are from the completed seed-0 R-Aug sweep [s0]; probing
-results hold for all four M-CTRL models. Seed-1 sweep: \TBD{running}.
+results hold for all six M-CTRL models. Seed-1 sweep: \TBD{running}.
 
 \subsection{H1 --- the key is decodable beyond the input surface}
 \begin{table}[t]
@@ -192,23 +206,40 @@ best input baseline (C3: PC-hist LR, $W{=}64$) & 0.790\\
 untrained model (C2) & 0.243\\
 selectivity control task (C1b) & 0.040\\
 \midrule
-corrected margin (probe $-$ C1b $-$ C3), BCa 95\% CI &
-$+0.105\;[0.091, 0.114]$\\
+corrected margin, BCa 95\% CI & $+0.105\;[0.091, 0.114]$\\
 \bottomrule
 \end{tabular}
 \end{table}
-Table~\ref{tab:probe}: the corrected probe--baseline margin excludes zero in
-layers 1--7 of every model (peak $+0.105$ at L4), and only fails at L0
-($-0.20$) --- the key is \emph{computed}, not transcribed from the input. In
-the top ambiguity quartile (KS posterior entropy), probe accuracy is
-$0.936$ vs.\ $0.795$ for the best baseline; the internal state is most
-valuable exactly where the surface is least informative.
+Table~\ref{tab:probe} and Fig.~\ref{fig:layers}a: the corrected
+probe--baseline margin excludes zero in layers 1--7 of every model (peak
+$+0.105$ at L4), and only fails at L0 ($-0.20$) --- the key is
+\emph{computed}, not transcribed from the input. In the top ambiguity
+quartile (KS posterior entropy), probe accuracy is $0.936$ vs.\ $0.795$ for
+the best baseline (Fig.~\ref{fig:amb}); the internal state is most valuable
+exactly where the surface is least informative.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\columnwidth]{fig_ambiguity.pdf}
+\caption{Probe vs.\ input baseline by ambiguity stratum (L4, [s0] model): the
+probe's margin is largest where surface statistics are least informative.}
+\label{fig:amb}
+\end{figure}
 
 \subsection{H2 --- fifths geometry; equivariant but not a group}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\columnwidth]{fig_fifths_geometry.pdf}
+\caption{The twelve major-tonic probe directions (L4, first two principal
+components) self-organize into a circle of fifths. No key, chord, or degree
+token exists in the training vocabulary.}
+\label{fig:fifths}
+\end{figure}
 Projected to two principal components, the twelve major-tonic probe
-directions order themselves as C--G--D--A--E--B--F$\sharp$--\ldots{}: perfect
-circle-of-fifths neighbor agreement (1.00) vs.\ none for the chromatic
-ordering (0.00), at every probed layer (exploratory, no decision rule).
+directions order themselves as C--G--D--A--E--B--F$\sharp$--\ldots{}
+(Fig.~\ref{fig:fifths}): perfect circle-of-fifths neighbor agreement (1.00)
+vs.\ none for the chromatic ordering (0.00), at every probed layer
+(exploratory, no decision rule).
 Transposition acts as a linear map: Procrustes $R_k$ fit on half the
 sequences aligns held-out activations with $0.05$--$0.11$ relative error.
 Yet the family $\{R_k\}$ is far from cyclic
@@ -247,8 +278,30 @@ $\tkr(\text{edit})-\tkr(\text{K1})>0$ holds for \textbf{12/12} targets
 \textbf{supported}, with $\geq 8/12$ pre-registered as the bar. Pitch content
 triangulates the same conclusion without the key estimator:
 $\ikr_{\kappa^*}=0.937$ vs.\ $\ikr_{\kappa_{\mathrm{src}}}=0.646$ after
-editing. Success decreases gently with target distance on the circle of
-fifths ($0.395$ at distance 1 to $0.280$ at the tritone). The edit reaches
+editing. The specificity matrix (Fig.~\ref{fig:spec}) shows continuations
+concentrating on the injected key with the estimator's known
+fifths-neighbor confusions beside the diagonal and a faint relative-minor
+band; success decreases gently with target distance on the circle of fifths
+(Fig.~\ref{fig:curve}; $0.395$ at distance 1 to $0.280$ at the tritone),
+while random edits collapse to zero once the identity target is excluded.
+The edit reaches
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_specificity.pdf}
+\caption{Specificity [s0]: distribution of the continuation's estimated key
+(columns, fifths order) per injected key (rows), V-PROBE edit at L4.}
+\label{fig:spec}
+\end{figure}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\columnwidth]{fig_fifths_curve.pdf}
+\caption{Strict $\tkr$ vs.\ circle-of-fifths distance from the prompt's key
+to the injected key [s0]: V-PROBE edit against the K1 control and the K4
+behavioral reference. At distance 0 (identity target) all conditions
+trivially preserve the key.}
+\label{fig:curve}
+\end{figure}
 $58\%$ of the behavioral upper bound (K4), quantifying an
 \emph{actionability gap}: the state is readable in a rank-24 subspace of one
 layer, but generation draws on redundant, distributed copies that a single-%
