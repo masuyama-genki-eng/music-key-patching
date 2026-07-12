@@ -152,3 +152,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/equivariance/verdict_DR-H2b.json`
 - note: supported=False (aug 0.9792 < noaug 0.9820, p=0.2641, r=-0.191)
 
+## 2026-07-12T03:24:30+09:00 — DEMO midi render
+- git: `e05b7c3969490083fc253d01f09c0ef1f7992226+DIRTY`
+- config_hash: `04f2190d827ca8e35ded42b2b29943f3abbf99d5845dc0078bfa3dc35b3e3826`
+- seeds: [0]
+- artifacts: `results/samples/prompt0_srcBb_clean.mid`, `results/samples/prompt1_srcD_clean.mid`, `results/samples/prompt0_srcBb_editG_L4.mid`, `results/samples/prompt1_srcD_editG_L4.mid`, `results/samples/prompt0_srcBb_editE_L4.mid`, `results/samples/prompt1_srcD_editE_L4.mid`
+- note: listenable clean-vs-edited pairs; demo only, not a SPEC metric
+

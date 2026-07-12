@@ -45,11 +45,15 @@ def part_path(outdir: Path, cond_id: str) -> Path:
     return outdir / "parts" / f"{cond_id}.parquet"
 
 
-def write_part(outdir: Path, cond_id: str, rows: list[dict]) -> None:
+def write_part(outdir: Path, cond_id: str, rows: list[dict],
+               conts: list[list[int]] | None = None) -> None:
     df = pa.Table.from_pylist(rows)
     p = part_path(outdir, cond_id)
     p.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(df, p)
+    if conts is not None:                       # token continuations for H4/demo
+        (outdir / "conts").mkdir(exist_ok=True)
+        (outdir / "conts" / f"{cond_id}.json").write_text(json.dumps(conts))
 
 
 def main() -> None:
@@ -195,7 +199,7 @@ def main() -> None:
                     prompts, conts, mref, device, clean_ppl)
                 for r in rows:
                     r["guard_pass"] = bool(r["mref_ppl_excess"] <= delta_ppl)
-                write_part(outdir, cond_id, rows)
+                write_part(outdir, cond_id, rows, conts)
                 n_done += 1
             log.info("%s layer %d done", method, li)
 
