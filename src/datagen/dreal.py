@@ -155,12 +155,18 @@ def parse_chorale(path: str | Path) -> dict | None:
     if any(l != bar_len for l in interior):
         return None
 
-    # measure boundaries as WRITTEN in the score (a pickup is measure 0, and is
-    # shorter than bar_len — inferring bars from a grid would shift everything).
+    # Measure boundaries as WRITTEN in the score. A pickup is measure 0 and is SHORT:
+    # it holds only the last beats of a notional full bar. Its NOTIONAL DOWNBEAT is
+    # therefore BEFORE the music starts, at (first_barline - bar_len) — which is
+    # negative. Anchoring it at onset 0 instead (as this code did until 2026-07-14)
+    # shifts every beat reference inside the pickup by a whole bar: an analysis line
+    # "m0 b4 g:" then lands a bar too late, can sort AFTER the "m1 b2 Bb:" that
+    # follows it, and the piece is labelled as opening in the wrong key. It also made
+    # the pickup chord tokenize as POS_1, i.e. as a downbeat. Both bugs, one cause.
     bounds = sorted(bars.items())                # [(measure_no, onset), ...]
     first_no, first_on = bounds[0]
-    if first_on > 0:                             # notes before the first barline
-        bounds.insert(0, (first_no - 1, 0))      # = pickup measure
+    if first_on > 0:                             # notes precede the first barline
+        bounds.insert(0, (first_no - 1, first_on - bar_len))   # notional downbeat
 
     def measure_of(onset: int) -> tuple[int, int]:
         """(measure number, onset of that measure)"""

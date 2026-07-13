@@ -167,6 +167,20 @@ def main() -> None:
         "corrected_margin_ci": ci,
         "beats_surface": bool(ci["ci_lo"] > 0),
     }
+    # artifacts the intervention needs: probe row space (V-PROBE) and the
+    # class-conditional means (the edit target), both in RAW activation space
+    np.savez_compressed(
+        outdir / "probe_weights.npz",
+        **{f"layer_{li}": probes[li]["weights"] for li in probes},
+        **{f"bias_{li}": probes[li]["bias"] for li in probes})
+    means = {}
+    for li in range(n_layers):
+        A = data["acts"][li].astype(np.float32)
+        means[f"layer_{li}"] = np.stack(
+            [A[y == k].mean(0) if (y == k).any() else np.zeros(A.shape[1])
+             for k in range(24)]).astype(np.float32)
+    np.savez_compressed(outdir / "class_means.npz", **means)
+
     out = outdir / "mwild_probe.json"
     out.write_text(json.dumps(result, indent=2))
     run_cfg = {k: v for k, v in vars(args).items() if k != "no_ledger"}

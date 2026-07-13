@@ -85,6 +85,35 @@ label is noisy away from home. The SAME label is used for the probe and for the 
 input baseline, so the comparison stays fair, but absolute numbers will sit below
 D-SYN and are reported as such.
 
+## 2026-07-14 — M-WILD intervention: design fixed BEFORE running (deviations named)
+
+Extending Phase B to a public checkpoint forces three departures from SPEC §4, all
+decided and recorded before any edit result was looked at.
+
+1. GUARD REFERENCE. SPEC §4.3 requires M-REF: same architecture, disjoint seed AND data
+   split, so it shares no weights with the model under test. A public checkpoint has no
+   such twin and we cannot make one. The reference is therefore a DIFFERENT public
+   checkpoint from the same family — music-medium (302M) judging music-small (85M):
+   different weights, different capacity, same tokenizer. Not circular, but not the
+   pre-registered construction either, so it is named as a deviation wherever the guard
+   is used. delta_PPL is frozen the same way: the 90th percentile of the reference's NLL
+   rise across NATURAL modulations in the Bach chorales, computed before any edit.
+
+2. TWO-STAGE LAYER SELECTION. This paper shows the probe-F1 peak is NOT the causal peak,
+   so the edit layer cannot be inherited from the probe. It must be searched — and a
+   layer chosen on the same prompts it is then judged on would be a selection effect.
+   The prompt sets are therefore DISJOINT: stage 1 scans all 12 layers on 20 chorale
+   prefixes; stage 2 evaluates the chosen layer on 60 chorale prefixes it never saw.
+
+3. UNCONSTRAINED GENERATION. The public model emits (time, duration, note) triples. We do
+   NOT force the sampler to produce well-formed triples: constraining the output would
+   confound "the edit changed the key" with "our decoder repaired the output". Pitches
+   are read off whatever note tokens the model actually emits, and malformed spans are
+   simply absent from the pitch stream.
+
+K2 still binds: the sham edit must reproduce the clean continuation token-for-token
+before any real edit is trusted. It passed.
+
 ## 2026-07-14 — M-WILD: the negative D-REAL is TRAINING DATA, not the method
 ## (matched-architecture control; probe position corrected)
 
