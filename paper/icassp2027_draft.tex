@@ -192,10 +192,12 @@ the injected internal state.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_layer_profile.pdf}
-\caption{The key is read and used in the same middle layers. (a)~Linear-probe
+\caption{Readability is diffuse; causal efficacy is sharp. (a)~Linear-probe
 macro-$F_1$ per layer for all six M-CTRL models (thin lines; R-Aug seed 0
-highlighted) against the best input baseline. (b)~Causal effect [s0]: guarded
-strict $\tkr$ of the V-PROBE edit vs.\ the K1 matched random control.}
+highlighted) against the best input baseline: the key is legible across a broad
+plateau (L2--L6). (b)~Causal effect [s0]: guarded strict $\tkr$ of the V-PROBE
+edit vs.\ the K1 matched random control (bands: prompt-level bootstrap 95\% CI).
+Only a narrow band around L4 actually moves the output.}
 \label{fig:layers}
 \end{figure}
 
@@ -207,8 +209,9 @@ Phase-B verdict (Sec.~\ref{sec:repl}).
 \subsection{H1 --- the key is decodable beyond the input surface}
 \begin{table}[t]
 \centering\small
-\caption{Key decoding at the peak layer (L4, R-Aug seed 0), 24-class
-macro-$F_1$ on held-out sequences. DR-H1 supported in 6/6 models.}
+\caption{Key decoding at L4 (R-Aug seed 0; the layer the edit acts on --- probe
+$F_1$ itself is flat across L2--L6), 24-class macro-$F_1$ on held-out sequences.
+DR-H1 supported in 6/6 models.}
 \label{tab:probe}
 \begin{tabular}{@{}lc@{}}
 \toprule
@@ -344,10 +347,16 @@ $\leq 5\%$ at L4--L5) --- the guard is load-bearing.
 
 \subsection{H5 --- causal efficacy localizes to middle layers}
 The layer profile of the edit-minus-control effect is single-peaked:
-$0.03, 0.04, 0.19, 0.26, \mathbf{0.30}, 0.26, 0.23, 0.23$ for L0--L7, peaking
-at the same layer where probe $F_1$ peaks; best-vs-median bootstrap CI
-$[0.038, 0.109]$ excludes zero (DR-H5 supported). Where the key is read is
-where it acts.
+$0.03, 0.04, 0.19, 0.26, \mathbf{0.30}, 0.26, 0.23, 0.23$ for L0--L7;
+best-vs-median bootstrap CI $[0.038, 0.109]$ excludes zero (DR-H5 supported).
+The two profiles in Fig.~\ref{fig:layers} are not the same shape, and the
+difference is informative: \emph{readability is diffuse where efficacy is
+sharp}. The probe saturates across L2--L6 (macro-$F_1$ $0.920$--$0.929$, all
+within $0.01$ of its maximum), so the key is legible from most of the network;
+yet a single-layer edit only moves the output near L4, and barely at all at
+L0--L1. Legibility of a state is thus a weak guide to where it is used --- a
+caution for interpretability work that localizes a computation by probing
+accuracy alone.
 
 \subsection{Replication and capacity}
 \label{sec:repl}

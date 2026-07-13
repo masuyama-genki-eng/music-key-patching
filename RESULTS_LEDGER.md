@@ -411,3 +411,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: n/a
 - note: VERDICT: USABLE. License CC BY-SA 4.0 (free-culture; attribution + share-alike, commercial use permitted) — less restrictive than the kern score edition. Provides LOCAL key annotations (human Roman-numeral analyses with modulations marked), matched to the Sapp kern scores by BWV number. This enables the test that H1 actually predicts (local key state), per CHANGELOG 2026-07-13.
 
+## 2026-07-13T14:51:59+09:00 — P5 figures
+- git: `961913c7229c8350e04e9211526dc561c0d971ea+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-13T14:54:23+09:00 — P5 figures
+- git: `961913c7229c8350e04e9211526dc561c0d971ea+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-13T14:54:46+09:00 — P5 figures
+- git: `961913c7229c8350e04e9211526dc561c0d971ea+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
