@@ -32,6 +32,7 @@ import numpy as np
 import torch
 import yaml
 
+from src.analysis.stats import holm_correct, wilcoxon_rank_biserial
 from src.datagen.dreal import load_corpus_local
 from src.eval.keyest import estimate_key, in_key_ratio
 from src.intervene.mwild_edit import (HFSubspaceEditor, continuation_pitches,
@@ -142,7 +143,7 @@ def main() -> None:
                 "tkr": bool(est == tgt) if (est is not None and tgt is not None) else None,
                 "ikr_target": in_key_ratio(pitches, tgt) if tgt is not None else None,
                 "ikr_src": in_key_ratio(pitches, p["src_key"]),
-                "cont": cont if mode in ("clean", "sham") else None,
+                "cont": cont,          # kept: stage 2 needs them for the guard's NLL
             })
         return rows
 
@@ -190,6 +191,109 @@ def main() -> None:
                          note=f"layer scan on {len(prompts)} held-in prompts; best L"
                               f"{best['layer']} TKR {best['tkr_edit']:.3f} vs K1 "
                               f"{best['tkr_k1']:.3f}")
+        return
+
+    # ---------------- stage 2: the chosen layer, judged on prompts it never saw
+    scan = json.loads((outdir / "stage1_layer_scan.json").read_text())
+    layer = int(scan["best_layer"])
+    guard_path = outdir / "delta_ppl.json"
+    if not guard_path.exists():
+        raise SystemExit("frozen guard missing — run scripts/14_mwild_guard.py first "
+                         "(the budget must be fixed before any edit is scored)")
+    delta = json.loads(guard_path.read_text())["delta_ppl"]
+    log.info("stage 2: layer L%d (chosen on the DISJOINT stage-1 prompts), "
+             "delta_ppl=%.4f nats", layer, delta)
+
+    ref = AutoModelForCausalLM.from_pretrained(args.ref_model).to(device).eval()
+
+    def nll_of(rows: list[dict]) -> np.ndarray:
+        """Continuation NLL under the REFERENCE model (different weights: not circular)."""
+        v = np.empty(len(rows))
+        for i, r in enumerate(rows):
+            p = prompts[r["prompt"]]
+            full = torch.tensor([p["ids"] + r["cont"]], device=device)
+            v[i] = ref_nll(ref, full, len(p["ids"]), device)
+        return v
+
+    # Clean twins first. Every edit is judged against the clean run of the SAME prompt
+    # with the SAME sampling seed, so the guard measures what the edit cost, not what
+    # the prompt costs.
+    clean_rows = run(layer, None, "clean")
+    clean_nll = {r["prompt"]: n for r, n in zip(clean_rows, nll_of(clean_rows))}
+    log.info("clean twins scored (mean reference NLL %.3f)",
+             float(np.mean(list(clean_nll.values()))))
+
+    out_rows = []
+    for cond, k1 in (("edit", False), ("k1", True)):
+        for tgt in MAJOR_TARGETS:
+            rows = run(layer, tgt, "edit", k1=k1)
+            for r, n in zip(rows, nll_of(rows)):
+                r["cond"] = cond
+                r["nll_excess"] = float(n - clean_nll[r["prompt"]])
+                r["guard_pass"] = bool(r["nll_excess"] <= delta)
+                r["success"] = bool(r["tkr"]) and r["guard_pass"]
+                r.pop("cont", None)               # not needed past this point
+            out_rows.extend(rows)
+            log.info("  %-4s T%-2d  TKR %.3f  guard %3.0f%%  guarded %.3f", cond, tgt,
+                     float(np.mean([bool(r["tkr"]) for r in rows])),
+                     100 * float(np.mean([r["guard_pass"] for r in rows])),
+                     float(np.mean([r["success"] for r in rows])))
+
+    df_e = [r for r in out_rows if r["cond"] == "edit"]
+    df_k = [r for r in out_rows if r["cond"] == "k1"]
+
+    # DR-H3, unchanged: per target, edit vs its matched random control, paired by
+    # prompt, Holm-corrected across the 12 targets. >= 8/12 significant supports it.
+    pvals, per_target = [], []
+    for tgt in MAJOR_TARGETS:
+        e = sorted([r for r in df_e if r["target"] == tgt], key=lambda r: r["prompt"])
+        k = sorted([r for r in df_k if r["target"] == tgt], key=lambda r: r["prompt"])
+        assert [r["prompt"] for r in e] == [r["prompt"] for r in k], "pairing broken"
+        t = wilcoxon_rank_biserial(np.array([r["success"] for r in e], float),
+                                   np.array([r["success"] for r in k], float),
+                                   alternative="greater")
+        pvals.append(t["p"])
+        per_target.append({"target": tgt,
+                           "tkr_edit": float(np.mean([r["success"] for r in e])),
+                           "tkr_k1": float(np.mean([r["success"] for r in k])), **t})
+    for rec, p_adj in zip(per_target, holm_correct(pvals)):
+        rec["p_holm"] = p_adj
+        rec["sig"] = bool(p_adj < 0.05 and rec["tkr_edit"] > rec["tkr_k1"])
+    n_sig = sum(r["sig"] for r in per_target)
+
+    res = {
+        "stage": 2, "model": args.model, "layer": layer, "delta_ppl": delta,
+        "n_prompts": len(prompts), "guard_reference": args.ref_model,
+        "tkr_edit_guarded": float(np.mean([r["success"] for r in df_e])),
+        "tkr_k1_guarded": float(np.mean([r["success"] for r in df_k])),
+        "tkr_edit_raw": float(np.mean([bool(r["tkr"]) for r in df_e])),
+        "tkr_k1_raw": float(np.mean([bool(r["tkr"]) for r in df_k])),
+        "guard_pass_edit": float(np.mean([r["guard_pass"] for r in df_e])),
+        "ikr_target_edit": float(np.mean([r["ikr_target"] for r in df_e])),
+        "ikr_src_edit": float(np.mean([r["ikr_src"] for r in df_e])),
+        "per_target": per_target,
+        "n_sig_targets": n_sig,
+        "DR_H3_supported": bool(n_sig >= 8),
+        "rows": out_rows,
+    }
+    (outdir / "stage2_eval.json").write_text(json.dumps(res, indent=2, default=float))
+    snapshot(outdir / "stage2_eval.json", vars(args), seeds=[args.seed])
+    log.info("STAGE 2 (L%d, held-out): guarded TKR edit %.3f vs K1 %.3f (raw %.3f vs "
+             "%.3f) | guard pass %.0f%% | IKR target %.3f src %.3f | DR-H3 %s (%d/12)",
+             layer, res["tkr_edit_guarded"], res["tkr_k1_guarded"],
+             res["tkr_edit_raw"], res["tkr_k1_raw"], 100 * res["guard_pass_edit"],
+             res["ikr_target_edit"], res["ikr_src_edit"],
+             "SUPPORTED" if res["DR_H3_supported"] else "not supported",
+             res["n_sig_targets"])
+    if not args.no_ledger:
+        append_entry(stage=f"M-WILD intervention stage 2 ({short})", config=vars(args),
+                     seeds=[args.seed],
+                     artifacts=[str((outdir / "stage2_eval.json").relative_to(REPO))],
+                     note=f"L{layer} chosen on disjoint prompts; guarded TKR "
+                          f"{res['tkr_edit_guarded']:.3f} vs K1 "
+                          f"{res['tkr_k1_guarded']:.3f} on {len(prompts)} held-out "
+                          f"prompts; DR-H3 supported={res['DR_H3_supported']} "
+                          f"({res['n_sig_targets']}/12); guard ref {args.ref_model}")
 
 
 if __name__ == "__main__":
