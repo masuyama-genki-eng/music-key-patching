@@ -537,3 +537,52 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild/music-small-800k/mwild_probe.json`
 - note: public model trained on REAL music (Apache-2.0); probe F1=0.6857 (L10) vs best C3 0.4463; corrected margin 0.1983 CI[0.1329,0.2663]; beats_surface=True
 
+## 2026-07-14T04:52:52+09:00 — D-REAL probe size-L12d768_s0
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `4b50286b57531345d777f2d2c88dab05dc247ec379676855f952833488145dca`
+- seeds: [0]
+- artifacts: `results/dreal/size-L12d768_s0/dreal_probe.json`
+- note: 300 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.5336 vs best C3 0.4512; corrected margin CI excludes 0: False
+
+## 2026-07-14T04:53:33+09:00 — D-REAL probe size-L12d768_s0
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `df548d6add7954c0217dfe69e7f1bff33ed17bfc2f294cc3523095876ded2869`
+- seeds: [0]
+- artifacts: `results/dreal/size-L12d768_s0/dreal_probe.json`
+- note: 316 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.5572 vs best C3 0.4918; corrected margin CI excludes 0: False
+
+## 2026-07-14T04:53:59+09:00 — M-WILD probe music-small-800k
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `84786b829b709fb2ae9ee950c9287e0465ae78a75c4ede07b81d5b426c4f24a0`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6902 (L10) vs best C3 0.4537; corrected margin 0.1956 CI[0.1315,0.2596]; beats_surface=True
+
+## 2026-07-14T04:54:47+09:00 — M-WILD probe music-medium-800k
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `4f634626eae0956b07508cfe0f6228c2e6cad826b338008b473f2b5825a1da68`
+- seeds: [0]
+- artifacts: `results/mwild/music-medium-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.7062 (L16) vs best C3 0.4537; corrected margin 0.2129 CI[0.1476,0.2875]; beats_surface=True
+
+## 2026-07-14T04:56:09+09:00 — M-WILD probe music-large-800k
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `8030be558230a1a4313c3bce72372e9dd566a14f26f01695232d744b46f70d76`
+- seeds: [0]
+- artifacts: `results/mwild/music-large-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.7146 (L19) vs best C3 0.4537; corrected margin 0.2028 CI[0.1296,0.2729]; beats_surface=True
+
+## 2026-07-14T04:57:22+09:00 — D-REAL probe size-L12d768_s0
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `4b50286b57531345d777f2d2c88dab05dc247ec379676855f952833488145dca`
+- seeds: [0]
+- artifacts: `results/dreal/size-L12d768_s0/local/dreal_probe.json`
+- note: 300 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.5336 vs best C3 0.4512; corrected margin CI excludes 0: False
+
+## 2026-07-14T04:58:04+09:00 — D-REAL probe size-L12d768_s0
+- git: `a7bbe9810b4f247aaea8e3ab8e78a9a930ea25ca+DIRTY`
+- config_hash: `df548d6add7954c0217dfe69e7f1bff33ed17bfc2f294cc3523095876ded2869`
+- seeds: [0]
+- artifacts: `results/dreal/size-L12d768_s0/global/dreal_probe.json`
+- note: 316 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.5572 vs best C3 0.4918; corrected margin CI excludes 0: False
+

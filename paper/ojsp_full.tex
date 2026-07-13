@@ -70,7 +70,7 @@ $90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
 without breaking everything else. Finally, a matched control settles what generalizes:
 on real Bach chorales our synthetic-trained model does \emph{not} beat the pitch
 surface, while a public model of \emph{identical architecture} trained on real music
-does (margin $+0.198$, CI excluding zero)---with the training data as the single free
+does (margin $+0.196$, CI excluding zero)---with the training data as the single free
 variable. Editing a music Transformer's internal key state changes what key it composes
 in: tonality is tracked as a causal latent variable, not just surface statistics.
 \end{abstract}
@@ -424,9 +424,9 @@ given by published Roman-numeral analyses.\footnote{Scores: \texttt{bach-370-cho
 (CC BY-NC-SA); analyses: \emph{When in Rome} (CC BY-SA). Neither is redistributed.}
 
 \textbf{Our model does not clear the surface on real music.} Probed on the chorales, our
-$85$M model reaches macro-$F_1$ $0.523$ against a selectivity floor of $0.037$---the key
+$85$M model reaches macro-$F_1$ $0.534$ against a selectivity floor of $0.037$---the key
 subspace is real and transfers, it is not an artifact of our grammar---but the best input
-baseline (KS, $W{=}64$) reaches $0.447$, and the corrected margin, $+0.034$ (CI
+baseline (KS, $W{=}64$) reaches $0.451$, and the corrected margin, $+0.034$ (CI
 $[-0.020,\,0.100]$), does not exclude zero. DR-H1 is \emph{not} supported out of
 distribution.
 
@@ -436,9 +436,9 @@ $450$k commercial records) is, at its \texttt{small} size, \emph{architecturally
 identical} to our $85$M model: $12$ layers, $d{=}768$. Its vocabulary is
 (arrival-time, duration, note) triples---leak-free in exactly the sense ours is. We
 probed it on the same chorales, at the same positions, with the same controls and the
-same decision rule; the two C3 baselines land at $0.447$ and $0.446$, confirming the
-setups are matched. It reaches macro-$F_1$ $0.686$ (L$10$) with a corrected margin of
-$+0.198$ (CI $[0.133,\,0.266]$): \textbf{DR-H1 supported}. With architecture, corpus,
+same decision rule; the two C3 baselines land at $0.451$ and $0.454$, confirming the
+setups are matched. It reaches macro-$F_1$ $0.690$ (L$10$) with a corrected margin of
+$+0.196$ (CI $[0.132,\,0.260]$): \textbf{DR-H1 supported}. With architecture, corpus,
 protocol, and decision rule held fixed, \emph{the training data is the single free
 variable}, and it is what decides whether a key state beats the pitch surface. The layer
 profiles say the same thing from the other side: our synthetic model's readout peaks

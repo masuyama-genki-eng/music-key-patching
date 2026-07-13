@@ -63,7 +63,7 @@ same edit moves the key \emph{more} often than at $25$M while wrecking the music
 $90\%$ of the time: capacity does not buy the key, it buys a key that can be moved
 without breaking everything else. And on real Bach chorales a public model of
 identical architecture trained on \emph{real} music clears the input-surface
-baseline (margin $+0.198$) where our synthetic-trained model does not---the
+baseline (margin $+0.196$) where our synthetic-trained model does not---the
 training data is the single free variable. Editing a music Transformer's internal
 key state changes what key it composes in: tonality is a causal latent variable,
 not just surface statistics.
@@ -288,16 +288,16 @@ downstream, repairing a single-layer edit.
 bottom). On $300$ Bach chorales with published Roman-numeral analyses giving the
 \emph{local} key at every note,\footnote{Scores: \texttt{bach-370-chorales}
 (CC BY-NC-SA); analyses: \emph{When in Rome} (CC BY-SA). Neither is redistributed.}
-our $85$M model's key subspace transfers ($F_1$ $0.523$ \vs a $0.037$ selectivity
+our $85$M model's key subspace transfers ($F_1$ $0.534$ \vs a $0.037$ selectivity
 floor) but does \emph{not} beat the pitch surface: the corrected margin, $+0.034$
-(CI $[-0.020,0.100]$), does not exclude zero. The Anticipatory Music
+(CI $[-0.021,0.103]$), does not exclude zero. The Anticipatory Music
 Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh MIDI, MetaMIDI, FMA,
 $450$k commercial records) is, at its \texttt{small} size, \emph{architecturally
 identical}---$12$ layers, $d{=}768$---and its vocabulary is (arrival-time, duration,
 note) triples, leak-free exactly as ours is. Probed on the same chorales, at the same
-positions, with the same controls and rule (the two C3 baselines land at $0.447$ and
-$0.446$, confirming the setups match), it reaches $F_1$ $0.686$ with a corrected
-margin of $+0.198$ (CI $[0.133,0.266]$): \textbf{DR-H1 supported}. With architecture,
+positions, with the same controls and rule (the two C3 baselines land at $0.451$ and
+$0.454$, confirming the setups match), it reaches $F_1$ $0.690$ with a corrected
+margin of $+0.196$ (CI $[0.132,0.260]$): \textbf{DR-H1 supported}. With architecture,
 corpus, protocol and decision rule fixed, \emph{the training data is the single free
 variable}, and it decides whether a key state is worth more than the notes. One
 caution earned the hard way: the probe must be read where the model is about to
@@ -325,7 +325,7 @@ $85$M & $0.879$ & $+0.10$ & yes & $71\%$\\
 \midrule
 \multicolumn{5}{@{}l}{\emph{real music, matched architecture (Bach chorales)}}\\
 ours, synthetic-trained & --- & $+0.034$ & \textbf{no} & ---\\
-public, real-trained~\cite{thickstun2023anticipatory} & --- & $\mathbf{+0.198}$ & \textbf{yes} & ---\\
+public, real-trained~\cite{thickstun2023anticipatory} & --- & $\mathbf{+0.196}$ & \textbf{yes} & ---\\
 \bottomrule
 \end{tabularx}
 \end{table}

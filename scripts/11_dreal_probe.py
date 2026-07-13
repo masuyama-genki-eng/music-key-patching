@@ -88,7 +88,9 @@ def main() -> None:
     windows = list(pcfg["controls"]["c3_windows"])
     device = "cuda" if torch.cuda.is_available() else "cpu"
     name = Path(args.model_dir).name
-    outdir = REPO / "results/dreal" / name
+    # label type in the path: a "global" run must never silently overwrite the
+    # "local" artifact the paper quotes (it did, once).
+    outdir = REPO / "results/dreal" / name / args.labels
     outdir.mkdir(parents=True, exist_ok=True)
 
     kern_dir = ensure(SCORES_URL, Path(args.scores)) / "kern"
