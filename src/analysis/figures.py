@@ -51,6 +51,8 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
         name = r["model"]
+        if not name.startswith(("R-Aug_", "R-NoAug_")):
+            continue                          # main-line L8 models only (size-* differ)
         f1 = [r["layers"][str(li)]["probe"]["macro_f1_24"] for li in range(8)]
         if name == highlight:
             ax1.plot(range(8), f1, color=BLUE, lw=1.8, marker="o", ms=3,
@@ -295,6 +297,79 @@ def fig_intervention_bars(sweep_dir: Path, out: Path) -> None:
     ax.set_xticks(range(len(conds)), [l for l, _, _ in conds], fontsize=7)
     ax.set_ylabel("guarded strict TKR")
     ax.set_ylim(0, 0.78)
+    fig.savefig(out)
+    plt.close(fig)
+
+
+# ------------------------------------------------------------------ Fig: emergence
+SIZE_MODELS = [                       # (label, params_M, probing-dir prefixes)
+    ("1.6M", 1.6, ["size-L2d128_s0", "size-L2d128_s1"]),
+    ("6M", 6.0, ["size-L4d256_s0", "size-L4d256_s1"]),
+    ("25M", 25.0, ["R-Aug_s0", "R-Aug_s1", "R-Aug_s2"]),
+    ("85M", 85.0, ["size-L12d768_s0", "size-L12d768_s1"]),
+]
+
+
+def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
+                  out: Path) -> None:
+    """Behavioral equivalence vs. representational emergence across capacity.
+    (a) next-token top-1 and peak probe F1 vs. the input baseline;
+    (b) the pre-registered DR-H1 margin (probe - C1b - best C3), which crosses
+        zero between 1.6M and 6M. Causal panel added when sweeps land."""
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.4), sharex=True)
+    xs = [p for _, p, _ in SIZE_MODELS]
+
+    def collect(fn):
+        return [[fn(n) for n in names] for _, _, names in SIZE_MODELS]
+
+    def top1(n):
+        return json.loads((models_root / n / "metrics.json").read_text())["final"]["val_top1"]
+
+    def peak_f1(n):
+        r = json.loads((probing_root / n / "probe_report.json").read_text())
+        return max(L["probe"]["macro_f1_24"] for L in r["layers"].values())
+
+    def margin(n):
+        v = json.loads((probing_root / n / "verdict_DR-H1.json").read_text())
+        return max(l["stat"] for l in v["layers"])
+
+    def best_c3(n):
+        r = json.loads((probing_root / n / "probe_report.json").read_text())
+        return max(x["macro_f1_24"] for x in r["c3"].values())
+
+    t1, pf, mg = collect(top1), collect(peak_f1), collect(margin)
+    c3 = np.mean([v for row in collect(best_c3) for v in row])
+
+    ax1.plot(xs, [np.mean(v) for v in t1], color=GRAY, lw=1.6, marker="s", ms=4,
+             label="next-token top-1")
+    ax1.plot(xs, [np.mean(v) for v in pf], color=BLUE, lw=1.8, marker="o", ms=4,
+             label="peak probe $F_1$ (key)")
+    for x, vals in zip(xs, pf):
+        ax1.scatter([x] * len(vals), vals, s=5, color="black", zorder=3)
+    ax1.axhline(c3, color=ORANGE, lw=1.1, ls="--")
+    ax1.text(85, c3 - 0.055, "input baseline (C3)", color=ORANGE, ha="right",
+             fontsize=7)
+    ax1.set_xscale("log")
+    ax1.set_ylim(0.5, 1.0)
+    ax1.set_ylabel("score")
+    ax1.legend(frameon=False, loc="lower right", fontsize=6.5)
+    ax1.text(0.02, 0.90, "(a) behavior is flat; the readout is not",
+             transform=ax1.transAxes, fontsize=7)
+
+    ax2.axhline(0, color="black", lw=0.8)
+    ax2.plot(xs, [np.mean(v) for v in mg], color=VERM, lw=1.8, marker="o", ms=4)
+    for x, vals in zip(xs, mg):
+        ax2.scatter([x] * len(vals), vals, s=5, color="black", zorder=3)
+    ax2.set_xscale("log")
+    ax2.set_xticks(xs, [l for l, _, _ in SIZE_MODELS])
+    ax2.set_xlabel("parameters")
+    ax2.set_ylabel("DR-H1 margin")
+    ax2.text(0.02, 0.88, "(b) world model emerges between 1.6M and 6M",
+             transform=ax2.transAxes, fontsize=7)
+    ax2.annotate("DR-H1 not supported", xy=(1.6, -0.19), xytext=(2.6, -0.145),
+                 color=GRAY, fontsize=6.5,
+                 arrowprops=dict(arrowstyle="-", lw=0.6, color=GRAY))
+    ax2.text(30, 0.055, "supported", color=GRAY, fontsize=6.5)
     fig.savefig(out)
     plt.close(fig)
 

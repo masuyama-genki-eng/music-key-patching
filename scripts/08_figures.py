@@ -51,6 +51,9 @@ def main() -> None:
          lambda p: F.fig_equivariance(REPO / "results/equivariance", p)),
         ("fig_intervention_bars.pdf",
          lambda p: F.fig_intervention_bars(sweep, p)),
+        ("fig_emergence.pdf",
+         lambda p: F.fig_emergence(probing, REPO / "results/models",
+                                   REPO / "results/sweep", p)),
     ]
     written = []
     for name, fn in jobs:

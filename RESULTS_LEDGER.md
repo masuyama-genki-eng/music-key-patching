@@ -292,3 +292,87 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-07-13T00:46:28+09:00 — P2 train size-L12d768_s1
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c`
+- config_hash: `6432d9e8cf1bc14c7c0699a019357dfbd4de658179f5d931915a72000be72073`
+- seeds: [1]
+- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s1/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s1/metrics.json`
+- note: final val: loss 0.2966, ppl 1.345, top1 0.8791 (784897 tokens)
+
+## 2026-07-13T08:19:30+09:00 — P4 sweep R-Aug_s1
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `959d65237481c566601842eba0f9058c5176ec45e0d64b08e7e75b02ca9e51b5`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s1/parts`
+- note: 576 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-13T13:47:59+09:00 — P5 analysis R-Aug_s1 (DR-H3/H5)
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `a23663ddfb5fe3226dc5959f8a955fea7cc3a53e963edbfe0c0d573b721f5fe1`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s1/verdict_DR-H3_H5.json`
+- note: DR-H3 supported=True; DR-H5=True
+
+## 2026-07-13T13:51:38+09:00 — P3 Phase A probing size-L2d128_s0
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `f7dbdc9379c31236e4a04d551d6644b7a2eaa0a1630dce26f33fe612995fb12d`
+- seeds: [0]
+- artifacts: `results/probing/size-L2d128_s0/probe_report.json`, `results/probing/size-L2d128_s0/verdict_DR-H1.json`, `results/probing/size-L2d128_s0/probe_weights.npz`, `results/probing/size-L2d128_s0/class_means.npz`
+- note: DR-H1 supported=False; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T13:54:42+09:00 — P3 Phase A probing size-L2d128_s1
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `4caa66a3a2b17cfc28d8cc25b6ff788eb6a0e34eb332b51d63778b0cd37de5b5`
+- seeds: [0]
+- artifacts: `results/probing/size-L2d128_s1/probe_report.json`, `results/probing/size-L2d128_s1/verdict_DR-H1.json`, `results/probing/size-L2d128_s1/probe_weights.npz`, `results/probing/size-L2d128_s1/class_means.npz`
+- note: DR-H1 supported=False; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T13:58:12+09:00 — P3 Phase A probing size-L4d256_s0
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `2f19924b14e0d1ed5ec21b706006a12cee42023cabc9e5a43af57b9dd278471a`
+- seeds: [0]
+- artifacts: `results/probing/size-L4d256_s0/probe_report.json`, `results/probing/size-L4d256_s0/verdict_DR-H1.json`, `results/probing/size-L4d256_s0/probe_weights.npz`, `results/probing/size-L4d256_s0/class_means.npz`
+- note: DR-H1 supported=True; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T14:01:37+09:00 — P3 Phase A probing size-L4d256_s1
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `31a6e6cf40dcee00e06ad36f9f68cffc1947a03bbc92db3696d5f174e621f9a4`
+- seeds: [0]
+- artifacts: `results/probing/size-L4d256_s1/probe_report.json`, `results/probing/size-L4d256_s1/verdict_DR-H1.json`, `results/probing/size-L4d256_s1/probe_weights.npz`, `results/probing/size-L4d256_s1/class_means.npz`
+- note: DR-H1 supported=True; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T14:07:43+09:00 — P3 Phase A probing size-L12d768_s0
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `1162a3cba46310df9560c980ddf9ead6d14354f83f29dd41c49ce648c656d112`
+- seeds: [0]
+- artifacts: `results/probing/size-L12d768_s0/probe_report.json`, `results/probing/size-L12d768_s0/verdict_DR-H1.json`, `results/probing/size-L12d768_s0/probe_weights.npz`, `results/probing/size-L12d768_s0/class_means.npz`
+- note: DR-H1 supported=True; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T14:13:42+09:00 — P3 Phase A probing size-L12d768_s1
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `e24e19c79b026b8bd1b50498309b7b13622518e0214066005c9694069ffefece`
+- seeds: [0]
+- artifacts: `results/probing/size-L12d768_s1/probe_report.json`, `results/probing/size-L12d768_s1/verdict_DR-H1.json`, `results/probing/size-L12d768_s1/probe_weights.npz`, `results/probing/size-L12d768_s1/class_means.npz`
+- note: DR-H1 supported=True; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T14:15:34+09:00 — P4 sweep size-L2d128_s0
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `6ba6a10c20f291b778b7cc465a7c7f635a6c412379f17151a9ca3218afa002e6`
+- seeds: [0]
+- artifacts: `results/sweep/size-L2d128_s0/parts`
+- note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-13T14:16:15+09:00 — P5 figures
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-13T14:16:29+09:00 — P4 sweep size-L2d128_s1
+- git: `a4d276fae2b80a9836e7a89338e2941a62082f0c+DIRTY`
+- config_hash: `cbdc917e654e109c45e4fe9198930ec9bdce61246f1e28d6fb5870d350805c69`
+- seeds: [0]
+- artifacts: `results/sweep/size-L2d128_s1/parts`
+- note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
+

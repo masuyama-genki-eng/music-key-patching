@@ -54,9 +54,12 @@ model continue in the injected key at $5.6\times$ the rate of rank- and
 norm-matched random edits (0.38 vs.\ 0.07, significant for 12/12 target keys
 after Holm correction) while staying within a frozen musicality budget ---
 about $58\%$ of the behavioral upper bound obtained by transposing the prompt
-itself. Editing a music Transformer's internal key state changes what key it
-composes in: tonality is tracked as a causal latent variable, not just
-surface statistics.
+itself. A capacity sweep sharpens the claim: next-token accuracy is flat from
+1.6M to 85M parameters, yet below ${\sim}6$M the key state does not exist ---
+behaviorally equivalent models can be pure surface statistics, and the
+pre-registered test tells them apart. Editing a music Transformer's internal
+key state changes what key it composes in: tonality is tracked as a causal
+latent variable, not just surface statistics.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -197,8 +200,9 @@ strict $\tkr$ of the V-PROBE edit vs.\ the K1 matched random control.}
 \end{figure}
 
 \section{Results}
-Unless noted, numbers are from the completed seed-0 R-Aug sweep [s0]; probing
-results hold for all six M-CTRL models. Seed-1 sweep: \TBD{running}.
+Unless noted, intervention numbers are from the R-Aug seed-0 sweep [s0]; probing
+results hold for all six M-CTRL models, and the seed-1 sweep replicates every
+Phase-B verdict (Sec.~\ref{sec:repl}).
 
 \subsection{H1 --- the key is decodable beyond the input surface}
 \begin{table}[t]
@@ -345,6 +349,40 @@ at the same layer where probe $F_1$ peaks; best-vs-median bootstrap CI
 $[0.038, 0.109]$ excludes zero (DR-H5 supported). Where the key is read is
 where it acts.
 
+\subsection{Replication and capacity}
+\label{sec:repl}
+\textbf{Second seed.} The independently trained R-Aug seed-1 model reproduces
+every Phase-B verdict: DR-H3 supported with V-PROBE significant in 12/12
+targets ($\tkr$ $0.23$--$0.41$ vs.\ K1 $0.02$--$0.10$), and DR-H5 supported
+(CI $[0.122, 0.181]$). Its single-peaked layer profile peaks at L2 rather than
+L4, so the \emph{localization} replicates while its exact depth does not; we
+report both profiles rather than a pooled one.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{fig_emergence.pdf}
+\caption{Behavioral equivalence, representational dissociation. Across a
+50$\times$ capacity range next-token accuracy is flat, but the key readout is
+not: below ${\sim}6$M parameters the probe cannot beat the input baseline and
+the pre-registered DR-H1 margin is negative. A behaviorally equivalent model
+can lack the world model entirely. Dots: seeds.}
+\label{fig:emergence}
+\end{figure}
+
+\textbf{Capacity (Fig.~\ref{fig:emergence}).} Training the same data and
+protocol at 1.6M (L2, $d$=128), 6M (L4, $d$=256), 25M (main line) and 85M
+(L12, $d$=768) parameters, next-token top-1 is \emph{flat} across a 50$\times$
+capacity range ($0.868$--$0.879$), yet the internal key representation is not:
+at 1.6M the probe (peak $F_1$ $0.63$--$0.66$) falls \emph{below} the input
+baseline (corrected margin $-0.21$/$-0.17$; DR-H1 \emph{not supported} in
+either seed), while from 6M upward it clears the baseline and saturates by 25M.
+A model that is behaviorally equivalent on next-token prediction can therefore
+lack the world model entirely --- it is the surface-statistics account made
+flesh, and our probe correctly refuses to credit it with a key state. Whether
+the causal effect emerges at the same threshold: \TBD{size-model intervention
+sweeps running}. (The sweep varies depth and width together; disentangling them
+is left to future work.)
+
 \section{Discussion and limitations}
 Together the three levels support the world-model interpretation: a
 Transformer trained on notes alone maintains a mid-layer key variable with
@@ -357,13 +395,12 @@ near-complete editability that we attribute to music's continual re-grounding
 of tonality in the immediately preceding notes.
 
 \textbf{Limitations.} M-CTRL is small and trained on synthetic music; claims
-are about emergence under this training condition. Planned robustness
-additions: probe validation on real annotated music, a capacity sweep
-(1.6M--85M; \TBD{training queued}), a probe of a public large symbolic
-checkpoint, and a third seed (\TBD{queued}). The KS estimator confuses
-fifths-neighbors, which strict/tolerant reporting brackets. Whether edited
-continuations \emph{modulate musically} (pivot-like transitions vs.\ jumps)
-is deferred to the journal version.
+are about emergence under this training condition, and the capacity sweep
+varies depth and width together. Remaining robustness additions: probe
+validation on real annotated music and a probe of a public large symbolic
+checkpoint. The KS estimator confuses fifths-neighbors, which strict/tolerant
+reporting brackets. Whether edited continuations \emph{modulate musically}
+(pivot-like transitions vs.\ jumps) is deferred to the journal version.
 
 % ------------------------------------------------------------------
 \begin{thebibliography}{9}\small
