@@ -481,3 +481,45 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/dreal/R-Aug_s0/dreal_probe.json`
 - note: 316 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.4124 vs best C3 0.5164; corrected margin CI excludes 0: False
 
+## 2026-07-14T01:06:26+09:00 — M-WILD model selection + license check (SPEC 2.3)
+- git: `ec0ac28e25749e98998ee9445d57a892a1dae0ee`
+- config_hash: `c2aef6ae3366aed24f181a5f1a6fa9e4a0ab42c8d288418c5e42dbeaf0d5684c`
+- seeds: n/a
+- artifacts: n/a
+- note: VERDICT: USABLE. Anticipatory Music Transformer (Thickstun et al., Stanford CRFM). License Apache-2.0 (permissive, commercial use allowed). Trained on REAL music: Lakh MIDI + MetaMIDI + FMA transcripts + 450k commercial records. Architecture GPT2LMHeadModel (residual-stream hooks apply directly). VOCABULARY IS LEAK-FREE for our purpose: (arrival-time, duration, note=instrument x pitch) triples only - no key/chord/degree tokens, same property our own tokenizer is unit-tested for. CRITICAL PAIRING: music-small (12 layers, d=768, ~85M) is ARCHITECTURALLY IDENTICAL to our size-L12d768 model - same depth, width, and parameter count, differing ONLY in training data (real vs synthetic). This isolates distribution shift as the single variable explaining the negative D-REAL result. Sizes 85M/300M/780M also give a real-data capacity ladder. Dependency transformers 5.13.1 approved by user 2026-07-14; the anticipation package is NOT needed (tokenizer reimplemented from its published config: note = NOTE_OFFSET + 128*instr + pitch, 10ms time bins).
+
+## 2026-07-14T01:17:03+09:00 — M-WILD probe music-small-800k
+- git: `ec0ac28e25749e98998ee9445d57a892a1dae0ee+DIRTY`
+- config_hash: `dafb619cb41b70d5cda0392e9fbae3a1b24d278726549f7a866e63413ae398a3`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.3115 (L0) vs best C3 0.4568; corrected margin -0.1788 CI[-0.2571,-0.1326]; beats_surface=False
+
+## 2026-07-14T01:18:53+09:00 — M-WILD probe music-small-800k
+- git: `ec0ac28e25749e98998ee9445d57a892a1dae0ee+DIRTY`
+- config_hash: `51caa85fbcdfed29928e0350cf2d7b128e7c5e12597ea4e97483d44490422507`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.5379 (L0) vs best C3 0.4463; corrected margin 0.0371 CI[-0.0396,0.0899]; beats_surface=False
+
+## 2026-07-14T01:23:40+09:00 — D-REAL probe size-L12d768_s0
+- git: `ec0ac28e25749e98998ee9445d57a892a1dae0ee+DIRTY`
+- config_hash: `4b50286b57531345d777f2d2c88dab05dc247ec379676855f952833488145dca`
+- seeds: [0]
+- artifacts: `results/dreal/size-L12d768_s0/dreal_probe.json`
+- note: 300 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.5234 vs best C3 0.4469; corrected margin CI excludes 0: False
+
+## 2026-07-14T01:24:05+09:00 — M-WILD probe music-small-800k
+- git: `ec0ac28e25749e98998ee9445d57a892a1dae0ee+DIRTY`
+- config_hash: `84786b829b709fb2ae9ee950c9287e0465ae78a75c4ede07b81d5b426c4f24a0`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6857 (L10) vs best C3 0.4463; corrected margin 0.1983 CI[0.1329,0.2663]; beats_surface=True
+
+## 2026-07-14T01:25:20+09:00 — M-WILD probe music-medium-800k
+- git: `ec0ac28e25749e98998ee9445d57a892a1dae0ee+DIRTY`
+- config_hash: `4f634626eae0956b07508cfe0f6228c2e6cad826b338008b473f2b5825a1da68`
+- seeds: [0]
+- artifacts: `results/mwild/music-medium-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6959 (L18) vs best C3 0.4463; corrected margin 0.2108 CI[0.1448,0.2889]; beats_surface=True
+

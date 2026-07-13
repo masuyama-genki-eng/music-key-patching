@@ -51,11 +51,26 @@ def load_model(ckpt_path: str | None, device: str, untrained_seed: int | None = 
 
 
 def sample_positions(n_tokens: int, per_seq: int, min_pos: int,
-                     rng: np.random.Generator) -> np.ndarray:
+                     rng: np.random.Generator, ids: list[int] | None = None,
+                     probe_at: str = "any") -> np.ndarray:
+    """probe_at='any'           : uniform over positions (Phase A default)
+       probe_at='predict_pitch' : only positions whose NEXT token is a PITCH — i.e.
+                                  where the model is about to CHOOSE a pitch, which is
+                                  where a key state must be active if it is used. This
+                                  is the convention M-WILD needs, and comparing our
+                                  model to a public one demands the SAME convention.
+    """
     lo, hi = min_pos, n_tokens - 1                 # exclude final EOS position
     if hi <= lo:
         return np.empty(0, dtype=np.int64)
-    cand = np.arange(lo, hi)
+    if probe_at == "predict_pitch":
+        assert ids is not None
+        cand = np.array([t for t in range(lo, hi)
+                         if PITCH_ID_LO <= ids[t + 1] <= PITCH_ID_HI], dtype=np.int64)
+    else:
+        cand = np.arange(lo, hi)
+    if len(cand) == 0:
+        return np.empty(0, dtype=np.int64)
     if len(cand) <= per_seq:
         return cand
     return np.sort(rng.choice(cand, size=per_seq, replace=False))
@@ -79,7 +94,7 @@ def window_pitches(ids: list[int], t: int, w: int) -> list[int]:
 def extract(model: TonalGPT, seqs: list[list[int]], labels: list[list[int]],
             per_seq: int, min_pos: int, windows: list[int], seed: int,
             device: str, batch_size: int = 32, act_dtype=np.float16,
-            compute_ambiguity: bool = True) -> dict:
+            compute_ambiguity: bool = True, probe_at: str = "any") -> dict:
     """Returns dict of arrays:
       acts        (L, N, d) float16   h_ℓ(t) at sampled positions
       label       (N,) int8           κ(t)
@@ -89,7 +104,7 @@ def extract(model: TonalGPT, seqs: list[list[int]], labels: list[list[int]],
       pc_hist_W{w} (N, 12) float32    per window length
     """
     rng = np.random.default_rng(seed)
-    plan = [(si, sample_positions(len(s), per_seq, min_pos, rng))
+    plan = [(si, sample_positions(len(s), per_seq, min_pos, rng, s, probe_at))
             for si, s in enumerate(seqs)]
     plan = [(si, ps) for si, ps in plan if len(ps)]
 

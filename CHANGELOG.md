@@ -85,6 +85,43 @@ label is noisy away from home. The SAME label is used for the probe and for the 
 input baseline, so the comparison stays fair, but absolute numbers will sit below
 D-SYN and are reported as such.
 
+## 2026-07-14 — M-WILD: the negative D-REAL is TRAINING DATA, not the method
+## (matched-architecture control; probe position corrected)
+
+Two changes were needed before the comparison meant anything, both recorded here.
+
+(1) PROBE POSITION. The public model's encoding is a stream of (time, duration, note)
+triples. At a NOTE token the pitch is already emitted and the model is predicting the
+next arrival TIME; the position where it must CHOOSE a pitch is the preceding DUR
+token. Probing at NOTE gave a monotonically DECAYING layer profile (F1 0.54 at L0 down
+to 0.11 at L11) — a model that discards key information with depth, which is not
+credible for a model that writes tonal music. Probing where the pitch is chosen gives a
+U-shaped profile peaking deep (0.35 at L4 rising to 0.686 at L10). The naive position
+was simply the wrong place to look. Our own Phase A sampled all positions uniformly, so
+this convention (`probe_at=predict_pitch`) was added to BOTH pipelines and the
+comparison below re-run with it on both sides.
+
+(2) MATCHED CONTROL. Changing the model while also changing the probe position and the
+number of probe positions would have confounded the result. The public `music-small`
+(12 layers, d=768, Apache-2.0, trained on Lakh MIDI + MetaMIDI + FMA + 450k commercial
+records) is architecturally IDENTICAL to our own size-L12d768. Both were probed on the
+same 300 chorales, with the same human local-key labels, the same probe position, the
+same number of positions, the same C1 control and the same C3 baselines. The C3
+baselines came out at 0.4469 and 0.4463 — confirming the two setups really are matched.
+
+RESULT — the single free variable is the training data:
+
+    model (12 layers, d=768)      probe F1     corrected margin        DR-H1
+    ours,   SYNTHETIC-trained     0.523 (L2)   +0.034 [-0.020, 0.100]  not supported
+    public, REAL-music-trained    0.686 (L10)  +0.198 [ 0.133, 0.266]  SUPPORTED
+
+The negative D-REAL result is therefore about distribution shift, not a limit of the
+method or of key as a state variable: a model trained on real music DOES carry a key
+state that beats the pitch surface on real music, read out by the same protocol and
+judged by the same pre-registered rule. Our synthetic model's representation degrades
+with depth on out-of-distribution input (peaks at L2, falls to 0.17 by L11) while the
+real-trained model builds it up (peaks at L10).
+
 ## 2026-07-14 — 85M editability: our own explanation was WRONG (hypothesis refuted by
 ## the experiment we ran to test it)
 

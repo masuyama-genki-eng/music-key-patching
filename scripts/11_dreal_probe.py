@@ -72,7 +72,11 @@ def main() -> None:
                     help="local = Roman-numeral key at each token (what H1 predicts); "
                          "global = the chorale's home key (reported for completeness)")
     ap.add_argument("--config", default=str(REPO / "configs/probe.yaml"))
-    ap.add_argument("--per-seq", type=int, default=24)
+    ap.add_argument("--per-seq", type=int, default=120)
+    ap.add_argument("--probe-at", choices=["any", "predict_pitch"],
+                    default="predict_pitch",
+                    help="position convention; must MATCH M-WILD for the "
+                         "real-vs-synthetic training-data comparison to be valid")
     ap.add_argument("--min-pos", type=int, default=8)
     ap.add_argument("--no-ledger", action="store_true")
     args = ap.parse_args()
@@ -110,7 +114,7 @@ def main() -> None:
     model = load_model(str(Path(args.model_dir) / "final.pt"), device)
     log.info("extracting activations (model trained on D-SYN only)")
     data = extract(model, seqs, labels, args.per_seq, args.min_pos, windows,
-                   seed, device)
+                   seed, device, probe_at=args.probe_at)
     y = data["label"].astype(np.int64)
     seq_idx = data["seq_idx"]
     masks = split_by_sequence(seq_idx, seed)
@@ -171,6 +175,7 @@ def main() -> None:
     result = {
         "model": name,
         "label_type": args.labels,
+        "probe_at": args.probe_at,
         "corpus": {
             "scores": "craigsapp/bach-370-chorales (CC BY-NC-SA 4.0)",
             "analyses": ("MarkGotham/When-in-Rome (CC BY-SA 4.0)"
