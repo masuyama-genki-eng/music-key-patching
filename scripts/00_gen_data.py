@@ -86,7 +86,16 @@ def _make_row(args: tuple[int, int, dict]) -> dict:
         "initial_key": labels[0],
         "n_key_changes": len(marks),
         "mod_types": [m["modulation"] for m in marks],
-        "mod_fifths": [fifths_distance(m["from"] % 12, m["to"] % 12) for m in marks],
+        # The STRATIFIED quantity is the fifths distance of the sampled TARGET (SPEC
+        # §1.1), counted ONCE PER MODULATION. Two subtleties, both of which skewed this
+        # histogram until 2026-07-14 (tokens were never affected):
+        #   - deriving it from from/to logs the distance of each realized STEP, which
+        #     for a halved sequential modulation is not the target's;
+        #   - a `sequential_step` mark is the second half of a modulation already
+        #     counted, not a new one, so counting it double-weights even distances.
+        "mod_fifths": [int(m["target_fifths"]) for m in marks
+                       if m["modulation"] != "sequential_step"
+                       and m.get("target_fifths") is not None],
     }
 
 

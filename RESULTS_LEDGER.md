@@ -586,3 +586,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/dreal/size-L12d768_s0/global/dreal_probe.json`
 - note: 316 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.5572 vs best C3 0.4918; corrected margin CI excludes 0: False
 
+## 2026-07-14T05:04:33+09:00 — P1 D-SYN generation
+- git: `afbf2cc2e45b10b286f77d625cbaa4fad2c19335+DIRTY`
+- config_hash: `3531fb4140a36c604aa476491d17e97bd727574dad7e746e1c010305bf5ff95c`
+- seeds: [20260711]
+- artifacts: `results/data_syn/train.parquet`, `results/data_syn/val.parquet`, `results/data_syn/test.parquet`, `results/data_syn/ref_train.parquet`, `results/data_syn/ref_val.parquet`, `results/data_syn/stats.json`
+- note: splits=['train', 'val', 'test', 'ref_train', 'ref_val']; byte-identity verified=['train', 'val', 'test', 'ref_train', 'ref_val']; skipped(idempotent)=[]
+
+## 2026-07-14T05:07:04+09:00 — P1 D-SYN generation
+- git: `afbf2cc2e45b10b286f77d625cbaa4fad2c19335+DIRTY`
+- config_hash: `3531fb4140a36c604aa476491d17e97bd727574dad7e746e1c010305bf5ff95c`
+- seeds: [20260711]
+- artifacts: `results/data_syn/train.parquet`, `results/data_syn/val.parquet`, `results/data_syn/test.parquet`, `results/data_syn/ref_train.parquet`, `results/data_syn/ref_val.parquet`, `results/data_syn/stats.json`
+- note: splits=['train', 'val', 'test', 'ref_train', 'ref_val']; byte-identity verified=['train', 'val', 'test', 'ref_train', 'ref_val']; skipped(idempotent)=[]
+

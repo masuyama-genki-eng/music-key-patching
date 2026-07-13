@@ -85,6 +85,32 @@ label is noisy away from home. The SAME label is used for the probe and for the 
 input baseline, so the comparison stays fair, but absolute numbers will sit below
 D-SYN and are reported as such.
 
+## 2026-07-14 — Corpus statistics were wrong; the corpus itself was not
+
+An adversarial audit of the pipeline flagged the D-SYN modulation statistics. Two
+claims, both checked by hand and both real:
+
+1. A "sequential" modulation whose semitone interval is ODD cannot be halved, so it
+   lands in one abrupt shift — identical to `direct` in the token stream — yet was
+   still counted as sequential. Measured: 49.7% of all events labelled sequential.
+2. `mod_fifths` was derived from each mark's from/to, i.e. the distance of each
+   REALIZED step. For a halved sequential modulation that is not the distance of the
+   sampled target, which is the quantity SPEC §1.1 stratifies on. A `sequential_step`
+   mark was also counted as a separate modulation, double-weighting even distances.
+   The published histogram was {1: 30400, 2: 22822, 3: 37729, 4: 22736, 5: 30850,
+   6: 15201} — visibly non-uniform for a target drawn uniformly from 1..6.
+
+FIX: markers now carry `target_fifths` (the sampled target's distance) and an
+odd-interval sequential is labelled `direct_from_sequential` — what it actually is.
+The corrected histogram is uniform: 16.5%–16.8% per distance.
+
+WHAT DID NOT CHANGE, and it is proven, not assumed: the TOKEN STREAM and the KEY
+LABELS. Both were hashed before and after the fix over 5,000 fresh pieces and are
+byte-identical, and the regenerated 200k-piece training corpus reproduces the exact
+token_ids sha256 of the corpus every model was trained on. So no model needs
+retraining and no result (H1, H2b, H3, H5, capacity, D-REAL, M-WILD) is affected. The
+error was confined to how the corpus DESCRIBED itself.
+
 ## 2026-07-14 — M-WILD intervention: design fixed BEFORE running (deviations named)
 
 Extending Phase B to a public checkpoint forces three departures from SPEC §4, all

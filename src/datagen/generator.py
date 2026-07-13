@@ -145,9 +145,16 @@ def generate_piece(cfg: GenConfig):
     seq_pending = None                                   # (interval, bars_left) for sequential
     pending_pivot = None                                 # degree (in NEW key) to emit as first chord
 
-    def _mark(mtype: str, old: Key, new: Key, bar: int) -> None:
+    def _mark(mtype: str, old: Key, new: Key, bar: int,
+              target_fifths: int | None = None) -> None:
+        """A marker event. `target_fifths` is the fifths distance of the SAMPLED
+        target — the quantity SPEC §1.1 stratifies on. It is not recoverable from
+        from/to on a sequential modulation, whose marks record intermediate steps."""
         events.append({"bar": bar, "pos": 0, "notes": [], "modulation": mtype,
-                       "from": old.index24, "to": new.index24})
+                       "from": old.index24, "to": new.index24,
+                       "target_fifths": target_fifths})
+
+    seq_target_fifths = None                     # carried to the second step's mark
 
     for bar in range(n_bars):
         # -------- modulation bookkeeping at bar start
@@ -155,35 +162,43 @@ def generate_piece(cfg: GenConfig):
             interval, left = seq_pending
             old = key
             key = Key((key.tonic + interval) % 12, key.mode)
-            _mark("sequential_step", old, key, bar)
+            _mark("sequential_step", old, key, bar, seq_target_fifths)
             seq_pending = (interval, left - 1) if left > 1 else None
             func = "T"
         elif bar in plan:
             mtype, _ = plan[bar]
             dst = _sample_target_key(key, rng)
             old = key
+            tf = fifths_distance(key.tonic, dst.tonic)   # the STRATIFIED quantity
             if mtype == "pivot":
                 pd = _pivot_degree(key, dst, rng)
                 key = dst
                 if pd is not None:
                     # emit pivot chord (diatonic in BOTH keys) as this bar's 1st chord
                     pending_pivot = pd
-                    _mark("pivot", old, key, bar)
+                    _mark("pivot", old, key, bar, tf)
                 else:                                    # no shared triad -> direct
                     func = "T"
-                    _mark("direct_fallback", old, key, bar)
+                    _mark("direct_fallback", old, key, bar, tf)
             elif mtype == "sequential":
                 interval = (dst.tonic - key.tonic) % 12
                 half = interval // 2 if interval % 2 == 0 and interval != 0 else interval
                 key = Key((key.tonic + half) % 12, key.mode)
                 if half != interval:
                     seq_pending = (interval - half, 1)
+                    seq_target_fifths = tf
                 func = "T"
-                _mark("sequential", old, key, bar)
+                # A "sequential" whose interval is ODD cannot be halved, so it lands in
+                # one abrupt shift and is indistinguishable from `direct` in the token
+                # stream. Calling it sequential inflated that count by ~2x in the corpus
+                # statistics (nothing else — the tokens are identical either way). It is
+                # now labelled as what it is; see CHANGELOG 2026-07-14.
+                _mark("sequential" if half != interval else "direct_from_sequential",
+                      old, key, bar, tf)
             else:                                        # direct
                 key = dst
                 func = "T"
-                _mark("direct", old, key, bar)
+                _mark("direct", old, key, bar, tf)
 
         tokens.append("BAR"); labels.append(key.index24)
 
