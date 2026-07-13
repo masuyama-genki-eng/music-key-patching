@@ -61,12 +61,14 @@ requires. Across a $50\times$ capacity range next-token accuracy is flat, yet at
 $1.6$M parameters the key is not decodable beyond the input surface at all and the
 same edit moves the key \emph{more} often than at $25$M while wrecking the music
 $90\%$ of the time: capacity does not buy the key, it buys a key that can be moved
-without breaking everything else. And on real Bach chorales a public model of
-identical architecture trained on \emph{real} music clears the input-surface
-baseline (margin $+0.196$) where our synthetic-trained model does not---the
-training data is the single free variable. Editing a music Transformer's internal
-key state changes what key it composes in: tonality is a causal latent variable,
-not just surface statistics.
+without breaking everything else. Finally we leave our own models: on real Bach chorales a
+\emph{public} checkpoint trained on real music---architecturally identical to one of
+ours---carries a key state that beats the pitch surface where ours does not, and editing
+that state redirects the music it composes at $5.7\times$ the matched control ($11/12$
+targets, $100\%$ within the frozen musicality budget). It also resists: the keys the edit
+cannot reach are the keys real music rarely uses. Editing a music Transformer's internal
+key state changes what key it composes in---in a model people actually use, not only in
+ours.
 \end{abstract}
 
 \begin{keywords}
@@ -107,8 +109,8 @@ corpus with exact per-token key labels, pre-registered protocol---released as a
 benchmark; (2)~a causal result: single-layer subspace edits redirect the composed
 key for $12/12$ targets inside a frozen musicality budget; (3)~two controls that
 say what a world model requires: a capacity sweep separating the state's presence,
-its legibility, and its manipulability, and a matched-architecture comparison
-against a public model trained on real music.
+its legibility, and its manipulability; and the same probe AND the same intervention
+carried to a public model trained on real music, which reads its key state and uses it.
 
 \section{Method}
 \label{sec:method}
@@ -196,20 +198,20 @@ is worst: in the top quartile of KS-entropy ambiguity, probe accuracy is $0.936$
 \vs $0.795$ for the baseline.
 
 \subsection{Fifths geometry; equivariant but not a group}
-Projected to two principal components, the twelve major-tonic probe directions
-order themselves as C--G--D--A--E--B--F$\sharp$--$\cdots$
-(Fig.~\ref{fig:fifths}): circle-of-fifths neighbour agreement $1.00$ \vs $0.00$ for
-the chromatic ordering, at every probed layer (exploratory). Transposition acts as
-a generalizing linear map---Procrustes $R_k$ fit on half the sequences aligns
-held-out activations with $0.05$--$0.11$ relative error---but the family is not
-cyclic ($\ecyc\approx0.98$, \vs ${\approx}1.41$ for random orthogonal maps), and our
-pre-registered comparison is \emph{negative}: transposition augmentation does not
-improve cyclicity ($3$ seeds per regime; $0.983$ \vs $0.981$; one-sided $p=0.83$),
-so DR-H2b is not supported.
+The representation carries music-theoretic structure. Projected to two principal
+components, the twelve major-tonic probe directions order themselves as
+C--G--D--A--E--B--F$\sharp$--$\cdots$ (Fig.~\ref{fig:fifths}): circle-of-fifths
+neighbour agreement $1.00$ \vs $0.00$ for the chromatic ordering, at every probed layer
+(exploratory). Transposition acts as a generalizing linear map---Procrustes $R_k$ fit on
+half the sequences aligns held-out activations with $0.05$--$0.11$ relative error---but
+the family is not cyclic ($\ecyc\approx0.98$, \vs ${\approx}1.41$ for random orthogonal
+maps), and our pre-registered comparison is \emph{negative}: augmentation does not
+improve cyclicity ($3$ seeds per regime; $0.983$ \vs $0.981$; one-sided $p=0.83$), so
+DR-H2b is not supported.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.58\columnwidth]{fig_fifths_geometry.pdf}
+\includegraphics[width=0.5\columnwidth]{fig_fifths_geometry.pdf}
 \caption{The twelve major-tonic probe directions (L$4$, first two PCs) self-organize
 into a circle of fifths. No key, chord, or degree token exists in the vocabulary.}
 \label{fig:fifths}
@@ -264,54 +266,74 @@ prompt-level bootstrap $95\%$ CI). Only a narrow band around L$4$ moves the outp
 
 \subsection{What a world model actually requires}
 \label{sec:capacity}
-\textbf{Capacity buys manipulability, not the key} (Table~\ref{tab:what},
-top). Training the same data and protocol at $1.6$M, $6$M, $25$M, and $85$M
-parameters dissociates three things the term ``world model'' conflates. Behavior is
-flat: next-token top-$1$ is $0.868$--$0.879$ across a $50\times$ range. Legibility is
-not: at $1.6$M the probe peaks \emph{below} the input baseline and DR-H1 is
-unsupported in both seeds---a behaviorally equivalent model with no key state, the
-surface-statistics account made flesh, which the pre-registered test correctly
-refuses to credit. Manipulability is a third thing: at $1.6$M the edit moves the key
-\emph{more} often than at $25$M in raw terms ($0.55$ \vs $0.43$) and survives the
-musicality guard only $10\%$ of the time (\vs $80\%$): with two layers, ``editing the
-key subspace'' is a blunt overwrite, not the movement of a separable state. Reporting
-guarded $\tkr$ alone hides this; reporting raw $\tkr$ alone credits a surface model
-with a world model. The guard is the instrument that tells them apart. Manipulability
-does not simply keep improving: it peaks near $25$M and falls to $0.18$ at $85$M. We
-suspected we had edited the wrong layer---each size was edited at its probe-$F_1$
-peak, a heuristic this paper refutes---so we swept all twelve layers of the $85$M
-model; its causal peak (L$6$, $0.206$) is indistinguishable from the layer we had used
-(L$3$, $0.202$). The decline is real, and deeper models plausibly re-derive the key
-downstream, repairing a single-layer edit.
+Training the same data and protocol at $1.6$M, $6$M, $25$M and $85$M parameters
+dissociates three things the term ``world model'' conflates (Table~\ref{tab:what},
+top). \emph{Behaviour} is flat: next-token top-$1$ is $0.868$--$0.879$ across a
+$50\times$ range. \emph{Legibility} is not: at $1.6$M the probe peaks \emph{below} the
+input baseline and DR-H1 is unsupported in both seeds---a behaviourally equivalent model
+with no key state, the surface-statistics account made flesh, which the pre-registered
+test correctly refuses to credit. \emph{Manipulability} is a third thing again: at
+$1.6$M the edit moves the key \emph{more} often than at $25$M in raw terms ($0.55$ \vs
+$0.43$) and survives the musicality guard only $10\%$ of the time (\vs $80\%$)---with two
+layers, ``editing the key subspace'' is a blunt overwrite, not the movement of a
+separable state. Reporting guarded $\tkr$ alone hides this; reporting raw $\tkr$ alone
+credits a surface model with a world model. The guard is what tells them apart. Nor does
+manipulability simply keep improving: it peaks near $25$M and falls to $0.18$ at $85$M,
+and a full twelve-layer sweep confirms this is not a layer-choice artifact (the $85$M
+causal peak, L$6$ at $0.206$, is indistinguishable from the L$3$ we had used, $0.202$).
 
-\textbf{Real music: the training data is what decides} (Table~\ref{tab:what},
-bottom). On $300$ Bach chorales with published Roman-numeral analyses giving the
-\emph{local} key at every note,\footnote{Scores: \texttt{bach-370-chorales}
-(CC BY-NC-SA); analyses: \emph{When in Rome} (CC BY-SA). Neither is redistributed.}
-our $85$M model's key subspace transfers ($F_1$ $0.534$ \vs a $0.037$ selectivity
-floor) but does \emph{not} beat the pitch surface: the corrected margin, $+0.034$
-(CI $[-0.021,0.103]$), does not exclude zero. The Anticipatory Music
-Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh MIDI, MetaMIDI, FMA,
-$450$k commercial records) is, at its \texttt{small} size, \emph{architecturally
-identical}---$12$ layers, $d{=}768$---and its vocabulary is (arrival-time, duration,
-note) triples, leak-free exactly as ours is. Probed on the same chorales, at the same
-positions, with the same controls and rule (the two C3 baselines land at $0.451$ and
-$0.454$, confirming the setups match), it reaches $F_1$ $0.690$ with a corrected
-margin of $+0.196$ (CI $[0.132,0.260]$): \textbf{DR-H1 supported}. With architecture,
-corpus, protocol and decision rule fixed, \emph{the training data is the single free
-variable}, and it decides whether a key state is worth more than the notes. One
-caution earned the hard way: the probe must be read where the model is about to
-\emph{choose} a pitch. Read at the note itself---after the pitch is committed---the
-same public model's profile decays with depth and the key appears to vanish. Where one
-probes is not a free parameter.
+\subsection{A public model trained on real music: it reads, and it uses}
+\label{sec:wild}
+Everything above is our own model on our own data. We close by leaving both. On $300$
+Bach chorales whose \emph{local} key at every note comes from published Roman-numeral
+analyses,\footnote{Scores: \texttt{bach-370-chorales} (CC BY-NC-SA); analyses:
+\emph{When in Rome} (CC BY-SA). Neither is redistributed.} our $85$M model's key
+subspace transfers ($F_1$ $0.534$ \vs a $0.037$ selectivity floor) but does \emph{not}
+beat the pitch surface: the corrected margin, $+0.034$ (CI $[-0.021,0.103]$), does not
+exclude zero.
+
+The Anticipatory Music Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh
+MIDI, MetaMIDI, FMA, $450$k commercial records) is, at its \texttt{small} size,
+\emph{architecturally identical} to that model---$12$ layers, $d{=}768$---and its
+vocabulary, (arrival-time, duration, note) triples, is leak-free exactly as ours is.
+Probed on the same chorales, at the same positions, with the same controls and rule (the
+two C3 baselines land at $0.451$ and $0.454$, confirming the setups match), it reaches
+$F_1$ $0.690$ with a corrected margin of $+0.196$ (CI $[0.132,0.260]$): \textbf{DR-H1
+supported}. With architecture, corpus, protocol and rule fixed, \emph{the training data
+is the single free variable}, and it decides whether a key state is worth more than the
+notes themselves.
+
+\textbf{And that state is used.} We ran the same intervention on it: the probe's row
+space as the subspace, a \emph{different} public checkpoint as the guard's reference
+(medium refereeing small---different weights, not circular; $\ppl{=}0.849$ nats frozen
+from $1{,}180$ natural modulations in the chorales), the edit layer searched on $20$
+chorale prefixes and judged on $60$ it never saw, sham edit bit-identical ($20/20$).
+\textbf{DR-H3 is supported}: at L$8$ the edit lands the continuation on the injected key
+at $5.7\times$ the matched random control ($0.365$ \vs $0.064$), significant in $11/12$
+targets, with $\ikr$ crossing ($0.824$ to the injected key \vs $0.785$ to the prompt's)
+and---unlike our own model's $87\%$---\textbf{$100\%$ of edits inside the frozen
+musicality budget}. A key state learned from real music is \emph{more} cleanly separable,
+not less.
+
+Two things only a real model could show. The causal peak (L$8$) is again not the probe
+peak (L$10$), so Sec.~\ref{sec:h5}'s dissociation is not an artifact of synthetic data.
+And the model \emph{resists}: the one target it cannot reach is F$\sharp$ major ($\tkr$
+$0.000$), and across all twelve targets success is ordered almost perfectly by how common
+that tonic is in real music (Spearman $+0.90$). A model trained on real music can be
+steered into keys it knows and resists keys its training distribution barely contains---a
+prior our uniformly-keyed synthetic corpus could not have revealed. One caution earned
+the hard way: the probe must be read where the model is about to \emph{choose} a pitch;
+read at the note itself, after the pitch is committed, the same model's profile decays
+with depth and the key appears to vanish. Where one probes is not a free parameter.
 
 \begin{table}[t]
 \setlength{\tabcolsep}{3.5pt}\renewcommand{\arraystretch}{1.12}
 \centering\small
 \caption{What a world model requires. \textbf{Top}: same data and protocol, four
-capacities. Behavior is flat while legibility and manipulability are not. \textbf{
-Bottom}: same architecture ($12$ layers, $d{=}768$), same chorales, same protocol;
-only the training data differs.}
+capacities --- behaviour is flat while legibility and manipulability are not.
+\textbf{Bottom}: same architecture ($12$ layers, $d{=}768$), same chorales, same
+protocol; only the training data differs. The public model both reads the key and
+uses it.}
 \label{tab:what}
 \begin{tabularx}{\linewidth}{@{}Xcccc@{}}
 \toprule

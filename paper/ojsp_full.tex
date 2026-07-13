@@ -67,12 +67,14 @@ this means. Next-token accuracy is flat from $1.6$M to $85$M parameters, yet at
 $1.6$M the key is not decodable beyond the input surface at all, and the same
 edit moves the key \emph{more} often than at $25$M while destroying the music in
 $90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
-without breaking everything else. Finally, a matched control settles what generalizes:
-on real Bach chorales our synthetic-trained model does \emph{not} beat the pitch
-surface, while a public model of \emph{identical architecture} trained on real music
-does (margin $+0.196$, CI excluding zero)---with the training data as the single free
-variable. Editing a music Transformer's internal key state changes what key it composes
-in: tonality is tracked as a causal latent variable, not just surface statistics.
+without breaking everything else. Finally we leave our own models entirely. On real Bach
+chorales a \emph{public} $85$M checkpoint trained on real music---architecturally
+identical to one of ours---carries a key state that beats the pitch surface where ours
+does not, and editing that state redirects the music it composes at $5.7\times$ the rate
+of matched random edits ($11/12$ targets, Holm-corrected) with \emph{no} measurable cost
+to musicality. It also resists: the keys the edit cannot reach are exactly the keys real
+music rarely uses (Spearman $+0.90$). Editing a music Transformer's internal key state
+changes what key it composes in---in a model people actually use, not only in ours.
 \end{abstract}
 
 \begin{keywords}
@@ -134,6 +136,11 @@ rule held fixed, a public real-trained model clears the input-surface baseline w
 synthetic-trained model of the same shape does not, isolating the training data as the
 variable that decides whether a key state is worth more than the notes themselves
 (Sec.~\ref{sec:wild}).
+\item The same causal test on that public model: editing its key state redirects the key
+it composes in ($5.7\times$ the matched control, $11/12$ targets, $100\%$ within the
+frozen musicality budget), so the world-model claim is not confined to models we built.
+Its failures are informative---it resists exactly the keys real music rarely uses
+(Sec.~\ref{sec:wildcausal}).
 \end{enumerate}
 
 \section{Relation to Prior Work}
@@ -445,12 +452,66 @@ profiles say the same thing from the other side: our synthetic model's readout p
 early (L$2$) and decays to $0.17$ by L$11$ on this out-of-distribution input, while the
 real-trained model's dips mid-network and \emph{builds} to its peak at L$10$.
 
-Two cautions. The probe must be read where the model is about to \emph{choose} a pitch
+One caution. The probe must be read where the model is about to \emph{choose} a pitch
 (the token before a note); read at the note itself---after the pitch is committed, when
 the model is predicting the next onset---the same public model's profile decays with
-depth and the key appears to vanish. Where one probes is not a free parameter. And this
-is a readability result: we have not intervened on the public model, so it inherits none
-of our causal claims.
+depth and the key appears to vanish. Where one probes is not a free parameter.
+
+\subsection{The public model \emph{uses} its key state}
+\label{sec:wildcausal}
+Readability is not use, and the whole point of this paper is that the difference is
+testable. We therefore put the public model through the same intervention its synthetic
+counterpart faced. The subspace is the row space of the probe we fit on it; the guard is
+a \emph{different} public checkpoint (music-medium refereeing music-small: different
+weights, so not circular), with $\ppl$ frozen at $0.849$ nats---the $90$th percentile of
+that reference's perplexity rise across $1{,}180$ \emph{natural} modulations in the
+chorales---before any edit ran. Because this paper shows the probe peak is not the
+causal peak, the edit layer cannot be inherited from the probe: it is searched on $20$
+chorale prefixes and then judged on $60$ prefixes it never saw. The sham edit is
+bit-identical to the clean run ($20/20$), and an \emph{unedited} continuation stays in
+the prompt's key with $\ikr = 1.00$, so any movement is the edit's.
+
+\textbf{DR-H3 is supported} (Table~\ref{tab:wildcausal}). At L$8$, on held-out prompts,
+the edit lands the continuation on the injected key at $5.7\times$ the rate of the
+matched random control ($0.365$ \vs $0.064$), significant in $11/12$ targets after Holm
+correction. $\ikr$ crosses: the continuation is \emph{more} diatonic to the injected key
+than to the prompt's own ($0.824$ \vs $0.785$). And the edit costs the music nothing
+measurable---$100\%$ of edited continuations sit inside the frozen budget (median excess
+$+0.125$ nats against a budget of $0.849$), where our own model managed $87\%$. A key
+state learned from real music is \emph{more} cleanly separable, not less.
+
+Two findings here are only visible on a real model. First, the causal peak (L$8$) is
+again \emph{not} the probe peak (L$10$): the diffuse-readout/sharp-effect dissociation of
+Sec.~\ref{sec:h5} is not an artifact of synthetic data. Second, \textbf{the model has a
+key prior and resists being pushed out of it}. The single target that fails outright is
+F$\sharp$ major ($\tkr$ $0.000$), and across all twelve targets success is almost
+perfectly ordered by how common that tonic is in real music (Spearman $+0.90$ against the
+chorale corpus's own key distribution: D at $13.8\%$ of the corpus reaches $\tkr$
+$0.600$, G at $21.4\%$ reaches $0.550$, while D$\flat$ at $0.2\%$ reaches $0.233$ and
+G$\flat$ reaches zero). A model trained on real music can be steered into keys it knows
+and resists keys its training distribution barely contains. Our synthetic model, whose
+key distribution is uniform by construction, could not have shown this.
+
+\begin{table}[t]
+\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\centering\small
+\caption{Editing the key state of a \emph{public} model trained on real music
+(music-small, $85$M, Apache-2.0), on $60$ held-out Bach chorale prefixes. The edit layer
+was chosen on a disjoint set of prompts. Guard: a different public checkpoint, budget
+frozen before any edit.}
+\label{tab:wildcausal}
+\begin{tabularx}{\linewidth}{@{}Xr@{}}
+\toprule
+Guarded strict $\tkr$, V-PROBE edit (L$8$) & $\mathbf{0.365}$\\
+Guarded strict $\tkr$, K1 matched random control & $0.064$\\
+\quad ratio & $5.7\times$\\
+\midrule
+Targets significant after Holm correction & $\mathbf{11/12}$\\
+Guard pass rate (edit) & $100\%$\\
+$\ikr$ to the injected key \vs to the prompt's key & $0.824$ \vs $0.785$\\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Discussion and Limitations}
 \label{sec:disc}
@@ -469,9 +530,11 @@ observed and release its configuration, but do not claim optimization is inheren
 inferior. \emph{Estimator:} the KS judge confuses fifths-neighbours, which
 strict/tolerant reporting brackets and $\ikr$ triangulates. \emph{Capacity:} the sweep
 varies depth and width together, so it locates a threshold, not its cause. \emph{External
-validity:} the causal results are for our own small, synthetic-trained models;
-Sec.~\ref{sec:wild} shows the \emph{readout} generalizes to a public real-trained model,
-but intervening on such a model is future work. Whether edited continuations modulate
+validity:} Sec.~\ref{sec:wildcausal} carries both the readout and the causal result to a
+public model trained on real music, so the world-model claim is no longer confined to our
+own synthetic setting. What remains ours alone is the \emph{exactness} of the ground
+truth: only the synthetic corpus gives a per-token key label that no estimator had to
+guess. Whether edited continuations modulate
 \emph{musically} (pivot-like transitions \vs jumps) is measured in the journal version.
 All training data are synthetic; no artist recordings or copyrighted corpora are used
 for training, and the evaluation corpora are used under their stated licenses.

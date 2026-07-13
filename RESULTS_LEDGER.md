@@ -600,3 +600,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/data_syn/train.parquet`, `results/data_syn/val.parquet`, `results/data_syn/test.parquet`, `results/data_syn/ref_train.parquet`, `results/data_syn/ref_val.parquet`, `results/data_syn/stats.json`
 - note: splits=['train', 'val', 'test', 'ref_train', 'ref_val']; byte-identity verified=['train', 'val', 'test', 'ref_train', 'ref_val']; skipped(idempotent)=[]
 
+## 2026-07-14T07:20:00+09:00 — M-WILD intervention stage 1 (music-small-800k)
+- git: `658141577acdf460777d8813a087135dd160d97c`
+- config_hash: `eecec42883cb4eae7028d83d352da2245d6ce61a42ec7f897fb3b0d4e7e03e8b`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-small-800k/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L8 TKR 0.342 vs K1 0.054
+
+## 2026-07-14T07:20:28+09:00 — M-WILD guard freeze (music-small-800k)
+- git: `658141577acdf460777d8813a087135dd160d97c+DIRTY`
+- config_hash: `ea127b92e460672fc8ee8993905093763110977645338b42477912f08a82e1cd`
+- seeds: n/a
+- artifacts: `results/mwild_sweep/music-small-800k/delta_ppl.json`
+- note: delta_ppl=0.8489 nats frozen from 1180 natural modulations in real chorales, judged by stanford-crfm/music-medium-800k; BEFORE any edit result is reported
+
+## 2026-07-14T07:54:42+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `658141577acdf460777d8813a087135dd160d97c+DIRTY`
+- config_hash: `37a978301bd4167b5bffe97afd1f628a73d010b9aaffa97426ee69f76123d54f`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-small-800k/stage2_eval.json`
+- note: L8 chosen on disjoint prompts; guarded TKR 0.365 vs K1 0.064 on 60 held-out prompts; DR-H3 supported=True (11/12); guard ref stanford-crfm/music-medium-800k
+

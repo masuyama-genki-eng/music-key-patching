@@ -85,6 +85,41 @@ label is noisy away from home. The SAME label is used for the probe and for the 
 input baseline, so the comparison stays fair, but absolute numbers will sit below
 D-SYN and are reported as such.
 
+## 2026-07-14 — M-WILD intervention: DR-H3 SUPPORTED on a public real-trained model
+
+The probe said a real-trained public model carries a key state that beats the pitch
+surface. Editing it says the model USES that state.
+
+Result (music-small, 85M, Apache-2.0, trained on Lakh MIDI + MetaMIDI + FMA + 450k
+commercial records; edit layer L8 chosen on 20 chorale prefixes, evaluated on 60
+prefixes it never saw):
+
+    guarded TKR, edit          0.365
+    guarded TKR, K1 control    0.064      -> 5.7x
+    DR-H3                      SUPPORTED, 11/12 targets (Holm-corrected, bar >= 8/12)
+    guard pass rate            100%       (median NLL excess +0.125 nats, budget 0.849)
+    IKR target / source        0.824 / 0.785   (they CROSS: the continuation is more
+                                               diatonic to the injected key than to
+                                               the prompt's own)
+
+Two things this model shows that ours could not.
+
+1. THE EDIT COSTS THE MUSIC NOTHING. Every edited continuation stayed inside the frozen
+   musicality budget (100% vs 87% for our own model). The key state of a model trained
+   on real music is cleanly separable: you can move it without damaging anything else.
+
+2. THE MODEL HAS A KEY PRIOR, AND IT RESISTS. The one target that fails is F#/Gb major
+   (TKR 0.000) — and across all 12 targets, success is almost perfectly ordered by how
+   common that tonic is in real music (Spearman +0.90 against the chorale corpus's own
+   key distribution: D 13.8% -> 0.600, G 21.4% -> 0.550, vs Db 0.2% -> 0.233, Gb -> 0).
+   A model trained on real music can be steered into keys it knows and resists keys its
+   training distribution rarely contains. Our synthetic model, whose key distribution is
+   uniform by construction, could not have revealed this — it took a real model.
+
+Also replicated on the public model: the causal peak (L8) is NOT the probe peak (L10).
+The synthetic-data finding — readability is diffuse, causal efficacy is sharp, and the
+two do not coincide — transfers to a model trained on real music.
+
 ## 2026-07-14 — Corpus statistics were wrong; the corpus itself was not
 
 An adversarial audit of the pipeline flagged the D-SYN modulation statistics. Two
