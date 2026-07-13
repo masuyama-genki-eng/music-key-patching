@@ -1,0 +1,520 @@
+% TonalWM — OJSP FULL VERSION: the growing complete study.
+% The 4-page ICASSP submission (paper/icassp2027.tex) is CUT DOWN from this file.
+% Plan per SPEC section 9, unchanged: 4p ICASSP first; the full study goes to OJSP.
+% Every measurement lands here; only a subset survives the 4-page cut.
+% TonalWM — full study
+% ==========================================================================
+% INTEGRITY (SPEC §7): every number is traceable to a ledgered artifact under
+% results/. NO number is estimated or placeholdered. "TBD (run required)" marks
+% a measurement that has not been made. Numbers carry a [sN] tag naming the run.
+%
+% FORMAT: written for spconf.sty (official ICASSP Paper Kit). spconf is not
+% redistributable, so this file falls back to IEEEtran when it is absent — the
+% fallback exists only so the draft compiles; drop spconf.sty in the directory
+% and it is used automatically. No content depends on which is active.
+% ==========================================================================
+\documentclass[conference]{IEEEtran}
+\newif\ifspconf
+\IfFileExists{spconf.sty}{\spconftrue}{\spconffalse}
+\ifspconf \usepackage{spconf} \fi
+% IEEEtran fallback so the draft always compiles. spconf is not redistributable;
+% drop spconf.sty beside this file and it is used instead, with no content change.
+\ifspconf\else
+  \newcommand{\name}[1]{\author{\IEEEauthorblockN{#1}}}
+  \newcommand{\address}[1]{}
+  \newcommand{\ninept}{}
+  \newenvironment{keywords}{\begin{IEEEkeywords}}{\end{IEEEkeywords}}
+\fi
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,graphicx,booktabs,array,tabularx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\graphicspath{{../results/figures/}}   % figures are ledgered results/ artifacts
+
+\newcommand{\tkr}{\mathrm{TKR}}
+\newcommand{\ikr}{\mathrm{IKR}}
+\newcommand{\ecyc}{\varepsilon_{\mathrm{cyc}}}
+\newcommand{\ppl}{\delta_{\mathrm{PPL}}}
+\newcommand{\TBD}[1]{\textbf{[TBD (run required): #1]}}
+\newcommand{\vs}{vs.\@\ }
+
+\title{Does a Music Transformer Know What Key It Is In?\\
+Causal Interventions on an Emergent Tonal World Model}
+
+\name{Anonymous ICASSP 2027 submission}
+\address{Paper ID: TBD}
+
+\begin{document}
+\ninept
+\maketitle
+
+\begin{abstract}
+Music generation models produce convincingly tonal music. Whether they do so by
+chaining surface statistics or by maintaining an internal representation of
+musical key that generation \emph{causally uses} has not been tested. We test it
+directly: a decoder-only Transformer trained on symbolic music from a
+functional-harmony grammar whose vocabulary contains absolute pitch and time
+only---no key, chord, or degree tokens---under a pre-registered protocol with
+frozen decision rules. Our central result is causal: replacing the key component
+of the residual stream at a single middle layer makes the model continue in the
+injected key at $5.6\times$ the rate of rank- and norm-matched random edits
+(guarded strict $\tkr$ $0.378$ \vs $0.068$; significant for $12/12$ target keys
+after Holm correction, replicated across seeds), while staying inside a
+musicality budget frozen before any edit ran---reaching $58\%$ of the behavioral
+ceiling obtained by transposing the prompt itself. A capacity sweep sharpens what
+this means. Next-token accuracy is flat from $1.6$M to $85$M parameters, yet at
+$1.6$M the key is not decodable beyond the input surface at all, and the same
+edit moves the key \emph{more} often than at $25$M while destroying the music in
+$90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
+without breaking everything else. Finally, a matched control settles what generalizes:
+on real Bach chorales our synthetic-trained model does \emph{not} beat the pitch
+surface, while a public model of \emph{identical architecture} trained on real music
+does (margin $+0.198$, CI excluding zero)---with the training data as the single free
+variable. Editing a music Transformer's internal key state changes what key it composes
+in: tonality is tracked as a causal latent variable, not just surface statistics.
+\end{abstract}
+
+\begin{keywords}
+music generation, world models, interpretability, causal intervention, tonality
+\end{keywords}
+
+\section{Introduction}
+\label{sec:intro}
+Systems that compose music now write convincingly tonal pieces: their outputs
+settle into a home key, build tension away from it, and return. For listeners
+this is much of what makes generated music sound like music; for creators it
+determines whether such systems can be steered.
+
+How they achieve this is largely unexamined. Existing analyses report that
+musical attributes can be \emph{read out} of a model's activations by trained
+classifiers~\cite{syntheory2024}. Reading, however, is not using: a signal can be
+decodable from a system's state without the system consulting it when it
+acts---a gap documented repeatedly in interpretability
+research~\cite{hewitt2019control}. No study has tested whether a music model
+\emph{uses} an internal key representation: whether intervening on it, while
+leaving the input untouched, changes the key of the music the model goes on to
+generate.
+
+Sequence models can build causal models of the latent state behind their data. A
+model trained only to predict Othello moves tracks the board those moves imply,
+and editing that internal board changes which moves it treats as
+legal~\cite{li2023othello,nanda2023emergent}. Analogous causal evidence exists
+for chess, mazes, and RL environments~\cite{karvonen2024chess,maze2024,iris2026},
+but not for music.
+
+We close that gap. We choose key---tonic and mode---as the state variable for
+three reasons. First, unlike any candidate in the game domains, key is defined
+\emph{externally} to the model, by centuries of theory and by psychological
+measurement~\cite{krumhansl1982}, so the probed state is not an artifact of our
+own labeling. Second, among musical state candidates it is the most demanding:
+metric position is recoverable from time tokens, and harmonic function
+presupposes a key, whereas key must be \emph{computed} by integrating pitch
+evidence over time. Third, key admits a natural analogue of Othello's legal-move
+rate---diatonic scale membership---so causal success is measurable without a
+learned judge.
+
+Our contributions:
+\begin{enumerate}\itemsep1pt
+\item A controlled testbed for world-model analysis in music: a leak-free
+tokenizer, a functional-harmony corpus with exact per-token key labels, and a
+pre-registered protocol, released as a benchmark (Sec.~\ref{sec:method}).
+\item Existence and geometry: key is decodable beyond strong input-side
+baselines in all six trained models, the twelve tonic directions self-organize
+into a circle of fifths, and---a pre-registered negative result---transposition
+augmentation does not make the representation a cyclic group
+(Sec.~\ref{sec:resultsA}).
+\item Causality: single-layer subspace edits redirect the composed key for
+$12/12$ targets within a frozen musicality budget, and a capacity sweep shows
+that what capacity supplies is not the key but the ability to move it
+surgically---dissociating three things the term ``world model'' usually conflates
+(Secs.~\ref{sec:resultsB}--\ref{sec:capacity}).
+\item A matched-architecture control on real music: with corpus, protocol, and decision
+rule held fixed, a public real-trained model clears the input-surface baseline where our
+synthetic-trained model of the same shape does not, isolating the training data as the
+variable that decides whether a key state is worth more than the notes themselves
+(Sec.~\ref{sec:wild}).
+\end{enumerate}
+
+\section{Relation to Prior Work}
+\label{sec:prior}
+Prior work divides along two axes: domain and evidence level. Across domains,
+world-model analyses have progressed from readability to causal intervention in
+board games~\cite{li2023othello,nanda2023emergent,mcgrath2022chess,karvonen2024chess},
+mazes~\cite{maze2024}, and RL environments~\cite{iris2026}. In music, evidence has
+stayed at the readability level: probing studies decode theory concepts from
+generation models~\cite{syntheory2024}, and steering studies control attributes
+without testing a state variable~\cite{smitin2024}. We occupy the empty
+cell---causal, state-level evidence in music---for a state whose transitions
+(modulations) themselves follow a grammar, unlike the game domains.
+
+\section{Method}
+\label{sec:method}
+
+\subsection{Problem statement and terminology}
+The input is a symbolic music sequence; the latent state is the running key
+$\kappa(t)$; the question is whether the generator's continuation causally
+depends on its internal estimate of $\kappa$. Table~\ref{tab:terms} fixes the
+terms. The pre-registration (supplementary) specifies every decision rule,
+threshold, and control, all frozen before any experiment ran; deviations are
+logged and negative results reported.
+
+\begin{table}[t]
+\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.3}
+\centering\small
+\caption{Terminology. Decision rules (DR-$*$) were frozen pre-experiment.}
+\label{tab:terms}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+$\kappa(t)$ & Key state: tonic $(\mathbb{Z}_{12})\times{}$mode at token $t$\\
+$\kappa^{*}$ & Donor key injected by an edit\\
+D-SYN & Synthetic corpus with per-token ground-truth $\kappa(t)$\\
+M-CTRL & Studied model\\
+M-REF & Frozen reference model; used only for the quality guard\\
+Edit & $h \leftarrow h - P_{V}h + P_{V}\mu_{\kappa^{*}}$ in the residual stream\\
+$\tkr$ & Rate at which the continuation's estimated key $=\kappa^{*}$\\
+$\ikr_{x}$ & Fraction of continuation pitches diatonic to key $x$\\
+$\ppl$ & M-REF perplexity budget, frozen pre-intervention\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_framework.pdf}
+\caption{The claim in one example (real model output, fixed sampling seed [s0]).
+The same $8$-bar B$\flat$-major prompt, continued (a)~clean and (b)~with the key
+component of layer-$4$ activations replaced by the E-major class mean from bar~$9$
+on. \textbf{The input does not change}; the continuation's estimated key follows
+the injected internal state. Shading marks the scale of the key in force.}
+\label{fig:overview}
+\end{figure}
+
+\subsection{Data and models}
+To make ground truth exact rather than estimated, all training data are
+synthetic. \textbf{D-SYN.} A functional-harmony state machine
+(T\,$\to$\,S\,$\to$\,D\,$\to$\,T with substitutions, SATB voicing, optional
+diatonic melody) generates $200$k$/10$k$/10$k train/val/test pieces of
+$278$--$508$ tokens with $0$--$3$ modulations each (pivot-chord, direct, or
+sequential; fifths-distance stratified), giving every token a ground-truth key
+label. \textbf{Tokenizer.} To prevent state leakage the vocabulary ($124$ types)
+contains only \texttt{BAR}, \texttt{POS}, absolute-MIDI \texttt{PITCH}, and
+\texttt{DUR} tokens; a unit test enforces the absence of key/chord/degree tokens.
+\textbf{Models.} M-CTRL is a GPT-2 style decoder ($8$ layers, $8$ heads,
+$d\,{=}\,512$, context $512$, ${\sim}25$M parameters), trained $12$k steps under
+two regimes---with (R-Aug) and without (R-NoAug) uniform $12$-fold transposition
+augmentation---$\times\,3$ seeds. M-REF shares the architecture but uses a
+disjoint seed \emph{and} data split, and serves only as the musicality guard,
+avoiding circular evaluation. All models pass a pre-frozen quality gate
+(validation next-token top-$1$ $0.878$--$0.881$ \vs a $0.434$ constant-predictor
+rate; unconditional in-key ratio $0.964$--$0.977$ \vs a $0.608$ threshold).
+
+\subsection{Phase A: probing and geometry}
+To separate internal computation from input transcription, every probe result is
+reported against three control families. Linear (multinomial logistic) probes map
+residual-stream activations $h_{\ell}(t)$ to $\kappa(t)$ ($24$ classes) with
+sequence-level splits. \textbf{C1} permutes key identities per sequence---a
+control task in the sense of~\cite{hewitt2019control}; \textbf{C2} is an untrained
+model; \textbf{C3} are input-side baselines at the same positions (pitch-class
+histogram logistic regression, and Krumhansl--Schmuckler (KS) template matching;
+windows $W\in\{8,16,32,64\}$). DR-H1: the probe supports H1 iff its
+selectivity-corrected $F_1$ exceeds the best C3 baseline with a sequence-level BCa
+$95\%$ CI excluding zero in some layer. Ambiguity is stratified by KS posterior
+entropy ($W{=}16$). For geometry, orthogonal Procrustes maps $R_k$ are fit between
+activations of pieces and their $k$-semitone transpositions, and a cyclicity error
+tests group structure:
+\begin{equation}
+\ecyc \;=\; \frac{1}{11}\sum_{k=2}^{12}
+\frac{\lVert R_k - R_1^{\,k}\rVert_F}{\lVert R_k\rVert_F},
+\label{eq:cyc}
+\end{equation}
+with DR-H2b: $\ecyc(\text{R-Aug}) < \ecyc(\text{R-NoAug})$ (one-sided Wilcoxon).
+
+\subsection{Phase B: causal intervention}
+\label{sec:methodB}
+To test \emph{use} rather than presence, we edit the state and score the behavior.
+From bar~$9$ of a key-stable $8$-bar prompt, a sustained edit replaces the key
+component at one layer, $h \leftarrow h - P_V h + P_V\mu_{\kappa^{*}}$, with $V$ an
+orthonormal key subspace and $\mu_{\kappa^{*}}$ the class-conditional mean of the
+donor key. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),
+\textbf{V-MEAN} (class-mean span), \textbf{V-DAS} (interchange-trained, ranks
+$8/24$). Controls: \textbf{K1} rank/norm-matched random subspace; \textbf{K2} sham
+edit, required bit-identical to the clean run (passed, $100/100$ prompts);
+\textbf{K3} a different layer's subspace; \textbf{K4} behavioral reference,
+transposing the prompt itself. Continuations ($16$ bars; $12$ major targets
+$\times\,100$ prompts $\times\,8$ layers; sampling noise paired with a clean twin)
+are scored by KS key estimation ($\tkr$, strict and closely-related-tolerant),
+$\ikr$, and a grammar guard. The budget $\ppl\,{=}\,0.613$ ($90$th percentile of
+the M-REF perplexity rise across $7{,}989$ natural modulations in validation data)
+was fixed \emph{before} any edit ran; edits exceeding it do not count as successes.
+DR-H3 requires $\tkr(\text{edit})>\tkr(\text{K1})$ with Holm-corrected Wilcoxon
+$p<.05$ in ${\geq}\,8/12$ targets at the best in-budget condition.
+
+\section{Results}
+\label{sec:results}
+Intervention numbers are from the R-Aug seed-$0$ sweep [s0] unless noted; probing
+holds for all six M-CTRL models, and the seed-$1$ sweep replicates every Phase-B
+verdict (Sec.~\ref{sec:repl}).
+
+\subsection{H1: the key is decodable beyond the input surface}
+\label{sec:resultsA}
+The key is \emph{computed} by the model, not transcribed from the input: the
+corrected probe--baseline margin excludes zero in layers $1$--$7$ of every trained
+model (peak $+0.105$) and fails only at L$0$ ($-0.20$). Table~\ref{tab:probe} gives
+the numbers at the layer the edit acts on. The internal state is most valuable
+where the surface is least informative: in the top ambiguity quartile probe accuracy
+is $0.936$ \vs $0.795$ for the best baseline.
+
+\begin{table}[t]
+\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
+\centering\small
+\caption{Key decoding at L$4$ (R-Aug seed~$0$), $24$-class macro-$F_1$ on held-out
+sequences; DR-H1 supported in $6/6$ models. Note the two C1 rows measure different
+things: a control probe trained on permuted labels barely learns \emph{them}
+($0.040$, near the $1/24$ chance rate---the control task is genuinely unlearnable),
+and predicts the \emph{true} key at $0.032$---the selectivity floor the margin
+subtracts. The margin reconciles exactly:
+$0.927-0.032-0.790=0.105$.}
+\label{tab:probe}
+\begin{tabularx}{\linewidth}{@{}Xr@{}}
+\toprule
+\textbf{Method / baseline} & \textbf{macro-$F_1$}\\
+\midrule
+Linear probe on $h_4(t)$ & $0.927$\\
+\quad MLP probe (secondary) & $0.932$\\
+Best input baseline (C3: PC-hist LR, $W{=}64$) & $0.790$\\
+Untrained model (C2) & $0.243$\\
+C1 control probe, on its own permuted labels & $0.040$\\
+C1 control probe, on the true key (selectivity floor) & $0.032$\\
+\midrule
+Corrected margin, BCa $95\%$ CI $[0.091,\,0.114]$ & $+0.105$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{H2: fifths geometry; equivariant but not a group}
+The representation carries music-theoretic structure, but not the strictest form we
+pre-registered. Projected to two principal components, the twelve major-tonic
+directions order as C--G--D--A--E--B--F$\sharp$--$\cdots$ (Fig.~\ref{fig:fifths}):
+circle-of-fifths neighbour agreement $1.00$ \vs $0.00$ for the chromatic ordering,
+at every probed layer (exploratory). Transposition acts as a generalizing linear
+map: Procrustes $R_k$ fit on half the sequences aligns held-out activations with
+$0.05$--$0.11$ relative error. The family is not cyclic, however: $\ecyc\approx0.98$
+\vs ${\approx}\,1.41$ for random orthogonal maps [Eq.~\eqref{eq:cyc}]. Our
+pre-registered comparison is negative: augmentation does not improve cyclicity
+($3$ seeds per regime; R-Aug $0.983$ \vs R-NoAug $0.981$; one-sided $p=0.83$), so
+DR-H2b is \emph{not} supported. The representation is transposition-equivariant in
+effect but not organized as a cyclic group, and the key diversity already present
+in the data appears to suffice.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\columnwidth]{fig_fifths_geometry.pdf}
+\caption{The twelve major-tonic probe directions (L$4$, first two PCs)
+self-organize into a circle of fifths. No key, chord, or degree token exists in
+the training vocabulary.}
+\label{fig:fifths}
+\end{figure}
+
+\subsection{H3: editing the key state changes the composed key}
+\label{sec:resultsB}
+Editing the internal key redirects generation. At the best in-budget condition
+(V-PROBE, L$4$), $\tkr(\text{edit})-\tkr(\text{K1})>0$ holds for $12/12$ targets
+(Holm-corrected $p<10^{-4}$ each; rank-biserial $r=0.64$--$1.00$) against a
+pre-registered bar of ${\geq}\,8/12$: DR-H3 is supported. Fig.~\ref{fig:bars} gives
+all conditions. Pitch content triangulates the same conclusion without the
+estimator: $\ikr_{\kappa^{*}}=0.937$ \vs $\ikr_{\kappa_{\mathrm{src}}}=0.646$ after
+editing. Success falls gently with target distance on the circle of fifths ($0.395$
+at distance~$1$ to $0.280$ at the tritone), while random edits collapse to zero once
+the identity target is excluded. The edit reaches $58\%$ of the behavioral ceiling
+(K4), quantifying an \emph{actionability gap}: the state is readable in a rank-$24$
+subspace of one layer, yet a single-layer edit realizes only part of the behavioral
+effect. Two subsidiary findings: the \emph{optimized} subspace (V-DAS) underperforms
+the probe's readout directions (Sec.~\ref{sec:disc}), and V-MEAN edits destroy output
+quality at deep layers (guard pass ${\leq}\,5\%$ at L$4$--L$5$)---the guard is
+load-bearing, a point Sec.~\ref{sec:capacity} makes decisive.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{fig_intervention_bars.pdf}
+\caption{Guarded strict $\tkr$ across conditions [s0]: the continuation lands
+exactly on the injected key \emph{and} stays within the frozen musicality budget.
+Chance $=1/12$. Bars: prompt-level bootstrap $95\%$ CI.}
+\label{fig:bars}
+\end{figure}
+
+\subsection{H5: readability is diffuse; causal efficacy is sharp}
+The layer profile of the edit-minus-control effect is single-peaked
+($0.03,0.04,0.19,0.26,\mathbf{0.30},0.26,0.23,0.23$ for L$0$--L$7$); the
+best-\vs-median bootstrap CI $[0.038,0.109]$ excludes zero, so DR-H5 is supported.
+The two profiles in Fig.~\ref{fig:layers} are \emph{not} the same shape, and the
+difference is the finding. The probe saturates across L$2$--L$6$ (macro-$F_1$
+$0.920$--$0.929$, all within $0.01$ of its maximum), so the key is legible from most
+of the network; yet a single-layer edit moves the output only near L$4$, and barely
+at all at L$0$--L$1$. Where a state is legible is a weak guide to where it is
+used---a caution for interpretability work that localizes a computation by probing
+accuracy alone.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_layer_profile.pdf}
+\caption{(a)~Probe macro-$F_1$ per layer, all six M-CTRL models (thin lines; R-Aug
+seed~$0$ highlighted): the key is legible across a broad plateau. (b)~Causal effect
+[s0]: guarded strict $\tkr$ of the V-PROBE edit \vs the K1 matched random control
+(bands: prompt-level bootstrap $95\%$ CI). Only a narrow band around L$4$ moves the
+output.}
+\label{fig:layers}
+\end{figure}
+
+\subsection{Replication, and what capacity actually buys}
+\label{sec:capacity}
+\label{sec:repl}
+\textbf{Second seed.} An independently trained R-Aug seed-$1$ model reproduces every
+Phase-B verdict: DR-H3 supported with V-PROBE significant in $12/12$ targets
+($\tkr$ $0.23$--$0.41$ \vs K1 $0.02$--$0.10$), and DR-H5 supported (CI
+$[0.122,0.181]$). Its profile peaks at L$2$ rather than L$4$: the \emph{localization}
+replicates, its exact depth does not, and we report both profiles rather than a
+pooled one.
+
+\textbf{Capacity.} Training the same data and protocol at $1.6$M (L$2$, $d{=}128$),
+$6$M (L$4$, $d{=}256$), $25$M (main line), and $85$M (L$12$, $d{=}768$) parameters
+dissociates three things the term ``world model'' usually conflates
+(Fig.~\ref{fig:emergence}). \emph{Behavior} is flat: next-token top-$1$ is
+$0.868$--$0.879$ across a $50\times$ capacity range. \emph{Readability} is not: at
+$1.6$M the probe peaks at $F_1$ $0.63$--$0.66$, \emph{below} the input baseline
+($0.79$), and DR-H1 is not supported in either seed---a behaviorally equivalent model
+that has no key state at all, which is the surface-statistics account made flesh, and
+which our pre-registered test correctly refuses to credit. \emph{Manipulability} is a
+third thing again. At $1.6$M the edit changes the key \emph{more} often than at $25$M
+in raw terms ($0.55$ \vs $0.43$) and passes the musicality guard only $10\%$ of the
+time (\vs $80\%$ at $25$M): with two layers, ``editing the key subspace'' is a blunt
+overwrite of the output, not the movement of a separable state. Reporting guarded
+$\tkr$ alone would hide this; reporting raw $\tkr$ alone would credit a surface model
+with a world model. \textbf{Capacity does not buy the key---it buys a key that can be
+moved without breaking everything else}, and the pre-registered guard is precisely the
+instrument that tells the two apart.
+
+Manipulability does not simply keep improving, however. It peaks near $25$M and then
+\emph{falls}: the $85$M model reaches guarded $\tkr$ $0.18$, about half the $25$M value.
+We suspected an artifact of our own making---each size model was edited at its
+probe-$F_1$ peak, a heuristic this paper itself refutes---so we swept all twelve layers
+of the $85$M model. The hypothesis was wrong: its causal peak (L$6$, $0.206$) is
+statistically indistinguishable from the layer we had already used (L$3$, $0.202$).
+The decline is real. A natural reading, which we did not test and do not claim, is that
+greater depth leaves more downstream layers able to re-derive the key from the surviving
+context, so a single-layer edit is more easily repaired---the actionability gap widening
+with scale rather than closing. (Layer sweep: one seed.)
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{fig_emergence.pdf}
+\caption{Behavioral equivalence, representational dissociation. Across a $50\times$
+capacity range next-token accuracy is flat, but the key readout is not: below
+${\sim}6$M the probe cannot beat the input baseline and the pre-registered DR-H1
+margin is negative. Dots: seeds.}
+\label{fig:emergence}
+\end{figure}
+
+\subsection{Real music, and a public model: what generalizes}
+\label{sec:wild}
+Two questions remain for a synthetic-data study: does the key readout survive real
+music, and does any of this describe a model people actually use? We answer both with
+one matched comparison, on $300$ Bach chorales whose \emph{local} key at every note is
+given by published Roman-numeral analyses.\footnote{Scores: \texttt{bach-370-chorales}
+(CC BY-NC-SA); analyses: \emph{When in Rome} (CC BY-SA). Neither is redistributed.}
+
+\textbf{Our model does not clear the surface on real music.} Probed on the chorales, our
+$85$M model reaches macro-$F_1$ $0.523$ against a selectivity floor of $0.037$---the key
+subspace is real and transfers, it is not an artifact of our grammar---but the best input
+baseline (KS, $W{=}64$) reaches $0.447$, and the corrected margin, $+0.034$ (CI
+$[-0.020,\,0.100]$), does not exclude zero. DR-H1 is \emph{not} supported out of
+distribution.
+
+\textbf{A public model trained on real music does clear it.} The Anticipatory Music
+Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh MIDI, MetaMIDI, FMA, and
+$450$k commercial records) is, at its \texttt{small} size, \emph{architecturally
+identical} to our $85$M model: $12$ layers, $d{=}768$. Its vocabulary is
+(arrival-time, duration, note) triples---leak-free in exactly the sense ours is. We
+probed it on the same chorales, at the same positions, with the same controls and the
+same decision rule; the two C3 baselines land at $0.447$ and $0.446$, confirming the
+setups are matched. It reaches macro-$F_1$ $0.686$ (L$10$) with a corrected margin of
+$+0.198$ (CI $[0.133,\,0.266]$): \textbf{DR-H1 supported}. With architecture, corpus,
+protocol, and decision rule held fixed, \emph{the training data is the single free
+variable}, and it is what decides whether a key state beats the pitch surface. The layer
+profiles say the same thing from the other side: our synthetic model's readout peaks
+early (L$2$) and decays to $0.17$ by L$11$ on this out-of-distribution input, while the
+real-trained model's dips mid-network and \emph{builds} to its peak at L$10$.
+
+Two cautions. The probe must be read where the model is about to \emph{choose} a pitch
+(the token before a note); read at the note itself---after the pitch is committed, when
+the model is predicting the next onset---the same public model's profile decays with
+depth and the key appears to vanish. Where one probes is not a free parameter. And this
+is a readability result: we have not intervened on the public model, so it inherits none
+of our causal claims.
+
+\section{Discussion and Limitations}
+\label{sec:disc}
+The three levels support the world-model reading \emph{within this training
+condition}: a Transformer trained on notes alone maintains a mid-layer key variable
+with music-theoretic geometry, and generation consults it. The gap to the behavioral
+ceiling, the failure of edits at L$0$--L$1$, and the partial effect of layer-shuffled
+subspaces (K3 $=0.160$, between K1 and the true edit) indicate a distributed,
+redundantly re-estimated state rather than a single canonical register---a contrast
+with Othello-GPT's near-complete editability that we attribute to music's continual
+re-grounding of tonality in the immediately preceding notes.
+
+Four observations bound our claims. \emph{V-DAS below V-PROBE:} the optimized
+subspace may simply be undertrained relative to its search space; we report it as
+observed and release its configuration, but do not claim optimization is inherently
+inferior. \emph{Estimator:} the KS judge confuses fifths-neighbours, which
+strict/tolerant reporting brackets and $\ikr$ triangulates. \emph{Capacity:} the sweep
+varies depth and width together, so it locates a threshold, not its cause. \emph{External
+validity:} the causal results are for our own small, synthetic-trained models;
+Sec.~\ref{sec:wild} shows the \emph{readout} generalizes to a public real-trained model,
+but intervening on such a model is future work. Whether edited continuations modulate
+\emph{musically} (pivot-like transitions \vs jumps) is measured in the journal version.
+All training data are synthetic; no artist recordings or copyrighted corpora are used
+for training, and the evaluation corpora are used under their stated licenses.
+
+\section{Conclusion}
+\label{sec:concl}
+We gave pre-registered causal evidence that a music Transformer tracks musical key as
+an internal state variable that generation consults, and quantified how far a
+single-layer edit goes toward full behavioral control. The capacity sweep separates
+three properties usually bundled under ``world model''---the state being present,
+being legible, and being separately manipulable---and shows they emerge at different
+points. The testbed (exact state labels, leak-free vocabulary, frozen decision rules)
+is released as a benchmark. Because music offers state variables that theory defines
+and ears can verify, we expect it to be a useful substrate for asking what sequence
+models know; our next question is whether models also internalize how keys are
+\emph{supposed} to change.
+
+\vspace{2pt}\noindent\footnotesize\textbf{Reproducibility.} Anonymized code, data
+generator, pre-registration, and an audio demo page (clean \vs edited continuations):
+\url{https://anonymous.4open.science/r/TBD}. \TBD{create before submission.}\normalsize
+
+\begin{thebibliography}{9}\footnotesize
+\bibitem{li2023othello} K.~Li, A.~K. Hopkins, D.~Bau, F.~Vi\'egas, H.~Pfister, and
+M.~Wattenberg, ``Emergent world representations: Exploring a sequence model trained
+on a synthetic task,'' in \emph{ICLR}, 2023.
+\bibitem{nanda2023emergent} N.~Nanda, A.~Lee, and M.~Wattenberg, ``Emergent linear
+representations in world models of self-supervised sequence models,'' in
+\emph{BlackboxNLP}, 2023.
+\bibitem{mcgrath2022chess} T.~McGrath et al., ``Acquisition of chess knowledge in
+AlphaZero,'' \emph{PNAS}, vol.~119, no.~47, 2022.
+\bibitem{karvonen2024chess} A.~Karvonen, ``Emergent world models and latent variable
+estimation in chess-playing language models,'' in \emph{CoLM}, 2024.
+\bibitem{maze2024} \TBD{maze world-model reference; finalize bibliographic details}.
+\bibitem{iris2026} \TBD{RL world-model probing reference; finalize}.
+\bibitem{syntheory2024} \TBD{SynTheory music-probing reference; finalize}.
+\bibitem{smitin2024} \TBD{music steering reference; finalize}.
+\bibitem{thickstun2023anticipatory} J.~Thickstun, D.~Hall, C.~Donahue, and P.~Liang,
+``Anticipatory music transformer,'' \emph{TMLR}, 2024.
+\bibitem{krumhansl1982} C.~L. Krumhansl and E.~J. Kessler, ``Tracing the dynamic
+changes in the perceived tonal organization in a spatial representation of musical
+keys,'' \emph{Psychological Review}, vol.~89, no.~4, pp.~334--368, 1982.
+\bibitem{hewitt2019control} J.~Hewitt and P.~Liang, ``Designing and interpreting
+probes with control tasks,'' in \emph{EMNLP}, 2019.
+\end{thebibliography}
+
+\end{document}

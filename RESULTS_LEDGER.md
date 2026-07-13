@@ -523,3 +523,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild/music-medium-800k/mwild_probe.json`
 - note: public model trained on REAL music (Apache-2.0); probe F1=0.6959 (L18) vs best C3 0.4463; corrected margin 0.2108 CI[0.1448,0.2889]; beats_surface=True
 
+## 2026-07-14T01:27:33+09:00 — M-WILD probe music-large-800k
+- git: `bd921876517fa3fa1cedea940799ce06cbe21173`
+- config_hash: `8030be558230a1a4313c3bce72372e9dd566a14f26f01695232d744b46f70d76`
+- seeds: [0]
+- artifacts: `results/mwild/music-large-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.7048 (L20) vs best C3 0.4463; corrected margin 0.2136 CI[0.1431,0.2853]; beats_surface=True
+
