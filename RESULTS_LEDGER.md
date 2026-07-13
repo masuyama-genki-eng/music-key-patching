@@ -376,3 +376,38 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/sweep/size-L2d128_s1/parts`
 - note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
 
+## 2026-07-13T14:20:29+09:00 — P4 sweep size-L4d256_s0
+- git: `d8bc918332799513f3ed5fc4d6ca51bf296a93c6`
+- config_hash: `928d236dcaf3bd0aa74f08f39cddbb3b562fe21ddc985c1644e0b369b6d9a717`
+- seeds: [0]
+- artifacts: `results/sweep/size-L4d256_s0/parts`
+- note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-13T14:20:35+09:00 — D-REAL license check (SPEC 1.3)
+- git: `d8bc918332799513f3ed5fc4d6ca51bf296a93c6+DIRTY`
+- config_hash: `9c24ca2f94b0a8f25e7af8c21b45f0dcfc9a353ec6d4501809a28720e7cf146d`
+- seeds: n/a
+- artifacts: n/a
+- note: VERDICT: USABLE for research. License CC BY-NC-SA 4.0 (digital edition, (C) 2009 Craig Stuart Sapp; the music itself is public domain, Bach d.1750). Non-commercial academic use permitted with attribution. CONSTRAINT: corpus will NOT be bundled in any benchmark release - ship a fetch script + attribution instead (NonCommercial/ShareAlike). Key annotations are EDITORIAL (kern *G: designations from the score encoding), not algorithmic - stronger than the music21-derived labels anticipated in SPEC 1.3.
+
+## 2026-07-13T14:24:04+09:00 — D-REAL probe R-Aug_s0
+- git: `d8bc918332799513f3ed5fc4d6ca51bf296a93c6+DIRTY`
+- config_hash: `2b66b291d1964f2bbff7f94cbb220fc99bd61a2d57548cf9b89a496733383f92`
+- seeds: [0]
+- artifacts: `results/dreal/R-Aug_s0/dreal_probe.json`
+- note: 321 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.4267 vs best C3 0.4709; corrected margin CI excludes 0: False
+
+## 2026-07-13T14:24:29+09:00 — P4 sweep size-L4d256_s1
+- git: `d8bc918332799513f3ed5fc4d6ca51bf296a93c6+DIRTY`
+- config_hash: `9b6140c28da3a635f9134c38bb37365e6a50ad40e3b99ed72fcdeafc47edcdce`
+- seeds: [0]
+- artifacts: `results/sweep/size-L4d256_s1/parts`
+- note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-13T14:26:28+09:00 — D-REAL local-key annotations: license check
+- git: `d8bc918332799513f3ed5fc4d6ca51bf296a93c6+DIRTY`
+- config_hash: `2b9d6548b92f04d1115bb5832741133e0c10925db1fecd3c9a9cf9a109fb27d5`
+- seeds: n/a
+- artifacts: n/a
+- note: VERDICT: USABLE. License CC BY-SA 4.0 (free-culture; attribution + share-alike, commercial use permitted) — less restrictive than the kern score edition. Provides LOCAL key annotations (human Roman-numeral analyses with modulations marked), matched to the Sapp kern scores by BWV number. This enables the test that H1 actually predicts (local key state), per CHANGELOG 2026-07-13.
+
