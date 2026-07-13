@@ -63,9 +63,12 @@ this means. Next-token accuracy is flat from $1.6$M to $85$M parameters, yet at
 $1.6$M the key is not decodable beyond the input surface at all, and the same
 edit moves the key \emph{more} often than at $25$M while destroying the music in
 $90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
-without breaking everything else. Editing a music Transformer's internal key
-state changes what key it composes in: tonality is tracked as a causal latent
-variable, not just surface statistics.
+without breaking everything else. Finally, a matched control settles what generalizes:
+on real Bach chorales our synthetic-trained model does \emph{not} beat the pitch
+surface, while a public model of \emph{identical architecture} trained on real music
+does (margin $+0.198$, CI excluding zero)---with the training data as the single free
+variable. Editing a music Transformer's internal key state changes what key it composes
+in: tonality is tracked as a causal latent variable, not just surface statistics.
 \end{abstract}
 
 \begin{keywords}
@@ -122,6 +125,11 @@ $12/12$ targets within a frozen musicality budget, and a capacity sweep shows
 that what capacity supplies is not the key but the ability to move it
 surgically---dissociating three things the term ``world model'' usually conflates
 (Secs.~\ref{sec:resultsB}--\ref{sec:capacity}).
+\item A matched-architecture control on real music: with corpus, protocol, and decision
+rule held fixed, a public real-trained model clears the input-surface baseline where our
+synthetic-trained model of the same shape does not, isolating the training data as the
+variable that decides whether a key state is worth more than the notes themselves
+(Sec.~\ref{sec:wild}).
 \end{enumerate}
 
 \section{Relation to Prior Work}
