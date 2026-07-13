@@ -54,6 +54,8 @@ def main() -> None:
         ("fig_emergence.pdf",
          lambda p: F.fig_emergence(probing, REPO / "results/models",
                                    REPO / "results/sweep", p)),
+        ("fig_surgical.pdf",
+         lambda p: F.fig_surgical(REPO / "results/sweep", p)),
     ]
     written = []
     for name, fn in jobs:

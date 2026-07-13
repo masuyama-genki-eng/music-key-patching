@@ -36,6 +36,36 @@ control task; structure preserved, content decoupled). DR-H1's "selectivity-corr
 probe F1" uses C1b; C1a is reported alongside in probe_report.json. Decided and
 recorded before any Phase A analysis was run.
 
+## 2026-07-13 — Capacity sweep: the guard is applied UNCHANGED across sizes, and BOTH
+## raw and guarded TKR are reported (decided on seeing the guard rates, before writing)
+
+The frozen musicality budget (delta_PPL = 0.6127, an ABSOLUTE M-REF perplexity rise
+over the paired clean twin) was calibrated on natural modulations in D-SYN and frozen
+before any edit ran. The capacity sweep is a new use of it that SPEC did not
+anticipate: the models being edited differ in size, and their clean continuations
+differ in baseline quality (mean M-REF perplexity 4.5 / 30.2 at 1.6M, 4.5 at 6M, 2.7
+at 25M). Two decisions, recorded now:
+
+1. The budget is applied UNCHANGED. It is a paired rise over each model's OWN clean
+   twin, so it is not obviously biased by baseline quality, and re-tuning a
+   pre-registered threshold per condition would destroy its meaning.
+2. BOTH raw and guarded TKR are reported for every size, because they dissociate and
+   the dissociation is the finding:
+
+       size    raw TKR   guard pass   guarded TKR
+       1.6M    0.52-0.58    8-13%      0.04-0.07
+       6M      0.46         54%        0.27
+       25M     0.43         87%        0.38
+
+   At 1.6M the edit moves the key MORE often in raw terms than at 25M — and almost
+   always wrecks the music doing it. The small model has no key state that can be
+   moved independently of the rest of its computation: the "edit" is a blunt overwrite
+   of a 2-layer network's output. Only above ~6M does the same edit become surgical.
+   Reporting the guarded number alone would hide this; reporting the raw number alone
+   would falsely credit the small model with a world model. The guard is what
+   separates "the key is in there" from "the key is a separable, manipulable state" —
+   which is the world-model claim.
+
 ## 2026-07-13 — D-REAL corpus, labels, and exclusion criteria (decided before probing)
 
 SPEC §1.3 anticipated Bach chorales with **music21-derived (algorithmic)** key

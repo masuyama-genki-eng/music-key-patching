@@ -480,12 +480,16 @@ SIZE_MODELS = [                       # (label, params_M, probing-dir prefixes)
 ]
 
 
+SIZE_PEAK_LAYER = {"size-L2d128": 1, "size-L4d256": 2, "R-Aug_s0": 4, "R-Aug_s1": 2,
+                   "size-L12d768": 3}
+
+
 def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
                   out: Path) -> None:
     """Behavioral equivalence vs. representational emergence across capacity.
     (a) next-token top-1 and peak probe F1 vs. the input baseline;
     (b) the pre-registered DR-H1 margin (probe - C1b - best C3), which crosses
-        zero between 1.6M and 6M. Causal panel added when sweeps land."""
+        zero between 1.6M and 6M."""
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.4), sharex=True)
     xs = [p for _, p, _ in SIZE_MODELS]
 
@@ -549,6 +553,68 @@ def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
     # name the shaded band from inside it, where both panels have clear space
     ax1.text(np.sqrt(zone[0] * zone[1]), 0.535, "world model\nappears here",
              ha="center", va="bottom", fontsize=6.8, color="#5A5A5A", linespacing=1.2)
+    fig.savefig(out)
+    plt.close(fig)
+
+
+def fig_surgical(sweep_root: Path, out: Path) -> None:
+    """Why the guard is the load-bearing control. At 1.6M the edit moves the key MORE
+    often than at 25M (raw TKR) — and almost always wrecks the music doing it. Only
+    with capacity does the same edit become surgical: a state you can move without
+    breaking everything else. That, not mere presence, is the world-model claim."""
+    guard = json.loads((sweep_root.parent / "guard/delta_ppl.json").read_text())
+    delta = guard["delta_ppl"]
+    N_TARGETS = 12                     # a size is plotted only when ALL targets ran
+    rows, skipped = [], []
+    for label, params, names in SIZE_MODELS:
+        raws, passes = [], []
+        for n in names:
+            key = n if n.startswith("R-Aug") else n.rsplit("_s", 1)[0]
+            li = SIZE_PEAK_LAYER.get(key)
+            parts = sorted((sweep_root / n / "parts").glob(f"v_probe_L{li}_T*.parquet"))
+            if len(parts) < N_TARGETS:   # partial sweep: never plot it as if complete
+                continue
+            df = pd.concat([pq.read_table(p).to_pandas() for p in parts],
+                           ignore_index=True)
+            gp = (df["guard_pass"] if df.get("guard_pass") is not None
+                  and not df["guard_pass"].isna().all()
+                  else df["mref_ppl_excess"] <= delta)
+            raws.append(df["tkr_strict"].fillna(False).mean())
+            passes.append(gp.mean())
+        if raws:
+            rows.append((label, params, float(np.mean(raws)), float(np.mean(passes)),
+                         len(raws)))
+        else:
+            skipped.append(label)
+    import logging
+    log = logging.getLogger("figures")
+    log.info("fig_surgical: seeds per size = %s",
+             {r[0]: r[4] for r in rows})
+    if skipped:
+        log.warning("fig_surgical: %s excluded — intervention sweep incomplete",
+                    skipped)
+    if not rows:
+        return
+
+    xs = [r[1] for r in rows]
+    fig, ax = plt.subplots(figsize=(3.5, 2.15))
+    ax.plot(xs, [r[2] for r in rows], color=EDIT, lw=2.0, marker="o", ms=4, zorder=4,
+            label="key moved (raw TKR)")
+    ax.plot(xs, [r[3] for r in rows], color=BOUND, lw=2.0, marker="^", ms=4, zorder=4,
+            label="music survived (guard pass)")
+    ax.set_xscale("log")
+    ax.set_xticks(xs, [r[0] for r in rows])
+    ax.set_xlabel("parameters")
+    ax.set_ylabel("rate")
+    ax.set_ylim(0, 1.24)
+    ax.legend(frameon=False, loc="upper center", fontsize=6.5, handlelength=1.4,
+              ncols=2, columnspacing=1.0, borderpad=0.1)
+    ax.annotate("edit works,\nmusic destroyed", xy=(xs[0] * 1.02, rows[0][3] + 0.02),
+                xytext=(xs[0] * 1.06, 0.30), fontsize=6.6, color="#5A5A5A",
+                ha="left", va="center", linespacing=1.2,
+                arrowprops=dict(arrowstyle="->", lw=0.7, color="#9A9A9A"))
+    ax.set_title("capacity buys surgical control, not the key itself", loc="left",
+                 fontsize=7.5, color=INK, pad=12)
     fig.savefig(out)
     plt.close(fig)
 
