@@ -163,12 +163,35 @@ def main() -> None:
         # A2: high-ambiguity stratum (token-level diff, same positions)
         acc_p = (lin["y_pred_test"] == y_test)
         acc_c = (best_c3["y_pred_test"] == y_test)
+        # The C1 controls have TWO F1s and they are not interchangeable:
+        #   *_on_control_labels : how well the control probe predicts the permuted
+        #                         labels it was trained on (is the control task
+        #                         actually unlearnable? it should sit near chance)
+        #   *_on_true_labels    : how well it predicts the TRUE key anyway — this is
+        #                         the selectivity floor, and it is what DR-H1's
+        #                         corrected margin subtracts.
+        # Reporting the first while subtracting the second makes the headline
+        # arithmetic fail to reconcile; both are emitted explicitly.
+        c1b_true = metric_report(y_test, c1b["linear"][li]["y_pred_test"])
+        c1a_true = metric_report(y_test, c1a["linear"][li]["y_pred_test"])
         layer_rec = {
             "layer": li,
             "probe": lin["report"], "mlp": main_probes["mlp"][li]["report"],
-            "c1a": c1a["linear"][li]["report"], "c1b": c1b["linear"][li]["report"],
+            "c1a_on_control_labels": c1a["linear"][li]["report"],
+            "c1a_on_true_labels": c1a_true,
+            "c1b_on_control_labels": c1b["linear"][li]["report"],
+            "c1b_on_true_labels": c1b_true,
             "c2_untrained": c2["linear"][li]["report"],
             "corrected_diff_ci": ci,
+            "margin_check": {                      # must reconcile exactly
+                "probe": lin["report"]["macro_f1_24"],
+                "minus_c1b_on_true_labels": c1b_true["macro_f1_24"],
+                "minus_best_c3": best_c3["report"]["macro_f1_24"],
+                "equals": (lin["report"]["macro_f1_24"]
+                           - c1b_true["macro_f1_24"]
+                           - best_c3["report"]["macro_f1_24"]),
+                "bca_point_estimate": ci["stat"],
+            },
             "high_ambiguity": {
                 "n": int(hi_bin.sum()),
                 "probe_acc": float(acc_p[hi_bin].mean()),

@@ -85,6 +85,27 @@ label is noisy away from home. The SAME label is used for the probe and for the 
 input baseline, so the comparison stays fair, but absolute numbers will sit below
 D-SYN and are reported as such.
 
+## 2026-07-14 — 85M editability: our own explanation was WRONG (hypothesis refuted by
+## the experiment we ran to test it)
+
+The capacity sweep showed the causal effect DECLINING at 85M (guarded TKR 0.18 vs 0.35
+at 25M). We suspected a measurement artifact of our own making: the edit layer for each
+size model was chosen by probe-F1 argmax — a heuristic THIS PAPER refutes (readability
+plateaus while efficacy is sharp), so for a 12-layer model the probe peak (L3, 25% depth)
+plausibly missed a causal peak nearer mid-depth (L6). We ran the full 12-layer sweep to
+find out.
+
+THE HYPOTHESIS IS REFUTED. The 85M causal profile peaks at L6 (guarded TKR 0.206) —
+but L3, the layer we had already used, gives 0.202. The layer choice cost essentially
+nothing. Even at its best layer the 85M model is roughly half as editable as the 25M
+model (0.206 vs 0.378), so the decline is REAL, not an artifact.
+
+Reported as such. The likely mechanism — more depth means more downstream layers that
+can re-derive the key from the surviving context, i.e. more redundancy to repair a
+single-layer edit — is consistent with the distributed-state reading elsewhere in this
+work, but we did not test it and do not claim it. Caveat recorded: the full layer sweep
+is one seed (s0); seed s1 has only its original layer (L3, 0.146).
+
 ## 2026-07-13 — D-REAL: the global-key test is the WRONG test for H1 (declared
 ## before running the local-key test; the global-key result is reported regardless)
 

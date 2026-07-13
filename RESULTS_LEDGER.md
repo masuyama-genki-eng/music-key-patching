@@ -432,3 +432,52 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-07-13T15:33:03+09:00 — P4 sweep size-L12d768_s0
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0`
+- config_hash: `f6e3284765d36ba713d85bc2216e25c7bafeb486311c5965a3832b9f33793dc2`
+- seeds: [0]
+- artifacts: `results/sweep/size-L12d768_s0/parts`
+- note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-13T16:41:18+09:00 — P4 sweep size-L12d768_s1
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0+DIRTY`
+- config_hash: `d1a9905d84b983c7179b0d2363d8af40ee22ce02479a6d24075fe9143e88efd3`
+- seeds: [0]
+- artifacts: `results/sweep/size-L12d768_s1/parts`
+- note: 24 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-13T18:00:02+09:00 — P5 figures
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-13T18:44:15+09:00 — P3 Phase A probing R-Aug_s0
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0+DIRTY`
+- config_hash: `c6b57eb91ca6bf2300aaf59079960435aa45109967f1b71702cdf803d7320a76`
+- seeds: [0]
+- artifacts: `results/probing/R-Aug_s0/probe_report.json`, `results/probing/R-Aug_s0/verdict_DR-H1.json`, `results/probing/R-Aug_s0/probe_weights.npz`, `results/probing/R-Aug_s0/class_means.npz`
+- note: DR-H1 supported=True; best C3=lr_W64 F1=0.7902
+
+## 2026-07-13T23:48:00+09:00 — P4 sweep size-L12d768_s0
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0+DIRTY`
+- config_hash: `54580e7509db96ef17166b34eb46efcd6f1b2e7393ff99288d25074f189502a3`
+- seeds: [0]
+- artifacts: `results/sweep/size-L12d768_s0/parts`
+- note: 132 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-07-14T00:58:47+09:00 — D-REAL probe R-Aug_s0
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0+DIRTY`
+- config_hash: `742b062c79ed7fe53877de7ecd071c8e68562b4b1a9d7f1fee3ebdd77c0ee0d1`
+- seeds: [0]
+- artifacts: `results/dreal/R-Aug_s0/dreal_probe.json`
+- note: 300 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.4071 vs best C3 0.4307; corrected margin CI excludes 0: False
+
+## 2026-07-14T01:00:02+09:00 — D-REAL probe R-Aug_s0
+- git: `b58a81206cceb5e4fce08e9b621a41eac7cb58a0+DIRTY`
+- config_hash: `dc8cc77d63f6b4aafefbc885c9d7a79903991e5aede205109168fe90f26b596c`
+- seeds: [0]
+- artifacts: `results/dreal/R-Aug_s0/dreal_probe.json`
+- note: 316 Bach chorales (CC BY-NC-SA, not redistributed); refit F1=0.4124 vs best C3 0.5164; corrected margin CI excludes 0: False
+
