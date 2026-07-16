@@ -621,3 +621,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/music-small-800k/stage2_eval.json`
 - note: L8 chosen on disjoint prompts; guarded TKR 0.365 vs K1 0.064 on 60 held-out prompts; DR-H3 supported=True (11/12); guard ref stanford-crfm/music-medium-800k
 
+## 2026-07-15T18:57:08+09:00 — param-count audit fix
+- git: `ac85affb7ee89c7e9bfdf28d7e1f57643a1a5d29+DIRTY`
+- config_hash: `n/a`
+- seeds: n/a
+- artifacts: `results/models/param_counts.json`
+- note: AUDIT: paper quoted parameter counts from config COMMENTS (# ~1.6M, # ~6M), not from the checkpoints. Actual (counted from state_dict): 0.49M / 3.35M / 25.6M / 85.6M, range 173x not 50x. The 1.6M and 6M labels were overstated 3.3x and 1.8x. SPEC §7 violation; papers corrected to the checkpoint values.
+
+## 2026-07-16T18:03:37+09:00 — M-WILD key prior (TKR vs corpus key frequency)
+- git: `ac85affb7ee89c7e9bfdf28d7e1f57643a1a5d29+DIRTY`
+- config_hash: `ecae80f4de4705e0f2b45bde8b49a0c64be9620e5346778c0bdc30bd74a3e3f7`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-small-800k/key_prior.json`
+- note: Spearman rho=0.9072 (by-note local keys, n=138249), one-sided permutation p=0.00005. Frequency counted from the D-REAL chorale corpus (proxy, NOT the model's training distribution). Retro-fits a number that was quoted in CHANGELOG 2026-07-14 without an artifact (SPEC §7 violation).
+

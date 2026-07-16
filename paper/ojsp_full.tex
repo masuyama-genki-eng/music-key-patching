@@ -63,12 +63,12 @@ injected key at $5.6\times$ the rate of rank- and norm-matched random edits
 after Holm correction, replicated across seeds), while staying inside a
 musicality budget frozen before any edit ran---reaching $58\%$ of the behavioral
 ceiling obtained by transposing the prompt itself. A capacity sweep sharpens what
-this means. Next-token accuracy is flat from $1.6$M to $85$M parameters, yet at
-$1.6$M the key is not decodable beyond the input surface at all, and the same
-edit moves the key \emph{more} often than at $25$M while destroying the music in
+this means. Next-token accuracy is flat from $0.5$M to $86$M parameters, yet at
+$0.5$M the key is not decodable beyond the input surface at all, and the same
+edit moves the key \emph{more} often than at $26$M while destroying the music in
 $90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
 without breaking everything else. Finally we leave our own models entirely. On real Bach
-chorales a \emph{public} $85$M checkpoint trained on real music---architecturally
+chorales a \emph{public} $86$M checkpoint trained on real music---architecturally
 identical to one of ours---carries a key state that beats the pitch surface where ours
 does not, and editing that state redirects the music it composes at $5.7\times$ the rate
 of matched random edits ($11/12$ targets, Holm-corrected) with \emph{no} measurable cost
@@ -351,6 +351,7 @@ Chance $=1/12$. Bars: prompt-level bootstrap $95\%$ CI.}
 \end{figure}
 
 \subsection{H5: readability is diffuse; causal efficacy is sharp}
+\label{sec:h5}
 The layer profile of the edit-minus-control effect is single-peaked
 ($0.03,0.04,0.19,0.26,\mathbf{0.30},0.26,0.23,0.23$ for L$0$--L$7$); the
 best-\vs-median bootstrap CI $[0.038,0.109]$ excludes zero, so DR-H5 is supported.
@@ -383,29 +384,29 @@ $[0.122,0.181]$). Its profile peaks at L$2$ rather than L$4$: the \emph{localiza
 replicates, its exact depth does not, and we report both profiles rather than a
 pooled one.
 
-\textbf{Capacity.} Training the same data and protocol at $1.6$M (L$2$, $d{=}128$),
-$6$M (L$4$, $d{=}256$), $25$M (main line), and $85$M (L$12$, $d{=}768$) parameters
-dissociates three things the term ``world model'' usually conflates
-(Fig.~\ref{fig:emergence}). \emph{Behavior} is flat: next-token top-$1$ is
-$0.868$--$0.879$ across a $50\times$ capacity range. \emph{Readability} is not: at
-$1.6$M the probe peaks at $F_1$ $0.63$--$0.66$, \emph{below} the input baseline
+\textbf{Capacity.} Training the same data and protocol at $0.5$M (L$2$, $d{=}128$),
+$3.4$M (L$4$, $d{=}256$), $26$M (main line), and $86$M (L$12$, $d{=}768$) parameters
+(counted from the checkpoints) dissociates three things the term ``world model''
+usually conflates (Fig.~\ref{fig:emergence}). \emph{Behavior} is flat: next-token
+top-$1$ is $0.868$--$0.879$ across a $170\times$ capacity range. \emph{Readability} is
+not: at $0.5$M the probe peaks at $F_1$ $0.63$--$0.66$, \emph{below} the input baseline
 ($0.79$), and DR-H1 is not supported in either seed---a behaviorally equivalent model
 that has no key state at all, which is the surface-statistics account made flesh, and
 which our pre-registered test correctly refuses to credit. \emph{Manipulability} is a
-third thing again. At $1.6$M the edit changes the key \emph{more} often than at $25$M
+third thing again. At $0.5$M the edit changes the key \emph{more} often than at $26$M
 in raw terms ($0.55$ \vs $0.43$) and passes the musicality guard only $10\%$ of the
-time (\vs $80\%$ at $25$M): with two layers, ``editing the key subspace'' is a blunt
+time (\vs $80\%$ at $26$M): with two layers, ``editing the key subspace'' is a blunt
 overwrite of the output, not the movement of a separable state. Reporting guarded
 $\tkr$ alone would hide this; reporting raw $\tkr$ alone would credit a surface model
 with a world model. \textbf{Capacity does not buy the key---it buys a key that can be
 moved without breaking everything else}, and the pre-registered guard is precisely the
 instrument that tells the two apart.
 
-Manipulability does not simply keep improving, however. It peaks near $25$M and then
-\emph{falls}: the $85$M model reaches guarded $\tkr$ $0.18$, about half the $25$M value.
+Manipulability does not simply keep improving, however. It peaks near $26$M and then
+\emph{falls}: the $86$M model reaches guarded $\tkr$ $0.18$, about half the $26$M value.
 We suspected an artifact of our own making---each size model was edited at its
 probe-$F_1$ peak, a heuristic this paper itself refutes---so we swept all twelve layers
-of the $85$M model. The hypothesis was wrong: its causal peak (L$6$, $0.206$) is
+of the $86$M model. The hypothesis was wrong: its causal peak (L$6$, $0.206$) is
 statistically indistinguishable from the layer we had already used (L$3$, $0.202$).
 The decline is real. A natural reading, which we did not test and do not claim, is that
 greater depth leaves more downstream layers able to re-derive the key from the surviving
@@ -415,7 +416,7 @@ with scale rather than closing. (Layer sweep: one seed.)
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.95\columnwidth]{fig_emergence.pdf}
-\caption{Behavioral equivalence, representational dissociation. Across a $50\times$
+\caption{Behavioral equivalence, representational dissociation. Across a $170\times$
 capacity range next-token accuracy is flat, but the key readout is not: below
 ${\sim}6$M the probe cannot beat the input baseline and the pre-registered DR-H1
 margin is negative. Dots: seeds.}
@@ -431,7 +432,7 @@ given by published Roman-numeral analyses.\footnote{Scores: \texttt{bach-370-cho
 (CC BY-NC-SA); analyses: \emph{When in Rome} (CC BY-SA). Neither is redistributed.}
 
 \textbf{Our model does not clear the surface on real music.} Probed on the chorales, our
-$85$M model reaches macro-$F_1$ $0.534$ against a selectivity floor of $0.037$---the key
+$86$M model reaches macro-$F_1$ $0.534$ against a selectivity floor of $0.037$---the key
 subspace is real and transfers, it is not an artifact of our grammar---but the best input
 baseline (KS, $W{=}64$) reaches $0.451$, and the corrected margin, $+0.034$ (CI
 $[-0.020,\,0.100]$), does not exclude zero. DR-H1 is \emph{not} supported out of
@@ -440,7 +441,7 @@ distribution.
 \textbf{A public model trained on real music does clear it.} The Anticipatory Music
 Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh MIDI, MetaMIDI, FMA, and
 $450$k commercial records) is, at its \texttt{small} size, \emph{architecturally
-identical} to our $85$M model: $12$ layers, $d{=}768$. Its vocabulary is
+identical} to our $86$M model: $12$ layers, $d{=}768$. Its vocabulary is
 (arrival-time, duration, note) triples---leak-free in exactly the sense ours is. We
 probed it on the same chorales, at the same positions, with the same controls and the
 same decision rule; the two C3 baselines land at $0.451$ and $0.454$, confirming the
@@ -485,18 +486,32 @@ again \emph{not} the probe peak (L$10$): the diffuse-readout/sharp-effect dissoc
 Sec.~\ref{sec:h5} is not an artifact of synthetic data. Second, \textbf{the model has a
 key prior and resists being pushed out of it}. The single target that fails outright is
 F$\sharp$ major ($\tkr$ $0.000$), and across all twelve targets success is almost
-perfectly ordered by how common that tonic is in real music (Spearman $+0.90$ against the
-chorale corpus's own key distribution: D at $13.8\%$ of the corpus reaches $\tkr$
-$0.600$, G at $21.4\%$ reaches $0.550$, while D$\flat$ at $0.2\%$ reaches $0.233$ and
-G$\flat$ reaches zero). A model trained on real music can be steered into keys it knows
-and resists keys its training distribution barely contains. Our synthetic model, whose
-key distribution is uniform by construction, could not have shown this.
+perfectly ordered by how common that tonic is in the chorale corpus. We count key
+frequency two ways over the same $300$ chorales, both from the human Roman-numeral
+analyses. Weighting each key by how much music is actually spent in it (note-level local
+labels, $n{=}138{,}249$) gives Spearman $+0.91$ against $\tkr$; counting each chorale's
+opening key once ($n{=}300$) gives $+0.75$. With only twelve tonics the asymptotic test
+is unreliable, so we report one-sided Monte-Carlo permutation $p$ (direction predicted a
+priori): $p<10^{-4}$ and $p=0.003$ respectively. On the note-weighted count, D at
+$13.8\%$ of the corpus reaches $\tkr$ $0.600$ and G at $21.4\%$ reaches $0.550$, while
+D$\flat$ at $0.2\%$ reaches $0.233$ and G$\flat$ at $2.2\%$ reaches zero.
+
+Two limits of this analysis deserve naming. The chorale corpus is a \emph{proxy} for
+which keys Western tonal music favours; it is not this model's training distribution,
+which is Lakh MIDI, MetaMIDI and FMA~\cite{thickstun2023anticipatory}. The correlation
+therefore establishes that the model has a key prior aligned with tonal practice, not
+that the prior was inherited from any particular corpus---identifying its source would
+require the training distribution itself. And G$\flat$ is the one target where the prior
+argument and the estimator's known weakness coincide: it is both the rarest sharp-side
+key and the enharmonic seam of the circle, so its zero should be read as the ordering's
+endpoint, not as independent evidence. Our synthetic model, whose key distribution is
+uniform by construction, could not have shown any of this.
 
 \begin{table}[t]
 \setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
 \centering\small
 \caption{Editing the key state of a \emph{public} model trained on real music
-(music-small, $85$M, Apache-2.0), on $60$ held-out Bach chorale prefixes. The edit layer
+(music-small, $86$M, Apache-2.0), on $60$ held-out Bach chorale prefixes. The edit layer
 was chosen on a disjoint set of prompts. Guard: a different public checkpoint, budget
 frozen before any edit.}
 \label{tab:wildcausal}
@@ -524,9 +539,13 @@ redundantly re-estimated state rather than a single canonical register---a contr
 with Othello-GPT's near-complete editability that we attribute to music's continual
 re-grounding of tonality in the immediately preceding notes.
 
-Four observations bound our claims. \emph{V-DAS below V-PROBE:} the optimized
-subspace may simply be undertrained relative to its search space; we report it as
-observed and release its configuration, but do not claim optimization is inherently
+Five observations bound our claims. \emph{Mode:} the pre-registration (SPEC §4) fixed
+the injected mode to major and designated minor targets a secondary condition. They have
+not been run. Every causal claim in this paper is therefore a claim about major targets,
+and whether a minor key state is equally manipulable---or whether the major/relative-minor
+distinction is even carried in the same subspace---is open. \emph{V-DAS below V-PROBE:}
+the optimized subspace may simply be undertrained relative to its search space; we report
+it as observed and release its configuration, but do not claim optimization is inherently
 inferior. \emph{Estimator:} the KS judge confuses fifths-neighbours, which
 strict/tolerant reporting brackets and $\ikr$ triangulates. \emph{Capacity:} the sweep
 varies depth and width together, so it locates a threshold, not its cause. \emph{External
@@ -567,10 +586,15 @@ representations in world models of self-supervised sequence models,'' in
 AlphaZero,'' \emph{PNAS}, vol.~119, no.~47, 2022.
 \bibitem{karvonen2024chess} A.~Karvonen, ``Emergent world models and latent variable
 estimation in chess-playing language models,'' in \emph{CoLM}, 2024.
-\bibitem{maze2024} \TBD{maze world-model reference; finalize bibliographic details}.
-\bibitem{iris2026} \TBD{RL world-model probing reference; finalize}.
-\bibitem{syntheory2024} \TBD{SynTheory music-probing reference; finalize}.
-\bibitem{smitin2024} \TBD{music steering reference; finalize}.
+\bibitem{maze2024} A.~F. Spies, W.~Edwards, M.~I. Ivanitskiy, et al., ``Transformers use
+causal world models in maze-solving tasks,'' \emph{arXiv:2412.11867}, 2024.
+\bibitem{iris2026} X.~Zhang, ``What do world models learn in RL? Probing latent
+representations in learned environment simulators,'' \emph{arXiv:2603.21546}, 2026.
+\bibitem{syntheory2024} M.~Wei, M.~Freeman, C.~Donahue, and C.~Sun, ``Do music generation
+models encode music theory?,'' in \emph{ISMIR}, 2024.
+\bibitem{smitin2024} I.~Prokopiou, P.~Vikatos, M.~Kaliakatsos-Papakostas, T.~Giannakopoulos,
+and T.~Stafylakis, ``Latent space disentanglement via activation steering for
+interpretable attribute control in symbolic music generation,'' in \emph{EUSIPCO}, 2026.
 \bibitem{thickstun2023anticipatory} J.~Thickstun, D.~Hall, C.~Donahue, and P.~Liang,
 ``Anticipatory music transformer,'' \emph{TMLR}, 2024.
 \bibitem{krumhansl1982} C.~L. Krumhansl and E.~J. Kessler, ``Tracing the dynamic

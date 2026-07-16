@@ -473,10 +473,12 @@ def fig_intervention_bars(sweep_dir: Path, out: Path, best_layer: int = 4,
 
 # ------------------------------------------------------------------ Fig: emergence
 SIZE_MODELS = [                       # (label, params_M, probing-dir prefixes)
-    ("1.6M", 1.6, ["size-L2d128_s0", "size-L2d128_s1"]),
-    ("6M", 6.0, ["size-L4d256_s0", "size-L4d256_s1"]),
-    ("25M", 25.0, ["R-Aug_s0", "R-Aug_s1", "R-Aug_s2"]),
-    ("85M", 85.0, ["size-L12d768_s0", "size-L12d768_s1"]),
+    # params counted from the checkpoints (results/models/param_counts.json), NOT from
+    # config comments — the comments said 1.6M/6M and were wrong (audit 2026-07-14).
+    ("0.5M", 0.494, ["size-L2d128_s0", "size-L2d128_s1"]),
+    ("3.4M", 3.354, ["size-L4d256_s0", "size-L4d256_s1"]),
+    ("26M", 25.61, ["R-Aug_s0", "R-Aug_s1", "R-Aug_s2"]),
+    ("86M", 85.64, ["size-L12d768_s0", "size-L12d768_s1"]),
 ]
 
 
