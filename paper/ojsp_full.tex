@@ -58,8 +58,8 @@ functional-harmony grammar whose vocabulary contains absolute pitch and time
 only---no key, chord, or degree tokens---under a pre-registered protocol with
 frozen decision rules. Our central result is causal: replacing the key component
 of the residual stream at a single middle layer makes the model continue in the
-injected key at $5.6\times$ the rate of rank- and norm-matched random edits
-(guarded strict $\tkr$ $0.378$ \vs $0.068$; significant for $12/12$ target keys
+injected key at $5.0\times$ the rate of rank-matched random edits
+(guarded strict $\tkr$ $0.378$ \vs $0.075$; significant for $12/12$ target keys
 after Holm correction, replicated across seeds), while staying inside a
 musicality budget frozen before any edit ran---reaching $58\%$ of the behavioral
 ceiling obtained by transposing the prompt itself. A capacity sweep sharpens what
@@ -68,12 +68,12 @@ $0.5$M the key is not decodable beyond the input surface at all, and the same
 edit moves the key \emph{more} often than at $26$M while destroying the music in
 $90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
 without breaking everything else. Finally we leave our own models entirely. On real Bach
-chorales a \emph{public} $86$M checkpoint trained on real music---architecturally
+chorales a \emph{public} $128$M checkpoint trained on real music---architecturally
 identical to one of ours---carries a key state that beats the pitch surface where ours
 does not, and editing that state redirects the music it composes at $5.7\times$ the rate
 of matched random edits ($11/12$ targets, Holm-corrected) with \emph{no} measurable cost
 to musicality. It also resists: the keys the edit cannot reach are exactly the keys real
-music rarely uses (Spearman $+0.90$). Editing a music Transformer's internal key state
+music rarely uses (Spearman $+0.91$). Editing a music Transformer's internal key state
 changes what key it composes in---in a model people actually use, not only in ours.
 \end{abstract}
 
@@ -204,9 +204,17 @@ synthetic. \textbf{D-SYN.} A functional-harmony state machine
 diatonic melody) generates $200$k$/10$k$/10$k train/val/test pieces of
 $278$--$508$ tokens with $0$--$3$ modulations each (pivot-chord, direct, or
 sequential; fifths-distance stratified), giving every token a ground-truth key
-label. \textbf{Tokenizer.} To prevent state leakage the vocabulary ($124$ types)
-contains only \texttt{BAR}, \texttt{POS}, absolute-MIDI \texttt{PITCH}, and
-\texttt{DUR} tokens; a unit test enforces the absence of key/chord/degree tokens.
+label. The three types are planned in equal thirds, but two of them degrade in the
+token stream: a pivot with no shared diatonic triad emits a direct jump, and a
+sequential shift over an odd fifths-distance cannot be halved into two equal steps.
+The realized corpus is therefore $18.6\%$ pivot, $16.5\%$ two-step sequential, and
+$64.9\%$ single jumps---a fact the surface baselines benefit from, not our probe. We
+also note that our ``sequential'' is a documented simplification (two equal-interval
+shifts one bar apart), not a full melodic sequence. Every token still carries an exact key
+label. \textbf{Tokenizer.} To prevent state leakage the vocabulary's $124$ types are
+\texttt{BAR}, \texttt{POS}, absolute-MIDI \texttt{PITCH} and \texttt{DUR} ($121$ types)
+together with the three structural symbols \texttt{PAD}/\texttt{BOS}/\texttt{EOS}, which
+are key-invariant. Nothing names a key, chord or degree, and a unit test enforces this.
 \textbf{Models.} M-CTRL is a GPT-2 style decoder ($8$ layers, $8$ heads,
 $d\,{=}\,512$, context $512$, ${\sim}25$M parameters), trained $12$k steps under
 two regimes---with (R-Aug) and without (R-NoAug) uniform $12$-fold transposition
@@ -245,7 +253,7 @@ component at one layer, $h \leftarrow h - P_V h + P_V\mu_{\kappa^{*}}$, with $V$
 orthonormal key subspace and $\mu_{\kappa^{*}}$ the class-conditional mean of the
 donor key. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),
 \textbf{V-MEAN} (class-mean span), \textbf{V-DAS} (interchange-trained, ranks
-$8/24$). Controls: \textbf{K1} rank/norm-matched random subspace; \textbf{K2} sham
+$8/24$). Controls: \textbf{K1} rank-matched random subspace; \textbf{K2} sham
 edit, required bit-identical to the clean run (passed, $100/100$ prompts);
 \textbf{K3} a different layer's subspace; \textbf{K4} behavioral reference,
 transposing the prompt itself. Continuations ($16$ bars; $12$ major targets
@@ -267,7 +275,10 @@ verdict (Sec.~\ref{sec:repl}).
 \label{sec:resultsA}
 The key is \emph{computed} by the model, not transcribed from the input: the
 corrected probe--baseline margin excludes zero in layers $1$--$7$ of every trained
-model (peak $+0.105$) and fails only at L$0$ ($-0.20$). Table~\ref{tab:probe} gives
+model (peak $+0.105$). It fails only at L$0$, and fails there in the informative
+direction: the margin is significantly \emph{negative} ($-0.20$, CI
+$[-0.211,-0.182]$), i.e.\ at the raw embedding the input surface outperforms the
+model's own representation of it. Table~\ref{tab:probe} gives
 the numbers at the layer the edit acts on. The internal state is most valuable
 where the surface is least informative: in the top ambiguity quartile probe accuracy
 is $0.936$ \vs $0.795$ for the best baseline.
@@ -336,7 +347,12 @@ at distance~$1$ to $0.280$ at the tritone), while random edits collapse to zero 
 the identity target is excluded. The edit reaches $58\%$ of the behavioral ceiling
 (K4), quantifying an \emph{actionability gap}: the state is readable in a rank-$24$
 subspace of one layer, yet a single-layer edit realizes only part of the behavioral
-effect. Two subsidiary findings: the \emph{optimized} subspace (V-DAS) underperforms
+effect. The fraction depends on a convention we should state. K4's perplexity excess is
+measured against the \emph{untransposed} clean twin, so it scores the transposition
+rather than any damage, and guarding K4 is not well defined. We therefore divide the
+edit's guarded rate ($0.378$) by K4's raw rate ($0.652$), giving $58\%$. Applying the
+guard to both sides gives $0.378/0.614 = 62\%$ and to neither $0.429/0.652 = 66\%$; we
+report the smallest of the three, which is the one that flatters us least. Two subsidiary findings: the \emph{optimized} subspace (V-DAS) underperforms
 the probe's readout directions (Sec.~\ref{sec:disc}), and V-MEAN edits destroy output
 quality at deep layers (guard pass ${\leq}\,5\%$ at L$4$--L$5$)---the guard is
 load-bearing, a point Sec.~\ref{sec:capacity} makes decisive.
@@ -432,17 +448,20 @@ given by published Roman-numeral analyses.\footnote{Scores: \texttt{bach-370-cho
 (CC BY-NC-SA); analyses: \emph{When in Rome} (CC BY-SA). Neither is redistributed.}
 
 \textbf{Our model does not clear the surface on real music.} Probed on the chorales, our
-$86$M model reaches macro-$F_1$ $0.534$ against a selectivity floor of $0.037$---the key
+$86$M model reaches macro-$F_1$ $0.534$ against a selectivity floor of $0.035$---the key
 subspace is real and transfers, it is not an artifact of our grammar---but the best input
 baseline (KS, $W{=}64$) reaches $0.451$, and the corrected margin, $+0.034$ (CI
-$[-0.020,\,0.100]$), does not exclude zero. DR-H1 is \emph{not} supported out of
+$[-0.021,\,0.103]$), does not exclude zero. DR-H1 is \emph{not} supported out of
 distribution.
 
 \textbf{A public model trained on real music does clear it.} The Anticipatory Music
 Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh MIDI, MetaMIDI, FMA, and
 $450$k commercial records) is, at its \texttt{small} size, \emph{architecturally
-identical} to our $86$M model: $12$ layers, $d{=}768$. Its vocabulary is
-(arrival-time, duration, note) triples---leak-free in exactly the sense ours is. We
+identical} to our $86$M model: $12$ layers, $d{=}768$, and $85.1$M non-embedding
+parameters against our $85.2$M. Only the totals differ ($128$M \vs $86$M), and only
+because its vocabulary holds $55$k tokens where ours holds $124$---so the stacks being
+compared are the same size, and what differs is what they were trained on. Its vocabulary
+is (arrival-time, duration, note) triples---leak-free in exactly the sense ours is. We
 probed it on the same chorales, at the same positions, with the same controls and the
 same decision rule; the two C3 baselines land at $0.451$ and $0.454$, confirming the
 setups are matched. It reaches macro-$F_1$ $0.690$ (L$10$) with a corrected margin of
@@ -453,10 +472,20 @@ profiles say the same thing from the other side: our synthetic model's readout p
 early (L$2$) and decays to $0.17$ by L$11$ on this out-of-distribution input, while the
 real-trained model's dips mid-network and \emph{builds} to its peak at L$10$.
 
-One caution. The probe must be read where the model is about to \emph{choose} a pitch
-(the token before a note); read at the note itself---after the pitch is committed, when
-the model is predicting the next onset---the same public model's profile decays with
-depth and the key appears to vanish. Where one probes is not a free parameter.
+One caution, and it is a large one. The probe must be read where the model is about to
+\emph{choose} a pitch (the token before a note). Read at the note itself---after the
+pitch is committed, when the model is predicting the next onset---the same public model,
+on the same chorales, with the same probe, controls and rule, produces a different
+picture and a different verdict. Its layer profile inverts from a U-shape peaking deep
+($F_1$ $0.618$ at L$0$, $0.357$ at L$4$, $0.690$ at L$10$) to a monotone decay ($0.545$,
+$0.227$, $0.093$), and the corrected margin collapses from $+0.196$ (CI $[0.132,0.260]$)
+to $+0.042$ (CI $[-0.034,0.092]$), which does not exclude zero: read at the note,
+\textbf{DR-H1 is not supported} on this model. Nothing changed but the position. Had we
+probed where the pitch has already been emitted, we would have concluded that a public
+music Transformer's key state does not beat the pitch surface and that it fades with
+depth---and we would have published it. Where one probes is not a free parameter, and we
+report the negative convention alongside the positive one rather than only the one that
+worked.
 
 \subsection{The public model \emph{uses} its key state}
 \label{sec:wildcausal}
@@ -466,11 +495,19 @@ counterpart faced. The subspace is the row space of the probe we fit on it; the 
 a \emph{different} public checkpoint (music-medium refereeing music-small: different
 weights, so not circular), with $\ppl$ frozen at $0.849$ nats---the $90$th percentile of
 that reference's perplexity rise across $1{,}180$ \emph{natural} modulations in the
-chorales---before any edit ran. Because this paper shows the probe peak is not the
-causal peak, the edit layer cannot be inherited from the probe: it is searched on $20$
-chorale prefixes and then judged on $60$ prefixes it never saw. The sham edit is
-bit-identical to the clean run ($20/20$), and an \emph{unedited} continuation stays in
-the prompt's key with $\ikr = 1.00$, so any movement is the edit's.
+chorales. Because this paper shows the probe peak is not the causal peak, the edit layer
+cannot be inherited from the probe: it is searched on $20$ chorale prefixes and then
+judged on $60$ prefixes it never saw. The sham edit is bit-identical to the clean run
+($20/20$), so any movement is the edit's.
+
+We state the freeze order precisely, because it differs from the main experiment's. For
+our own models the budget was frozen before \emph{any} edit ran. Here it was frozen after
+the $20$-prefix layer scan and before the held-out evaluation---the order the ledger
+records. The scan never consults the budget (it ranks layers on unguarded
+$\tkr(\text{edit})-\tkr(\text{K1})$), and every number we report comes from the
+evaluation that followed the freeze; but the scan's raw outcomes were visible when the
+budget's parameters were fixed, so this is a weaker guarantee than the pre-registered one
+and we do not claim otherwise.
 
 \textbf{DR-H3 is supported} (Table~\ref{tab:wildcausal}). At L$8$, on held-out prompts,
 the edit lands the continuation on the injected key at $5.7\times$ the rate of the
@@ -479,7 +516,13 @@ correction. $\ikr$ crosses: the continuation is \emph{more} diatonic to the inje
 than to the prompt's own ($0.824$ \vs $0.785$). And the edit costs the music nothing
 measurable---$100\%$ of edited continuations sit inside the frozen budget (median excess
 $+0.125$ nats against a budget of $0.849$), where our own model managed $87\%$. A key
-state learned from real music is \emph{more} cleanly separable, not less.
+state learned from real music is \emph{more} cleanly separable, not less. One
+consequence deserves stating plainly, since the guard does discriminating work elsewhere
+in this paper: here it does none. Both the edit and K1 pass it at $100\%$, so guarded and
+raw $\tkr$ coincide exactly ($0.365$ and $0.064$) and the word ``guarded'' in
+Table~\ref{tab:wildcausal} filters nothing. That is the finding, not a gap in it---but
+the reader should not picture the budget separating survivors from casualties on this
+model, because there are no casualties.
 
 Two findings here are only visible on a real model. First, the causal peak (L$8$) is
 again \emph{not} the probe peak (L$10$): the diffuse-readout/sharp-effect dissociation of
@@ -511,7 +554,7 @@ uniform by construction, could not have shown any of this.
 \setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
 \centering\small
 \caption{Editing the key state of a \emph{public} model trained on real music
-(music-small, $86$M, Apache-2.0), on $60$ held-out Bach chorale prefixes. The edit layer
+(music-small, $128$M, Apache-2.0), on $60$ held-out Bach chorale prefixes. The edit layer
 was chosen on a disjoint set of prompts. Guard: a different public checkpoint, budget
 frozen before any edit.}
 \label{tab:wildcausal}
@@ -533,11 +576,43 @@ $\ikr$ to the injected key \vs to the prompt's key & $0.824$ \vs $0.785$\\
 The three levels support the world-model reading \emph{within this training
 condition}: a Transformer trained on notes alone maintains a mid-layer key variable
 with music-theoretic geometry, and generation consults it. The gap to the behavioral
-ceiling, the failure of edits at L$0$--L$1$, and the partial effect of layer-shuffled
-subspaces (K3 $=0.160$, between K1 and the true edit) indicate a distributed,
-redundantly re-estimated state rather than a single canonical register---a contrast
-with Othello-GPT's near-complete editability that we attribute to music's continual
+ceiling and the failure of edits at L$0$--L$1$ indicate a distributed, redundantly
+re-estimated state rather than a single canonical register---a contrast with
+Othello-GPT's near-complete editability that we attribute to music's continual
 re-grounding of tonality in the immediately preceding notes.
+
+\begin{table}[t]
+\centering\caption{K3 (layer-shuffled subspace) resolved by layer. K3 injects layer
+$\ell{+}4$'s subspace at layer $\ell$; guarded strict $\tkr$, R-Aug seed~$0$. The
+layer-pooled mean ($0.160$) averages two opposite regimes and describes no condition
+that was run.}
+\label{tab:k3}
+\begin{tabular}{lccccc}
+\toprule
+inject at & L$0$ & L$1$ & L$2$ & L$3$ & L$4$ \\
+(borrowed from) & (L$4$) & (L$5$) & (L$6$) & (L$7$) & (L$0$) \\
+\midrule
+K3            & $0.003$ & $0.274$ & $0.387$ & $0.313$ & $0.064$ \\
+own edit      & $0.103$ & $0.118$ & $0.267$ & $0.337$ & $\mathbf{0.378}$ \\
+K1            & $0.073$ & $0.074$ & $0.074$ & $0.078$ & $0.075$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+K3 deserves its own paragraph, because its layer-pooled value misleads and we had
+initially read it wrongly. Pooled over layers K3 is $0.160$, which sits invitingly
+``between K1 and the true edit'' and reads as a graded partial effect. Resolved by layer
+(Table~\ref{tab:k3}) it is nothing of the kind. At the tested layer L$4$, K3 borrows
+L$0$'s subspace---the one layer whose probe fails to beat the input surface---and
+accordingly does nothing ($0.064$, at or below K1's $0.075$). That is the clean negative
+control the design intended, and it says the L$4$ effect requires L$4$'s own subspace.
+Everywhere else the result inverts: subspaces borrowed from L$5$--L$7$ and injected at
+L$1$--L$3$ reach $0.274$--$0.387$, and at L$2$ the borrowed subspace ($0.387$)
+outperforms that layer's own edit ($0.267$) and even the L$4$ headline. The key subspace
+is thus largely \emph{shared} across the middle stack rather than re-learned at each
+depth; what depth governs is not which direction encodes the key but whether writing to
+it changes the output. K3 is a valid negative control at L$4$ only, and we no longer read
+its pooled mean as evidence of anything.
 
 Five observations bound our claims. \emph{Mode:} the pre-registration (SPEC §4) fixed
 the injected mode to major and designated minor targets a secondary condition. They have

@@ -1,11 +1,19 @@
 """Subspace edit for key-state intervention (SPEC §4.2).
 
 Edit: h <- h - P_V h + P_V mu_target,  P_V = V V^T with V (d x r) orthonormal.
-K2 sham edit: h <- h - P_V h + P_V h. Mathematically the identity; in floating point
-`(x - comp) + comp` is NOT bit-identical (non-associativity), so sham computes the
-projection (exercising the editor path) and returns x unchanged. Bit-identity to the
-clean run is enforced by tests/test_sham_identity.py — this doubles as the
-implementation correctness gate. See CHANGELOG 2026-07-11.
+K2 sham edit: h <- h - P_V h + P_V h. Mathematically the identity, and it is computed
+that way: the sham runs the SAME arithmetic as a real edit, differing only in what is
+re-inserted. This is what gives the K2 gate its power — it exercises the hook, the
+layer, the basis and the from_position logic, so a detached hook or a drifted position
+makes it FAIL. Returning x early (as this file did until 2026-07-16) makes the gate
+unfalsifiable: it then passes for any V, any layer, any position.
+
+Floating-point note: `(x - comp) + comp` is not bit-identical to x in fp
+(non-associativity), and the forward LOGITS do differ by ~1e-5. That does not reach the
+generated tokens: the honest sham was measured token-bit-identical to the clean run on
+24 real prompts at the real gate layer (CHANGELOG 2026-07-16). So the sweep gate
+compares tokens with exact equality, while the unit test compares logits with a
+tolerance. See CHANGELOG 2026-07-11 and 2026-07-16.
 """
 from __future__ import annotations
 import torch
@@ -40,9 +48,9 @@ class SubspaceEditor:
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         comp = self._proj(x)
         if self.mode == "sham":
-            # (x - comp) + comp is not bit-exact in fp; the math is identity, so
-            # return x after exercising the projection (see module docstring).
-            edited = x
+            # Re-insert the component we just removed: the identity, computed the long
+            # way on purpose so this path exercises everything a real edit exercises.
+            edited = x - comp + comp
         else:
             target = (self.mu_t @ self.V) @ self.V.T   # (d,) target component
             edited = x - comp + target[None, None, :]

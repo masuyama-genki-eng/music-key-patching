@@ -52,9 +52,9 @@ generation \emph{causally uses} has not been tested. We test it directly, under 
 pre-registered protocol with frozen decision rules, on Transformers trained on
 symbolic music whose vocabulary holds absolute pitch and time only---no key,
 chord, or degree tokens. Replacing the key component of the residual stream at a
-single middle layer makes the model continue in the injected key at $5.6\times$
-the rate of rank- and norm-matched random edits (guarded $\tkr$ $0.378$ \vs
-$0.068$; significant for $12/12$ targets after Holm correction, replicated across
+single middle layer makes the model continue in the injected key at $5.0\times$
+the rate of rank-matched random edits (guarded $\tkr$ $0.378$ \vs
+$0.075$; significant for $12/12$ targets after Holm correction, replicated across
 seeds), inside a musicality budget frozen before any edit ran, reaching $58\%$ of
 the ceiling set by transposing the prompt itself. Two controls say what this
 requires. Across a $170\times$ capacity range next-token accuracy is flat, yet at
@@ -122,9 +122,10 @@ substitutions, SATB voicing, optional diatonic melody) generates
 $200$k$/10$k$/10$k train/val/test pieces of $278$--$508$ tokens with $0$--$3$
 modulations each (pivot, direct, or sequential; fifths-distance stratified), giving
 every token a ground-truth key label $\kappa(t)$ (tonic $\times$ mode, $24$
-classes). \textbf{Tokenizer}: the vocabulary ($124$ types) holds only \texttt{BAR},
-\texttt{POS}, absolute-MIDI \texttt{PITCH}, and \texttt{DUR}; a unit test enforces
-the absence of key/chord/degree tokens, so key must be computed from the notes.
+classes). \textbf{Tokenizer}: the vocabulary's $124$ types are \texttt{BAR},
+\texttt{POS}, absolute-MIDI \texttt{PITCH} and \texttt{DUR} ($121$ types) together with
+\texttt{PAD}/\texttt{BOS}/\texttt{EOS}; nothing names a key, chord or degree, and a unit
+test enforces this, so key must be computed from the notes.
 \textbf{Models}: M-CTRL is a GPT-2 style decoder ($8$ layers, $8$ heads,
 $d{=}512$, ctx $512$, ${\sim}25$M params), trained under two regimes---with
 (R-Aug) and without (R-NoAug) uniform $12$-fold transposition
@@ -156,7 +157,7 @@ h \;\leftarrow\; h - P_V h + P_V\,\mu_{\kappa^{*}},
 with $V$ an orthonormal key subspace, $P_V=VV^{\!\top}$, and $\mu_{\kappa^{*}}$ the
 class-conditional mean of the donor key $\kappa^{*}$. Subspaces: \textbf{V-PROBE}
 (probe row space, rank $24$), \textbf{V-MEAN} (class-mean span), \textbf{V-DAS}
-(interchange-trained, ranks $8/24$). Controls: \textbf{K1} rank/norm-matched random
+(interchange-trained, ranks $8/24$). Controls: \textbf{K1} rank-matched random
 subspace; \textbf{K2} sham edit, required bit-identical to the clean run (passed,
 $100/100$); \textbf{K3} another layer's subspace; \textbf{K4} the behavioral
 ceiling---transposing the prompt itself. Continuations ($16$ bars; $12$ major
@@ -172,7 +173,7 @@ condition.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_framework.pdf}
+\includegraphics[width=0.9\columnwidth]{fig_framework.pdf}
 \caption{The claim in one example (real model output, fixed sampling seed). The same
 $8$-bar B$\flat$-major prompt, continued (a)~clean and (b)~with the key component of
 layer-$4$ activations replaced by the E-major class mean from bar~$9$ on.
@@ -184,7 +185,9 @@ injected internal state. Shading marks the scale of the key in force.}
 \section{Results}
 \label{sec:results}
 Intervention numbers are from the R-Aug seed-$0$ sweep; probing holds for all six
-M-CTRL models, and the seed-$1$ sweep replicates every Phase-B verdict.
+M-CTRL models, and the seed-$1$ sweep replicates every Phase-B verdict, though seed~$1$
+peaks at L$2$ ($\tkr$ $0.321$ \vs K1 $0.056$): the localization replicates, its depth
+does not.
 
 \subsection{The key is decodable beyond the input surface}
 \label{sec:h1}
@@ -192,7 +195,9 @@ The key is \emph{computed}, not transcribed: at L$4$ the linear probe reaches
 macro-$F_1$ $0.927$ against $0.790$ for the best input baseline (PC-hist LR,
 $W{=}64$) and a $0.032$ selectivity floor, so the corrected margin is $+0.105$ (BCa
 $95\%$ CI $[0.091,0.114]$). The margin excludes zero in layers $1$--$7$ of every
-trained model and fails only at L$0$ ($-0.20$): DR-H1 is supported $6/6$. An
+trained model. It fails only at L$0$, where the margin is significantly \emph{negative}
+($-0.20$, CI $[-0.211,-0.182]$): at the embedding the notes themselves beat the
+network's own read of them, exactly as they should. DR-H1 is supported $6/6$. An
 untrained model scores $0.243$. The internal state is worth most where the surface
 is worst: in the top quartile of KS-entropy ambiguity, probe accuracy is $0.936$
 \vs $0.795$ for the baseline.
@@ -229,7 +234,9 @@ after editing. Success falls gently with fifths distance ($0.395$ at distance~$1
 $0.280$ at the tritone), while random edits collapse to zero once the identity
 target is excluded. The edit reaches $58\%$ of the behavioral ceiling (K4): the state
 is readable in a rank-$24$ subspace of one layer, yet a single-layer edit realizes
-only part of the behavioral effect---an \emph{actionability gap}. Two subsidiary
+only part of the behavioral effect---an \emph{actionability gap}. (Guarded edit over unguarded
+K4, whose perplexity twin is untransposed and so scores transposition, not damage;
+guarding both sides gives $62\%$, neither $66\%$---we report the smallest.) Two subsidiary
 findings: the \emph{optimized} subspace (V-DAS, $0.213$) underperforms the probe's
 readout directions, and V-MEAN edits destroy quality at deep layers (guard pass
 ${\leq}5\%$)---the guard is load-bearing, as Sec.~\ref{sec:capacity} makes decisive.
@@ -256,7 +263,7 @@ caution for work that localizes a computation by probing accuracy alone.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_layer_profile.pdf}
+\includegraphics[width=0.92\columnwidth]{fig_layer_profile.pdf}
 \caption{(a)~Probe macro-$F_1$ per layer, all six M-CTRL models (thin lines; R-Aug
 seed~$0$ highlighted): the key is legible across a broad plateau. (b)~Causal effect:
 guarded $\tkr$ of the V-PROBE edit \vs the K1 matched random control (bands:
@@ -290,14 +297,16 @@ Everything above is our own model on our own data. We close by leaving both. On 
 Bach chorales whose \emph{local} key at every note comes from published Roman-numeral
 analyses,\footnote{Scores: \texttt{bach-370-chorales} (CC BY-NC-SA); analyses:
 \emph{When in Rome} (CC BY-SA). Neither is redistributed.} our $86$M model's key
-subspace transfers ($F_1$ $0.534$ \vs a $0.037$ selectivity floor) but does \emph{not}
+subspace transfers ($F_1$ $0.534$ \vs a $0.035$ selectivity floor) but does \emph{not}
 beat the pitch surface: the corrected margin, $+0.034$ (CI $[-0.021,0.103]$), does not
 exclude zero.
 
 The Anticipatory Music Transformer~\cite{thickstun2023anticipatory} (Apache-2.0; Lakh
 MIDI, MetaMIDI, FMA, $450$k commercial records) is, at its \texttt{small} size,
-\emph{architecturally identical} to that model---$12$ layers, $d{=}768$---and its
-vocabulary, (arrival-time, duration, note) triples, is leak-free exactly as ours is.
+\emph{architecturally identical} to that model---$12$ layers, $d{=}768$, $85.1$M
+\vs $85.2$M non-embedding parameters (its $128$M total only reflects a $55$k
+vocabulary against our $124$)---and its (arrival-time, duration, note) vocabulary is
+leak-free exactly as ours is.
 Probed on the same chorales, at the same positions, with the same controls and rule (the
 two C3 baselines land at $0.451$ and $0.454$, confirming the setups match), it reaches
 $F_1$ $0.690$ with a corrected margin of $+0.196$ (CI $[0.132,0.260]$): \textbf{DR-H1
@@ -322,16 +331,18 @@ peak (L$10$), so Sec.~\ref{sec:h3}'s dissociation is not an artifact of syntheti
 And the model \emph{resists}: the one target it cannot reach is F$\sharp$ major ($\tkr$
 $0.000$), and across all twelve targets success is ordered almost perfectly by how common
 that tonic is in the chorale corpus, counted over its note-weighted local-key labels
-(Spearman $+0.90$, $n{=}12$, one-sided permutation $p<10^{-4}$; $+0.75$ if keys are
+(Spearman $+0.91$, $n{=}12$, one-sided permutation $p<10^{-4}$; $+0.75$ if keys are
 counted once per chorale instead). A model trained on real music can be steered into the
 keys that music favours and resists the rest---a prior our uniformly-keyed synthetic
 corpus could not have revealed. The chorale distribution is a proxy for tonal key
 frequency, not a measurement of this model's own training corpus (Lakh MIDI and
 MetaMIDI, not chorales), so the prior's \emph{source} is not identified here---only its
 existence. One caution earned
-the hard way: the probe must be read where the model is about to \emph{choose} a pitch;
-read at the note itself, after the pitch is committed, the same model's profile decays
-with depth and the key appears to vanish. Where one probes is not a free parameter.
+the hard way: the probe must be read where the model is about to \emph{choose} a pitch.
+Read at the note instead, the same model on the same chorales decays with depth
+($F_1$ $0.545$ at L$0$ to $0.093$ at L$10$) rather than peaking deep, and the margin
+falls to $+0.042$ (CI $[-0.034,0.092]$): DR-H1 would be \emph{unsupported}. One position
+choice, and the verdict inverts.
 
 \begin{table}[t]
 \setlength{\tabcolsep}{3.5pt}\renewcommand{\arraystretch}{1.12}
@@ -363,37 +374,35 @@ public, real-trained~\cite{thickstun2023anticipatory} & --- & $\mathbf{+0.196}$ 
 \label{sec:disc}
 The evidence supports the world-model reading within this training condition: a
 Transformer trained on notes alone maintains a mid-layer key variable with
-music-theoretic geometry, and generation consults it. The gap to the behavioral
-ceiling, the failure of edits at L$0$--L$1$, and the partial effect of layer-shuffled
-subspaces (K3 $=0.160$, between K1 and the true edit) point to a distributed,
-redundantly re-estimated state rather than a single canonical register---a contrast
-with Othello-GPT's near-complete editability that we attribute to music's continual
-re-grounding of tonality in the immediately preceding notes.
+music-theoretic geometry, and generation consults it. The gap to the behavioral ceiling
+and the failure of edits at L$0$--L$1$ point to a distributed, redundantly re-estimated
+state rather than a single canonical register---a contrast with Othello-GPT's
+near-complete editability that we attribute to music's continual re-grounding of
+tonality in the preceding notes. K3 agrees: it is a negative control only at L$4$, where
+it borrows L$0$'s failed subspace and does nothing ($0.064$, at or below K1), but
+subspaces borrowed from L$5$--L$7$ and injected at L$1$--L$3$ reach $0.27$--$0.39$, so
+the subspace is largely \emph{shared} across the middle stack and its layer-pooled mean
+($0.160$) is not a ``partial effect''. The full version resolves K3 by layer.
 
-Bounds. \emph{Mode:} the pre-registration fixed the injected mode to major and
-designated minor targets a secondary condition; they have not been run, so every causal
-claim here is a claim about major targets only. \emph{V-DAS below V-PROBE:} the
-optimized subspace may be undertrained relative to its search space; we report it as
-observed and release its configuration. \emph{Estimator:} the KS judge confuses
-fifths-neighbours, which strict/tolerant reporting brackets and $\ikr$ triangulates.
-\emph{Capacity:} the sweep varies depth and width together, locating a threshold, not
-its cause. \emph{Real models:} the causal result of Sec.~\ref{sec:wild} holds for one
-public checkpoint at one size; whether edited continuations modulate \emph{musically}
-(pivot-like transitions \vs jumps) is the journal version's question. Supplementary material carries the ambiguity strata,
-the $12\times24$ specificity matrix, the fifths-distance curve, and per-seed variants of
-every figure. All training data are synthetic; the evaluation corpora are used under
-their stated licenses.
+Bounds. \emph{Mode:} the pre-registration fixed the injected mode to major; minor
+targets were designated secondary and have not been run, so every causal claim here
+concerns major targets. \emph{V-DAS below V-PROBE:} the optimized subspace may be
+undertrained relative to its search space; we report it as observed. \emph{Estimator:}
+the KS judge confuses fifths-neighbours, which strict/tolerant reporting brackets and
+$\ikr$ triangulates. \emph{Capacity:} the sweep varies depth and width together,
+locating a threshold, not its cause. \emph{Selection:} the best (method, layer) is
+chosen on the data the Wilcoxon then tests, as pre-registered. \emph{Real models:} the
+causal result holds for one public checkpoint at one size. The journal version carries
+the ambiguity strata, the specificity matrix, the fifths-distance curve, per-seed
+figures, and whether edited continuations modulate \emph{musically}. Training data are
+synthetic; evaluation corpora are used under their stated licenses.
 
 \section{Conclusion}
-We gave pre-registered causal evidence that a music Transformer tracks musical key as
-an internal state variable that generation consults, and quantified how far a
-single-layer edit goes toward full behavioral control. Two controls say what this
-requires: capacity supplies not the key but a key that can be moved without breaking
-the music, and it is the training data---not the architecture---that decides whether
-such a state beats the notes themselves. The testbed (exact state labels, leak-free
-vocabulary, frozen decision rules) is released as a benchmark. Music offers state
-variables that theory defines and ears can verify; our next question is whether models
-also internalize how keys are \emph{supposed} to change.
+A music Transformer tracks musical key as an internal state variable that generation
+consults---in our models, and in one people actually use. Capacity supplies not the key
+but a key that can be moved without breaking the music; the training data, not the
+architecture, decides whether that state beats the notes themselves. The testbed is
+released as a benchmark.
 
 \vspace{2pt}\noindent\footnotesize\textbf{Reproducibility.} Anonymized code, data
 generator, pre-registration, and an audio demo page (clean \vs edited continuations):

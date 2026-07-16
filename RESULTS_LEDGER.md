@@ -642,3 +642,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-07-16T18:28:37+09:00 — P5 figures
+- git: `2259453437a5fb0761fe91bcec3b8d24d34387d1+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-16T18:31:44+09:00 — param counts (ours + public AMT)
+- git: `2259453437a5fb0761fe91bcec3b8d24d34387d1+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: []
+- artifacts: `results/models/param_counts.json`
+- note: Adds the public AMT checkpoints. music-small: total 128,103,936 / non-emb 85,056,000 vs our size-L12d768 total 85,639,680 / non-emb 85,151,232. The paper's '86M' label for music-small was our model's total misapplied; the stacks match at 85M non-embedding, the totals do not.
+
+## 2026-07-16T18:32:22+09:00 — param counts (ours + public AMT)
+- git: `2259453437a5fb0761fe91bcec3b8d24d34387d1+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: []
+- artifacts: `results/models/param_counts.json`
+- note: Adds the public AMT checkpoints. music-small: total 128,103,936 / non-emb 85,056,000 vs our size-L12d768 total 85,639,680 / non-emb 85,151,232. The paper's '86M' label for music-small was our model's total misapplied; the stacks match at 85M non-embedding, the totals do not.
+
+## 2026-07-16T18:34:03+09:00 — M-WILD probe music-small-800k
+- git: `2259453437a5fb0761fe91bcec3b8d24d34387d1+DIRTY`
+- config_hash: `559125c1792c9920d4a8e6734fd812908458f23c6ee113173ee0f0df68719875`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/at_note/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.5449 (L0) vs best C3 0.4537; corrected margin 0.0417 CI[-0.0335,0.0924]; beats_surface=False
+

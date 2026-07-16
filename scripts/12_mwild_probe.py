@@ -67,7 +67,13 @@ def main() -> None:
     windows = list(pcfg["controls"]["c3_windows"])
     device = "cuda" if torch.cuda.is_available() else "cpu"
     short = args.model.split("/")[-1]
+    # probe_at MUST be in the path: the two conventions are different measurements, and
+    # a shared path silently overwrites one with the other (this bit us once already in
+    # the D-REAL probe — CHANGELOG 2026-07-15). predict_pitch keeps the original,
+    # unsuffixed location so existing artifacts and their ledger entries stay valid.
     outdir = REPO / "results/mwild" / short
+    if args.probe_at != "predict_pitch":
+        outdir = outdir / args.probe_at
     outdir.mkdir(parents=True, exist_ok=True)
 
     log.info("loading %s", args.model)

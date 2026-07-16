@@ -28,23 +28,46 @@ def _basis(seed: int = 1) -> torch.Tensor:
     return orthonormalize(torch.randn(D, RANK, generator=g))
 
 
-def test_sham_forward_bit_identical():
+def test_sham_forward_matches_clean_to_fp_tolerance():
+    """The sham computes x - P_V x + P_V x, which is the identity in exact arithmetic
+    but not bit-exact in fp (non-associativity). The logits may differ at ~1e-5; what
+    must not differ is the tokens (see the next test and the sweep's K2 gate)."""
     m = _model()
     ids = torch.randint(0, V, (2, 48))
     sham = SubspaceEditor(_basis(), mode="sham")
     with torch.no_grad():
         clean = m(ids)
         edited = m(ids, editors={LAYER: sham})
-    assert torch.equal(clean, edited), "sham edit is not bit-identical to clean forward"
+    assert torch.allclose(clean, edited, atol=1e-4), "sham edit is not the identity"
 
 
 def test_sham_generate_bit_identical():
+    """Token-level exactness — this is the property the K2 gate relies on."""
     m = _model()
     ids = torch.randint(0, V, (2, 16))
     sham = SubspaceEditor(_basis(), mode="sham")
     a = m.generate(ids, n_new=32, rng=torch.Generator().manual_seed(3))
     b = m.generate(ids, n_new=32, editors={LAYER: sham}, rng=torch.Generator().manual_seed(3))
     assert torch.equal(a, b), "sham edit changed generated tokens"
+
+
+def test_sham_is_not_short_circuited():
+    """Guards the guard.
+
+    Until 2026-07-16 the sham returned x unconditionally. The K2 gate then passed for
+    any basis, any layer and any from_position — it could not fail, so it tested
+    nothing. This test pins the sham to doing the arithmetic: x - P_V x + P_V x is the
+    identity mathematically but NOT bit-exact in fp, so an honest sham's output differs
+    from x in the last bits while remaining numerically identical. If someone restores
+    the `edited = x` short-circuit, torch.equal becomes True and this fails."""
+    torch.manual_seed(0)
+    x = torch.randn(2, 16, D)
+    sham = SubspaceEditor(_basis(), mode="sham")
+    out = sham(x)
+    assert torch.allclose(out, x, atol=1e-4), "sham is not the identity"
+    assert not torch.equal(out, x), \
+        "sham returned x bit-for-bit: the projection was skipped, so the K2 gate " \
+        "cannot detect a detached hook, a wrong layer, or position drift"
 
 
 def test_replace_edit_changes_output():

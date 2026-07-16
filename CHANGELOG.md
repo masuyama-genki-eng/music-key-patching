@@ -342,3 +342,141 @@ permutation p values (the asymptotic p is not trustworthy at n=12).
 - ICASSP Limitations still read "we have not intervened on [the public model], so it
   inherits no causal claim" — stale text predating the M-WILD intervention, contradicting
   our own abstract. Fixed.
+
+## 2026-07-16 — Code review against the paper: five real defects, two SPEC deviations
+
+A five-way audit cross-checked every claim in both papers against the code and artifacts.
+DR-H1/H3/H5 survive: the edit formula is exactly h - P_V h + P_V mu, V is orthonormal,
+the sustained edit lands on the right positions at every step including across the
+context slide (384 steps instrumented, 0 drifted), clean/edited are paired by
+common random numbers, no target leaks outside the residual stream, Holm and the paired
+Wilcoxon are correct, the guard is applied symmetrically to edit and K1, and the D-SYN
+tokenizer is empirically leak-free (stripping PITCH leaves exactly one non-pitch stream
+per length; n_tokens x initial_key chi^2 p=0.48). What follows is what was wrong.
+
+### DEVIATION 1 (silent, now logged) — K1 is rank-matched, NOT norm-matched
+
+SPEC §4 (frozen) requires "K1 rank・norm 整合ランダム部分空間". The implementation
+(src/intervene/edit.py::random_matched_subspace) is `orthonormalize(randn(V.shape))` —
+shape only. No norm matching exists anywhere in src/intervene/. Both papers claimed
+"rank- and norm-matched" IN THE ABSTRACT. Never logged. This is exactly what CLAUDE.md
+forbids: a frozen protocol silently not followed.
+
+Measured consequence before deciding: at the headline condition the applied perturbation
+is ‖Δ‖ = 32.5 (edit) vs 28.7 (K1), ratio 1.13 against ‖h‖≈100 — both are rank-24
+projections of comparably scaled vectors, so they land within 13% without being matched.
+The 5x effect is not an artifact of edit magnitude. Papers now say "rank-matched"; the
+deviation is logged here rather than papered over.
+
+### DEVIATION 2 (reversed) — the K2 sham was a no-op, so its gate could not fail
+
+`edit.py` returned `edited = x` for mode="sham", ignoring V, mu, layer and
+from_position. The sweep's K2 gate compares sham vs clean tokens — so it passed
+unconditionally, for any basis, any layer, any position. It could not detect a detached
+hook, a wrong layer, position drift, or a wrong V. Both papers cite it as evidence the
+plumbing is sound ("required bit-identical to the clean run (passed, 100/100)").
+
+The 2026-07-11 justification (fp non-associativity breaks bit-identity) is true only of
+LOGITS (max|diff| ~2e-5). The gate compares TOKENS. Measured on the real R-Aug_s0 model
+at the real gate layer with the honest arithmetic `x - P_V x + P_V x`: **0/100 prompts
+differ**. The deviation was unnecessary. Restored: the sham now does the arithmetic, the
+sweep gate keeps exact token equality, the unit test compares logits with a tolerance,
+and a new test (test_sham_is_not_short_circuited) fails if anyone reintroduces `= x`.
+
+### DEFECT 1 — "5.6x" compared an L4 edit against a K1 pooled over all 8 layers
+
+src/analysis/figures.py globbed `k1_r24_L*.parquet` (all layers) for the control bar
+while V-PROBE used `v_probe_L{best}_*.parquet` (L4 only). K1 is 0.073-0.078 at L0-L4 but
+0.055-0.058 at L5-L7, so pooling drags it to 0.0681 and the ratio to 0.378/0.0681 = 5.55
+-> "5.6x". The layer-matched control is 0.0750 -> **5.04x**. A ~10% inflation, favorable
+to us, in both abstracts. DR-H3 itself always used the layer-matched K1
+(07_analyze.py:88-89), so the verdict never moved. Figure now globs the best layer for
+K1 and K3; papers say 5.0x and 0.075.
+
+### DEFECT 2 — "K3 = 0.160, between K1 and the true edit" averages two opposite regimes
+
+Same pooling, worse consequence: the number was load-bearing for an inference. K3
+injects layer ℓ+4's subspace at layer ℓ. Resolved by layer (guarded strict TKR):
+
+    inject at   L0     L1     L2     L3     L4
+    (borrowed)  (L4)   (L5)   (L6)   (L7)   (L0)
+    K3          0.003  0.274  0.387  0.313  0.064
+    own edit    0.103  0.118  0.267  0.337  0.378
+    K1          0.073  0.074  0.074  0.078  0.075
+
+At the tested layer L4, K3 borrows L0's subspace — the one layer whose probe fails — and
+does nothing (0.064, at/below K1). That is the clean negative control, and it says the L4
+effect needs L4's own subspace. Everywhere else it inverts: subspaces borrowed from L5-L7
+and injected at L1-L3 reach 0.274-0.387, and at L2 the borrowed subspace (0.387) beats
+that layer's own edit (0.267). The pooled 0.160 describes no condition that was run. The
+Discussion's "partial effect -> distributed, redundantly re-estimated state" is not what
+this shows; it shows the subspace is largely SHARED across the middle stack. Rewritten in
+both papers; OJSP gains Table tab:k3 with the full breakdown.
+
+### DEFECT 3 — wrong numbers traced to no artifact or the wrong one
+
+- D-REAL selectivity floor: papers said 0.037; artifact says 0.03545 -> **0.035**.
+- OJSP margin CI: printed [-0.020, 0.100]; artifact says [-0.020637, 0.102683] ->
+  **[-0.021, 0.103]** (ICASSP was already correct).
+- ICASSP Spearman: +0.90; artifact says 0.9072 -> **+0.91** (OJSP was correct).
+- Vocabulary: "124 types holds only BAR/POS/PITCH/DUR" — those four are 121; the other
+  three are PAD/BOS/EOS. Not a leak (they are key-invariant), but false as written.
+- L0 probing: "fails only at L0 (-0.20)" hid that the margin is significantly NEGATIVE
+  (CI [-0.211,-0.182]) — at the embedding the surface beats the model's read of it,
+  which strengthens the argument. Now stated.
+- music-small labelled "86M": that is OUR model's total. Counted from the checkpoint
+  (scripts/16_param_counts.py, new): music-small is **128,103,936 total / 85,056,000
+  non-embedding**; our size-L12d768 is 85,639,680 / 85,151,232. The stacks match at 85M
+  non-embedding; the totals differ only because AMT's vocab is 55,028 against our 124.
+  Papers now compare non-embedding counts and say so.
+  (First cut of that script matched only wte/wpe and silently reported non_embedding ==
+  total for our models, whose embeddings are named tok./pos.; caught by cross-checking
+  against the 2026-07-14 artifact, which it now reproduces exactly.)
+
+### DEFECT 4 — two claims rested on prose in this file, not on artifacts (SPEC §7)
+
+- **at_note.** Both papers claimed that probing at the note (rather than before it) makes
+  the key "appear to vanish", citing numbers that existed only in CHANGELOG 2026-07-14.
+  Now RUN and ledgered (results/mwild/music-small-800k/at_note/): the profile inverts
+  from a deep-peaking U (0.618 L0 / 0.357 L4 / 0.690 L10) to a monotone decay (0.545 /
+  0.227 / 0.093), and the corrected margin collapses from +0.196 [0.132,0.260] to +0.042
+  [-0.034,0.092] — read at the note, **DR-H1 is not supported on this model**. The claim
+  is stronger than what we had written, and it is now traceable. (12_mwild_probe.py wrote
+  both conventions to the same path; probe_at is now part of the path, as in 11_dreal.)
+- **IKR = 1.00 for unedited continuations.** No artifact contains it: stage 2 generates
+  clean twins but stores only their reference NLL. Claim removed from OJSP.
+
+### DISCLOSURES added (true before, but unstated)
+
+- **58% of ceiling** divides a guarded numerator by an unguarded K4, because K4's
+  perplexity is measured against the untransposed clean twin and therefore scores
+  transposition, not damage. Guarding both sides gives 62%, neither 66%. We keep 58% —
+  the smallest of the three — and now say why.
+- **M-WILD guard freeze order.** The paper said "before any edit ran". The ledger says
+  the budget was frozen 28 s AFTER the 20-prefix layer scan (07:20:00 -> 07:20:28) and
+  before the held-out evaluation (07:54:42). The scan never consults the budget and every
+  reported number postdates the freeze, but the scan's raw outcomes were visible when the
+  budget's parameters were fixed. Weaker than the main experiment's guarantee; now stated
+  as such instead of claimed as equal.
+- **The M-WILD guard is non-binding**: edit and K1 both pass at 100%, so guarded and raw
+  TKR coincide and "guarded" filters nothing on that model.
+- **Realized modulation mix.** Planned in equal thirds, but pivots without a shared triad
+  and odd-interval sequentials degrade to single jumps: the corpus is 18.6% pivot / 16.5%
+  two-step sequential / 64.9% single jumps. Disclosed in OJSP.
+- **Seed 1 peaks at L2, not L4** (TKR 0.321 vs K1 0.056). Every verdict replicates; the
+  depth does not. OJSP said so; ICASSP now does too.
+- **Best (method, layer) is selected on the same data the Wilcoxon then tests.** SPEC
+  pre-registers exactly this, so the code is faithful — but it is now stated rather than
+  left for a referee to find.
+
+### Known, NOT fixed (recorded so it is not rediscovered as new)
+
+The M-WILD tokenizer is a reimplementation validated only by a vocab-size equality and an
+NLL sanity gate. The gate's pitch-shift arm adds +1 to every note token, which is a
+uniform transposition — valid music — so its margin is 0.0129 nats (1.9%), and nothing
+tests TIME_OFFSET, DUR_OFFSET or field order. The gate shows the stream is not noise; it
+does NOT show our offsets are the ones the model was trained with. Settling it costs one
+`pip install anticipation` and an assert of token-id equality against the published
+encoder. Until then every M-WILD number depends on an unvalidated reimplementation. Also:
+src/probing/mwild.py's docstring claims the checkpoint declares vocab 55030 and is padded
+to 55028 — false, it declares 55028; the padding branch never fires.

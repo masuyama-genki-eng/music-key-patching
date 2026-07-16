@@ -404,9 +404,13 @@ def fig_intervention_bars(sweep_dir: Path, out: Path, best_layer: int = 4,
     The two numbers the paper argues from — the multiplier over the matched random
     control and the fraction of the behavioural ceiling reached — are drawn in the
     figure rather than left to the caption."""
+    # Controls MUST be read at the same layer as the edit they are compared against.
+    # Until 2026-07-16 K1 and K3 globbed L* (all 8 layers) while V-PROBE was L4 only:
+    # the K1 mean was dragged down by L5-L7 (0.055-0.058 vs 0.075 at L4), inflating the
+    # headline ratio from 5.0x to 5.6x. See CHANGELOG 2026-07-16.
     conds = [
-        ("K1\nrandom", "k1_r24_L*.parquet", CTRL, "control"),
-        ("K3\nshuffled", "k3_*.parquet", CTRL2, "control"),
+        (f"K1\nrandom", f"k1_r24_L{best_layer}_*.parquet", CTRL, "control"),
+        (f"K3\nshuffled", f"k3_L{best_layer}_*.parquet", CTRL2, "control"),
         (f"V-DAS\n(L{best_layer})", f"v_das24_L{best_layer}_*.parquet", EDIT2, "edit"),
         (f"V-MEAN\n(L{mean_layer})", f"v_mean_L{mean_layer}_*.parquet", EDIT2, "edit"),
         (f"V-PROBE\n(L{best_layer})", f"v_probe_L{best_layer}_*.parquet", EDIT, "edit"),
