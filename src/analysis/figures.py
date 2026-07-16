@@ -77,9 +77,10 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     r = json.loads((probing_root / highlight / "probe_report.json").read_text())
     best_c3 = max(v["macro_f1_24"] for v in r["c3"].values())
     ax1.axhline(best_c3, color=BASE, lw=1.1, ls="--", zorder=3)
-    ax1.text(0.05, best_c3, "input baseline (C3)", color=BASE, ha="left",
-             va="center", fontsize=6.5, zorder=5,
-             bbox=dict(fc="white", ec="none", pad=1.0))
+    ax1.annotate("input baseline (C3)", xy=(0.99, best_c3),
+                 xycoords=ax1.get_yaxis_transform(), xytext=(0, 2),
+                 textcoords="offset points", color=BASE, ha="right", va="bottom",
+                 fontsize=6.5, zorder=5)
     # the readout is a PLATEAU, not a peak: report the saturated band honestly
     f1 = np.array(curves[highlight])
     plateau = [i for i in range(8) if f1[i] >= f1.max() - 0.01]
@@ -112,8 +113,10 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     ax2.plot(layers, cm, color=CTRL, lw=1.4, marker="s", ms=3, zorder=3,
              label="K1 random matched")
     ax2.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
-    ax2.text(7.45, 1 / 12, "chance", color=BASE, ha="right", va="center",
-             fontsize=6.5, zorder=5, bbox=dict(fc="white", ec="none", pad=1.0))
+    # axis coords, so the label cannot drift off the plot when the layer count changes
+    ax2.annotate("chance", xy=(0.99, 1 / 12), xycoords=ax2.get_yaxis_transform(),
+                 xytext=(0, 2), textcoords="offset points", color=BASE, ha="right",
+                 va="bottom", fontsize=6.5, zorder=5)
     peak_act = int(layers[int(np.argmax(em))])
     ymax = max(eh) * 1.42
     ax2.set_xlabel("layer")
@@ -252,8 +255,9 @@ def fig_fifths_curve(sweep_dir: Path, method: str, layer: int, out: Path) -> Non
     ax.fill_between(common, c[common], e[common], color=EDIT, alpha=0.12, lw=0,
                     zorder=2)
     ax.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
-    ax.text(6.05, 1 / 12, "chance", color=BASE, fontsize=6.5, va="center", ha="left",
-            bbox=dict(fc="white", ec="none", pad=1.0))
+    ax.annotate("chance", xy=(0.99, 1 / 12), xycoords=ax.get_yaxis_transform(),
+                xytext=(0, 2), textcoords="offset points", color=BASE, fontsize=6.5,
+                va="bottom", ha="right")
     ax.set_xlabel("circle-of-fifths distance src $\\to$ target")
     ax.set_ylabel("strict TKR")
     ax.set_ylim(0, 1.02)
@@ -344,8 +348,6 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
              fontsize=6.8, color=INK, ha="left", va="center", clip_on=False)
     ax1.text(4 * 16, 40.2, f"prompt: {src} major", ha="center", fontsize=6.5,
              color="#5A5A5A", bbox=dict(fc="white", ec="none", pad=0.8))
-    ax2.text(0.35 * 16, 40.2, "shading = scale of the key in force", fontsize=6,
-             color="#8A8A8A", ha="left", bbox=dict(fc="white", ec="none", pad=0.8))
     fig.savefig(out)
     plt.close(fig)
 
@@ -381,13 +383,14 @@ def fig_equivariance(equi_root: Path, out: Path) -> None:
         ax.fill_between(x, arr.min(0), arr.max(0), color=color, alpha=0.16, lw=0,
                         zorder=2)
     ax.axhline(rand_ref, color=BASE, lw=1.1, ls="--", zorder=1)
-    ax.text(L - 1, rand_ref, "random orthogonal maps", color=BASE, ha="right",
-            va="center", fontsize=6.5, zorder=5,
-            bbox=dict(fc="white", ec="none", pad=1.0))
-    ax.annotate("augmentation changes nothing\n(DR-H2b not supported)",
-                xy=(4, np.stack(groups["R-Aug"]).mean(0)[4]), xytext=(4.6, 0.62),
-                fontsize=6.8, color="#5A5A5A", ha="left",
-                arrowprops=dict(arrowstyle="->", lw=0.7, color="#9A9A9A"))
+    ax.annotate("random orthogonal maps", xy=(0.99, rand_ref),
+                xycoords=ax.get_yaxis_transform(), xytext=(0, 2),
+                textcoords="offset points", color=BASE, ha="right", va="bottom",
+                fontsize=6.5, zorder=5)
+    # annotate ABOVE the curves and keep the legend in the opposite corner: the two
+    # regimes sit on top of each other, so the free space is over the plateau.
+    ax.text(4.9, 0.78, "augmentation changes nothing\n(DR-H2b not supported)",
+            fontsize=6.8, color="#5A5A5A", ha="center", va="bottom", linespacing=1.25)
     ax.set_xticks(x, [str(i) for i in range(L)])
     ax.set_xlabel("layer")
     ax.set_ylabel("cyclicity error $\\varepsilon_{\\mathrm{cyc}}$")
@@ -454,8 +457,9 @@ def fig_intervention_bars(sweep_dir: Path, out: Path, best_layer: int = 4,
             va="bottom", fontsize=7, color=BOUND, fontweight="bold")
 
     ax.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
-    ax.text(5.72, 1 / 12, "chance", color=BASE, fontsize=6.5, va="center", ha="left",
-            zorder=5, bbox=dict(fc="white", ec="none", pad=1.0))
+    ax.annotate("chance", xy=(0.99, 1 / 12), xycoords=ax.get_yaxis_transform(),
+                xytext=(0, 2), textcoords="offset points", color=BASE, fontsize=6.5,
+                va="bottom", ha="right", zorder=5)
 
     # group brackets BELOW the tick labels: the logic of the comparison
     for lo_i, hi_i, nm in ((0, 1, "controls"), (2, 4, "subspace edits"),
@@ -494,8 +498,15 @@ def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
                   out: Path) -> None:
     """Behavioral equivalence vs. representational emergence across capacity.
     (a) next-token top-1 and peak probe F1 vs. the input baseline;
-    (b) the pre-registered DR-H1 margin (probe - C1b - best C3), which crosses
-        zero between 1.6M and 6M."""
+    (b) the pre-registered DR-H1 margin (probe - C1b - best C3), which crosses zero
+        inside the shaded band.
+
+    Every label and annotation here is placed from the DATA or in axis coordinates —
+    never at a hardcoded parameter value. The first version of this figure hardcoded
+    "between 1.6M and 6M" in the panel-(b) title and pinned labels at x=88 and x=1.72,
+    tuned to parameter counts that turned out to be wrong (CHANGELOG 2026-07-14). When
+    SIZE_MODELS was corrected the axis moved and the title did not, so the figure
+    contradicted its own x-axis. Derive, don't retype."""
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.4), sharex=True)
     xs = [p for _, p, _ in SIZE_MODELS]
 
@@ -534,8 +545,11 @@ def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
     for x, vals in zip(xs, pf):
         ax1.scatter([x] * len(vals), vals, s=5, color=INK, zorder=5)
     ax1.axhline(c3, color=BASE, lw=1.1, ls="--", zorder=2)
-    ax1.text(88, c3, "input baseline (C3)", color=BASE, ha="right", va="center",
-             fontsize=6.5, zorder=6, bbox=dict(fc="white", ec="none", pad=1.0))
+    # axis coords: independent of whatever the parameter range happens to be
+    ax1.annotate("input baseline (C3)", xy=(0.99, c3),
+                 xycoords=ax1.get_yaxis_transform(), xytext=(0, 2),
+                 textcoords="offset points", color=BASE, ha="right", va="bottom",
+                 fontsize=6.5, zorder=6)
     ax1.set_xscale("log")
     ax1.set_ylim(0.5, 1.02)
     ax1.set_ylabel("score")
@@ -552,10 +566,13 @@ def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
     ax2.set_xlabel("parameters")
     ax2.set_ylabel("DR-H1 margin")
     ax2.set_ylim(-0.26, 0.17)
-    ax2.set_title("(b) the world model appears between 1.6M and 6M", loc="left",
-                  fontsize=7.5, color=INK)
-    ax2.text(1.72, -0.235, "not supported", color="#666666", fontsize=6.5, ha="left")
-    ax2.text(88, 0.115, "supported", color="#666666", fontsize=6.5, ha="right")
+    lo_lbl, hi_lbl = SIZE_MODELS[lo_i][0], SIZE_MODELS[lo_i + 1][0]
+    ax2.set_title(f"(b) the world model appears between {lo_lbl} and {hi_lbl}",
+                  loc="left", fontsize=7.5, color=INK)
+    ax2.text(0.02, 0.04, "not supported", color="#666666", fontsize=6.5, ha="left",
+             transform=ax2.transAxes)
+    ax2.text(0.985, 0.88, "supported", color="#666666", fontsize=6.5, ha="right",
+             transform=ax2.transAxes)
     # name the shaded band from inside it, where both panels have clear space
     ax1.text(np.sqrt(zone[0] * zone[1]), 0.535, "world model\nappears here",
              ha="center", va="bottom", fontsize=6.8, color="#5A5A5A", linespacing=1.2)
@@ -564,10 +581,11 @@ def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,
 
 
 def fig_surgical(sweep_root: Path, out: Path) -> None:
-    """Why the guard is the load-bearing control. At 1.6M the edit moves the key MORE
-    often than at 25M (raw TKR) — and almost always wrecks the music doing it. Only
-    with capacity does the same edit become surgical: a state you can move without
-    breaking everything else. That, not mere presence, is the world-model claim."""
+    """Why the guard is the load-bearing control. At the smallest size the edit moves
+    the key MORE often than at 26M (raw TKR) — and almost always wrecks the music doing
+    it. Only with capacity does the same edit become surgical: a state you can move
+    without breaking everything else. That, not mere presence, is the world-model claim.
+    Sizes are named by SIZE_MODELS, never retyped here."""
     guard = json.loads((sweep_root.parent / "guard/delta_ppl.json").read_text())
     delta = guard["delta_ppl"]
     N_TARGETS = 12                     # a size is plotted only when ALL targets ran
@@ -615,10 +633,11 @@ def fig_surgical(sweep_root: Path, out: Path) -> None:
     ax.set_ylim(0, 1.24)
     ax.legend(frameon=False, loc="upper center", fontsize=6.5, handlelength=1.4,
               ncols=2, columnspacing=1.0, borderpad=0.1)
-    ax.annotate("edit works,\nmusic destroyed", xy=(xs[0] * 1.02, rows[0][3] + 0.02),
-                xytext=(xs[0] * 1.06, 0.30), fontsize=6.6, color="#5A5A5A",
-                ha="left", va="center", linespacing=1.2,
-                arrowprops=dict(arrowstyle="->", lw=0.7, color="#9A9A9A"))
+    ax.annotate("edit works,\nmusic destroyed", xy=(xs[0] * 1.03, rows[0][3]),
+                xytext=(xs[0] * 2.3, 0.035), fontsize=6.6, color="#5A5A5A",
+                ha="left", va="bottom", linespacing=1.2,
+                arrowprops=dict(arrowstyle="->", lw=0.7, color="#9A9A9A",
+                                shrinkA=2, shrinkB=3))
     ax.set_title("capacity buys surgical control, not the key itself", loc="left",
                  fontsize=7.5, color=INK, pad=12)
     fig.savefig(out)

@@ -609,3 +609,46 @@ incidents]]: I stated the rule myself — "load-bearing subagent findings get re
 before acting" — and then propagated an unverified subagent number into two papers and
 this file within the same session. An audit finding is a hypothesis, not a result. It
 becomes a result when it has an artifact.
+
+## 2026-07-16 (4) — Figure audit: one figure contradicted its own axis
+
+Rendered every figure and inspected it, then checked every plotted number against the
+artifact it claims to come from.
+
+### DEFECT — fig_emergence's panel-(b) title carried the retracted parameter counts
+
+`ax2.set_title("(b) the world model appears between 1.6M and 6M")` was a hardcoded
+string. SIZE_MODELS had been corrected to the checkpoint-counted values (0.5M / 3.4M /
+26M / 86M) and the x-axis moved with it; the title did not. The figure therefore showed
+an axis reading 0.5M…86M under a title naming 1.6M and 6M — the very numbers retracted
+as fabricated on 2026-07-14. The transition band itself was always computed from the
+data (the last size failing DR-H1 → the first passing); only the title lied.
+
+Fixed by deriving the title from SIZE_MODELS at the computed band, so it cannot drift
+again. Two more hardcodings from the same era went with it: labels pinned at x=88 and
+x=1.72, positions that only made sense for the old parameter values. All annotations in
+that figure are now placed from the data or in axis coordinates. Rule for this file:
+derive, don't retype.
+
+### Layout, per the user's "no overlapping legends"
+
+- **fig_framework**: "shading = scale of the key in force" was drawn across the notes in
+  panel (b). The LaTeX caption already says it. Removed.
+- **fig_surgical**: "edit works, music destroyed" sat at y=0.30, exactly where the
+  guard-pass curve climbs through it. Moved below the curve into empty space.
+- **fig_equivariance**: the DR-H2b annotation crowded the legend; its leader arrow spanned
+  ~2mm and read as a stray mark. Text moved under the (coincident) curves, arrow dropped.
+- **Reference-line labels** (chance, input baseline, random orthogonal maps) in five
+  figures sat ON their line inside a white box, which punched a hole in the line and left
+  a clipped fragment between the box and the spine. They now sit 2pt ABOVE the line via
+  offset-point annotation, so the line runs unbroken. In fig_layer_profile the C3 label
+  also had the probe curve climbing through it (the curve crosses the baseline between L0
+  and L1); moved to the right side, where the curves have plateaued.
+
+### Numbers verified against artifacts
+
+fig_intervention_bars: K1 0.0750→0.07, K3 0.0642→0.06, V-DAS 0.2133→0.21, V-MEAN
+0.3458→0.35, V-PROBE 0.3783→0.38, K4 0.6517→0.65, ratio 5.044→"5.0x", ceiling
+58.1%→"58%". fig_ambiguity: 0.9243→0.92, 0.8027→0.80, 0.9364→0.94, 0.7948→0.79.
+fig_fifths_curve: d=1 0.3950, tritone 0.2800 — both as printed in the papers. Every
+rounding correct; no figure number that fails to trace.

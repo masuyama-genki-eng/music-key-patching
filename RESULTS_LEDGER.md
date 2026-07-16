@@ -677,3 +677,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/sweep/R-Aug_s0/k1_norm_check.json`
 - note: basis norms identical by construction (4.8990); applied perturbation edit 21.886 vs K1 22.075, ratio 0.9914 (K1 marginally larger => conservative). Refutes the earlier unverified 1.13 figure.
 
+## 2026-07-16T22:39:04+09:00 — P5 figures
+- git: `f8fdbbca73393c07e422ab03e27501a134e64ccf+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-16T22:42:27+09:00 — P5 figures
+- git: `f8fdbbca73393c07e422ab03e27501a134e64ccf+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-16T22:43:27+09:00 — P5 figures
+- git: `f8fdbbca73393c07e422ab03e27501a134e64ccf+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-07-16T22:44:02+09:00 — P5 figures
+- git: `f8fdbbca73393c07e422ab03e27501a134e64ccf+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
