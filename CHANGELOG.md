@@ -550,3 +550,62 @@ relative (mode differs, tonic differs by 3 or 9); the parallel (mode differs, sa
 tonic). Fifths adjacency alone is not the definition — the same-mode conjunct matters,
 and two cross-mode relations are included. Both papers now give the full definition and
 state that every headline number is strict.
+
+## 2026-07-16 (3) — RETRACTION: the K1 "norm deviation" was my error, not the code's
+
+The two entries above (2026-07-16 and 2026-07-16 (2)) report a silent SPEC/H3 deviation:
+"K1 is rank-matched but NOT norm-matched", with measured magnitudes |Δ| = 32.5 (edit) vs
+28.7 (K1), ratio 1.13, ||h|| ≈ 100. **Both the finding and the numbers are wrong.** This
+entry corrects the record; the entries above stand as written because the ledger is
+append-only.
+
+WHAT HAPPENED. The audit subagent reported those magnitudes. I did not reproduce them. I
+wrote them into CHANGELOG twice and into both papers' method sections, and built a
+"deviation from the frozen pre-registration" narrative on top of them. The user declined
+to put the claim in their draft — leaving a TBD instead of a number they could not
+source — and asked which direction the mismatch ran. Measuring it was the first time
+anyone checked.
+
+WHAT IS TRUE (scripts/17_k1_norm_check.py -> results/sweep/R-Aug_s0/k1_norm_check.json;
+headline condition reproduced exactly: R-Aug_s0, V-PROBE, L4, rank 24, seed 0, the
+sweep's own k1_basis seed = seed + 31*layer, ||delta|| recorded at the positions the
+editor actually writes, over every generation step, 12 targets x 24 prompts):
+
+  1. BASIS NORM — matched exactly, by construction. ||V||_F = ||V_K1||_F = 4.898980 =
+     sqrt(24). Both bases are orthonormal (d, r), so this cannot be otherwise. Under the
+     literal reading of SPEC §4 ("K1 rank・norm 整合ランダム部分空間") and H3 ("rank と
+     norm を揃えたランダム部分空間 edit") — the thing matched is the SUBSPACE — there is
+     NO DEVIATION. My claim that there was one was wrong.
+
+  2. APPLIED PERTURBATION — matched to 0.9% by measurement, in the CONSERVATIVE
+     direction:
+         ||delta_edit|| = 21.886     rel. to ||h||: 0.1603
+         ||delta_K1||   = 22.075     rel. to ||h||: 0.1617     (||h|| = 136.53)
+         ratio edit/K1  = 0.9914     -> K1 perturbs 0.9% MORE, not less
+     The subagent's 1.13 does not reproduce; its ||h|| ~ 100.6 vs the measured 136.53
+     indicates it measured some other quantity (likely not during generation at the
+     edited positions). Per-target ratios span 0.821-1.139 with mean 0.991.
+
+     The user's concern — "if K1's perturbation is smaller, the 5x is unfairly
+     favorable" — was the right question and the answer is no: it runs the other way,
+     marginally.
+
+WHY THEY AGREE, AND WHY IT MATTERS. Both edits project w = mu_target - h onto a rank-24
+subspace of R^512. A random subspace captures sqrt(24/512) = 0.2165 of ||w||; the key
+subspace is measured to capture 0.215 — no more. ||mu - h|| is dominated by variation
+unrelated to key, and the key subspace holds no privileged share of its energy. So the
+5.04x effect gap cannot be a magnitude artifact: the two interventions are the same size
+and differ only in direction. This is a stronger statement than "norm-matched" and it is
+now in both papers, sourced to the artifact.
+
+DECISION on the three options the user posed: neither re-run nor Limitations entry.
+Rescaling K1 to match ||delta|| exactly would move it by 0.9% — not worth a sweep — and
+there is no deviation to disclose. Both papers restore the pre-registered wording ("rank-
+and norm-matched") as a statement of fact, with the measurement cited rather than the
+adjective asserted.
+
+PROCESS FAILURE, recorded because it is the same one as [[the param-count and Spearman
+incidents]]: I stated the rule myself — "load-bearing subagent findings get re-verified
+before acting" — and then propagated an unverified subagent number into two papers and
+this file within the same session. An audit finding is a hypothesis, not a result. It
+becomes a result when it has an artifact.

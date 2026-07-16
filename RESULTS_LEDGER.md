@@ -670,3 +670,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild/music-small-800k/at_note/mwild_probe.json`
 - note: public model trained on REAL music (Apache-2.0); probe F1=0.5449 (L0) vs best C3 0.4537; corrected margin 0.0417 CI[-0.0335,0.0924]; beats_surface=False
 
+## 2026-07-16T20:28:30+09:00 — K1 norm check R-Aug_s0 L4
+- git: `d959f74a222b9f1adcc7cf3ff9b092be970a1fb7+DIRTY`
+- config_hash: `7f29d2bf4de5e82d594cf03b9704864d692fd114c4e6a56d0819a8c06493c93c`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s0/k1_norm_check.json`
+- note: basis norms identical by construction (4.8990); applied perturbation edit 21.886 vs K1 22.075, ratio 0.9914 (K1 marginally larger => conservative). Refutes the earlier unverified 1.13 figure.
+

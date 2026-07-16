@@ -53,7 +53,7 @@ pre-registered protocol with frozen decision rules, on Transformers trained on
 symbolic music whose vocabulary holds absolute pitch and time only---no key,
 chord, or degree tokens. Replacing the key component of the residual stream at a
 single middle layer makes the model continue in the injected key at $5.0\times$
-the rate of rank-matched random edits (guarded $\tkr$ $0.378$ \vs
+the rate of rank- and norm-matched random edits (guarded $\tkr$ $0.378$ \vs
 $0.075$; significant for $12/12$ targets after Holm correction, replicated across
 seeds), inside a musicality budget frozen before any edit ran, reaching $58\%$ of
 the ceiling set by transposing the prompt itself. Two controls say what this
@@ -169,10 +169,11 @@ h \;\leftarrow\; h - P_V h + P_V\,\mu_{\kappa^{*}},
 with $V$ an orthonormal key subspace, $P_V=VV^{\!\top}$, and $\mu_{\kappa^{*}}$ the
 class-conditional mean of the donor key $\kappa^{*}$. Subspaces: \textbf{V-PROBE}
 (probe row space, rank $24$), \textbf{V-MEAN} (class-mean span), \textbf{V-DAS}
-(interchange-trained, ranks $8/24$). Controls: \textbf{K1} rank-matched random
-subspace (H3 as pre-registered asks for rank \emph{and} norm matching; we do not
-rescale, and report the measured magnitudes instead---$\lVert\Delta\rVert$ $32.5$ \vs
-$28.7$, ratio $1.13$, so the effect is not a magnitude artifact); \textbf{K2} sham edit, required bit-identical to the clean run (passed,
+(interchange-trained, ranks $8/24$). Controls: \textbf{K1} a random subspace matched in
+rank and norm---the bases are orthonormal, so $\lVert V\rVert_F\!=\!\sqrt{24}$ for both,
+and the perturbations they apply agree to under $1\%$ when measured on real activations
+($\lVert\Delta\rVert$ $21.9$ \vs $22.1$, the control marginally the larger), so what
+separates them is direction, not magnitude; \textbf{K2} sham edit, required bit-identical to the clean run (passed,
 $100/100$); \textbf{K3} another layer's subspace; \textbf{K4} the behavioral
 ceiling---transposing the prompt itself. Continuations ($16$ bars; $12$ major
 targets $\times\,100$ prompts $\times\,8$ layers; sampling noise paired with a clean

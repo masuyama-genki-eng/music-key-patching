@@ -58,7 +58,7 @@ functional-harmony grammar whose vocabulary contains absolute pitch and time
 only---no key, chord, or degree tokens---under a pre-registered protocol with
 frozen decision rules. Our central result is causal: replacing the key component
 of the residual stream at a single middle layer makes the model continue in the
-injected key at $5.0\times$ the rate of rank-matched random edits
+injected key at $5.0\times$ the rate of rank- and norm-matched random edits
 (guarded strict $\tkr$ $0.378$ \vs $0.075$; significant for $12/12$ target keys
 after Holm correction, replicated across seeds), while staying inside a
 musicality budget frozen before any edit ran---reaching $58\%$ of the behavioral
@@ -231,15 +231,26 @@ not a result withheld or a casualty of space. It has not been run.
 effective are confined to a limited band.
 \end{itemize}
 
-\noindent One deviation must be flagged here rather than in a footnote, because H3's
-wording is what it violates. Our K1 control is matched in \emph{rank} but not in
-\emph{norm}: the implementation draws a random orthonormal basis of the same shape and
-never rescales the injected component. H3 as pre-registered asks for both. We report the
-measured magnitudes instead of claiming a match: at the tested condition the edit applies
-$\lVert\Delta\rVert = 32.5$ against K1's $28.7$ ($\lVert h\rVert \approx 100$), a ratio
-of $1.13$---the two land close because both are rank-$24$ projections of comparably
-scaled vectors, so the effect reported below is not an artifact of edit magnitude. But it
-is a deviation from the frozen text, and it is logged as one.
+\noindent H3 asks for a control matched in \emph{rank and norm}, and ``norm'' admits two
+readings; we checked both rather than assert the convenient one. The basis reading is
+satisfied by construction: $V$ and $V_{\mathrm{K1}}$ are both orthonormal $512\times24$,
+so $\lVert V\rVert_F = \lVert V_{\mathrm{K1}}\rVert_F = \sqrt{24}$ identically. The
+stricter reading---that the two edits should \emph{perturb the residual stream equally}
+---is not imposed by construction, since we never rescale the injected component, so we
+measured it on real activations during real generation at the tested condition
+($12$ targets, all edited positions). The edit applies
+$\lVert\Delta\rVert = 21.9$ against K1's $22.1$: a ratio of $0.99$, or $0.160$ \vs
+$0.162$ of $\lVert h\rVert = 136.5$, with the \emph{control} marginally the larger. The
+match is observed rather than enforced, but it is observed, and it is conservative.
+
+That the two agree so closely is itself informative. Both edits project
+$\mu_{\kappa^{*}}\!-\!h$ onto a rank-$24$ subspace of $\mathbb{R}^{512}$; a random one
+captures $\sqrt{24/512}\approx0.217$ of that vector's energy, and the key subspace is
+measured to capture $0.215$---no more. The difference between $\mu_{\kappa^{*}}$ and a
+given activation is dominated by variation that has nothing to do with key, and the key
+subspace holds no privileged share of it. So the $5\times$ gap reported in
+Sec.~\ref{sec:results} cannot be a magnitude effect: the two interventions are the same
+size, and only their direction differs.
 
 \subsection{Data and models}
 To make ground truth exact rather than estimated, all training data are
@@ -308,7 +319,8 @@ choose a pitch. We write to the whole stream and read from
 one position in it. Restricting the edit to pitch-choosing positions is a natural
 variant and we have not run it. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),
 \textbf{V-MEAN} (class-mean span), \textbf{V-DAS} (interchange-trained, ranks
-$8/24$). Controls: \textbf{K1} rank-matched random subspace; \textbf{K2} sham
+$8/24$). Controls: \textbf{K1} rank- and norm-matched random subspace
+(Sec.~\ref{sec:hyp}); \textbf{K2} sham
 edit, required bit-identical to the clean run (passed, $100/100$ prompts);
 \textbf{K3} a different layer's subspace; \textbf{K4} behavioral reference,
 transposing the prompt itself. Continuations ($16$ bars; $12$ major targets
