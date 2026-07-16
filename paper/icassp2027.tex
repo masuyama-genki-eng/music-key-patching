@@ -146,10 +146,22 @@ matching, windows $W\in\{8,16,32,64\}$). \textbf{DR-H1}: the probe supports H1 i
 its selectivity-corrected $F_1$ exceeds the best C3 baseline with a sequence-level
 BCa $95\%$ CI excluding zero in some layer.
 
+The pre-registered hypotheses are H1 (key is decodable above the input surface), H2
+(the representation is transposition-equivariant with cyclic-group structure) with
+sub-claim H2b (augmentation strengthens equivariance---hence no ``H2a'': H2 is the
+parent), H3 (a targeted subspace edit moves the composed key, beating a rank- and
+norm-matched random edit inside the guard), H4 (after a \emph{one-shot} edit the state
+persists, is reasserted, or transitions via a pivot), and H5 (causally effective layers
+are localized). H4 is Phase~C: the pre-registration assigned it to the journal version
+before any run, so it is out of scope here by design rather than for space, and it has
+not been run.
+
 \subsection{Intervention (Phase B)}
 \label{sec:methodB}
-From bar~$9$ of a key-stable $8$-bar prompt, a sustained edit replaces the key
-component at one layer,
+From bar~$9$ ($t^{*}$) of a key-stable $8$-bar prompt, a sustained edit replaces the key
+component at one layer at \emph{every} token position from $t^{*}$ on (not only where a
+pitch is chosen---we write to the whole stream but probe one position in it), at every
+generation step,
 \begin{equation}
 h \;\leftarrow\; h - P_V h + P_V\,\mu_{\kappa^{*}},
 \label{eq:edit}
@@ -158,13 +170,17 @@ with $V$ an orthonormal key subspace, $P_V=VV^{\!\top}$, and $\mu_{\kappa^{*}}$ 
 class-conditional mean of the donor key $\kappa^{*}$. Subspaces: \textbf{V-PROBE}
 (probe row space, rank $24$), \textbf{V-MEAN} (class-mean span), \textbf{V-DAS}
 (interchange-trained, ranks $8/24$). Controls: \textbf{K1} rank-matched random
-subspace; \textbf{K2} sham edit, required bit-identical to the clean run (passed,
+subspace (H3 as pre-registered asks for rank \emph{and} norm matching; we do not
+rescale, and report the measured magnitudes instead---$\lVert\Delta\rVert$ $32.5$ \vs
+$28.7$, ratio $1.13$, so the effect is not a magnitude artifact); \textbf{K2} sham edit, required bit-identical to the clean run (passed,
 $100/100$); \textbf{K3} another layer's subspace; \textbf{K4} the behavioral
 ceiling---transposing the prompt itself. Continuations ($16$ bars; $12$ major
 targets $\times\,100$ prompts $\times\,8$ layers; sampling noise paired with a clean
-twin) are scored by KS key estimation ($\tkr$: the continuation's estimated key
-equals $\kappa^{*}$) and by $\ikr$ (fraction of continuation pitches diatonic to a
-key). The musicality budget $\ppl{=}0.613$---the $90$th percentile of the M-REF
+twin) are scored by KS key estimation ($\tkr$ strict: the continuation's estimated key
+equals $\kappa^{*}$; all headline numbers are strict) and by $\ikr$ (fraction of
+continuation pitches diatonic to a key). The pre-registered \emph{tolerant} variant,
+used only to bracket estimator confusions, counts fifths distance ${\leq}1$ with the
+same mode, the relative, or the parallel key. The musicality budget $\ppl{=}0.613$---the $90$th percentile of the M-REF
 perplexity rise across $7{,}989$ \emph{natural} modulations in validation
 data---was fixed \emph{before} any edit ran; edits exceeding it do not count as
 successes. \textbf{DR-H3} requires $\tkr(\text{edit})>\tkr(\text{K1})$ with

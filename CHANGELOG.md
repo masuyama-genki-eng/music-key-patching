@@ -480,3 +480,73 @@ does NOT show our offsets are the ones the model was trained with. Settling it c
 encoder. Until then every M-WILD number depends on an unvalidated reimplementation. Also:
 src/probing/mwild.py's docstring claims the checkpoint declares vocab 55030 and is padded
 to 55028 — false, it declares 55028; the padding branch never fires.
+
+## 2026-07-16 (2) — The pre-registration's own wording, checked against the papers
+
+The user asked for the verbatim H1/H2b/H3/H5 text from SPEC §4, and for what H2a and H4
+are. Answering required reading the documents rather than reconstructing from the DRs,
+and that turned up four things.
+
+### The hypotheses are NOT in SPEC
+
+SPEC contains only the DECISION RULES. The hypothesis statements live in
+docs/KNOWLEDGE.md §4; SPEC references them only in section titles ("Phase B — 因果介入
+（H3, H5）"). Anyone reconstructing H1/H3/H5 from SPEC's DRs is paraphrasing, which is
+how the errors below got in. Both papers now state the hypotheses in the
+pre-registration's own terms (OJSP §II-A, full list; ICASSP, compact).
+
+### H3's WORDING requires norm matching — the K1 deviation is worse than reported
+
+KNOWLEDGE.md:44 — 「H3（因果性・本丸）：… 効果は **rank と norm を揃えた**ランダム部分
+空間 edit を有意に上回り…」. The 2026-07-16 entry logged the K1 norm deviation against
+SPEC §4's control list (K1 rank・norm 整合). It also violates the hypothesis statement
+itself: norm matching is part of what H3 asserts, not merely how a control is built.
+Recorded here so the deviation is not filed as a mere implementation detail. Both papers
+now name the deviation at the point where K1 is introduced and give the measured
+magnitudes (32.5 vs 28.7, ratio 1.13) instead of claiming a match.
+
+### There is no H2a — and H4 is unrun by design, not by space
+
+`grep -rn "H2a"` over the whole repo: zero hits, ever. The numbering is not a gap: H2 is
+the parent (transposition equivariance with cyclic-group structure) and H2b is its
+manipulation sub-claim (R-Aug > R-NoAug). H4 (persistence and reassertion after a
+ONE-SHOT edit) is real and pre-registered (KNOWLEDGE.md:46) but belongs to Phase C: SPEC
+§5 titles it "Phase C — 動態と一般化（H4、OJSP 拡張）" and SPEC §9 fixes the conference
+scope as "Phase A（H1, H2 core）+ Phase B（H3, H5）". So H4 is out of scope by a decision
+made before any run — not cut for space, not withheld. It has not been run. Both papers
+now say all of this, because a referee will notice H2b without H2a and H5 without H4.
+
+### DEFECT — the eps_cyc equation in the paper does not match the code
+
+ojsp_full.tex printed:  eps_cyc = (1/11) * sum_{k=2}^{12} ||R_k - R_1^k||_F / ||R_k||_F
+
+The code computes 10 terms and divides by 10:
+  scripts/04_equivariance.py:71  `for k in range(1, 12)`   -> Rs holds k = 1..11 only
+  src/probing/equivariance.py:32 `for k in range(2, 12)`   -> k = 2..11, np.mean over 10
+
+So the printed formula sums to k=12 — an R_12 that is never computed and would be the
+identity map anyway (T_12 = identity) — and normalises by 11 instead of 10. SPEC A3 gives
+"ε_cyc = mean_k ‖R_k − R_1^k‖_F / ‖R_k‖_F" without pinning the range of k; the code's
+choice (start at 2 because R_1 − R_1^1 ≡ 0 would dilute the mean; stop at 11 because T_12
+is the identity) is a sound operationalisation but is not in SPEC. Corrected to
+(1/10) sum_{k=2}^{11}, with the range and its reason stated.
+
+### DISCLOSURE — "sustained" is asymmetric with the probe, and was unstated
+
+SPEC B2: 「Edit：小節境界 t* 以降の**全ステップ**で部分空間成分を target key κ* に置換
+（sustained）」. The code agrees: edit.py:59 writes `out[:, from_position:, :]` with
+from_position = plen (sweep.py:92), so the edit lands on EVERY token position from t* on
+— BAR, POS, PITCH, DUR alike — at every generation step. The PROBE, meanwhile, is read
+only at predict_pitch positions. We write to the whole stream and read from one position
+in it. That is what SPEC specifies, but neither paper said so, and a referee is entitled
+to assume the edit is confined to the positions the probe was fit on. Now stated in both.
+Restricting the edit to pitch-choosing positions is an obvious variant; it has not been run.
+
+### CLARIFICATION — tolerant TKR is not "fifths-adjacent counts as success"
+
+SPEC B3: tolerant = 「近親調許容：五度圏距離 ≤1・平行・関係調」, and metrics.py:18-29
+implements the disjunction of three relations: fifths distance <=1 AND SAME MODE; the
+relative (mode differs, tonic differs by 3 or 9); the parallel (mode differs, same
+tonic). Fifths adjacency alone is not the definition — the same-mode conjunct matters,
+and two cross-mode relations are included. Both papers now give the full definition and
+state that every headline number is strict.

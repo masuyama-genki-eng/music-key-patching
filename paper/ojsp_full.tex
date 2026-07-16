@@ -197,6 +197,50 @@ the injected internal state. Shading marks the scale of the key in force.}
 \label{fig:overview}
 \end{figure}
 
+\subsection{Pre-registered hypotheses}
+\label{sec:hyp}
+The protocol, its thresholds and its decision rules were frozen before any experiment
+ran. We restate the hypotheses in the pre-registration's own terms rather than
+paraphrase them, since the decision rules below are only meaningful against the claims
+they were written for.
+
+\begin{itemize}\itemsep2pt
+\item[\textbf{H1}] (\emph{existence}) Key is decodable from internal activations, and
+more accurately than from input-surface baselines (recent-window pitch-class histogram
+/ Krumhansl--Schmuckler); the gap widens in ambiguous regions. \emph{Falsified if} no
+layer's selectivity-corrected probe beats the input baseline.
+\item[\textbf{H2}] (\emph{encoding form}) The key representation is
+transposition-equivariant: for each transposition $T_k$ there is a linear map $R_k$ in
+representation space, and $\{R_k\}$ has cyclic-group structure ($R_k \approx R_1^{\,k}$).
+\item[\textbf{H2b}] A model trained with transposition augmentation (R-Aug) shows
+\emph{stronger} equivariance than one without (R-NoAug)---a manipulation of the training
+condition. H2b is a sub-claim of H2, which is why no ``H2a'' appears: the
+pre-registration numbered the parent claim H2 and its manipulation H2b.
+\item[\textbf{H3}] (\emph{causality; the main claim}) A targeted edit of the key
+subspace moves the key of the continuation to the edit target. The effect significantly
+exceeds a random subspace edit \textbf{matched in rank and norm}, and stays inside the
+musicality guard's budget. \emph{Falsified if} $\tkr$ is indistinguishable from the
+control edit, or is achievable only together with quality collapse.
+\item[\textbf{H4}] (\emph{persistence and reassertion}) After a \emph{one-shot} edit the
+state either (a)~persists, (b)~is reasserted toward the original key by context, or
+(c)~transitions via a pivot-like passage. H4 belongs to Phase~C and is \textbf{not
+tested in this paper}: the pre-registration assigned Phase~A+B to the conference version
+and Phase~C to the journal version, so H4's absence is a scope decision made in advance,
+not a result withheld or a casualty of space. It has not been run.
+\item[\textbf{H5}] (\emph{localization}) The layers at which an edit is causally
+effective are confined to a limited band.
+\end{itemize}
+
+\noindent One deviation must be flagged here rather than in a footnote, because H3's
+wording is what it violates. Our K1 control is matched in \emph{rank} but not in
+\emph{norm}: the implementation draws a random orthonormal basis of the same shape and
+never rescales the injected component. H3 as pre-registered asks for both. We report the
+measured magnitudes instead of claiming a match: at the tested condition the edit applies
+$\lVert\Delta\rVert = 32.5$ against K1's $28.7$ ($\lVert h\rVert \approx 100$), a ratio
+of $1.13$---the two land close because both are rank-$24$ projections of comparably
+scaled vectors, so the effect reported below is not an artifact of edit magnitude. But it
+is a deviation from the frozen text, and it is logged as one.
+
 \subsection{Data and models}
 To make ground truth exact rather than estimated, all training data are
 synthetic. \textbf{D-SYN.} A functional-harmony state machine
@@ -239,11 +283,15 @@ entropy ($W{=}16$). For geometry, orthogonal Procrustes maps $R_k$ are fit betwe
 activations of pieces and their $k$-semitone transpositions, and a cyclicity error
 tests group structure:
 \begin{equation}
-\ecyc \;=\; \frac{1}{11}\sum_{k=2}^{12}
+\ecyc \;=\; \frac{1}{10}\sum_{k=2}^{11}
 \frac{\lVert R_k - R_1^{\,k}\rVert_F}{\lVert R_k\rVert_F},
 \label{eq:cyc}
 \end{equation}
-with DR-H2b: $\ecyc(\text{R-Aug}) < \ecyc(\text{R-NoAug})$ (one-sided Wilcoxon).
+normalising each term by $\lVert R_k\rVert_F$ before averaging, as pre-registered. The
+sum starts at $k{=}2$ because $R_1 - R_1^{1}$ is identically zero and would only dilute
+the mean, and stops at $k{=}11$ because $T_{12}$ is the identity; $R_1$ defines the
+powers. DR-H2b: $\ecyc(\text{R-Aug}) < \ecyc(\text{R-NoAug})$ (one-sided Wilcoxon
+across seeds).
 
 \subsection{Phase B: causal intervention}
 \label{sec:methodB}
@@ -251,15 +299,28 @@ To test \emph{use} rather than presence, we edit the state and score the behavio
 From bar~$9$ of a key-stable $8$-bar prompt, a sustained edit replaces the key
 component at one layer, $h \leftarrow h - P_V h + P_V\mu_{\kappa^{*}}$, with $V$ an
 orthonormal key subspace and $\mu_{\kappa^{*}}$ the class-conditional mean of the
-donor key. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),
+donor key. ``Sustained'' is meant literally and asymmetrically, and the asymmetry is
+worth stating because it is easy to assume otherwise: the edit is applied at
+\emph{every} token position from $t^{*}$ (the bar-$9$ boundary) onward---\texttt{BAR},
+\texttt{POS}, \texttt{PITCH} and \texttt{DUR} alike---and re-applied at every generation
+step, whereas the \emph{probe} is read only at the positions where the model is about to
+choose a pitch. We write to the whole stream and read from
+one position in it. Restricting the edit to pitch-choosing positions is a natural
+variant and we have not run it. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),
 \textbf{V-MEAN} (class-mean span), \textbf{V-DAS} (interchange-trained, ranks
 $8/24$). Controls: \textbf{K1} rank-matched random subspace; \textbf{K2} sham
 edit, required bit-identical to the clean run (passed, $100/100$ prompts);
 \textbf{K3} a different layer's subspace; \textbf{K4} behavioral reference,
 transposing the prompt itself. Continuations ($16$ bars; $12$ major targets
 $\times\,100$ prompts $\times\,8$ layers; sampling noise paired with a clean twin)
-are scored by KS key estimation ($\tkr$, strict and closely-related-tolerant),
-$\ikr$, and a grammar guard. The budget $\ppl\,{=}\,0.613$ ($90$th percentile of
+are scored by KS key estimation, $\ikr$, and a grammar guard. $\tkr$ is reported
+\emph{strict} (the estimated key equals $\kappa^{*}$ exactly) and \emph{tolerant}. The
+pre-registration defines tolerant as the disjunction of three relations, not fifths
+adjacency alone: fifths distance ${\leq}\,1$ \emph{with the same mode}, the relative
+major/minor (mode differs, tonics $3$ or $9$ semitones apart), or the parallel key
+(mode differs, same tonic). Every headline number in this paper is strict; tolerant
+exists to bracket the estimator's known confusions (Sec.~\ref{sec:disc}), not to soften
+the claim. The budget $\ppl\,{=}\,0.613$ ($90$th percentile of
 the M-REF perplexity rise across $7{,}989$ natural modulations in validation data)
 was fixed \emph{before} any edit ran; edits exceeding it do not count as successes.
 DR-H3 requires $\tkr(\text{edit})>\tkr(\text{K1})$ with Holm-corrected Wilcoxon
