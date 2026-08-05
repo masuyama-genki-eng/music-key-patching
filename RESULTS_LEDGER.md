@@ -705,3 +705,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-08-05T12:33:40+09:00 — Experiment D: C3 window extension R-Aug_s0
+- git: `1d752c8664d070f08fe458ba78e33265c5064e3d+DIRTY`
+- config_hash: `4a5252ad69b7e735beb6de70be23548836ed86c3aab4ec8eb3a3ece4fcc9b483`
+- seeds: [0]
+- artifacts: `results/probing/R-Aug_s0/c3_window_ext.json`, `results/probing/R-Aug_s0/verdict_DR-H1_extD.json`
+- note: gates G1-G3 reproduce ledger exactly; plain-window C3 peaks INTERIOR at W=96 (0.8012) then falls to 0.7520 at W=512; steelman concat [W16|W512] best at 0.8243; DR-H1 vs strongest C3: supported=True (L2-L7 excl0; L4 +0.0706 [0.0560,0.0812])
+

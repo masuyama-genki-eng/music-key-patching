@@ -652,3 +652,51 @@ fig_intervention_bars: K1 0.0750→0.07, K3 0.0642→0.06, V-DAS 0.2133→0.21, 
 58.1%→"58%". fig_ambiguity: 0.9243→0.92, 0.8027→0.80, 0.9364→0.94, 0.7948→0.79.
 fig_fifths_curve: d=1 0.3950, tritone 0.2800 — both as printed in the papers. Every
 rounding correct; no figure number that fails to trace.
+
+## 2026-08-05 — Experiment D: the C3 history-length confound (user-identified)
+
+THE CONFOUND. The probe reads h_l(t), which attends over the full prefix (<=512
+tokens, ~170 notes). The pre-registered C3 capped the surface baseline at W=64 TOKENS
+(~21 notes) — and the best C3 was exactly W=64, the edge of the sweep, still rising
+steeply (W32 0.686 -> W64 0.790, a step of +0.105 — the same size as the headline
+margin). Both the +0.105 margin and the A2 contrast (0.936 vs 0.795) were therefore
+explainable by history length alone. Identified by the user 2026-08-05; H1 was at
+stake in full.
+
+THE TEST (scripts/18_c3_window_ext.py, results/probing/<m>/c3_window_ext.json).
+Same positions (rng reproduced), three hard reproduction gates (ledgered lr_W64,
+probe-from-stored-weights per layer, retrained C1b floor) — all passed EXACTLY on
+R-Aug_s0 before any new number was read. Then: extended windows W in
+{96,128,192,256,512} (512 >= longest piece = full prefix); exponentially-decayed
+full-history histograms (lambda in {32,64,128,256}); concatenated [W16|W512]
+features. The last two go beyond the pre-registered C3 family and are labeled as
+such; both only strengthen the baseline.
+
+RESULT on R-Aug_s0 — H1 SURVIVES, one sub-claim does not:
+- Plain windows peak INTERIOR at W=96 (0.8012) and then FALL to 0.7520 at W=512.
+  The rising trend stops just past the old sweep edge: modulations make stale
+  evidence poisonous, so "more window" is not "more accuracy".
+- Strongest surface overall: concat [W16|W512] at 0.8243 (decay lambda=32: 0.8138).
+- DR-H1 against the strongest baseline: supported=True. L2-L7 exclude zero;
+  peak L4 +0.0706, BCa 95% CI [0.0560, 0.0812]. (Old headline vs W64: +0.105.)
+- THE A2 SUB-CLAIM DIES: against the strengthened baseline the probe's edge is
+  +0.0972 in the high-ambiguity quartile and +0.0970 in the rest — FLAT. The
+  dramatic 0.936-vs-0.795 contrast was a window artifact: a 64-token surface is
+  weakest exactly where KS-16 is uncertain. The paper's "earns its keep exactly
+  where the surface fails" framing must be replaced by "a uniform ~0.10 edge that
+  no surface configuration we could build closes".
+
+TRANSFER RESULTS ARE SAFE IN DIRECTION (checked from existing artifacts):
+- Chorales, AMT (M-WILD): C3-LR peaks at W=16 (0.287) and FALLS by W=64 (0.234);
+  KS is flat (W16 0.449 -> W64 0.454). Longer windows hurt there.
+- Chorales, ours (D-REAL): C3 saturates (W32 0.263 -> W64 0.266); and a stronger
+  surface would only strengthen the reported "does NOT beat surface" verdict.
+
+PENDING: extD on the other 11 models (running). The capacity margins are the live
+risk: size-L4d256 probes at 0.870-0.880 vs the 0.824 strengthened baseline — the
+fig_emergence crossover ("between 0.5M and 3.4M") may move to between 3.4M and 26M.
+Paper edits held until those verdicts land.
+
+Note: the first run's append_entry crashed on a relative path AFTER artifacts and
+snapshots were written; the entry was appended post-hoc in the same session and the
+script fixed (resolve() before relative_to).
