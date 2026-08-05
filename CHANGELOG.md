@@ -770,3 +770,39 @@ TOKENS the edit caused, which are themselves input evidence of the new key. The
 token-splice control (scripts/20_splice_control.py: same bar-9 tokens spliced after
 the clean prompt, no activation edit anywhere) separates them. Paper prose is held
 until it lands.
+
+## 2026-08-05 (4) — Experiment G2: the carrier is the TOKENS. The variable is
+## re-estimated, not stored.
+
+The token-splice control (same bar-9 tokens spliced after the clean prompt, no
+activation edit anywhere) reproduces the one-shot plateau in full:
+  plateau means, bars 2-14 (targets != src):
+    oneshot 0.671 | splice 0.687 | K1-oneshot 0.547
+  state contribution beyond tokens: -0.016 (zero; splice marginally higher)
+  token contribution beyond K1:     +0.140 (the entire plateau)
+Re-assertion, now calibrated: clean itself stays in source only 47.4% under the
+strict last-4-bars metric, so K1-oneshot (45.0%) is INDISTINGUISHABLE from clean —
+a random one-bar perturbation does not derail a piece. The real effect is
+oneshot 30.8% / splice 34.8%: the target-shifted bar cuts return-to-source by
+~12-16 points, and that too is carried by the tokens.
+
+VERDICT ON H4a (descriptive; Phase C has no frozen DR): the model does NOT
+maintain an installed key value in its activations beyond the evidence stream.
+Pinning the bar-9 state contributes nothing once the notes it caused are in
+context. The key variable is a continuously re-estimated sufficient statistic:
+causally READ at generation (H3 stands untouched — sustained clamp, matched
+controls, guard), but not a latch. §IV-B's "one edit alone would be re-estimated
+away" was intuition; it is now measurement — with the refinement that the edit's
+effect DOES persist behaviorally (drop-then-plateau, no decay over 13 bars),
+because the model trusts its own emitted evidence.
+
+CONSEQUENCES FOR FRAMING (the user's tension, resolved on the deflationary side):
+1. The §II differentiation from steering (SMITIN/MusicRFM) may NOT rest on
+   persistence-after-release. It rests on: remove+install semantics against
+   class-mean VALUES (not directions), the matched-control/sham/guard apparatus,
+   and the readout-vs-actionability dissociations.
+2. The Discussion's domain speculation ("every passing note re-announces the key,
+   so the model can re-estimate it instead of storing it") is now supported by
+   direct measurement. Music differs from Othello exactly here.
+3. "World model" in this paper means: a decodable, causally consulted, continuously
+   re-estimated state variable — and the paper must say so in those words.

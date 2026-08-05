@@ -56,6 +56,8 @@ def main() -> None:
                                    REPO / "results/sweep", p)),
         ("fig_surgical.pdf",
          lambda p: F.fig_surgical(REPO / "results/sweep", p)),
+        ("fig_persistence.pdf",
+         lambda p: F.fig_persistence(REPO / "results/persistence" / args.model, p)),
     ]
     written = []
     for name, fn in jobs:

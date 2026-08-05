@@ -223,10 +223,11 @@ musicality guard's budget. \emph{Falsified if} $\tkr$ is indistinguishable from 
 control edit, or is achievable only together with quality collapse.
 \item[\textbf{H4}] (\emph{persistence and reassertion}) After a \emph{one-shot} edit the
 state either (a)~persists, (b)~is reasserted toward the original key by context, or
-(c)~transitions via a pivot-like passage. H4 belongs to Phase~C and is \textbf{not
-tested in this paper}: the pre-registration assigned Phase~A+B to the conference version
-and Phase~C to the journal version, so H4's absence is a scope decision made in advance,
-not a result withheld or a casualty of space. It has not been run.
+(c)~transitions via a pivot-like passage. The pre-registration assigned H4 to
+Phase~C; its sub-question H4a (does an installed value persist at all, and through
+what carrier?) became load-bearing for the paper's framing and was brought forward.
+Sec.~\ref{sec:h4a} reports it; the remainder of H4 (pivot structure, annotation)
+stays in Phase~C.
 \item[\textbf{H5}] (\emph{localization}) The layers at which an edit is causally
 effective are confined to a limited band.
 \end{itemize}
@@ -315,7 +316,8 @@ worth stating because it is easy to assume otherwise: the edit is applied at
 \emph{every} token position from $t^{*}$ (the bar-$9$ boundary) onward---\texttt{BAR},
 \texttt{POS}, \texttt{PITCH} and \texttt{DUR} alike---and re-applied at every generation
 step, whereas the \emph{probe} is read only at the positions where the model is about to
-choose a pitch. We write to the whole stream and read from
+choose a pitch. (What a \emph{one-shot} installation leaves behind---and through what
+carrier---is Sec.~\ref{sec:h4a}.) We write to the whole stream and read from
 one position in it. Restricting the edit to pitch-choosing positions is a natural
 variant and we have not run it. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),
 \textbf{V-MEAN} (class-mean span), \textbf{V-DAS} (interchange-trained, ranks
@@ -506,6 +508,57 @@ seed~$0$ highlighted): the key is legible across a broad plateau. (b)~Causal eff
 (bands: prompt-level bootstrap $95\%$ CI). Only a narrow band around L$4$ moves the
 output.}
 \label{fig:layers}
+\end{figure}
+
+\subsection{H4a: the variable is re-estimated, not stored}
+\label{sec:h4a}
+Everything above edits under a \emph{sustained} clamp, and a clamp cannot witness
+the ``install a value'' semantics our framing borrows: perhaps the model merely
+tolerates being steered, and maintains nothing. So we installed the value
+\emph{once} and let go. With no key--value cache the past is recomputed at every
+step, so ``once'' means: the edit is pinned to the positions of the first generated
+bar (each row's window closes at its own next bar line) and no later position is
+ever touched; later positions may attend to the pinned bar-$9$ state and to the
+notes it caused. Sustained, clean, and a K1 one-shot bracket it; all conditions
+share sampling randomness, and the one-shot's first bar is \emph{identical} to the
+sustained run's by construction ($\ikr_{\kappa^{*}}=0.805$ in both, an internal
+validity check).
+
+Released, the effect does not decay---and it does not complete
+(Fig.~\ref{fig:persistence}a). $\ikr_{\kappa^{*}}$ drops once ($0.805\to0.685$)
+and then holds a flat plateau ($0.65$--$0.70$) for thirteen bars, $+0.12$ above
+the K1 floor of $0.55$ (average scale overlap between random major keys). The
+music neither returns to the source key nor settles in the target: per-bar KS
+names the target in only ${\sim}9\%$ of bars (the clamp climbs to $28\%$), and
+under a strict last-four-bars metric the continuation returns to the source in
+$31\%$ of runs---\emph{less} often than after a matched random perturbation
+($45\%$), which itself matches the clean run's own $47\%$: a random one-bar
+perturbation derails nothing; the installed bar durably shifts the tonal center
+of mass without finishing the modulation.
+
+Then the control that decides what ``persists'' means
+(Fig.~\ref{fig:persistence}b): splice the one-shot run's bar-$9$ \emph{tokens}
+after the clean prompt and continue with no activation edit anywhere. The splice
+reproduces the plateau in full ($0.687$ \vs $0.671$ across bars $2$--$14$; state
+pinning adds $-0.016$, i.e.\ nothing). \textbf{The carrier is the music, not the
+pinned state}: a value installed in the activations persists exactly insofar as
+it writes itself into the notes, which then stand as ordinary input evidence.
+The key variable this paper's probes read and this paper's edits move is a
+continuously re-estimated statistic of the evidence---causally consulted at
+every step (H3), never latched (H4a). Our framing must therefore not rest the
+``set a variable'' distinction on persistence-after-release, and does not: it
+rests on the remove-and-install semantics, the matched controls, and the
+dissociations of Secs.~\ref{sec:resultsB}--\ref{sec:h5}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_persistence.pdf}
+\caption{H4a. (a)~Released after a one-bar installation, the pitch-content shift
+neither decays nor completes: a flat plateau $+0.12$ over the K1 floor for $13$
+bars. (b)~Splicing the installed bar's \emph{tokens} with no activation edit
+reproduces the plateau; pinning the state adds nothing. The variable is
+re-estimated from evidence, not stored.}
+\label{fig:persistence}
 \end{figure}
 
 \subsection{Replication, and what capacity actually buys}
@@ -699,8 +752,10 @@ condition}: a Transformer trained on notes alone maintains a mid-layer key varia
 with music-theoretic geometry, and generation consults it. The gap to the behavioral
 ceiling and the failure of edits at L$0$--L$1$ indicate a distributed, redundantly
 re-estimated state rather than a single canonical register---a contrast with
-Othello-GPT's near-complete editability that we attribute to music's continual
-re-grounding of tonality in the immediately preceding notes.
+Othello-GPT's near-complete editability. Sec.~\ref{sec:h4a} turns the natural
+attribution into a measurement: music continually re-grounds tonality in the
+immediately preceding notes, and accordingly an installed key value survives only
+through the notes it writes---the state is re-estimated, never latched.
 
 \begin{table}[t]
 \centering\caption{K3 (layer-shuffled subspace) resolved by layer. K3 injects layer

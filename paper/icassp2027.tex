@@ -459,7 +459,11 @@ consults it. Two observations say the model spreads that variable out rather tha
 keeping it in one place: the edit reaches only $58\%$ of the ceiling, and it fails at
 L$0$--L$1$. Othello-GPT, by contrast, is almost completely editable. The domain may
 explain it: an Othello board hides behind the moves, whereas every passing note
-re-announces the key, so the model can re-estimate it instead of storing it. K3 adds a
+re-announces the key, so the model can re-estimate it instead of storing it. A
+one-shot test confirms this directly: a value installed for a single bar shifts
+the pitch content durably ($+0.12$ over the matched control for $13$ bars, no
+decay) yet splicing that bar's \emph{tokens} alone reproduces the entire effect
+--- the state is re-estimated from the evidence, never latched. K3 adds a
 third: borrowing L$0$'s subspace does nothing at L$4$ ($0.064$, at or below K1), so the
 effect needs that layer's own directions---but subspaces borrowed from L$5$--L$7$ and
 injected at L$1$--L$3$ reach $0.27$--$0.39$, so the key subspace is largely
@@ -475,9 +479,10 @@ that accepts the relative, parallel, and fifth-neighbour keys. \emph{Capacity:} 
 sweep varies depth and width together, so it locates a threshold without explaining it.
 \emph{Selection:} the best condition is chosen on the data the test then uses, as
 pre-registered. \emph{Real models:} the causal result in Sec.~\ref{sec:wild} holds for
-one public checkpoint at one size. Whether an edited continuation holds its new key, has
-it re-asserted by context, or moves through a pivot, is \textbf{H4}, which our
-pre-registration assigns to a later phase. Supplementary material carries the ambiguity
+one public checkpoint at one size. \emph{Persistence:} H4a, brought forward from
+its pre-registered later phase, bounds the claim: the key variable is causally
+consulted (H3) but not latched --- persistence after release is carried entirely
+by the emitted notes. The rest of H4 (pivot structure) remains future work. Supplementary material carries the ambiguity
 strata, the $12\times24$ specificity matrix, the fifths-distance curve, and per-seed
 variants of every figure. All our training data are synthetic; we use the evaluation
 corpora under their stated licenses.

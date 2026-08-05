@@ -667,3 +667,46 @@ def fig_ambiguity(probing_root: Path, highlight: str, layer: int, out: Path) -> 
               columnspacing=0.9, handlelength=1.2)
     fig.savefig(out)
     plt.close(fig)
+
+
+# ------------------------------------------------------------------ Fig: persist
+def fig_persistence(persist_root: Path, out: Path) -> None:
+    """Experiment G/G2 (H4a). Left: the sustained clamp converges; released after
+    one bar, the effect drops once and PLATEAUS — no decay over 13 bars. Right:
+    the plateau is reproduced by splicing the bar's TOKENS with no activation
+    edit: the carrier is the music, not pinned state. The one honest reading:
+    the key variable is re-estimated from evidence, not stored."""
+    g = json.loads((persist_root / "summary.json").read_text())
+    g2 = json.loads((persist_root / "summary_G2.json").read_text())
+    t = g["trajectories"]
+    bars = list(range(1, 15))                          # bars 15-16 are nan (EOS)
+    n = len(bars)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.5, 1.9), sharey=True)
+
+    ax1.plot(bars, t["sustained"]["ikr_target"][:n], color=EDIT, lw=1.8,
+             marker="o", ms=2.6, zorder=4, label="sustained clamp")
+    ax1.plot(bars, t["oneshot"]["ikr_target"][:n], color=READ, lw=1.8,
+             marker="s", ms=2.6, zorder=4, label="one-shot (bar 9)")
+    ax1.plot(bars, t["k1_oneshot"]["ikr_target"][:n], color=CTRL, lw=1.4,
+             marker="^", ms=2.4, zorder=3, label="K1 one-shot")
+    ax1.set_title("(a) released: no decay", loc="left", fontsize=7.5,
+                  color=INK)
+    ax1.set_ylabel("IKR$_{\\mathrm{target}}$")
+    ax1.legend(frameon=False, fontsize=5.8, handlelength=1.3, loc="center right")
+
+    ax2.plot(bars, t["oneshot"]["ikr_target"][:n], color=READ, lw=1.8,
+             marker="s", ms=2.6, zorder=4, label="one-shot (state pinned)")
+    ax2.plot(bars, g2["splice_ikr_target"][:n], color=BOUND, lw=1.6, ls="--",
+             marker="D", ms=2.4, zorder=5, label="token splice (no edit)")
+    ax2.plot(bars, t["k1_oneshot"]["ikr_target"][:n], color=CTRL, lw=1.4,
+             marker="^", ms=2.4, zorder=3, label="K1 one-shot")
+    ax2.set_title("(b) tokens carry it all", loc="left", fontsize=7.5,
+                  color=INK)
+    ax2.legend(frameon=False, fontsize=5.8, handlelength=1.3, loc="center right")
+    for ax in (ax1, ax2):
+        ax.set_xlabel("continuation bar")
+        ax.set_xticks([1, 5, 9, 13])
+    ax1.set_ylim(0.5, 1.02)
+    fig.subplots_adjust(wspace=0.08)
+    fig.savefig(out)
+    plt.close(fig)

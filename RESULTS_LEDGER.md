@@ -796,3 +796,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/persistence/R-Aug_s0/parts/persistence_L4.parquet`, `results/persistence/R-Aug_s0/summary.json`
 - note: half-life=7 bars vs K1; reassertion={'sustained': 0.059322033898305086, 'oneshot': 0.30837004405286345, 'k1_oneshot': 0.44954128440366975}
 
+## 2026-08-05T15:20:39+09:00 — Experiment G2: token-splice control R-Aug_s0
+- git: `3050de406df9fbe4f84402aae836e44fca42a9e7`
+- config_hash: `b49d359412d363f459b4ba7d3c134e55a30b630b3f9604ff7944bbb88d5a51c6`
+- seeds: [0]
+- artifacts: `results/persistence/R-Aug_s0/parts/splice_L4.parquet`, `results/persistence/R-Aug_s0/summary_G2.json`
+- note: splice reassertion=0.348; clean stays-in-source=0.474
+
+## 2026-08-05T15:22:33+09:00 — P5 figures
+- git: `3050de406df9fbe4f84402aae836e44fca42a9e7+DIRTY`
+- config_hash: `62f52cd6669dedd2320da0c63863059ab1d1b8611471279f2555ab9a9b884568`
+- seeds: n/a
+- artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`, `results/figures/fig_persistence.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
