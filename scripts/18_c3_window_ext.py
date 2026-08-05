@@ -153,8 +153,22 @@ def main() -> None:
         r = train_probe(data["acts"][li].astype(np.float32), y_c1b, masks,
                         base_cfg, device=device)
         c1b_pred[li] = r["y_pred_test"]
-        got = metric_report(y_test, r["y_pred_test"])["macro_f1_24"]
-        want = report["layers"][str(li)]["c1b_on_true_labels"]["macro_f1_24"]
+        # Schema drift, resolved by git archaeology (de53a48 -> ec0ac28): reports
+        # that predate the margin-check refactor store "c1b" measured ON CONTROL
+        # LABELS (train_probe reports against the labels it trained on); the
+        # refactor added c1b_on_true_labels and s0 was re-probed. So compare like
+        # with like: new schema -> retrain vs true labels; old schema -> retrain
+        # vs the SAME control labels. (First attempt compared the old stored value
+        # against true-label F1 — a different quantity — and G3 correctly failed
+        # on all 11 old-schema models, ±0.005. controls.py itself is unchanged
+        # between the two commits, so the permutation is identical.)
+        lrec = report["layers"][str(li)]
+        if "c1b_on_true_labels" in lrec:
+            got = metric_report(y_test, r["y_pred_test"])["macro_f1_24"]
+            want = lrec["c1b_on_true_labels"]["macro_f1_24"]
+        else:
+            got = metric_report(y_c1b[test_mask], r["y_pred_test"])["macro_f1_24"]
+            want = lrec["c1b"]["macro_f1_24"]
         ok = abs(got - want) < GATE_TOL
         g3_ok &= ok
         out["gates"][f"G3_c1b_L{li}"] = {"got": got, "ledgered": want, "pass": ok}
