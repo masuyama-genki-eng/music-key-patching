@@ -712,3 +712,80 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/probing/R-Aug_s0/c3_window_ext.json`, `results/probing/R-Aug_s0/verdict_DR-H1_extD.json`
 - note: gates G1-G3 reproduce ledger exactly; plain-window C3 peaks INTERIOR at W=96 (0.8012) then falls to 0.7520 at W=512; steelman concat [W16|W512] best at 0.8243; DR-H1 vs strongest C3: supported=True (L2-L7 excl0; L4 +0.0706 [0.0560,0.0812])
 
+## 2026-08-05T13:17:21+09:00 — Experiment D: C3 window extension R-Aug_s1
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873`
+- config_hash: `c5b8cdd5ebb4a29d2ed3d04d1a5ffab84fdbbe68c682726bcdfdcb6855aaf24b`
+- seeds: [0]
+- artifacts: `results/probing/R-Aug_s1/c3_window_ext.json`, `results/probing/R-Aug_s1/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:20:04+09:00 — Experiment D: C3 window extension R-Aug_s2
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `3fa2404040599fa8c157d6effc19f5eb33970d24f790d424999680a8626236ca`
+- seeds: [0]
+- artifacts: `results/probing/R-Aug_s2/c3_window_ext.json`, `results/probing/R-Aug_s2/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:22:46+09:00 — Experiment D: C3 window extension R-NoAug_s0
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `08a68351757dd5da786969681d7cd7006ea5ee42ea290cea166e160547dfcd1d`
+- seeds: [0]
+- artifacts: `results/probing/R-NoAug_s0/c3_window_ext.json`, `results/probing/R-NoAug_s0/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:25:32+09:00 — Experiment D: C3 window extension R-NoAug_s1
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `c2a4458f18ffcf51e1890932028ea7f37f45659eeb06237408b8e562f8f8d0ba`
+- seeds: [0]
+- artifacts: `results/probing/R-NoAug_s1/c3_window_ext.json`, `results/probing/R-NoAug_s1/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:28:20+09:00 — Experiment D: C3 window extension R-NoAug_s2
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `5cf3ab040d47b2d3262260101159c10079805a3892ea63d5fe26ec3fe682fca1`
+- seeds: [0]
+- artifacts: `results/probing/R-NoAug_s2/c3_window_ext.json`, `results/probing/R-NoAug_s2/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:30:29+09:00 — Experiment D: C3 window extension size-L2d128_s0
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `47f41f26fcb1468b0e039e0a32ccb8e0c96092268970d46cf21f8562efade04e`
+- seeds: [0]
+- artifacts: `results/probing/size-L2d128_s0/c3_window_ext.json`, `results/probing/size-L2d128_s0/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=False
+
+## 2026-08-05T13:32:38+09:00 — Experiment D: C3 window extension size-L2d128_s1
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `431c45f136e5dcf1a71c36a7f1a2812a38104123e41a6c4a897355f4025586d7`
+- seeds: [0]
+- artifacts: `results/probing/size-L2d128_s1/c3_window_ext.json`, `results/probing/size-L2d128_s1/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=False
+
+## 2026-08-05T13:34:57+09:00 — Experiment D: C3 window extension size-L4d256_s0
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `7f3fee5effb1c6b97edb633078a208e013a0b9f559149b13bbe6dbb22c5a49ad`
+- seeds: [0]
+- artifacts: `results/probing/size-L4d256_s0/c3_window_ext.json`, `results/probing/size-L4d256_s0/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:37:16+09:00 — Experiment D: C3 window extension size-L4d256_s1
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `cc5e7564fdda65c4e839f54e4513cefc1588b840d7f0634246a221bf9b1da9bf`
+- seeds: [0]
+- artifacts: `results/probing/size-L4d256_s1/c3_window_ext.json`, `results/probing/size-L4d256_s1/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:40:33+09:00 — Experiment D: C3 window extension size-L12d768_s0
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `17c90541562a66e7eb49c5dc2c67f0a17677e2bcb565ac495240cb3fc1f6302a`
+- seeds: [0]
+- artifacts: `results/probing/size-L12d768_s0/c3_window_ext.json`, `results/probing/size-L12d768_s0/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+
+## 2026-08-05T13:43:46+09:00 — Experiment D: C3 window extension size-L12d768_s1
+- git: `abfc4cfd8c20f0c354ab01f0ee49ca2684f11873+DIRTY`
+- config_hash: `bfcbb44bbdea35d9644d51846d7384b465f67010568ca90a06ea82cc283c147a`
+- seeds: [0]
+- artifacts: `results/probing/size-L12d768_s1/c3_window_ext.json`, `results/probing/size-L12d768_s1/verdict_DR-H1_extD.json`
+- note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
+

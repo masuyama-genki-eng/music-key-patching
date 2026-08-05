@@ -352,9 +352,54 @@ model (peak $+0.105$). It fails only at L$0$, and fails there in the informative
 direction: the margin is significantly \emph{negative} ($-0.20$, CI
 $[-0.211,-0.182]$), i.e.\ at the raw embedding the input surface outperforms the
 model's own representation of it. Table~\ref{tab:probe} gives
-the numbers at the layer the edit acts on. The internal state is most valuable
-where the surface is least informative: in the top ambiguity quartile probe accuracy
-is $0.936$ \vs $0.795$ for the best baseline.
+the numbers at the layer the edit acts on.
+
+\subsubsection{The history-length confound, and what survived it}
+\label{sec:extD}
+The comparison above has an asymmetry that could have explained it entirely: the
+probe reads $h_\ell(t)$, which attends over the full prefix ($\le512$ tokens,
+${\sim}170$ notes), while C3 sees a $W$-token window with $W\le64$ (${\sim}21$
+notes)---and the best C3 sat exactly at $W{=}64$, the \emph{edge} of the
+pre-registered sweep, with its $F_1$ still rising steeply ($0.686$ at $W{=}32$).
+Both the headline margin and the ambiguity contrast could then be read as
+``the probe sees more history,'' not ``the model computes a state.''
+
+We therefore reran C3 at the same positions with the sweep extended to the full
+prefix ($W\in\{96,128,192,256,512\}$; $512$ exceeds the longest piece) and with two
+post-hoc variants that only strengthen the baseline: exponentially recency-decayed
+full-history histograms (half-life $\lambda\in\{32,\ldots,256\}$ tokens) and a
+concatenation of short and full windows $[W16\,|\,W512]$. History alone does not
+close the gap. The plain-window curve turns over \emph{inside} the extension, at
+$W{=}96$ ($0.801$), and falls monotonically to $0.752$ at the full prefix: with
+$0$--$3$ modulations per piece, evidence from before a modulation poisons a
+histogram that cannot down-weight it, which is precisely the estimation problem an
+internal state solves. The strongest surface overall is the concatenation, at
+$0.824$; the decayed variant peaks at $0.814$ ($\lambda{=}32$). Against that
+strongest baseline the corrected margin at L$4$ is $+0.071$ (BCa $95\%$ CI
+$[0.056,0.081]$), and every DR-H1 verdict in this paper---$6/6$ main-line support,
+both $0.5$M failures, both $3.4$M and both $86$M passes---is unchanged, though the
+$3.4$M margins thin to $+0.015$ $[0.004,0.023]$ and $+0.012$ $[0.001,0.021]$.
+
+One registered sub-claim does \emph{not} survive. Against the pre-registered
+baseline the probe's advantage concentrated where KS estimation is uncertain
+($0.936$ \vs $0.795$ in the top ambiguity quartile); against the strengthened
+baseline the advantage is \emph{uniform}---$+0.097$ in the top quartile, $+0.097$
+elsewhere. The apparent ambiguity-specific edge was an artifact of the $W{=}64$
+cap, which is weakest exactly where a short window is uncertain. We report H1's
+``the gap widens where the key is ambiguous'' as not supported in its strengthened
+form, and Fig.~\ref{fig:ambiguity} should be read with that caveat.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\columnwidth]{fig_ambiguity.pdf}
+\caption{A cautionary result. Against the \emph{pre-registered} baseline (shown),
+the probe's advantage concentrates in the top ambiguity quartile ($0.94$ \vs
+$0.79$)---which reads as ``the state earns its keep where the surface fails.''
+Against the strengthened baseline of Sec.~\ref{sec:extD} the advantage is uniform
+across strata ($+0.097$ in both): the concentration was an artifact of the
+$W{=}64$ window, itself weakest where a short window is uncertain.}
+\label{fig:ambiguity}
+\end{figure}
 
 \begin{table}[t]
 \setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
@@ -481,7 +526,10 @@ top-$1$ is $0.868$--$0.879$ across a $170\times$ capacity range. \emph{Readabili
 not: at $0.5$M the probe peaks at $F_1$ $0.63$--$0.66$, \emph{below} the input baseline
 ($0.79$), and DR-H1 is not supported in either seed---a behaviorally equivalent model
 that has no key state at all, which is the surface-statistics account made flesh, and
-which our pre-registered test correctly refuses to credit. \emph{Manipulability} is a
+which our pre-registered test correctly refuses to credit. (All size verdicts are
+unchanged against the strengthened baseline of Sec.~\ref{sec:extD}; the $3.4$M
+margins thin to $+0.015$ $[0.004,0.023]$ and $+0.012$ $[0.001,0.021]$---the state
+first appears just barely above the strongest surface.) \emph{Manipulability} is a
 third thing again. At $0.5$M the edit changes the key \emph{more} often than at $26$M
 in raw terms ($0.55$ \vs $0.43$) and passes the musicality guard only $10\%$ of the
 time (\vs $80\%$ at $26$M): with two layers, ``editing the key subspace'' is a blunt

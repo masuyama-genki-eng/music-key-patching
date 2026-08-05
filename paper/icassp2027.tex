@@ -249,9 +249,19 @@ is therefore $0.927-0.790-0.032=+0.105$ (BCa $95\%$ CI $[0.091,0.114]$). That ma
 excludes zero in layers $1$--$7$ of every trained model and fails only at L$0$, where
 it is significantly \emph{negative} ($-0.20$, CI $[-0.211,-0.182]$)---the embedding
 itself, which should not beat the surface: DR-H1 is supported $6/6$. An untrained model
-scores $0.243$, so the architecture alone does not supply the key. The internal state
-earns its keep where the surface fails: on the quarter of positions where KS estimation
-is least certain, the probe scores $0.936$ against the baseline's $0.795$.
+scores $0.243$, so the architecture alone does not supply the key.
+
+One confound could explain that margin: the probe attends the full prefix ($\le512$
+tokens) while C3 sees a $W$-token window, and the best C3 sat at the \emph{edge} of the
+pre-registered sweep, still rising. So we extended the sweep to the full prefix and
+built two stronger variants (recency-decayed histograms; short${+}$long concatenation).
+History does not close the gap: the window curve turns over at $W{=}96$ ($0.801$) and
+\emph{falls} to $0.752$ at $W{=}512$---under modulations, stale evidence poisons a
+histogram that cannot weight it. Against the strongest surface so built ($0.824$), the
+margin is $+0.071$ (CI $[0.056,0.081]$) and all twelve DR-H1 verdicts below are
+unchanged. One registered sub-claim does \emph{not} survive: the probe's edge is
+uniform across ambiguity strata ($+0.097$ in both), not wider where KS is
+uncertain---that contrast ($0.936$ \vs $0.795$) was an artifact of the $W{=}64$ cap.
 
 \subsection{Fifths geometry; equivariant but not a group}
 The representation carries music-theoretic structure. We project the twelve
@@ -344,7 +354,9 @@ $0.868$--$0.879$ across a $170\times$ range. \emph{Legibility} is not. At $0.5$M
 probe scores \emph{below} the surface baseline and DR-H1 fails in both seeds---a model
 that composes about as well as the others and has no key state to speak of, the
 surface-statistics account in the flesh, which our pre-registered rule refuses to
-credit. \emph{Manipulability} is a third property again. At $0.5$M the edit moves the
+credit. (Every size verdict is unchanged against Sec.~\ref{sec:h1}'s strengthened
+baseline, but the $3.4$M margin thins to ${\sim}{+}0.01$: the state appears just
+barely above the strongest surface.) \emph{Manipulability} is a third property again. At $0.5$M the edit moves the
 key \emph{more} often than at $26$M in raw terms ($0.55$ against $0.43$), but only
 $10\%$ of those edits stay in budget, against $80\%$ at $26$M: with two layers,
 ``editing the key subspace'' overwrites the model rather than moving a separable part

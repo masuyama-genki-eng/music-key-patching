@@ -700,3 +700,35 @@ Paper edits held until those verdicts land.
 Note: the first run's append_entry crashed on a relative path AFTER artifacts and
 snapshots were written; the entry was appended post-hoc in the same session and the
 script fixed (resolve() before relative_to).
+
+## 2026-08-05 (2) — Experiment D complete: 12/12 verdicts unchanged; A2 contrast dead
+
+All 12 models rerun against the strengthened C3 (best: concat [W16|W512] = 0.8243,
+identical across models as an input-only baseline must be). G3 initially failed on
+all 11 old-schema models by ±0.005 — git archaeology (de53a48 -> ec0ac28) showed
+pre-refactor reports store "c1b" on CONTROL labels; the gate now compares like with
+like and passes everywhere (commit abfc4cf).
+
+Best-layer corrected margins vs the strongest surface, BCa 95% CI:
+  R-Aug s0/s1/s2:     +0.0706 [.0560,.0812] / +0.0689 [.0538,.0798] / +0.0657 [.0503,.0767]
+  R-NoAug s0/s1/s2:   +0.0660 [.0505,.0770] / +0.0616 [.0471,.0723] / +0.0677 [.0522,.0786]
+  86M s0/s1:          +0.0606 [.0461,.0711] / +0.0622 [.0470,.0730]
+  3.4M s0/s1:         +0.0148 [.0035,.0234] / +0.0122 [.0013,.0209]   <- thin but positive
+  0.5M s0/s1:         -0.2436 [-.2553,-.2322] / -0.2065 [-.2186,-.1947]
+
+VERDICT MAP UNCHANGED: 6/6 main-line supported; 0.5M fails both seeds; 3.4M and 86M
+pass both seeds. The emergence crossover stays between 0.5M and 3.4M — but at 3.4M
+the key state clears the strongest surface by ~0.01, not the pre-registered-baseline
+~0.05: the transition is sharper than the paper currently reads.
+
+PAPER CONSEQUENCES (applied in the same session):
+1. The A2 sentence ("earns its keep where the surface fails", 0.936 vs 0.795) is
+   replaced by the experiment-D result: the probe's edge over the strongest surface
+   is uniform across ambiguity strata (+0.097 both). H1's registered sub-claim "the
+   gap widens where the key is ambiguous" is reported as not surviving the
+   strengthened baseline.
+2. Results gain the window-curve summary (interior optimum W=96, falls to 0.752 at
+   full prefix) and the strengthened-baseline margin +0.071 [0.056, 0.081].
+3. Capacity text notes the 3.4M margin thins to ~+0.01 under the strengthened
+   baseline (verdict unchanged).
+4. OJSP fig_ambiguity's caption/interpretation rewritten as a cautionary result.
