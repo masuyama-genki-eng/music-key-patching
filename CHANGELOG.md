@@ -732,3 +732,41 @@ PAPER CONSEQUENCES (applied in the same session):
 3. Capacity text notes the 3.4M margin thins to ~+0.01 under the strengthened
    baseline (verdict unchanged).
 4. OJSP fig_ambiguity's caption/interpretation rewritten as a cautionary result.
+
+## 2026-08-05 (3) — Experiment G: H4a one-shot persistence (user-identified tension)
+
+THE TENSION. §IV-B's sustained clamp ("re-applied at every position because one edit
+alone would be re-estimated away") is continuous steering, and it cannot witness the
+"set a variable" semantics that §II uses against SMITIN/MusicRFM. H4a — persistence
+after a ONE-SHOT edit (SPEC §5 C1) — is the load-bearing test, and it had never run
+(edit.py's one-shot mode was planned in CLAUDE.md but unimplemented).
+
+OPERATIONALIZATION (scripts/19_persistence.py, results/persistence/R-Aug_s0/).
+With no KV cache the past is recomputed every forward, so "install once" = pin the
+edit to the FIRST GENERATED BAR's positions (window closed per row at its own 2nd
+BAR token, cap 64 tokens) and never touch later positions. Conditions: clean /
+sustained / oneshot / K1-oneshot, 12 major targets x 100 prompts, V-PROBE L4, paired
+rng (bar 1 of sustained and oneshot is IDENTICAL by construction — measured equal,
+0.805, an internal validity check). Metrics per SPEC C1; Phase C has no frozen DR,
+so results are descriptive.
+
+RESULT — NOT exponential decay, and not a latch: a ONE-STEP DROP TO A STABLE PLATEAU.
+  IKR_target by bar (targets != src):
+    sustained: 0.805 -> 0.87 -> 0.92 -> ... -> 0.99   (clamp converges)
+    oneshot:   0.805 -> 0.685 -> then FLAT ~0.66-0.70 through bar 14 (no decay)
+    K1 1shot:  0.56 flat (the ~0.55 floor is average major-scale overlap)
+  Released, the music does not snap back: the pitch-content shift persists at
+  +0.12 over K1 for 13+ bars. Re-assertion (last-4-bars KS back to source):
+  oneshot 31% < K1 45% — the targeted edit is HARDER to recover from than a
+  matched random perturbation. But the freed state is intermediate: per-bar KS
+  names the target key only ~9% of bars (sustained climbs to 28%+); a one-bar
+  installation shifts the tonal center of mass without completing a modulation.
+  The summary.json "half-life=7" is an artifact of applying a half-life formula
+  to a plateau; the honest description is drop-then-plateau.
+
+CAVEAT THAT DECIDES THE READING (running as experiment G2): the persistence could
+be carried by (a) later positions reading the pinned bar-9 STATE, or (b) the bar-9
+TOKENS the edit caused, which are themselves input evidence of the new key. The
+token-splice control (scripts/20_splice_control.py: same bar-9 tokens spliced after
+the clean prompt, no activation edit anywhere) separates them. Paper prose is held
+until it lands.

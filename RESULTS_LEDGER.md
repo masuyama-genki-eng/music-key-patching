@@ -789,3 +789,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/probing/size-L12d768_s1/c3_window_ext.json`, `results/probing/size-L12d768_s1/verdict_DR-H1_extD.json`
 - note: best C3 now lr_W16cat512 F1=0.8243; DR-H1 supported=True
 
+## 2026-08-05T14:57:01+09:00 — Experiment G: H4a one-shot persistence R-Aug_s0
+- git: `24a4739015323ccf9b4a0995642f6767a827f972+DIRTY`
+- config_hash: `57f56a925b01d689025e7a3412a73eb791733a48bd79cf0918dd6d926b3b55a1`
+- seeds: [0]
+- artifacts: `results/persistence/R-Aug_s0/parts/persistence_L4.parquet`, `results/persistence/R-Aug_s0/summary.json`
+- note: half-life=7 bars vs K1; reassertion={'sustained': 0.059322033898305086, 'oneshot': 0.30837004405286345, 'k1_oneshot': 0.44954128440366975}
+
