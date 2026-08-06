@@ -891,3 +891,27 @@ reads most — moves nothing. Next decisive cut, if pursued: condition the
 attention analysis on QUERY type (the pitch-choice moments), distance-resolved;
 the aggregate over all final-bar queries mixes choice types. Out of scope for the
 current papers, which state the phenomenon only.
+
+## 2026-08-06 (4) — OV-by-type: the user's intuition is half-right; the inversion
+## survives a fifth account; inline tools reach their resolution limit
+
+The user pushed back: surely PITCH positions should matter most. For READING they
+do — probe F1 is (marginally) highest at PITCH (.938). The causal inversion is
+what needs explaining, and scripts/24_ov_by_type.py (attention OUTPUT decomposed
+by source type, content term W_O W_V ln1(x), projected onto each layer's own
+probe row space; forward replicated and logit-gated):
+- key DENSITY of delivered content is 1.5-2.8x higher from BAR/POS/DUR than from
+  PITCH (L7: .092/.088/.085 vs .038) — the division-of-labor direction;
+- but ABSOLUTE key-subspace delivery is ~7x larger from PITCH (L7: 9.5 vs 0.8),
+  because PITCH sources deliver enormously more of everything (247 vs 8) — so
+  "the summary flows only from delimiters" fails as stated;
+- a coherence probe (probe-logit margin toward the prompt's key, per source type)
+  is INCONCLUSIVE: signs flip across layers (L5 PITCH +0.095 pro-source, L7
+  PITCH -0.143 anti-source), and projecting OV summands through probes trained
+  on full residual streams is at the edge of what these inline tools resolve.
+STATE: the BAR/DUR causal concentration now survives five accounts (readability,
+edit magnitude, attention mass, per-head anchoring, simple OV division-of-labor).
+The right next tool is causal path patching (patch the edited state into
+type-restricted attention-value paths and measure guarded TKR downstream) —
+Phase C material, out of scope for the current papers, which state the
+phenomenon and the refutations only.

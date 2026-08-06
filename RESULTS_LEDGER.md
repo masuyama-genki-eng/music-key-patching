@@ -838,3 +838,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/selective/R-Aug_s0/attention_by_type.json`
 - note: per_head added; best DUR head in L5-L7 = 1.22, no delimiter head; H-A refuted at head granularity
 
+## 2026-08-06T16:41:31+09:00 — Experiment H OV-by-type (exploratory) R-Aug_s0
+- git: `232251f619d6613e76105621687e7d53006e96c4+DIRTY`
+- config_hash: `89fea83a03842201714dfaec96c2e863d0a63a133e563ec136b1a1b97d2f1a35`
+- seeds: [0]
+- artifacts: `results/selective/R-Aug_s0/ov_by_type.json`
+- note: L5 key_frac BAR=0.050,POS=0.067,PITCH=0.032,DUR=0.071; L6 key_frac BAR=0.052,POS=0.060,PITCH=0.032,DUR=0.043; L7 key_frac BAR=0.085,POS=0.088,PITCH=0.038,DUR=0.092
+
+## 2026-08-06T16:42:29+09:00 — Experiment H OV-by-type (exploratory) R-Aug_s0
+- git: `232251f619d6613e76105621687e7d53006e96c4+DIRTY`
+- config_hash: `89fea83a03842201714dfaec96c2e863d0a63a133e563ec136b1a1b97d2f1a35`
+- seeds: [0]
+- artifacts: `results/selective/R-Aug_s0/ov_by_type.json`
+- note: L5 key_frac BAR=0.050,POS=0.067,PITCH=0.032,DUR=0.071; L6 key_frac BAR=0.052,POS=0.060,PITCH=0.032,DUR=0.043; L7 key_frac BAR=0.085,POS=0.088,PITCH=0.038,DUR=0.092
+
