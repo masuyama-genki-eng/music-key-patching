@@ -31,22 +31,30 @@ class SubspaceEditor:
     mode:
       "replace" : project out V-component, insert target component (SPEC edit)
       "sham"    : project out and re-insert the SAME component (K2; identity)
-    Edit region is [from_position, until_position) in window coordinates.
+    Edit region is [from_position, until_position) in window coordinates,
+    optionally intersected with a token-type mask.
       from_position : int | None (None -> 0)
       until_position: int | LongTensor (B,) | None (None -> end). The tensor form
                       gives a per-row bound — experiment G's one-shot window closes
                       at each row's own first generated bar line (SPEC §5 C1).
+      token_mask    : BoolTensor (B, T) | None. True = position may be edited.
+                      Experiment H sets it per generation step from the token TYPE
+                      at each position (e.g. edit only POS/PITCH positions), testing
+                      whether the blanket all-type write needlessly damages the
+                      music. ANDed with the [from, until) range.
     """
 
     def __init__(self, V: torch.Tensor, mu_target: torch.Tensor | None = None,
                  mode: str = "replace", from_position: int | None = None,
-                 until_position: int | torch.Tensor | None = None):
+                 until_position: int | torch.Tensor | None = None,
+                 token_mask: torch.Tensor | None = None):
         assert mode in ("replace", "sham")
         self.V = orthonormalize(V)                     # (d, r)
         self.mu_t = mu_target                          # (d,) mean activation of target key
         self.mode = mode
         self.from_position = from_position
         self.until_position = until_position
+        self.token_mask = token_mask
 
     def _proj(self, x: torch.Tensor) -> torch.Tensor:
         return (x @ self.V) @ self.V.T                 # (B,T,d) -> component in V
@@ -60,9 +68,10 @@ class SubspaceEditor:
         else:
             target = (self.mu_t @ self.V) @ self.V.T   # (d,) target component
             edited = x - comp + target[None, None, :]
-        if self.from_position is None and self.until_position is None:
+        if (self.from_position is None and self.until_position is None
+                and self.token_mask is None):
             return edited
-        if self.until_position is None:
+        if self.until_position is None and self.token_mask is None:
             # Sustained path, kept in the exact slice-assign form the K2
             # bit-identity gate was validated against (CHANGELOG 2026-07-16).
             out = x.clone()
@@ -71,10 +80,13 @@ class SubspaceEditor:
         pos = torch.arange(x.shape[1], device=x.device)[None, :]     # (1, T)
         mask = pos >= (self.from_position or 0)
         hi = self.until_position
-        if torch.is_tensor(hi):
-            mask = mask & (pos < hi.to(x.device)[:, None])           # (B, T)
-        else:
-            mask = mask & (pos < hi)
+        if hi is not None:
+            if torch.is_tensor(hi):
+                mask = mask & (pos < hi.to(x.device)[:, None])       # (B, T)
+            else:
+                mask = mask & (pos < hi)
+        if self.token_mask is not None:
+            mask = mask & self.token_mask.to(x.device)               # (B, T)
         return torch.where(mask[..., None], edited, x)
 
 

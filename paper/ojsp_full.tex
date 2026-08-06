@@ -315,8 +315,9 @@ donor key. ``Sustained'' is meant literally and asymmetrically, and the asymmetr
 worth stating because it is easy to assume otherwise: the edit is applied at
 \emph{every} token position from $t^{*}$ (the bar-$9$ boundary) onward---\texttt{BAR},
 \texttt{POS}, \texttt{PITCH} and \texttt{DUR} alike---and re-applied at every generation
-step, whereas the \emph{probe} is read only at the positions where the model is about to
-choose a pitch. (What a \emph{one-shot} installation leaves behind---and through what
+step, whereas the \emph{probe} is trained and scored at sampled positions, uniformly
+over token types (the predict-pitch reading convention enters only with the
+public-model study, Sec.~\ref{sec:wild}). (What a \emph{one-shot} installation leaves behind---and through what
 carrier---is Sec.~\ref{sec:h4a}.) We write to the whole stream and read from
 one position in it. Restricting the edit to pitch-choosing positions is a natural
 variant and we have not run it. Subspaces: \textbf{V-PROBE} (probe row space, rank $24$),

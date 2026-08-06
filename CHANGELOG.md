@@ -806,3 +806,26 @@ CONSEQUENCES FOR FRAMING (the user's tension, resolved on the deflationary side)
    direct measurement. Music differs from Othello exactly here.
 3. "World model" in this paper means: a decodable, causally consulted, continuously
    re-estimated state variable — and the paper must say so in those words.
+
+## 2026-08-06 — Experiment H launched: token-type-selective editing (user-identified)
+
+THE CONCERN. The sustained edit writes into EVERY position from bar 9 on — BAR,
+POS, PITCH, DUR alike — with a single mu averaged over all token types (Phase A
+extraction is probe_at="any"). Type statistics differ, so the blanket write installs
+a type-averaged value at positions it does not match: candidate cause of the 13%
+guard failures at the headline condition, V-MEAN's deep-layer destruction, and part
+of the 58%-of-ceiling actionability gap.
+
+FOUND WHILE VERIFYING — a paper misdescription, now fixed in both papers: they
+claimed the Sec-3.1 probe "reads only where the model is about to choose a pitch".
+FALSE for M-CTRL Phase A (probe_at="any", uniform over token types; no predict_pitch
+Phase A run exists in the ledger); true only of the M-WILD study. The write-wider-
+than-read asymmetry survives, but the specific claim did not.
+
+THE TEST (scripts/21_selective_edit.py; SubspaceEditor gains a token_mask, ANDed
+with [from, until); 2 new unit tests, 41 green). V-PROBE L4, 12 targets x 100
+prompts, frozen guard. Conditions: all (reproduction gate vs the ledgered guarded
+0.3783) / pos_pitch / pitch / bar_dur (complement control). Pre-stated hypothesis:
+masking raises guard-pass; guarded TKR(pos_pitch) >= all means the blanket write
+was needlessly damaging the music; bar_dur moving the key would refute the
+token-type account. Running.

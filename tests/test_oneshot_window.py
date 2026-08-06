@@ -63,3 +63,28 @@ def test_sham_window_is_identity_outside_and_near_identity_inside():
     assert torch.equal(out[:, :1], x[:, :1])
     assert torch.equal(out[:, 3:], x[:, 3:])
     assert torch.allclose(out[:, 1:3], x[:, 1:3], atol=1e-5)
+
+
+def test_token_mask_edits_only_masked_positions():
+    ed = _editor(from_position=1)
+    tm = torch.tensor([[False, True, False, True, False, False],
+                       [False, False, True, True, False, False]])
+    ed.token_mask = tm
+    x = torch.randn(2, 6, 16)
+    out = ed(x)
+    combined = tm.clone(); combined[:, 0] = False       # from_position=1 wins
+    for b in range(2):
+        for t in range(6):
+            if combined[b, t]:
+                assert not torch.allclose(out[b, t], x[b, t])
+            else:
+                assert torch.equal(out[b, t], x[b, t])
+
+
+def test_token_mask_composes_with_window():
+    ed = _editor(from_position=0, until_position=3)
+    ed.token_mask = torch.tensor([[True, False, True, True, True, True]])
+    x = torch.randn(1, 6, 16)
+    out = ed(x)
+    for t, expect_edit in enumerate([True, False, True, False, False, False]):
+        assert (not torch.allclose(out[0, t], x[0, t])) == expect_edit

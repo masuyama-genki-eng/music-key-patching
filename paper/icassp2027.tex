@@ -187,7 +187,9 @@ donor key $\kappa^{*}$: we subtract $h$'s key component and install the donor's.
 after bar~$9$---every \texttt{BAR}, \texttt{POS}, \texttt{PITCH} and \texttt{DUR}
 alike---because one edit alone would be re-estimated away by the next note. We
 therefore write the state more widely than we read it: the probe of Sec.~\ref{sec:h1}
-reads only where the model is about to choose a pitch. \textbf{The prompt itself never
+is trained and scored at sampled positions, uniformly over token types; only the
+public-model study (Sec.~\ref{sec:wild}) restricts reading to positions about to
+choose a pitch. \textbf{The prompt itself never
 changes.}
 
 We build $V$ three ways: \textbf{V-PROBE}, the probe's row space (rank $24$)---the
