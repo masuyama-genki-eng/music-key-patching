@@ -817,3 +817,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/selective/R-Aug_s0/parts/selective_L4.parquet`, `results/selective/R-Aug_s0/summary.json`
 - note: all: guarded=0.378 guard%=0.87; pos_pitch: guarded=0.156 guard%=0.87; pitch: guarded=0.077 guard%=0.97; bar_dur: guarded=0.261 guard%=0.84
 
+## 2026-08-06T16:32:44+09:00 — Experiment H anatomy (exploratory) R-Aug_s0
+- git: `3ea80d119d5e80deebf5c8a4a0eca65df25d0dc0+DIRTY`
+- config_hash: `f99aa9213ea9ba71885ded0ed1ed45e4ae38387cc38f94ea317123a0047399e1`
+- seeds: [0]
+- artifacts: `results/selective/R-Aug_s0/type_anatomy.json`
+- note: BAR: F1=0.786 disp=25.7; POS: F1=0.922 disp=38.2; PITCH: F1=0.938 disp=33.6; DUR: F1=0.935 disp=38.4
+
+## 2026-08-06T16:34:46+09:00 — Experiment H attention-by-type (exploratory) R-Aug_s0
+- git: `3ea80d119d5e80deebf5c8a4a0eca65df25d0dc0+DIRTY`
+- config_hash: `c017669c8f7736301c3fc21e1a5c85d22611370799ac8b253ce6f3c98c77fb06`
+- seeds: [0]
+- artifacts: `results/selective/R-Aug_s0/attention_by_type.json`
+- note: concentration ratios at L4: BAR=0.61, POS=0.94, PITCH=0.38, DUR=1.07
+
+## 2026-08-06T16:37:21+09:00 — Experiment H attention-by-type per-head rerun (exploratory) R-Aug_s0
+- git: `3ea80d119d5e80deebf5c8a4a0eca65df25d0dc0+DIRTY`
+- config_hash: `61a713bcaa9d556b126531fd93229723f7c4674cd1062b92c45ed8e73633300f`
+- seeds: [0]
+- artifacts: `results/selective/R-Aug_s0/attention_by_type.json`
+- note: per_head added; best DUR head in L5-L7 = 1.22, no delimiter head; H-A refuted at head granularity
+

@@ -856,3 +856,38 @@ Paper consequence: the all-positions design is now empirically justified rather
 than assumed; OJSP gains the four-arm comparison; ICASSP Discussion gains one
 sentence. (Also fixed 2026-08-06: both papers misdescribed the Phase-A probe as
 reading only at pitch-choice positions; it reads uniformly sampled positions.)
+
+## 2026-08-06 (3) — WHY BAR/DUR? Three mechanisms tested, three refuted;
+## the "delimiter anchoring" speculation of entry (2) is hereby CORRECTED
+
+The user asked why the causal mass sits at BAR/DUR. Two exploratory analyses
+(scripts/22_type_anatomy.py, scripts/23_attention_by_type.py, both gated —
+anatomy reuses the exact probing extraction; the attention pass replicates
+forward() and asserts logit equality against model.forward):
+
+REFUTED, with numbers:
+- H-B readability/spare-capacity: probe F1 by type is flat (POS .922 / PITCH .938
+  / DUR .935) and LOWEST at BAR (.786). The key is not "more readable" where the
+  edit works — a per-type rerun of the legible!=usable dissociation.
+- H-C mechanical artifact: per-type edit displacement ||P_V h - P_V mu_t|| is
+  comparable (PITCH 33.6 vs DUR 38.4, POS 38.2, BAR 25.7). PITCH-null is not a
+  no-op edit.
+- H-A attention anchoring, layer-averaged AND per-head: at the reading layers
+  (L5-L7, which see the edited L4 output) attention concentrates on PITCH
+  sources (ratios 1.34/1.74/2.15), NOT BAR/DUR (BAR: .085/.007/.102). Best
+  DUR-head anywhere in L5-L7 is 1.22 — no hidden delimiter head.
+
+CORRECTION: entry (2)'s "consistent with delimiter-token summary anchoring" and
+the OJSP phrase "delimiter-like anchors" implied an attention-anchor mechanism
+that analysis 23 now refutes; the OJSP wording is reduced to the positional fact.
+Append-only discipline: this entry supersedes, the old entry stands as written.
+
+WHAT SURVIVES AS A LEAD (recorded, not claimed): key-fraction of the stream is
+highest at DUR (.270) and lowest at PITCH (.153) with PITCH norms largest (197 vs
+121) — after LayerNorm the same absolute key component is diluted at PITCH
+positions. And the sharpened puzzle: clamping BAR/DUR overrides INTACT pitch
+evidence everywhere else, while clamping PITCH — the very positions attention
+reads most — moves nothing. Next decisive cut, if pursued: condition the
+attention analysis on QUERY type (the pitch-choice moments), distance-resolved;
+the aggregate over all final-bar queries mixes choice types. Out of scope for the
+current papers, which state the phenomenon only.
