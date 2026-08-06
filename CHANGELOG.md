@@ -829,3 +829,30 @@ prompts, frozen guard. Conditions: all (reproduction gate vs the ledgered guarde
 masking raises guard-pass; guarded TKR(pos_pitch) >= all means the blanket write
 was needlessly damaging the music; bar_dur moving the key would refute the
 token-type account. Running.
+
+## 2026-08-06 (2) — Experiment H complete: the blanket write is vindicated;
+## the causal mass sits at BAR/DUR positions
+
+Reproduction gate passed exactly (all-arm guarded 0.3783 == ledger). The
+pre-stated hypothesis (masking raises guard-pass; selective write >= blanket) is
+REFUTED on both halves:
+  all        raw 0.429  guard 0.868  guarded 0.3783  dppl 0.079
+  pos_pitch  raw 0.174  guard 0.873  guarded 0.156   dppl 0.083
+  pitch      raw 0.078  guard 0.974  guarded 0.077   dppl 0.019   (= K1 floor 0.075)
+  bar_dur    raw 0.296  guard 0.845  guarded 0.261   dppl 0.120
+- Guard rates do NOT improve under masking (pitch's 0.974 is just a null edit).
+- Damage tracks EFFECT SIZE, not write breadth: ppl-excess per unit guarded TKR is
+  best for the blanket write (0.21) and worse for every mask (0.46-0.53). The
+  user's concern (blanket writes damage musicality) is answered by measurement:
+  they don't — restricting the write just loses the effect.
+- The refutation is informative: PITCH-only editing is causally NULL (0.077 ~ K1)
+  while the complement control BAR/DUR carries 69% of the full effect despite
+  covering FEWER positions than pos_pitch. pos_pitch + bar_dur ~ all (0.156+0.261
+  vs 0.429): the state is distributed across token types, with its causally potent
+  component concentrated at bar-line/duration positions — consistent with
+  delimiter-token summary anchoring, and a third dissociation alongside H5's
+  "where legible != where used".
+Paper consequence: the all-positions design is now empirically justified rather
+than assumed; OJSP gains the four-arm comparison; ICASSP Discussion gains one
+sentence. (Also fixed 2026-08-06: both papers misdescribed the Phase-A probe as
+reading only at pitch-choice positions; it reads uniformly sampled positions.)

@@ -810,3 +810,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_layer_profile.pdf`, `results/figures/fig_fifths_geometry.pdf`, `results/figures/fig_specificity.pdf`, `results/figures/fig_fifths_curve.pdf`, `results/figures/fig_ambiguity.pdf`, `results/figures/fig_framework.pdf`, `results/figures/fig_equivariance.pdf`, `results/figures/fig_intervention_bars.pdf`, `results/figures/fig_emergence.pdf`, `results/figures/fig_surgical.pdf`, `results/figures/fig_persistence.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-08-06T16:14:32+09:00 — Experiment H: token-type-selective edit R-Aug_s0
+- git: `0fbbf49eed49e5eaf600910fe49db096263f3558`
+- config_hash: `b21fba33eb78246546e4a75a09e8413da99eed8d0ff1d6d160c7d0925c9bc53d`
+- seeds: [0]
+- artifacts: `results/selective/R-Aug_s0/parts/selective_L4.parquet`, `results/selective/R-Aug_s0/summary.json`
+- note: all: guarded=0.378 guard%=0.87; pos_pitch: guarded=0.156 guard%=0.87; pitch: guarded=0.077 guard%=0.97; bar_dur: guarded=0.261 guard%=0.84
+

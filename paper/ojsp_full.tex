@@ -478,6 +478,21 @@ the probe's readout directions (Sec.~\ref{sec:disc}), and V-MEAN edits destroy o
 quality at deep layers (guard pass ${\leq}\,5\%$ at L$4$--L$5$)---the guard is
 load-bearing, a point Sec.~\ref{sec:capacity} makes decisive.
 
+The blanket write itself---every token position, one type-averaged
+$\mu_{\kappa^{*}}$---is a design one should suspect of damaging the music
+needlessly, so we tested it: the same condition with the write restricted by token
+type. It is vindicated, and the refutation is informative. Restricting to PITCH
+positions is causally \emph{null} (guarded $0.077$, at the K1 floor) while leaving
+the music essentially untouched (guard pass $0.974$); restricting to POS${+}$PITCH
+recovers $0.156$; the \emph{complement}---BAR and DUR positions only---recovers
+$0.261$, more than POS${+}$PITCH from fewer positions; and the two halves sum
+approximately to the whole ($0.156{+}0.261$ \vs $0.429$ raw). Guard rates do not
+improve under any mask, and the perplexity cost per unit of guarded $\tkr$ is
+\emph{lowest} for the blanket write: the damage tracks the effect, not the write's
+breadth. The causally potent component of the key state thus sits mostly at
+bar-line and duration positions---delimiter-like anchors, not the pitch emissions
+themselves---a third dissociation alongside Sec.~\ref{sec:h5}'s.
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.95\columnwidth]{fig_intervention_bars.pdf}

@@ -469,7 +469,11 @@ decay) yet splicing that bar's \emph{tokens} alone reproduces the entire effect
 third: borrowing L$0$'s subspace does nothing at L$4$ ($0.064$, at or below K1), so the
 effect needs that layer's own directions---but subspaces borrowed from L$5$--L$7$ and
 injected at L$1$--L$3$ reach $0.27$--$0.39$, so the key subspace is largely
-\emph{shared} across the middle stack rather than re-learned at each depth.
+\emph{shared} across the middle stack rather than re-learned at each depth. The
+state is also spread across token \emph{types}: restricting the write to PITCH
+positions is causally null ($0.077$, the K1 floor) while BAR/DUR positions alone
+carry $69\%$ of the effect---and no restriction improves the guard rate, so the
+blanket write does not needlessly damage the music.
 
 Bounds. \emph{Mode:} we pre-registered major as the injected mode and minor as a
 secondary condition, and have not run the secondary condition, so every causal claim
