@@ -915,3 +915,32 @@ The right next tool is causal path patching (patch the edited state into
 type-restricted attention-value paths and measure guarded TKR downstream) —
 Phase C material, out of scope for the current papers, which state the
 phenomenon and the refutations only.
+
+## 2026-08-08 — The F#/Spearman confound (user-identified): mu_F# was the ZERO VECTOR
+
+The user observed that the probe and the class means are estimated from the same
+imbalanced chorale corpus, so "the model resists rare keys" cannot be told apart
+from "rare keys have noisy mu". Recounting the corpus settles the strongest case
+outright: per-key note-event counts in the 300 labeled chorales are
+  G 8487, A 5548, D 5399, Bb 4788, F 4465, C 4050, Eb 1691, E 1451,
+  Ab 355, B 336, Db 40, **F#/Gb 0**.
+Zero. And 12_mwild_probe.py line ~186 writes `np.zeros` for absent classes: the
+celebrated "the one target it cannot reach is F# major (TKR 0.000)" was an edit
+that installed the ZERO VECTOR as the target key component. That datum is invalid
+as evidence of model resistance, full stop. Db (40), B (336), Ab (355) means are
+estimated from so few positions that the Spearman +0.91 confounds the model's
+prior with our estimator's sample count — exactly the user's point.
+
+EXPERIMENT I (the user's list letter: H) — balanced re-estimation, launching now:
+transpose every chorale's events into all 12 keys (event-level pitch shift, label
+tonic shifted mod 12; shifts chosen within instrument range), re-extract, and
+re-estimate BOTH the probe row space V and the class means from a key-BALANCED
+sample (equal positions per class). Evaluation prompts stay the natural held-out
+chorale prefixes; the edit layer stays the stage-1 choice (L8) and the guard
+stays frozen at 0.849 — the ONLY manipulated variable is the estimation corpus
+balance. Outcomes, pre-stated:
+  (a) resistance pattern and Spearman persist -> the prior is the model's; the
+      finding is defended and the papers get to say so with the confound closed;
+  (b) F#/rare targets become steerable -> the abstract-level finding is retracted
+      to "our estimator, not their prior" in both papers.
+Either way the F# 0.000 sentence must be rewritten: its current form is untrue.
