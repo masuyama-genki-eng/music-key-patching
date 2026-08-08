@@ -944,3 +944,31 @@ balance. Outcomes, pre-stated:
   (b) F#/rare targets become steerable -> the abstract-level finding is retracted
       to "our estimator, not their prior" in both papers.
 Either way the F# 0.000 sentence must be rewritten: its current form is untrue.
+
+## 2026-08-08 (2) — Experiment I verdict: outcome (b). The "key prior" is RETRACTED.
+
+Balanced re-estimation (12-key transposed estimation corpus; 993 positions/class;
+all 24 mu nonzero, norms 4.7-4.8; balanced probe F1 0.661; evaluation prompts,
+layer L8, and the frozen guard untouched) against the pre-stated outcomes:
+
+  per-target guarded TKR, old (imbalanced) -> new (balanced):
+    F#/Gb 0.000 -> 0.617 (second best!)   Db 0.233 -> 0.400
+    B     0.267 -> 0.500                  E  0.383 -> 0.650
+  pooled: 0.365 -> 0.479 (vs K1 0.061; 7.8x); 11/12 -> 12/12 significant;
+  guard pass 99.7%; IKR 0.890 vs 0.753.
+  Spearman vs corpus prior: note-weighted +0.907 (p<1e-4) -> +0.409 (p=0.096, ns);
+  by-chorale +0.749 (p=0.003) -> +0.489 (p=0.055, ns).
+
+VERDICT (pre-stated as outcome b): the striking prior was manufactured by the
+estimator's per-key sample count. F#'s 0.000 was an edit installing the zero
+vector. With balanced tools every key is reachable and DR-H3 STRENGTHENS
+(7.8x, 12/12). Whether a weaker genuine prior exists is open (ns trends +0.41/
++0.49); the claimed one is retracted.
+
+PAPERS updated: both abstracts drop "the keys it resists are the keys real music
+rarely uses" and carry the corrected numbers + a one-line caution; ICASSP gains a
+compact retraction paragraph; OJSP gains §"A retraction, in full" with the
+portable failure mode stated in bold; tab:wildcausal updated to balanced numbers.
+The balanced run is primary (corrected estimator); the first run remains in the
+text as the object of the retraction. 15_key_prior.py fixed (resolve();
+tagged output preserves the original artifact).

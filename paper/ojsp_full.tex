@@ -70,11 +70,13 @@ $90\%$ of cases. Capacity does not buy the key; it buys a key that can be moved
 without breaking everything else. Finally we leave our own models entirely. On real Bach
 chorales a \emph{public} $128$M checkpoint trained on real music---architecturally
 identical to one of ours---carries a key state that beats the pitch surface where ours
-does not, and editing that state redirects the music it composes at $5.7\times$ the rate
-of matched random edits ($11/12$ targets, Holm-corrected) with \emph{no} measurable cost
-to musicality. It also resists: the keys the edit cannot reach are exactly the keys real
-music rarely uses (Spearman $+0.91$). Editing a music Transformer's internal key state
-changes what key it composes in---in a model people actually use, not only in ours.
+does not, and editing that state redirects the music it composes at $7.8\times$ the rate
+of matched random edits ($12/12$ targets, Holm-corrected) at almost no measurable cost
+to musicality. An apparent key prior in our first run---F$\sharp$ unreachable, success
+tracking corpus key frequency at Spearman $+0.91$---dissolved under key-balanced
+re-estimation of the edit targets; we retract it publicly as a caution for activation
+editing at large. Editing a music Transformer's internal key state changes what key it
+composes in---in a model people actually use, not only in ours.
 \end{abstract}
 
 \begin{keywords}
@@ -137,10 +139,10 @@ synthetic-trained model of the same shape does not, isolating the training data 
 variable that decides whether a key state is worth more than the notes themselves
 (Sec.~\ref{sec:wild}).
 \item The same causal test on that public model: editing its key state redirects the key
-it composes in ($5.7\times$ the matched control, $11/12$ targets, $100\%$ within the
+it composes in ($7.8\times$ the matched control, $12/12$ targets, $99.7\%$ within the
 frozen musicality budget), so the world-model claim is not confined to models we built.
-Its failures are informative---it resists exactly the keys real music rarely uses
-(Sec.~\ref{sec:wildcausal}).
+A first-run ``key prior'' dissolved under balanced re-estimation of the edit
+targets---a portable caution we document in full (Sec.~\ref{sec:wildcausal}).
 \end{enumerate}
 
 \section{Relation to Prior Work}
@@ -703,46 +705,56 @@ evaluation that followed the freeze; but the scan's raw outcomes were visible wh
 budget's parameters were fixed, so this is a weaker guarantee than the pre-registered one
 and we do not claim otherwise.
 
-\textbf{DR-H3 is supported} (Table~\ref{tab:wildcausal}). At L$8$, on held-out prompts,
-the edit lands the continuation on the injected key at $5.7\times$ the rate of the
-matched random control ($0.365$ \vs $0.064$), significant in $11/12$ targets after Holm
-correction. $\ikr$ crosses: the continuation is \emph{more} diatonic to the injected key
-than to the prompt's own ($0.824$ \vs $0.785$). And the edit costs the music nothing
-measurable---$100\%$ of edited continuations sit inside the frozen budget (median excess
-$+0.125$ nats against a budget of $0.849$), where our own model managed $87\%$. A key
-state learned from real music is \emph{more} cleanly separable, not less. One
-consequence deserves stating plainly, since the guard does discriminating work elsewhere
-in this paper: here it does none. Both the edit and K1 pass it at $100\%$, so guarded and
-raw $\tkr$ coincide exactly ($0.365$ and $0.064$) and the word ``guarded'' in
-Table~\ref{tab:wildcausal} filters nothing. That is the finding, not a gap in it---but
-the reader should not picture the budget separating survivors from casualties on this
-model, because there are no casualties.
+\textbf{DR-H3 is supported} (Table~\ref{tab:wildcausal}; all numbers from the
+balanced re-estimation described below, which is the corrected estimator). At L$8$,
+on held-out prompts, the edit lands the continuation on the injected key at
+$7.8\times$ the rate of the matched random control ($0.479$ \vs $0.061$),
+significant in $12/12$ targets after Holm correction. $\ikr$ crosses: the
+continuation is \emph{more} diatonic to the injected key than to the prompt's own
+($0.890$ \vs $0.753$). And the edit costs the music almost nothing
+measurable---$99.7\%$ of edited continuations sit inside the frozen budget (median
+excess $+0.118$ nats against a budget of $0.849$), where our own model managed
+$87\%$. A key state learned from real music is \emph{more} cleanly separable, not
+less. One consequence deserves stating plainly, since the guard does discriminating
+work elsewhere in this paper: here it does almost none. The edit passes it at
+$99.7\%$ and K1 at $100\%$, so guarded and raw $\tkr$ nearly coincide ($0.479$
+\vs $0.482$) and the word ``guarded'' in Table~\ref{tab:wildcausal} filters almost
+nothing. That is the finding, not a gap in it---the reader should not picture the
+budget separating survivors from casualties on this model.
 
-Two findings here are only visible on a real model. First, the causal peak (L$8$) is
-again \emph{not} the probe peak (L$10$): the diffuse-readout/sharp-effect dissociation of
-Sec.~\ref{sec:h5} is not an artifact of synthetic data. Second, \textbf{the model has a
-key prior and resists being pushed out of it}. The single target that fails outright is
-F$\sharp$ major ($\tkr$ $0.000$), and across all twelve targets success is almost
-perfectly ordered by how common that tonic is in the chorale corpus. We count key
-frequency two ways over the same $300$ chorales, both from the human Roman-numeral
-analyses. Weighting each key by how much music is actually spent in it (note-level local
-labels, $n{=}138{,}249$) gives Spearman $+0.91$ against $\tkr$; counting each chorale's
-opening key once ($n{=}300$) gives $+0.75$. With only twelve tonics the asymptotic test
-is unreliable, so we report one-sided Monte-Carlo permutation $p$ (direction predicted a
-priori): $p<10^{-4}$ and $p=0.003$ respectively. On the note-weighted count, D at
-$13.8\%$ of the corpus reaches $\tkr$ $0.600$ and G at $21.4\%$ reaches $0.550$, while
-D$\flat$ at $0.2\%$ reaches $0.233$ and G$\flat$ at $2.2\%$ reaches zero.
+One finding here is only visible on a real model: the causal peak (L$8$) is again
+\emph{not} the probe peak (L$10$), so the diffuse-readout/sharp-effect dissociation
+of Sec.~\ref{sec:h5} is not an artifact of synthetic data.
 
-Two limits of this analysis deserve naming. The chorale corpus is a \emph{proxy} for
-which keys Western tonal music favours; it is not this model's training distribution,
-which is Lakh MIDI, MetaMIDI and FMA~\cite{thickstun2023anticipatory}. The correlation
-therefore establishes that the model has a key prior aligned with tonal practice, not
-that the prior was inherited from any particular corpus---identifying its source would
-require the training distribution itself. And G$\flat$ is the one target where the prior
-argument and the estimator's known weakness coincide: it is both the rarest sharp-side
-key and the enharmonic seam of the circle, so its zero should be read as the ordering's
-endpoint, not as independent evidence. Our synthetic model, whose key distribution is
-uniform by construction, could not have shown any of this.
+\subsubsection{A retraction, in full: the ``key prior'' that was our own sample count}
+\label{sec:priorretract}
+Our first run of this experiment used the probe row space and class means estimated
+from the natural chorale corpus, and appeared to deliver this section's most
+striking result: F$\sharp$ major failed outright ($\tkr$ $0.000$), and across the
+twelve targets success was almost perfectly ordered by how common the tonic is in
+the corpus (note-weighted Spearman $+0.91$, one-sided permutation $p<10^{-4}$;
+$+0.75$ by chorale, $p=0.003$)---\emph{the model has a key prior and resists being
+pushed out of it}. It does not. The probe and the class means were estimated from
+the same imbalanced corpus the frequencies were counted on: F$\sharp$ major never
+occurs in the $300$ chorales' local-key labels (D$\flat$: $40$ note events; B:
+$336$), and our estimation code silently wrote a \emph{zero vector} for the absent
+class. The celebrated $0.000$ was an edit that installed zeros, and the correlation
+was our estimator's per-key sample count wearing the costume of a model prior.
+
+The control that settles it: transpose every chorale into all twelve keys, and
+re-estimate \emph{both} the row space and the means from a key-balanced sample
+($993$ positions per class; transpositions of one chorale never straddle the
+train/test split), leaving the evaluation prompts, the layer, and the frozen guard
+untouched. Every rare key becomes reachable---F$\sharp$ jumps from $0.000$ to
+$0.617$, second best of the twelve---all twelve targets are significant, and the
+pooled effect \emph{rises} ($0.365\to0.479$). The correlation collapses to
+non-significance ($+0.41$, $p=0.10$ note-weighted; $+0.49$, $p=0.055$ by chorale).
+Whether a weaker genuine prior survives is an open question our power cannot
+settle; what is settled is that the striking version was manufactured by the
+imbalance. We report the episode in full because the failure mode is portable:
+\textbf{activation-editing targets estimated from an imbalanced corpus will
+manufacture a convincing, publishable, and false ``model prior'' that correlates
+with exactly the quantity the imbalance was measured on.}
 
 \begin{table}[t]
 \setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.15}
@@ -750,17 +762,18 @@ uniform by construction, could not have shown any of this.
 \caption{Editing the key state of a \emph{public} model trained on real music
 (music-small, $128$M, Apache-2.0), on $60$ held-out Bach chorale prefixes. The edit layer
 was chosen on a disjoint set of prompts. Guard: a different public checkpoint, budget
-frozen before any edit.}
+frozen before any edit. Basis and targets re-estimated from a key-balanced corpus
+(Sec.~\ref{sec:priorretract}).}
 \label{tab:wildcausal}
 \begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
-Guarded strict $\tkr$, V-PROBE edit (L$8$) & $\mathbf{0.365}$\\
-Guarded strict $\tkr$, K1 matched random control & $0.064$\\
-\quad ratio & $5.7\times$\\
+Guarded strict $\tkr$, V-PROBE edit (L$8$) & $\mathbf{0.479}$\\
+Guarded strict $\tkr$, K1 matched random control & $0.061$\\
+\quad ratio & $7.8\times$\\
 \midrule
-Targets significant after Holm correction & $\mathbf{11/12}$\\
-Guard pass rate (edit) & $100\%$\\
-$\ikr$ to the injected key \vs to the prompt's key & $0.824$ \vs $0.785$\\
+Targets significant after Holm correction & $\mathbf{12/12}$\\
+Guard pass rate (edit) & $99.7\%$\\
+$\ikr$ to the injected key \vs to the prompt's key & $0.890$ \vs $0.753$\\
 \bottomrule
 \end{tabularx}
 \end{table}

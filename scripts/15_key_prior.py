@@ -88,7 +88,7 @@ def main() -> None:
 
     x = np.array([tkr[k] for k in range(12)])
     out: dict = {
-        "tkr_source": str(Path(args.sweep_eval).relative_to(REPO)),
+        "tkr_source": str(Path(args.sweep_eval).resolve().relative_to(REPO)),
         "tkr_by_tonic": {NAMES[k]: tkr[k] for k in range(12)},
         "frequency_source": "D-REAL: 300 Bach chorales x When-in-Rome local analyses",
         "caveat": ("AMT music-small was trained on Lakh/MetaMIDI/FMA, not chorales; "
@@ -115,7 +115,8 @@ def main() -> None:
 
     out["headline"] = out["variants"]["by_note_local"]  # the denominator the paper quotes
 
-    dest = REPO / "results/mwild_sweep/music-small-800k/key_prior.json"
+    tag = "_balanced" if "balanced" in Path(args.sweep_eval).name else ""
+    dest = REPO / f"results/mwild_sweep/music-small-800k/key_prior{tag}.json"
     dest.write_text(json.dumps(out, indent=2))
     snapshot(dest, {"n_perm": args.n_perm, "seed": args.seed})
     log.info("wrote %s", dest)

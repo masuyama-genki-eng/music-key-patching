@@ -852,3 +852,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/selective/R-Aug_s0/ov_by_type.json`
 - note: L5 key_frac BAR=0.050,POS=0.067,PITCH=0.032,DUR=0.071; L6 key_frac BAR=0.052,POS=0.060,PITCH=0.032,DUR=0.043; L7 key_frac BAR=0.085,POS=0.088,PITCH=0.038,DUR=0.092
 
+## 2026-08-08T13:35:43+09:00 — Experiment I: balanced re-estimation (music-small-800k)
+- git: `2170f13fd5e71f21e12405983ef31bab512c7acb`
+- config_hash: `1b4fb8056691f38a828b2219c77d0cf399dcabf136dbe3c34d256bce8d61492e`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/balanced/probe_weights.npz`, `results/mwild/music-small-800k/balanced/class_means.npz`, `results/mwild/music-small-800k/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 993/class; L8 probe F1 0.6609; all 24 mu nonzero
+
+## 2026-08-08T14:10:20+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `2170f13fd5e71f21e12405983ef31bab512c7acb+DIRTY`
+- config_hash: `d49359aee5fa0aa4bf75f2da55462b30eee6ce78ca0303c8c084b61c26e0223c`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-small-800k/stage2_eval_balanced.json`
+- note: L8 chosen on disjoint prompts; guarded TKR 0.479 vs K1 0.061 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-08T14:11:50+09:00 — M-WILD key prior (TKR vs corpus key frequency)
+- git: `2170f13fd5e71f21e12405983ef31bab512c7acb+DIRTY`
+- config_hash: `ecae80f4de4705e0f2b45bde8b49a0c64be9620e5346778c0bdc30bd74a3e3f7`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-small-800k/key_prior_balanced.json`
+- note: Spearman rho=0.4086 (by-note local keys, n=138249), one-sided permutation p=0.09565. Frequency counted from the D-REAL chorale corpus (proxy, NOT the model's training distribution). Retro-fits a number that was quoted in CHANGELOG 2026-07-14 without an artifact (SPEC §7 violation).
+

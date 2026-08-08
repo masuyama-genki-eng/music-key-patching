@@ -68,8 +68,10 @@ parameter range, yet the smallest model carries no decodable key state, and its
 edits move the key while wrecking the music $90\%$ of the time. Both the probe and
 the intervention transfer to a public checkpoint trained on real music: its key
 state beats the pitch surface where our synthetic-trained twin's does not, editing
-it redirects composition at $5.7\times$ the matched control ($11/12$ targets,
-$100\%$ in budget), and the keys it resists are the keys real music rarely uses.
+it redirects composition at $7.8\times$ the matched control ($12/12$ targets,
+$99.7\%$ in budget)---and an apparent ``key prior'' (F$\sharp$ unreachable, success
+tracking corpus key frequency) dissolved once edit targets were re-estimated from a
+key-balanced corpus: a caution we report alongside the result.
 \end{abstract}
 
 \begin{keywords}
@@ -404,25 +406,31 @@ clean run bit for bit ($20/20$). Unlike the main experiment, the budget was froz
 after that layer search rather than before every edit---the search never consults it,
 and every number here postdates the freeze, but the guarantee is the weaker one.
 \textbf{DR-H3 is supported}: at L$8$ the edit lands the continuation on the injected
-key $5.7\times$ as often as the matched random control ($0.365$ against $0.064$),
-significantly in $11$ of $12$ targets. Pitch content crosses over too ($82.4\%$ of
-notes in the injected key's scale against $78.5\%$ in the prompt's). And where $87\%$
-of our own model's edits stayed in budget, $100\%$ of these do: a key state learned
-from real music is \emph{more} cleanly separable, not less.
+key $7.8\times$ as often as the matched random control ($0.479$ against $0.061$),
+significantly in $12$ of $12$ targets. Pitch content crosses over too ($89.0\%$ of
+notes in the injected key's scale against $75.3\%$ in the prompt's). And where $87\%$
+of our own model's edits stayed in budget, $99.7\%$ of these do (median excess
+$+0.118$ nats against a budget of $0.849$): a key state learned from real music is
+\emph{more} cleanly separable, not less.
 
-The real model shows two things a synthetic testbed cannot. Its causal peak (L$8$) is
-again not its probe peak (L$10$), so the dissociation in Sec.~\ref{sec:h5} is no
-artifact of synthetic data. And the model \emph{resists}: the one target it cannot
-reach is F$\sharp$ major ($\tkr$ $0.000$), and across all twelve targets success is
-ordered almost perfectly by how common that tonic is in the chorale corpus, counted
-over its note-weighted key labels (Spearman $+0.91$, $n{=}12$, one-sided permutation
-$p<10^{-4}$; $+0.75$ counting each chorale once). A model trained on real music can be
-steered into the keys that music favours, and resists the rest---a prior our
-uniformly-keyed synthetic corpus could not have revealed. The chorale distribution is a
-proxy for how often tonal music uses each key, not a measurement of this model's own
-training corpus (Lakh MIDI and MetaMIDI, not chorales), so we show that a prior exists,
-not where it came from. One practical caution: read the probe where the model is about
-to \emph{choose} a pitch. Read it at the note, after the pitch is committed, and the
+Those are corrected numbers, and the correction is itself a finding. Our first run
+appeared to show the model \emph{resisting}: F$\sharp$ major failed outright
+($\tkr$ $0.000$) and success tracked corpus key frequency (Spearman $+0.91$,
+$p<10^{-4}$)---a seductive ``key prior.'' It did not survive its control. The probe
+and the class means had been estimated from the same imbalanced chorales; F$\sharp$
+major never occurs in them, so its target mean was literally a zero vector, and rare
+keys got noise for targets. Re-estimating both from a key-balanced corpus (the same
+chorales transposed into all twelve keys; evaluation prompts, layer and guard
+unchanged) lifts F$\sharp$ to $0.617$---second best---and collapses the correlation
+to a non-significant $+0.41$ ($p=0.10$). The ``prior'' was our estimator's sample
+count. We keep the corrected numbers and report the episode as a portable caution:
+activation-editing targets estimated from an imbalanced corpus can manufacture a
+convincing, publishable, and false model prior.
+
+The real model still shows a thing a synthetic testbed cannot: its causal peak
+(L$8$) is again not its probe peak (L$10$), so the dissociation in
+Sec.~\ref{sec:h5} is no artifact of synthetic data. One practical caution: read
+the probe where the model is about to \emph{choose} a pitch. Read it at the note, after the pitch is committed, and the
 same model's profile decays with depth ($F_1$ $0.545$ at L$0$ to $0.093$ at L$10$), the
 margin falls to $+0.042$ (CI $[-0.034,0.092]$), and DR-H1 would be \emph{unsupported}.
 One position choice, and the verdict inverts.
