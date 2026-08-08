@@ -972,3 +972,13 @@ portable failure mode stated in bold; tab:wildcausal updated to balanced numbers
 The balanced run is primary (corrected estimator); the first run remains in the
 text as the object of the retraction. 15_key_prior.py fixed (resolve();
 tagged output preserves the original artifact).
+
+## 2026-08-08 (3) — Publication plan change: OJSP companion dropped (user decision)
+
+paper/ojsp_full.tex is deleted at the user's direction. SPEC §9's two-paper plan
+(4p ICASSP -> OJSP full study) is superseded: ICASSP 2027 is now the single
+target. The OJSP file's last state is preserved in git (commit d3f1276) and its
+unique material — experiment D full exposition, H4a persistence section with
+fig_persistence, the retraction-in-full, the K3-by-layer table, per-seed
+variants — moves to the supplementary hosted at the reproducibility URL.
+Recorded here per SPEC §7.6 (plan changes are CHANGELOG events, not silent).
