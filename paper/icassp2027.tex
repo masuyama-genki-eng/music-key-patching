@@ -295,7 +295,11 @@ Transformer~\cite{thickstun2023anticipatory} (\texttt{small}; trained on Lakh
 MIDI~\cite{raffel2016lakh}, MetaMIDI~\cite{ens2021metamidi},
 FMA~\cite{defferrard2017fma}) on $300$ Bach
 chorales~\cite{hadjeres2017deepbach,huang2017coconet} with human local-key
-labels~\cite{gotham2023wheninrome}. Its probe beats the surface baselines
+labels~\cite{gotham2023wheninrome}. Probes here read at the positions where
+the model is about to choose a pitch---the convention the (time, duration,
+note) encoding forces, unlike the uniform sampling of Sec.~\ref{sec:h1}; the
+supplementary shows the verdict inverts if one reads after the note instead.
+Its probe beats the surface baselines
 (corrected margin $+0.196$, CI $[0.132,0.260]$) where our same-shaped
 synthetic-trained model does not ($+0.034$, CI crosses zero); the C3 baselines
 land within $0.003$ of each other, confirming matched setups. We note the
