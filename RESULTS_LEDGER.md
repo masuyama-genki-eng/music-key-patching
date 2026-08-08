@@ -873,3 +873,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/music-small-800k/key_prior_balanced.json`
 - note: Spearman rho=0.4086 (by-note local keys, n=138249), one-sided permutation p=0.09565. Frequency counted from the D-REAL chorale corpus (proxy, NOT the model's training distribution). Retro-fits a number that was quoted in CHANGELOG 2026-07-14 without an artifact (SPEC §7 violation).
 
+## 2026-08-08T19:34:08+09:00 — CONFIRMATORY next-pitch R-Aug_s0 L4
+- git: `ba9ca307a1b94457d3c25c9649f9ccac0daf33ac`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/next_pitch_L4.parquet`, `results/confirmatory/R-Aug_s0/next_pitch.json`
+- note: D_edit=0.6953 vs D_k1=0.0410; 12/12 sig
+
