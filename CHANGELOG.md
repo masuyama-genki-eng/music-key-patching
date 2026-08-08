@@ -982,3 +982,17 @@ unique material — experiment D full exposition, H4a persistence section with
 fig_persistence, the retraction-in-full, the K3-by-layer table, per-seed
 variants — moves to the supplementary hosted at the reproducibility URL.
 Recorded here per SPEC §7.6 (plan changes are CHANGELOG events, not silent).
+
+## 2026-08-08 (4) — Strong-Accept overhaul begins: confirmatory freeze committed
+
+User-directed redesign. P0 audit findings: (1) the original 100 sweep prompts are
+rows 0-167 of test.parquet — INSIDE the probe-training pool (rows 0-5999), and
+the same prompts served condition selection (8 layers x 3 subspaces) and the H3
+verdict; Holm covered targets, not selection. (2) Rows >= 6000 are untouched by
+every experiment to date: 2,205 stable-major pieces — a genuine held-out pool.
+(3) Number audit: "87%" = 0.8683 v_probe_L4 guard rate (OK); figure ratio is the
+layer-matched 5.0x (OK since 2026-07-16); K3 figure label says "shuffled" while
+the text says layer-borrowed — to fix; "only the training data differs" (2 sites)
+over-attributes — to fix; TBDs remaining: repo URL, paper ID.
+docs/CONFIRMATORY_FREEZE.md commits every choice for S1/S2/S3/A1/replication
+BEFORE any run; predictions stated in the freeze. Runs follow.
