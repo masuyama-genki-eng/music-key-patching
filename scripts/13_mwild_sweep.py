@@ -81,6 +81,13 @@ def main() -> None:
     ap.add_argument("--n-prompts-stage2", type=int, default=60)
     ap.add_argument("--n-new", type=int, default=240)     # ~80 note events
     ap.add_argument("--rank", type=int, default=24)
+    # Experiment I (balanced re-estimation): point the basis+means at alternative
+    # artifacts and tag the outputs, leaving every default behavior untouched.
+    ap.add_argument("--artifacts-dir", default=None,
+                    help="dir with probe_weights.npz/class_means.npz "
+                         "(default: results/mwild/<short>)")
+    ap.add_argument("--tag", default="",
+                    help="suffix for stage-2 output files, e.g. _balanced")
     ap.add_argument("--temperature", type=float, default=1.0)
     ap.add_argument("--top-p", type=float, default=0.95)
     ap.add_argument("--seed", type=int, default=0)
@@ -109,8 +116,10 @@ def main() -> None:
     log.info("stage %d: %d prompts (%d layers, rank %d)", args.stage, len(prompts),
              n_layers, args.rank)
 
-    pw = np.load(REPO / "results/mwild" / short / "probe_weights.npz")
-    cm = np.load(REPO / "results/mwild" / short / "class_means.npz")
+    adir = Path(args.artifacts_dir) if args.artifacts_dir \
+        else REPO / "results/mwild" / short
+    pw = np.load(adir / "probe_weights.npz")
+    cm = np.load(adir / "class_means.npz")
 
     def basis_and_means(li: int):
         V = orthonormal_rows(pw[f"layer_{li}"], args.rank)
@@ -276,8 +285,8 @@ def main() -> None:
         "DR_H3_supported": bool(n_sig >= 8),
         "rows": out_rows,
     }
-    (outdir / "stage2_eval.json").write_text(json.dumps(res, indent=2, default=float))
-    snapshot(outdir / "stage2_eval.json", vars(args), seeds=[args.seed])
+    (outdir / f"stage2_eval{args.tag}.json").write_text(json.dumps(res, indent=2, default=float))
+    snapshot(outdir / f"stage2_eval{args.tag}.json", vars(args), seeds=[args.seed])
     log.info("STAGE 2 (L%d, held-out): guarded TKR edit %.3f vs K1 %.3f (raw %.3f vs "
              "%.3f) | guard pass %.0f%% | IKR target %.3f src %.3f | DR-H3 %s (%d/12)",
              layer, res["tkr_edit_guarded"], res["tkr_k1_guarded"],
@@ -288,7 +297,7 @@ def main() -> None:
     if not args.no_ledger:
         append_entry(stage=f"M-WILD intervention stage 2 ({short})", config=vars(args),
                      seeds=[args.seed],
-                     artifacts=[str((outdir / "stage2_eval.json").relative_to(REPO))],
+                     artifacts=[str((outdir / f"stage2_eval{args.tag}.json").relative_to(REPO))],
                      note=f"L{layer} chosen on disjoint prompts; guarded TKR "
                           f"{res['tkr_edit_guarded']:.3f} vs K1 "
                           f"{res['tkr_k1_guarded']:.3f} on {len(prompts)} held-out "
