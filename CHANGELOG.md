@@ -996,3 +996,49 @@ the text says layer-borrowed — to fix; "only the training data differs" (2 sit
 over-attributes — to fix; TBDs remaining: repo URL, paper ID.
 docs/CONFIRMATORY_FREEZE.md commits every choice for S1/S2/S3/A1/replication
 BEFORE any run; predictions stated in the freeze. Runs follow.
+
+## 2026-08-08 (5) — Manuscript audit: one false claim retracted, four fixes
+
+Every number in the restructured manuscript was checked against its artifact
+(~65 checks). Result: 60 exact, five problems, all now fixed.
+
+**FALSE CLAIM (serious).** "K1, a rank- and norm-matched random subspace
+(measured ||Delta|| within 1% of the edit's, 21.9 vs 22.1)". The 21.9/22.1 pair
+had no artifact anywhere and contradicted CHANGELOG 2026-07-16 DEVIATION 1,
+which had already logged that K1 is rank-matched ONLY. Measured now and ledgered
+(scripts/28_perturbation_norms.py, 100 prompts x 12 targets at L4): edit 34.63 vs
+K1 24.13, ratio 1.44, ||h|| 168.5. The claim was reintroduced during the
+2026-08-08 restructure by carrying forward the previous draft's wording without
+re-checking it against the deviation log — the exact failure mode CLAUDE.md
+warns about. Abstract and Method now say rank-matched and print the measured
+magnitudes; freeze AMENDMENT 1 adds the K1-norm control so magnitude is
+controlled exactly rather than argued about.
+
+**Unsourced but correct.** The quality-gate reference "0.434" (most-frequent-token
+predictor) had no artifact. Computed and ledgered: 0.4337 (token DUR_8) ->
+results/data_syn/majority_baseline.json. Paper unchanged.
+
+**Overclaimed scope.** "All models clear ... top-1 0.878-0.881" — true of the six
+M-CTRL models; the capacity sweep reaches 0.871. Now "All six".
+
+**Not yet true.** K2 "re-verified on every prompt set" — the held-out gate had not
+run. Now "(100/100 on the selection prompts)"; the confirmatory gate runs inside
+the sweep and its result will be reported when it lands.
+
+**Figure label.** fig_intervention_bars' K3 bar said "shuffled" while the text
+defines K3 as another layer's subspace. Relabeled "other-layer".
+
+Verified exact and unchanged: H1 block (probe 0.927 / C3 0.790 / floor 0.032 /
+margin +0.105 [0.091,0.114] / untrained 0.243 / L0 -0.20 / plateau 0.920-0.929);
+experiment D (W96 0.801, W512 0.752, strongest 0.824, margin +0.071
+[0.056,0.081]); selection sweep (0.378 / 0.075 / 5.0x / guard 0.868 / V-DAS
+0.213 / IKR 0.937 vs 0.646 / ceiling 58% / V-MEAN 0.047 and 0.000); H5 all eight
+layer effects and CI; fifths 0.395 and 0.280 (guarded, as the text implies);
+next-pitch (+0.695 / +0.041 / +0.255 / +0.017 / 0.547 / 12-12 / worst p 5e-16 /
+min r 0.99); token-type (0.378 / 0.077 / 69%); M-WILD balanced (0.479 / 0.061 /
+7.8x / 12-12 / guard 0.997 / IKR 0.890 vs 0.753 / F# 0.617 / margin +0.196
+[0.132,0.260] / setups within 0.0025 / Spearman 0.409 and 0.907); D-REAL +0.034;
+capacity (0.5M guard 0.102 -> 90% out of budget, 26M peak 0.350); persistence
+(0.671 vs 0.687); seed-1 (supported, 12/12, peak L2); guard 0.6127 from 7,989
+modulations at the 90th percentile; corpus 200k/10k/10k, 278-508 tokens, vocab
+124; K3 cross-layer 0.274-0.387.
