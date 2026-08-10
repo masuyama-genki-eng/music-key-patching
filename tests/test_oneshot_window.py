@@ -88,3 +88,27 @@ def test_token_mask_composes_with_window():
     out = ed(x)
     for t, expect_edit in enumerate([True, False, True, False, False, False]):
         assert (not torch.allclose(out[0, t], x[0, t])) == expect_edit
+
+
+def test_norm_ref_matches_reference_perturbation_magnitude():
+    """K1-norm (freeze AMENDMENT 1): the rescaled random edit must apply exactly
+    the magnitude the reference basis would, position by position."""
+    g = torch.Generator().manual_seed(3)
+    Vref = orthonormalize(torch.randn(16, 4, generator=g))
+    Vrnd = orthonormalize(torch.randn(16, 4, generator=g))
+    mu = torch.randn(16, generator=g) * 3.0
+    x = torch.randn(2, 5, 16, generator=g)
+
+    ref = SubspaceEditor(Vref, mu_target=mu, mode="replace")
+    rnd = SubspaceEditor(Vrnd, mu_target=mu, mode="replace")
+    normed = SubspaceEditor(Vrnd, mu_target=mu, mode="replace", norm_ref=Vref)
+
+    d_ref = (ref(x) - x).norm(dim=-1)
+    d_rnd = (rnd(x) - x).norm(dim=-1)
+    d_nrm = (normed(x) - x).norm(dim=-1)
+    assert torch.allclose(d_nrm, d_ref, atol=1e-4)      # magnitude matched
+    assert not torch.allclose(d_nrm, d_rnd, atol=1e-3)  # and it did rescale
+    # direction unchanged: still the random subspace's, only rescaled
+    u = torch.nn.functional.normalize(rnd(x) - x, dim=-1)
+    v = torch.nn.functional.normalize(normed(x) - x, dim=-1)
+    assert torch.allclose(u, v, atol=1e-4)

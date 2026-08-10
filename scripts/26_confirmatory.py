@@ -30,6 +30,7 @@ import yaml
 
 from src.analysis.stats import bca_ci, holm_correct, wilcoxon_rank_biserial
 from src.intervene import sweep as SW
+from src.intervene.edit import SubspaceEditor
 from src.intervene.sweep import Prompt
 from src.intervene.subspaces import mu_targets_from_means, v_probe
 from src.probing.extract import load_model
@@ -124,14 +125,25 @@ def main() -> None:
                                          prompts, clean, mref, device, None)
 
     # ---------------- arms
+    # k1      : rank-matched random subspace (pre-registered control)
+    # k1_norm : same basis, perturbation rescaled to the edit's magnitude
+    #           (freeze AMENDMENT 1 — excludes a magnitude explanation)
+    Vt = torch.from_numpy(V).float().to(device)
     all_rows = []
     arms = {k: ARMS[k] for k in args.arms.split(",")}
-    for cond, mask_fn in {**arms, "k1": None}.items():
-        basis = K1 if cond == "k1" else V
+    for cond, mask_fn in {**arms, "k1": None, "k1_norm": None}.items():
+        basis = K1 if cond in ("k1", "k1_norm") else V
+        ref = Vt if cond == "k1_norm" else None
+
+        def ed_fn(plen, t=None, b=basis, r=ref):
+            e = SubspaceEditor(torch.from_numpy(b).float().to(device),
+                               mu_target=torch.from_numpy(mus[t]).float().to(device),
+                               mode="replace", norm_ref=r)
+            return e
+
         for tgt in MAJOR_TARGETS:
             log.info("%s target %d", cond, tgt)
-            conts = gen(lambda plen, t=tgt, b=basis: SW.make_editor(b, mus[t], device),
-                        mask_fn)
+            conts = gen(lambda plen, t=tgt: ed_fn(plen, t), mask_fn)
             rows, _ = SW.rows_for_condition(
                 {"cond": cond, "method": "confirmatory", "layer": args.layer,
                  "target_key": tgt}, prompts, conts, mref, device, clean_ppl)
@@ -143,11 +155,11 @@ def main() -> None:
     df.to_parquet(outdir / "parts" / f"confirmatory_L{args.layer}.parquet")
 
     # ---------------- frozen statistics (identity cells excluded from primary)
-    def per_target_stats(cond):
+    def per_target_stats(cond, ctrl="k1"):
         recs, pvals = [], []
         for tgt in MAJOR_TARGETS:
             e = df[(df["cond"] == cond) & (df["target_key"] == tgt) & ~df["identity"]]
-            k = df[(df["cond"] == "k1") & (df["target_key"] == tgt) & ~df["identity"]]
+            k = df[(df["cond"] == ctrl) & (df["target_key"] == tgt) & ~df["identity"]]
             e = e.sort_values("prompt_idx"); k = k.sort_values("prompt_idx")
             assert list(e["prompt_idx"]) == list(k["prompt_idx"]), "pairing broken"
             t = wilcoxon_rank_biserial(e["succ"].astype(float).values,
@@ -174,6 +186,14 @@ def main() -> None:
         diff = (ep - kp).values
         ci = bca_ci(np.arange(len(diff)), lambda idx: float(diff[idx].mean()))
         ident = df[(df["cond"] == cond) & df["identity"]]
+        if cond == "edit":
+            recs_n = per_target_stats("edit", ctrl="k1_norm")
+            kn = df[(df["cond"] == "k1_norm") & ~df["identity"]]
+            verdict["edit_vs_k1norm"] = {
+                "per_target": recs_n,
+                "n_sig_holm": sum(1 for r in recs_n if r["p_holm"] < .05),
+                "pooled_k1_norm": float(kn["succ"].mean()),
+                "guard_pass_rate_k1_norm": float(kn["guard_pass"].mean())}
         verdict["conditions"][cond] = {
             "per_target": recs, "n_sig_holm": nsig,
             "pooled_guarded_tkr": float(e["succ"].mean()),

@@ -42,12 +42,22 @@ class SubspaceEditor:
                       at each position (e.g. edit only POS/PITCH positions), testing
                       whether the blanket all-type write needlessly damages the
                       music. ANDed with the [from, until) range.
+      norm_ref      : (d, r) orthonormal reference basis | None. When set, the
+                      applied perturbation is rescaled per position so that its
+                      norm equals the norm the REFERENCE basis would have applied
+                      with the same mu. This builds the K1-norm control (freeze
+                      AMENDMENT 1): K1 matches the edit in rank AND magnitude, so
+                      a magnitude explanation of the effect can be excluded.
+                      Rescaling is applied to the delta, not the state, so the
+                      sham path and the identity of an unedited position are
+                      untouched.
     """
 
     def __init__(self, V: torch.Tensor, mu_target: torch.Tensor | None = None,
                  mode: str = "replace", from_position: int | None = None,
                  until_position: int | torch.Tensor | None = None,
-                 token_mask: torch.Tensor | None = None):
+                 token_mask: torch.Tensor | None = None,
+                 norm_ref: torch.Tensor | None = None):
         assert mode in ("replace", "sham")
         self.V = orthonormalize(V)                     # (d, r)
         self.mu_t = mu_target                          # (d,) mean activation of target key
@@ -55,6 +65,7 @@ class SubspaceEditor:
         self.from_position = from_position
         self.until_position = until_position
         self.token_mask = token_mask
+        self.norm_ref = orthonormalize(norm_ref) if norm_ref is not None else None
 
     def _proj(self, x: torch.Tensor) -> torch.Tensor:
         return (x @ self.V) @ self.V.T                 # (B,T,d) -> component in V
@@ -67,7 +78,17 @@ class SubspaceEditor:
             edited = x - comp + comp
         else:
             target = (self.mu_t @ self.V) @ self.V.T   # (d,) target component
-            edited = x - comp + target[None, None, :]
+            delta = target[None, None, :] - comp       # what this edit would apply
+            if self.norm_ref is not None:
+                # K1-norm: rescale to the reference basis's perturbation magnitude
+                R = self.norm_ref
+                ref_comp = (x @ R) @ R.T
+                ref_tgt = (self.mu_t @ R) @ R.T
+                ref_delta = ref_tgt[None, None, :] - ref_comp
+                scale = ref_delta.norm(dim=-1, keepdim=True) / \
+                    delta.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+                delta = delta * scale
+            edited = x + delta
         if (self.from_position is None and self.until_position is None
                 and self.token_mask is None):
             return edited
