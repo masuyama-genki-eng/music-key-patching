@@ -114,7 +114,7 @@ Other domains already apply the causal test. A model trained only to predict
 Othello moves builds an internal board, and editing that board changes which
 moves the model treats as legal~\cite{li2023othello,nanda2023emergent}.
 Researchers have applied the same standard to chess, mazes, and reinforcement
-learning environments~\cite{karvonen2024chess,maze2024,iris2026}.
+learning~\cite{karvonen2024chess,maze2024,iris2026}.
 
 % 音楽側には probe と steering があるが，steering は「方向が効く」ことしか示さない。
 Music has probes, and it has steering. Steering methods adapt inference-time
@@ -153,8 +153,7 @@ component of one layer's activations with the component of a donor key, and we
 ask what the model composes next. We fix every analysis choice before we look at
 the confirmatory data, we add a logit-level test that removes feedback from
 generated notes, and we add token-type ablations that rule out a direct write to
-pitch decisions. We release the testbed, which contains a leak-free tokenizer, a
-corpus with exact per-token key labels, and the frozen protocols.
+pitch decisions.
 
 \section{Method}
 \label{sec:method}
@@ -263,7 +262,7 @@ set.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\columnwidth]{fig_framework.pdf}
+\includegraphics[width=0.88\columnwidth]{fig_framework.pdf}
 \caption{The claim in one example (real model output, fixed sampling seed). We
 continue the same $8$-bar B$\flat$-major prompt (a)~without an edit and
 (b)~after we replace the key component of the layer-$4$ activations with the
@@ -318,7 +317,8 @@ at most $5\%$ stay in budget.
 % 確認フェーズ。結果待ち。
 \textbf{Confirmatory phase.} The result holds on data that no earlier step
 touched. On the $100$ held-out prompts, with every choice frozen beforehand and
-identity cells excluded, the edit reaches a guarded $\tkr$ of $0.356$ against
+identity cells excluded (Fig.~\ref{fig:confirm}), the edit reaches a guarded
+$\tkr$ of $0.356$ against
 $0.039$ for K1, a ratio of $9.1$. All $12$ targets separate after Holm
 correction (worst $p=4.8\times10^{-5}$; rank-biserial $r=0.72$--$1.00$), and the
 paired prompt-level difference has a BCa $95\%$ CI of $[0.284,0.347]$. The guard
@@ -328,6 +328,19 @@ also beats K1$^{\mathrm{norm}}$, the control we rescale to the edit's exact
 perturbation magnitude ($0.056$; $12/12$ after Holm correction), so perturbation
 size does not explain the effect. In the identity cells, where we inject the key
 the prompt is already in, the model simply stays there ($0.650$), as it should.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\columnwidth]{fig_confirmatory.pdf}
+\caption{The main causal result, on held-out prompts, with every choice frozen
+beforehand and identity cells excluded. (a)~Guarded $\tkr$ for each injected
+key, edit against the rank-matched random control. (b)~The same measure pooled,
+for the two random controls and the two restricted writes: K1 random;
+K1$^{\mathrm{n}}$, the same random subspace rescaled to the edit's perturbation
+magnitude; \texttt{PITCH} positions only; \texttt{BAR}/\texttt{DUR} positions
+only; and all positions.}
+\label{fig:confirm}
+\end{figure}
 
 % 特異性。狙った調に入る，という主張。
 \textbf{Specificity.} The edit does not merely leave the source key; it lands
@@ -373,7 +386,10 @@ $0.23$, $0.23$ for L$0$--L$7$, and the best-against-median CI $[0.038,0.109]$
 excludes zero. The edit does almost nothing at L$0$--L$1$, where the probe
 already reads the key well (Fig.~\ref{fig:layers}). We claim middle-layer
 concentration rather than a landmark layer, because the second seed reproduces
-every verdict with its peak at L$2$.
+every verdict in the selection phase with its peak at L$2$. We did not obtain a
+held-out replication for that seed: its sham-edit gate failed on one prompt out
+of $100$, we traced the failure to floating-point non-associativity rather than
+to the intervention, and our frozen rule stops the run when the gate fails.
 
 % トークン型。PITCH のみは無効，BAR/DUR が効果の大半。
 \emph{Across token types}, we restrict the write by token type. An edit at
@@ -393,7 +409,7 @@ al.~\cite{arad2025selecting} in language models.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\columnwidth]{fig_layer_profile.pdf}
+\includegraphics[width=0.8\columnwidth]{fig_layer_profile.pdf}
 \caption{(a)~Probe macro-$F_1$ per layer for all six models (thin lines; seed~$0$
 highlighted). We can read the key across a broad band. (b)~Causal effect of the
 edit against the K1 matched control (bands: prompt-level bootstrap $95\%$ CI).
@@ -410,10 +426,9 @@ Transformer~\cite{thickstun2023anticipatory}, which its authors trained on Lakh
 MIDI~\cite{raffel2016lakh}, MetaMIDI~\cite{ens2021metamidi}, and
 FMA~\cite{defferrard2017fma}. We evaluate it on $300$ Bach
 chorales~\cite{hadjeres2017deepbach,huang2017coconet} with human local-key
-labels~\cite{gotham2023wheninrome}. Here we read the probe at the positions where
-the model is about to choose a pitch, because the (time, duration, note) encoding
-forces that convention; the supplementary shows that the verdict inverts if we
-read after the note instead. The probe beats the surface baselines with a
+labels~\cite{gotham2023wheninrome}. Here we read the probe where the model is about to
+choose a pitch, as the (time, duration, note) encoding requires; the
+supplementary shows the verdict inverts if we read after the note. The probe beats the surface baselines with a
 corrected margin of $+0.196$ $[0.132,0.260]$, while our own model of the same
 shape does not ($+0.034$, CI crosses zero). The two setups produce C3 baselines
 within $0.003$ of each other, which confirms that we matched them. We note that
@@ -424,64 +439,58 @@ the data alone.
 % 介入も転移する。
 The intervention also transfers. We re-froze the budget from natural modulations
 in the chorales and used a \emph{different} public checkpoint as the judge. The
-edit then reaches $7.8\times$ the matched control (guarded $\tkr$ $0.479$ against
-$0.061$), separates in $12/12$ targets, keeps $99.7\%$ of continuations in
-budget, and moves pitch content across ($\ikr$ $0.890$ for the injected key
-against $0.753$ for the prompt's). Its causal peak (L$8$) again differs from its
-probe peak (L$10$).
+edit then reaches $7.8\times$ the matched control ($0.479$ against $0.061$),
+separates in $12/12$ targets, keeps $99.7\%$ of continuations in budget, and
+moves pitch content across ($\ikr$ $0.890$ against $0.753$). Its causal peak
+(L$8$) again differs from its probe peak (L$10$).
 
 % 撤回。査読者が最も攻撃しやすい点を，自分で先に潰す。
 One result from our first run did not survive its control, and we retract it. We
-appeared to find a key prior: the model never reached F$\sharp$ major, and
+appeared to find a key prior, because the model never reached F$\sharp$ major and
 success tracked how common each key is in the corpus (Spearman $+0.91$). We had
-estimated the edit targets from the same imbalanced corpus, however, and
-F$\sharp$ major never occurs in it, so the target for F$\sharp$ was a zero
-vector. When we re-estimate the subspace and the targets from a key-balanced
-corpus, F$\sharp$ rises to $0.617$ and the correlation falls to $+0.41$, which is
-not significant. We report this episode because the failure mode transfers: edit
-targets estimated from an imbalanced corpus can manufacture a convincing but
-false model prior.
+estimated the edit targets from that same imbalanced corpus, however, and
+F$\sharp$ never occurs in it, so its target was a zero vector. Re-estimating from
+a key-balanced corpus lifts F$\sharp$ to $0.617$ and drops the correlation to a
+non-significant $+0.41$. The failure mode transfers: edit targets estimated from
+an imbalanced corpus can manufacture a false model prior.
 
 \subsection{What our results do not show}
 \label{sec:limits}
 % 主張の境界を3つ，測定値つきで述べる。
-We bound three further claims with measurements. \emph{Capacity}: next-token
-accuracy stays flat from $0.5$M to $86$M parameters, yet the smallest model has
-no decodable key state and $90\%$ of its edits leave the budget, and
-manipulability peaks near $26$M. \emph{Persistence}: after a one-shot
-installation the pitch content stays shifted for many bars, but splicing the
-tokens of that one bar reproduces the entire effect, so the model re-estimates
-the key from evidence at every step and does not hold a latent memory that is
-independent of the emitted notes. \emph{Geometry}: the twelve tonic directions
-arrange themselves on a circle of fifths, and transposition acts as an
-approximately linear map, but the twelve maps do not form a cyclic group, so our
-pre-registered H2b does not hold. The supplementary reports all three in full.
+We bound three further claims with measurements, and the supplementary reports
+all three in full. \emph{Capacity}: next-token accuracy stays flat from $0.5$M
+to $86$M parameters, yet the smallest model has no decodable key state and
+$90\%$ of its edits leave the budget. \emph{Persistence}: after a one-shot
+installation the pitch content stays shifted, but splicing the tokens of that
+one bar reproduces the entire effect, so the model re-estimates the key at every
+step and holds no latent memory independent of the emitted notes.
+\emph{Geometry}: the tonic directions arrange themselves on a circle of fifths,
+but the twelve transposition maps do not form a cyclic group, so our
+pre-registered H2b does not hold.
 
 \section{Discussion and Limitations}
 \label{sec:disc}
 % 主張を一文で述べ直し，解釈語 (world model) は解釈として扱う。
 Our evidence supports a precise claim: within this training condition, the model
 computes an internal representation of musical key and consults it during
-generation. The representation is manipulable, it is specific to the injected
-key, it acts before feedback, and it concentrates in middle layers and at
-structural token positions. Readers may call such a representation a world model;
-we use that term only as an interpretation, not as a result.
+generation. That representation is manipulable, specific to the injected key,
+effective before feedback, and concentrated in middle layers and at structural
+token positions. Readers may call it a world model; we use that term only as an
+interpretation, not as a result.
 
 % ギャップも情報である。
 The gaps inform us as well. The edit reaches only $58\%$ of the behavioral
-ceiling, it fails exactly where the state is most readable (L$0$--L$1$ and
-\texttt{PITCH} positions), and K3 shows that the middle layers share one subspace
-rather than relearning it at each depth.
+ceiling and fails exactly where the state is most readable (L$0$--L$1$ and
+\texttt{PITCH} positions).
 
 % 限界。
-\emph{Limitations.} We inject major keys only; we pre-registered minor as a
-secondary condition and have not run it. The KS estimator confuses keys a fifth
-apart, and $\ikr$ triangulates around that weakness. Our guard measures
-distributional damage under a reference model, not musicality itself, and we ran
-no listening test. Our public-model result covers one checkpoint at one size. The
-confirmatory phase covers our own model; the public-model intervention keeps its
-original design, in which we chose the layer on disjoint prompts and froze the
-budget before evaluation, but did not run a second held-out round.
+\emph{Limitations.} We inject major keys only; we pre-registered minor and have
+not run it. The KS estimator confuses keys a fifth apart, and $\ikr$
+triangulates around that weakness. Our guard measures distributional damage
+under a reference model, not musicality itself, and we ran no listening test.
+The public-model result covers one checkpoint at one size, and it keeps its
+original design: we chose its layer on disjoint prompts and froze its budget
+before evaluation, but we did not run a second held-out round for it.
 
 \section{Conclusion}
 % 結論。読めること != 使っていること，を最後にもう一度置く。
@@ -489,15 +498,13 @@ A music Transformer does not merely expose correlates of key to a probe. Under a
 design in which we fixed every choice before we saw the confirmatory data,
 replacing a rank-$24$ component of the hidden state moves composition to the
 injected key: before any generated note can feed back, specifically toward the
-target, within a frozen musicality budget, across seeds, and in a public model
-trained on real music. Decodability and causal use come apart across layers and
-across token positions. Reading a representation therefore does not show that the
-model consults it. We release the testbed, the labels, and the frozen protocols
-as a benchmark.
+target, within a frozen musicality budget, and in a public model trained on real
+music. Decodability and causal use come apart across layers and across token
+positions, so reading a representation does not show that the model consults it.
+We release the testbed, the labels, and the frozen protocols as a benchmark.
 
-\vspace{2pt}\noindent\footnotesize\textbf{Reproducibility.} We release the
-anonymized code, the data generator, the pre-registration and freeze documents,
-and audio demos at
+\vspace{2pt}\noindent\footnotesize\textbf{Reproducibility.} Code, data
+generator, pre-registration, freeze documents and audio demos:
 \url{https://anonymous.4open.science/r/TBD}. \TBD{create before submission.}\normalsize
 
 \ifspconf
