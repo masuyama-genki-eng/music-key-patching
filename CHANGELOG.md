@@ -1042,3 +1042,45 @@ capacity (0.5M guard 0.102 -> 90% out of budget, 26M peak 0.350); persistence
 (0.671 vs 0.687); seed-1 (supported, 12/12, peak L2); guard 0.6127 from 7,989
 modulations at the 90th percentile; corpus 200k/10k/10k, 278-508 tokens, vocab
 124; K3 cross-layer 0.274-0.387.
+
+## 2026-08-11 — Held-out confirmatory results, and one gate that stopped us
+
+**The confirmatory test passed, and it is stronger than the selection phase.**
+On 100 prompts that neither probe training nor any earlier run had touched, with
+every choice frozen at commit 0d621e4 and identity cells excluded:
+  edit 0.3555 vs K1 0.0391 = 9.09x; 12/12 Holm-significant (worst p 4.8e-5,
+  rank-biserial 0.72-1.00); paired BCa CI [0.2845, 0.3473]; guard 84.0%;
+  raw TKR 0.410; IKR 0.936 target vs 0.617 source.
+The ratio rose (5.0x -> 9.1x) because K1 falls on unseen prompts (0.075 ->
+0.039), not because the edit improved (0.378 -> 0.356).
+
+**K1-norm settles the magnitude objection.** The magnitude-matched control
+(freeze AMENDMENT 1) reaches 0.0564, and the edit beats it in 12/12 targets. The
+1.44x perturbation gap we logged does not explain the effect.
+
+**Token-type predictions confirmed on unseen data.** PITCH-only 0.0355, which is
+BELOW the K1 floor, and separates from K1 in 0/12 targets. BAR/DUR-only 0.2327 =
+65% of the full effect, 11/12 significant. One frozen prediction was worded
+imprecisely: "no mask improves guard pass" is false as written — PITCH-only
+passes the guard 98.4% of the time vs 84.0% for the full edit. It does so
+because it applies a null edit, so the substantive claim (no mask buys more
+in-budget effect) holds. We report the wording error rather than reinterpret it.
+
+**Specificity, on held-out data.** The continuation's estimated key matches the
+injected key 41.0% of the time vs 4.1% for K1, and only 8.5% stay in the
+prompt's key vs 51.7% for K1. Fifth-neighbour mass 34.8% (the KS estimator's
+known confusion). The edit installs a specific counterfactual key.
+
+**Identity sanity check.** Injecting the prompt's own key leaves the model in it
+(0.650 over 100 cells), as it should.
+
+**BLOCKED: the seed-1 held-out replication.** Its K2 sham gate failed 1/100 and
+the frozen rule says stop, so we ran nothing further and report no seed-1
+held-out number. Diagnosis: max |logit difference| clean vs sham = 1.14e-5 —
+floating-point non-associativity in (x - comp) + comp, exactly as edit.py's
+docstring predicts, not a detached hook. The gate compares tokens with exact
+equality, which is stricter than the property it tests; on 100 prompts x 384
+tokens one near-tie in top-p sampling flipped. We did NOT loosen the gate after
+seeing it fail. The paper's seed claim therefore continues to rest on the
+selection-phase replication (DR-H3 supported, 12/12, peak L2), which is
+ledgered and unaffected.

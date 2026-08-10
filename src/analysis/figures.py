@@ -710,3 +710,60 @@ def fig_persistence(persist_root: Path, out: Path) -> None:
     fig.subplots_adjust(wspace=0.08)
     fig.savefig(out)
     plt.close(fig)
+
+
+# ------------------------------------------------------------------ Fig: confirm
+def fig_confirmatory(confirm_root: Path, out: Path) -> None:
+    """The main causal result on held-out data (docs/CONFIRMATORY_FREEZE.md).
+
+    Left: per-target guarded TKR, edit vs the two random controls, on the 12
+    injected keys with identity cells excluded. Right: the same comparison
+    pooled, plus the two token-type arms — the reader sees in one panel that the
+    edit beats a magnitude-matched control and that writing at PITCH positions
+    alone does nothing. Ordered by logic (controls, restricted edits, full edit),
+    not by value."""
+    v = json.loads((confirm_root / "verdict.json").read_text())
+    e = v["conditions"]["edit"]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.5, 2.1),
+                                   gridspec_kw={"width_ratios": [1.5, 1]})
+
+    # ---- (a) per target
+    x = np.arange(12)
+    edit = [r["tkr_edit"] for r in e["per_target"]]
+    k1 = [r["tkr_k1"] for r in e["per_target"]]
+    ax1.bar(x - 0.21, edit, 0.42, color=EDIT, zorder=3, label="key edit")
+    ax1.bar(x + 0.21, k1, 0.42, color=CTRL, zorder=3, label="random (K1)")
+    ax1.set_xticks(x, [KEY_NAMES[r["target"]] for r in e["per_target"]],
+                   fontsize=5.4)
+    ax1.set_ylabel("guarded TKR")
+    ax1.set_ylim(0, 0.56)
+    ax1.set_title("(a) every injected key separates", loc="left", fontsize=7.5,
+                  color=INK)
+    ax1.legend(frameon=False, fontsize=6, handlelength=1.1, loc="upper left",
+               borderpad=0.1, handletextpad=0.5)
+    ax1.annotate("$12/12$ after Holm", xy=(0.98, 0.90), xycoords="axes fraction",
+                 ha="right", fontsize=6.2, color="#5A5A5A")
+
+    # ---- (b) pooled: controls, restricted writes, full edit
+    kn = v["edit_vs_k1norm"]
+    # short tick labels: the caption spells the conditions out, so the axis stays
+    # legible at 3.5in. Two random controls first, then restricted writes, then all.
+    bars = [("K1", e["pooled_k1"], CTRL),
+            ("K1$^{\\mathrm{n}}$", kn["pooled_k1_norm"], CTRL2),
+            ("PITCH", v["conditions"]["pitch"]["pooled_guarded_tkr"], EDIT2),
+            ("B/D", v["conditions"]["bar_dur"]["pooled_guarded_tkr"], EDIT2),
+            ("all", e["pooled_guarded_tkr"], EDIT)]
+    xb = np.arange(len(bars))
+    ax2.bar(xb, [b[1] for b in bars], 0.66, color=[b[2] for b in bars], zorder=3)
+    for i, b in enumerate(bars):
+        ax2.annotate(f"{b[1]:.3f}", (i, b[1]), xytext=(0, 2),
+                     textcoords="offset points", ha="center", fontsize=5.6,
+                     color=INK)
+    ax2.set_xticks(xb, [b[0] for b in bars], fontsize=6.2, rotation=45,
+                   ha="right", rotation_mode="anchor")
+    ax2.set_ylim(0, 0.46)
+    ax2.set_title("(b) pooled", loc="left", fontsize=7.5, color=INK)
+    ax2.tick_params(axis="y", labelsize=6)
+    fig.subplots_adjust(wspace=0.28)
+    fig.savefig(out)
+    plt.close(fig)

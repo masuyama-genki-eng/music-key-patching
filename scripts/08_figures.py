@@ -56,6 +56,8 @@ def main() -> None:
                                    REPO / "results/sweep", p)),
         ("fig_surgical.pdf",
          lambda p: F.fig_surgical(REPO / "results/sweep", p)),
+        ("fig_confirmatory.pdf",
+         lambda p: F.fig_confirmatory(REPO / "results/confirmatory" / args.model, p)),
         ("fig_persistence.pdf",
          lambda p: F.fig_persistence(REPO / "results/persistence" / args.model, p)),
     ]

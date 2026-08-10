@@ -894,3 +894,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/sweep/R-Aug_s0/perturbation_norms.json`
 - note: edit 34.63 vs K1 24.13 (ratio 1.44), ||h||=168.5; rank-matched only
 
+## 2026-08-11T05:50:32+09:00 — CONFIRMATORY held-out sweep R-Aug_s0 L4
+- git: `760177698ce5fa4db45b2176b47ff768c5253ef1`
+- config_hash: `51a3509f23ea6178d262c6878100e808a6952254e2b5284262c68f6265449873`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/parts/confirmatory_L4.parquet`, `results/confirmatory/R-Aug_s0/verdict.json`
+- note: edit: guarded=0.355 sig=12/12; pitch: guarded=0.035 sig=0/12; bar_dur: guarded=0.233 sig=11/12
+
+## 2026-08-11T05:55:06+09:00 — CONFIRMATORY seed replication R-Aug_s1 L2 — BLOCKED by K2 gate
+- git: `760177698ce5fa4db45b2176b47ff768c5253ef1+DIRTY`
+- config_hash: `f4e6423f09aa0a4f0bf4bba3b6e75ed59fb52a0779c49ed4a5809069e250c1df`
+- seeds: [7]
+- artifacts: n/a
+- note: K2 sham gate failed 1/100 on the held-out prompts. Diagnosed: max |logit diff| clean vs sham = 1.14e-5, i.e. fp non-associativity in (x - comp) + comp (documented in edit.py), not a detached hook. The frozen rule says gate failure = stop, so NO seed-1 held-out numbers exist and none are reported. Seed evidence in the paper remains the selection-phase replication (supported, 12/12, peak L2).
+

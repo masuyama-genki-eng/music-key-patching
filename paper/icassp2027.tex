@@ -73,8 +73,10 @@ only absolute pitch and time, and we replace the low-dimensional key component
 of the hidden state with the component of a different key while we keep the
 musical prompt fixed. On a held-out test set, with the layer, the subspace, the
 metrics and the statistical tests all fixed in advance, the edit moves
-generation to the injected key, and a rank-matched random edit does not
-(\TBD{held-out sweep running}). The effect appears before any generated note can
+generation to the injected key $9.1\times$ as often as a rank-matched random
+edit does ($0.356$ against $0.039$; all $12$ keys separate after Holm
+correction), and it also beats a control that we rescale to the same
+perturbation magnitude. The effect appears before any generated note can
 feed back: without sampling a single new token, the edit shifts the next-pitch
 distribution toward the injected key ($+0.26$ probability mass, against $+0.02$
 for the random control, in $12/12$ keys after Holm correction). We also find two
@@ -314,16 +316,29 @@ outperform an optimized one. V-MEAN edits destroy the music at deep layers, wher
 at most $5\%$ stay in budget.
 
 % 確認フェーズ。結果待ち。
-\textbf{Confirmatory phase.} \TBD{held-out confirmatory sweep executing:
-per-target guarded $\tkr$, K1, K1$^{\mathrm{norm}}$, rank-biserial $r$,
-Holm-corrected $p$, BCa CI, guard rate, and the identity sanity check land here}.
+\textbf{Confirmatory phase.} The result holds on data that no earlier step
+touched. On the $100$ held-out prompts, with every choice frozen beforehand and
+identity cells excluded, the edit reaches a guarded $\tkr$ of $0.356$ against
+$0.039$ for K1, a ratio of $9.1$. All $12$ targets separate after Holm
+correction (worst $p=4.8\times10^{-5}$; rank-biserial $r=0.72$--$1.00$), and the
+paired prompt-level difference has a BCa $95\%$ CI of $[0.284,0.347]$. The guard
+admits $84\%$ of edits, raw $\tkr$ is $0.410$, and pitch content again crosses
+($\ikr$ $0.936$ for the injected key against $0.617$ for the prompt's). The edit
+also beats K1$^{\mathrm{norm}}$, the control we rescale to the edit's exact
+perturbation magnitude ($0.056$; $12/12$ after Holm correction), so perturbation
+size does not explain the effect. In the identity cells, where we inject the key
+the prompt is already in, the model simply stays there ($0.650$), as it should.
 
 % 特異性。狙った調に入る，という主張。
-\textbf{Specificity.} The edit does not merely leave the source key; it lands on
-the key we inject. \TBD{confirmatory specificity: diagonal mass, fifth-neighbor
-mass, source retention, edit \vs K1}. In the selection data, success falls gently
-as the target moves away around the circle of fifths, from $0.395$ at one step to
-$0.280$ at the tritone, which is how moving a key should behave.
+\textbf{Specificity.} The edit does not merely leave the source key; it lands
+on the key we inject. On the held-out set, the estimated key of the continuation
+matches the injected key in $41.0\%$ of cases, against $4.1\%$ for K1, and only
+$8.5\%$ of continuations stay in the key of the prompt, against $51.7\%$ for K1.
+Most of the remaining mass falls on a neighbour a fifth away ($34.8\%$), which
+the KS estimator is known to confuse. Success also falls gently as the target
+moves away around the circle of fifths, from $0.395$ at one step to $0.280$ at
+the tritone. The edit therefore installs a specific counterfactual key rather
+than merely disrupting the current one.
 
 \subsection{The edit acts before the model hears a single new note}
 \label{sec:nextpitch}
@@ -364,9 +379,14 @@ every verdict with its peak at L$2$.
 \emph{Across token types}, we restrict the write by token type. An edit at
 \texttt{PITCH} positions alone does nothing (guarded $\tkr$ $0.077$, at the K1
 floor) and leaves the music intact, while an edit at \texttt{BAR} and
-\texttt{DUR} positions alone carries $69\%$ of the full effect. No restriction
-improves the guard rate. \TBD{confirmatory token-type arms land here}. An
-intervention that simply steered pitch logits would show the opposite pattern.
+\texttt{DUR} positions alone carries $69\%$ of the full effect. The held-out run
+reproduces both halves: the \texttt{PITCH}-only arm reaches $0.036$, below the
+K1 floor of $0.039$, and separates from it in $0/12$ targets, while the
+\texttt{BAR}/\texttt{DUR} arm reaches $0.233$, or $65\%$ of the full effect, and
+separates in $11/12$. The \texttt{PITCH}-only arm does keep more continuations
+in budget ($98\%$ against $84\%$), but only because it barely changes the music.
+An intervention that simply steered pitch logits would show the opposite
+pattern.
 Together with the layer result, this shows that linear decodability is a weak
 guide to causal use, which parallels the feature-selection result of Arad et
 al.~\cite{arad2025selecting} in language models.
