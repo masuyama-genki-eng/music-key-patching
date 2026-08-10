@@ -105,3 +105,30 @@ select_prompts scans from row 0; probing's load_corpus takes rows 0-5999.
 
 Anything not listed above. In particular: no new layer scans, no new subspace
 families, no threshold changes, no metric additions after unblinding.
+
+## AMENDMENT 1 (2026-08-08, before any confirmatory result exists)
+
+Legitimacy: the confirmatory sweep produced NO artifact (its process was killed;
+results/confirmatory/<model>/parts/ is empty and no verdict.json exists). No
+confirmatory number has been observed, so the freeze may still be extended.
+
+Reason: a manuscript audit found that the papers claimed a "rank- and
+norm-matched" K1 while the implementation matches rank only (CHANGELOG
+2026-07-16 DEVIATION 1). The magnitude gap is real and now measured
+(results/sweep/R-Aug_s0/perturbation_norms.json): mean ||Delta|| = 34.63 for the
+edit vs 24.13 for K1 (ratio 1.44) at ||h|| = 168.5. A reviewer can therefore ask
+whether the effect is bought by perturbation size.
+
+Added control, frozen here:
+- **K1-norm**: the same K1 random basis, with the applied perturbation rescaled
+  per position so that ||Delta_K1norm|| == ||Delta_edit|| exactly (scale factor
+  ||P_V(mu - h)|| / ||P_K(mu - h)||, computed per position and target). Rank,
+  shape, timing, positions, guard, metrics and statistics are otherwise
+  identical to K1.
+- Primary comparison remains edit vs K1 (pre-registered). K1-norm is reported
+  alongside as the stricter control; the paper's claim of magnitude-independence
+  stands only if the edit also beats K1-norm.
+- Frozen prediction: edit > K1-norm, with K1-norm at or near the K1 floor
+  (magnitude alone should not install a key).
+
+Nothing else in this document changes.

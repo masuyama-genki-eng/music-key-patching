@@ -880,3 +880,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/confirmatory/R-Aug_s0/next_pitch_L4.parquet`, `results/confirmatory/R-Aug_s0/next_pitch.json`
 - note: D_edit=0.6953 vs D_k1=0.0410; 12/12 sig
 
+## 2026-08-11T04:52:32+09:00 — Majority-token baseline (manuscript audit)
+- git: `b2d298ee6a1fff2175c1efd137a51c1613684c9d`
+- config_hash: `7416022ef128bb0c0505b5093cb62a6f663bb76ce934509df4db275f06a2da33`
+- seeds: n/a
+- artifacts: `results/data_syn/majority_baseline.json`
+- note: top1=0.4337 (token DUR_8); backs the 0.434 quality-gate reference quoted in the paper
+
+## 2026-08-11T04:54:34+09:00 — Perturbation-norm audit R-Aug_s0 L4
+- git: `b2d298ee6a1fff2175c1efd137a51c1613684c9d+DIRTY`
+- config_hash: `961d74e96287b4a7b3158e310d77a73d6a005d7783c6f07639dab91fa6109923`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s0/perturbation_norms.json`
+- note: edit 34.63 vs K1 24.13 (ratio 1.44), ||h||=168.5; rank-matched only
+

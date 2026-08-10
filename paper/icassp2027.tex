@@ -63,7 +63,7 @@ whose vocabulary holds absolute pitch and time only, we replace the
 low-dimensional key component of the hidden state with another key's while the
 musical prompt stays identical. On a fully held-out confirmatory set, with the
 intervention layer, subspace, metrics and tests all frozen in advance, the edit
-moves generation to the injected key where rank- and norm-matched random edits
+moves generation to the injected key where rank-matched random edits
 do not (\TBD{held-out sweep running}), within a musicality budget frozen before
 any edit ran. The effect precedes feedback from generated notes: before a single
 new note is sampled, the edit shifts the next-pitch distribution toward the
@@ -135,9 +135,9 @@ decoder~\cite{vaswani2017attention,radford2019gpt2} ($8$ layers, $d{=}512$,
 ${\sim}25$M parameters), trained with and without transposition augmentation
 $\times\,3$ seeds. \textbf{M-REF} shares the architecture but a different seed
 and data slice; it only judges whether edited music still sounds like music, so
-no model grades its own work. All models clear a preset quality gate
-(validation top-$1$ $0.878$--$0.881$ \vs the $0.434$ of a most-frequent-token
-predictor). Decision rules, thresholds and controls were frozen before
+no model grades its own work. All six clear a preset quality gate
+(validation next-token top-$1$ $0.878$--$0.881$ \vs the $0.434$ of a
+most-frequent-token predictor). Decision rules, thresholds and controls were frozen before
 experiments ran; deviations are logged and negative results reported.
 
 \subsection{Probing with controls}
@@ -164,11 +164,16 @@ subspace, $P_V{=}VV^{\!\top}$, and $\mu_{\kappa^{*}}$ the class-mean activation
 of the donor key. \textbf{The prompt never changes.} $V$ is built three ways
 (probe row space \textbf{V-PROBE}; class-mean span \textbf{V-MEAN}; optimized
 \textbf{V-DAS}~\cite{geiger2024das}); four controls bound the result:
-\textbf{K1}, a rank- and norm-matched random subspace (measured
-$\|\Delta\|$ within $1\%$ of the edit's); \textbf{K2}, a sham edit that must
-reproduce clean output bit for bit (it does, $100/100$, re-verified on every
-prompt set); \textbf{K3}, another layer's subspace; \textbf{K4}, transposing
-the prompt itself---the behavioral ceiling. Continuations are scored by the
+\textbf{K1}, a random subspace of the same rank and shape. Our
+pre-registration also asked K1 to match the edit's perturbation
+\emph{magnitude}; the implementation matches rank only, and we log the
+deviation rather than paper over it: measured $\|\Delta\|$ is $34.6$ for the
+edit against $24.1$ for K1 (ratio $1.44$, on $\|h\|{\approx}169$). We therefore
+add \textbf{K1$^{\mathrm{norm}}$}, the same random subspace with its
+perturbation rescaled to the edit's, so magnitude is controlled exactly.
+\textbf{K2} is a sham edit that must reproduce clean output bit for bit
+($100/100$ on the selection prompts); \textbf{K3} borrows another layer's
+subspace; \textbf{K4} transposes the prompt itself---the behavioral ceiling. Continuations are scored by the
 \emph{target-key rate} ($\tkr$: KS estimate equals the injected key, reported
 strictly) and the \emph{in-key rate} ($\ikr$: fraction of pitches in a given
 scale, no estimator). A musicality budget $\ppl{=}0.613$---the $90$th percentile
