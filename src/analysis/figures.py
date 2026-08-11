@@ -127,9 +127,9 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                  ha="right", va="bottom", fontsize=6.8)
     # the dissociation, pointed at directly -- text in the empty upper-left,
     # arrow descending through empty space to the layer-1 point
-    ax2.annotate("readable above,\nyet almost\nnothing happens",
-                 xy=(1.05, em[1] + 0.012), xytext=(0.03, 0.97),
-                 textcoords="axes fraction", fontsize=7.2,
+    ax2.annotate("reads well,\nno effect",
+                 xy=(1.05, em[1] + 0.012), xytext=(0.04, 0.93),
+                 textcoords="axes fraction", fontsize=7.4,
                  color="#404040", ha="left", va="top", linespacing=1.25,
                  arrowprops=dict(arrowstyle="->", lw=1.1, color="#707070",
                                  shrinkB=2, relpos=(0.4, 0.0)))
