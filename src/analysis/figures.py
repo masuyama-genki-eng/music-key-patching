@@ -91,8 +91,9 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     # ---- (a) reading: the title IS the claim
     for name, c in curves.items():
         if name != highlight:
-            ax1.plot(range(8), c, color=CTRL2, lw=0.9, alpha=0.55, zorder=2)
-    ax1.plot(range(8), f1, color=READ, lw=2.2, marker="o", ms=4, zorder=4)
+            ax1.plot(range(8), c, color="#8A8A8A", lw=1.0, alpha=0.75, zorder=2)
+    ax1.plot(range(8), f1, color=READ, lw=2.5, marker="o", ms=4.5, zorder=4,
+             markeredgecolor="white", markeredgewidth=0.6)
     ax1.annotate("seed 0", xy=(7, f1[7]), xytext=(6, 4),
                  textcoords="offset points", color=READ, fontsize=7.5,
                  fontweight="bold", ha="left", clip_on=False)
@@ -107,28 +108,31 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                   loc="left", fontsize=8.2, color=INK, pad=4)
 
     # ---- (b) acting: title carries the contrast; annotation names the gap
-    ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.18, lw=0, zorder=2)
-    ax2.plot(layers, em, color=EDIT, lw=2.2, marker="o", ms=4, zorder=4)
+    ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.15, lw=0, zorder=2)
+    ax2.plot(layers, em, color=EDIT, lw=2.5, marker="o", ms=4.5, zorder=4,
+             markeredgecolor="white", markeredgewidth=0.6)
     ax2.annotate("edit", xy=(7, em[7]), xytext=(6, 2),
                  textcoords="offset points", color=EDIT, fontsize=7.5,
                  fontweight="bold", ha="left", va="center", clip_on=False)
-    ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.15, lw=0, zorder=2)
-    ax2.plot(layers, cm, color=CTRL, lw=1.5, marker="s", ms=3.2, zorder=3)
+    ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.12, lw=0, zorder=2)
+    ax2.plot(layers, cm, color="#3A3A3A", lw=1.8, marker="s", ms=3.6, zorder=3,
+             markeredgecolor="white", markeredgewidth=0.5)
     ax2.annotate("random\nbaseline", xy=(7, cm[7]), xytext=(6, -2),
-                 textcoords="offset points", color="#707070", fontsize=6.8,
-                 ha="left", va="top", clip_on=False, linespacing=1.1)
-    ax2.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
+                 textcoords="offset points", color="#3A3A3A", fontsize=6.8,
+                 fontweight="bold", ha="left", va="top", clip_on=False,
+                 linespacing=1.1)
+    ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=1)
     ax2.annotate("chance", xy=(0.985, 1 / 12), xycoords=ax2.get_yaxis_transform(),
                  xytext=(0, 2), textcoords="offset points", color=BASE,
                  ha="right", va="bottom", fontsize=6.8)
     # the dissociation, pointed at directly -- text in the empty upper-left,
     # arrow descending through empty space to the layer-1 point
-    ax2.annotate("readable above,\nyet almost nothing happens",
-                 xy=(1.05, em[1] + 0.012), xytext=(0.03, 0.95),
+    ax2.annotate("readable above,\nyet almost\nnothing happens",
+                 xy=(1.05, em[1] + 0.012), xytext=(0.03, 0.97),
                  textcoords="axes fraction", fontsize=7.2,
-                 color="#5A5A5A", ha="left", va="top", linespacing=1.25,
-                 arrowprops=dict(arrowstyle="->", lw=0.9, color="#9A9A9A",
-                                 shrinkB=2, relpos=(0.35, 0.0)))
+                 color="#404040", ha="left", va="top", linespacing=1.25,
+                 arrowprops=dict(arrowstyle="->", lw=1.1, color="#707070",
+                                 shrinkB=2, relpos=(0.4, 0.0)))
     ax2.set_xlabel("layer", fontsize=8)
     ax2.set_ylabel("success rate", fontsize=8)
     ax2.set_ylim(0, max(eh) * 1.16)
@@ -140,7 +144,7 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
 
     # ---- one guide ties the panels at the final-test layer
     for ax in (ax1, ax2):
-        ax.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=1, alpha=0.85)
+        ax.axvline(peak, color="#C41E1E", lw=1.3, ls="--", zorder=1)
     ax2.annotate(f"final test edits layer {peak}", xy=(peak, 0.004),
                  xytext=(0, 1), textcoords="offset points", va="bottom",
                  ha="center", fontsize=6.6, color="#D02020")
