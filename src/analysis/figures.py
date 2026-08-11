@@ -91,16 +91,12 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     # ---- (a) reading: the title IS the claim
     for name, c in curves.items():
         if name != highlight:
-            ax1.plot(range(8), c, color="#8A8A8A", lw=1.0, alpha=0.75, zorder=2)
-    ax1.plot(range(8), f1, color=READ, lw=2.5, marker="o", ms=4.5, zorder=4,
-             markeredgecolor="white", markeredgewidth=0.6)
-    ax1.annotate("seed 0", xy=(7, f1[7]), xytext=(6, 4),
-                 textcoords="offset points", color=READ, fontsize=7.5,
-                 fontweight="bold", ha="left", clip_on=False)
-    ax1.annotate("5 other models", xy=(7, min(c[7] for n, c in curves.items()
-                                              if n != highlight)),
-                 xytext=(6, -9), textcoords="offset points", color="#8A8A8A",
-                 fontsize=6.8, ha="left", clip_on=False)
+            ax1.plot(range(8), c, color="#8A8A8A", lw=0.9, alpha=0.8, zorder=2)
+    ax1.plot(range(8), f1, color=READ, lw=1.6, zorder=4, label="seed 0")
+    ax1.plot([], [], color="#8A8A8A", lw=1.0, label="5 other models")
+    ax1.legend(frameon=True, edgecolor="black", framealpha=1.0,
+               fancybox=False, fontsize=6.5, loc="lower right",
+               borderpad=0.4, handlelength=1.6)
     ax1.set_ylabel("probe score", fontsize=8)
     ax1.set_ylim(0.35, 1.02)
     ax1.tick_params(labelsize=7)
@@ -109,22 +105,15 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
 
     # ---- (b) acting: title carries the contrast; annotation names the gap
     ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.15, lw=0, zorder=2)
-    ax2.plot(layers, em, color=EDIT, lw=2.5, marker="o", ms=4.5, zorder=4,
-             markeredgecolor="white", markeredgewidth=0.6)
-    ax2.annotate("edit", xy=(7, em[7]), xytext=(6, 2),
-                 textcoords="offset points", color=EDIT, fontsize=7.5,
-                 fontweight="bold", ha="left", va="center", clip_on=False)
+    ax2.plot(layers, em, color=EDIT, lw=1.6, zorder=4, label="edit")
     ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.12, lw=0, zorder=2)
-    ax2.plot(layers, cm, color="#3A3A3A", lw=1.8, marker="s", ms=3.6, zorder=3,
-             markeredgecolor="white", markeredgewidth=0.5)
-    ax2.annotate("random\nbaseline", xy=(7, cm[7]), xytext=(6, -2),
-                 textcoords="offset points", color="#3A3A3A", fontsize=6.8,
-                 fontweight="bold", ha="left", va="top", clip_on=False,
-                 linespacing=1.1)
-    ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=1)
-    ax2.annotate("chance", xy=(0.985, 1 / 12), xycoords=ax2.get_yaxis_transform(),
-                 xytext=(0, 2), textcoords="offset points", color=BASE,
-                 ha="right", va="bottom", fontsize=6.8)
+    ax2.plot(layers, cm, color="#3A3A3A", lw=1.4, zorder=3,
+             label="random baseline")
+    ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=1,
+                label="chance")
+    ax2.legend(frameon=True, edgecolor="black", framealpha=1.0,
+               fancybox=False, fontsize=6.5, loc="upper right",
+               borderpad=0.4, handlelength=1.6)
     # the dissociation, pointed at directly -- text in the empty upper-left,
     # arrow descending through empty space to the layer-1 point
     ax2.annotate("reads well,\nno effect",
@@ -751,8 +740,9 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     ax1.set_ylim(0, 0.56)
     ax1.set_title("(a) every installed key separates", loc="left",
                   fontsize=7.5, color=INK)
-    ax1.legend(frameon=False, fontsize=6, handlelength=1.1, loc="upper left",
-               borderpad=0.1, handletextpad=0.5)
+    ax1.legend(frameon=True, edgecolor="black", framealpha=1.0, fancybox=False,
+               fontsize=6, handlelength=1.1, loc="upper left",
+               borderpad=0.3, handletextpad=0.5)
     ax1.annotate("$12/12$ after correction", xy=(0.98, 0.90),
                  xycoords="axes fraction", ha="right", fontsize=6.2,
                  color="#5A5A5A")
