@@ -1084,3 +1084,17 @@ tokens one near-tie in top-p sampling flipped. We did NOT loosen the gate after
 seeing it fail. The paper's seed claim therefore continues to rest on the
 selection-phase replication (DR-H3 supported, 12/12, peak L2), which is
 ledgered and unaffected.
+
+## 2026-08-11 (2) — Figure set reduced to the three the paper uses (author
+## direction)
+
+results/figures/ now holds exactly fig_framework, fig_confirmatory,
+fig_layer_profile — the three the ICASSP manuscript includes. The nine
+supplementary-bound figures (fifths geometry/curve, specificity, ambiguity,
+equivariance, intervention bars, emergence, surgical, persistence) were deleted
+from results/figures/ (derived artifacts, deterministically regenerable) and
+their build jobs moved behind scripts/08_figures.py --supplementary, so the
+default build produces only what the paper needs. The generation functions
+stay in src/analysis/figures.py because the manuscript promises these analyses
+in the supplementary at the reproducibility URL; building that pack is a
+pre-submission task (run 08 with --supplementary).

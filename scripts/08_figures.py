@@ -24,6 +24,8 @@ def main() -> None:
     ap.add_argument("--model", default="R-Aug_s0")
     ap.add_argument("--layer", type=int, default=4, help="peak layer of --model")
     ap.add_argument("--no-ledger", action="store_true")
+    ap.add_argument("--supplementary", action="store_true",
+                    help="also build the 9 supplementary figures")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -34,9 +36,17 @@ def main() -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     cfg = vars(args)
 
+    # ICASSP 本編が使う3図のみを既定で生成する（2026-08-11 著者指示）。
+    # 残りは補足資料用: --supplementary を付けたときだけ生成する。
     jobs = [
+        ("fig_framework.pdf",
+         lambda p: F.fig_framework(REPO / "results/samples", p)),
+        ("fig_confirmatory.pdf",
+         lambda p: F.fig_confirmatory(REPO / "results/confirmatory" / args.model, p)),
         ("fig_layer_profile.pdf",
          lambda p: F.fig_layer_profile(probing, sweep, args.model, p)),
+    ]
+    supp_jobs = [
         ("fig_fifths_geometry.pdf",
          lambda p: F.fig_fifths_geometry(probing / args.model, args.layer, p)),
         ("fig_specificity.pdf",
@@ -45,8 +55,6 @@ def main() -> None:
          lambda p: F.fig_fifths_curve(sweep, "v_probe", args.layer, p)),
         ("fig_ambiguity.pdf",
          lambda p: F.fig_ambiguity(probing, args.model, args.layer, p)),
-        ("fig_framework.pdf",
-         lambda p: F.fig_framework(REPO / "results/samples", p)),
         ("fig_equivariance.pdf",
          lambda p: F.fig_equivariance(REPO / "results/equivariance", p)),
         ("fig_intervention_bars.pdf",
@@ -56,11 +64,11 @@ def main() -> None:
                                    REPO / "results/sweep", p)),
         ("fig_surgical.pdf",
          lambda p: F.fig_surgical(REPO / "results/sweep", p)),
-        ("fig_confirmatory.pdf",
-         lambda p: F.fig_confirmatory(REPO / "results/confirmatory" / args.model, p)),
         ("fig_persistence.pdf",
          lambda p: F.fig_persistence(REPO / "results/persistence" / args.model, p)),
     ]
+    if args.supplementary:
+        jobs = jobs + supp_jobs
     written = []
     for name, fn in jobs:
         p = outdir / name
