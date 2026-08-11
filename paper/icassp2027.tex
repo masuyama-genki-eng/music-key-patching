@@ -245,7 +245,8 @@ Our contributions are as follows.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.84\columnwidth]{fig_framework.pdf}
+% 2026-08-11: 台紙拡大 (3.5->3.7in) に合わせて表示幅も拡大（実効文字サイズ維持＋余白増）。
+\includegraphics[width=0.90\columnwidth]{fig_framework.pdf}
 % 図1キャプション
 % 主張を一例で（実際のモデル出力，サンプリングシードは固定）．
 % 同じ8小節の B♭ 長調プロンプトを，(a) 編集なしと (b) 第9小節以降に第4層の活性へホ長調の調成分を書き込んだ場合の2通りで継続する．
@@ -547,7 +548,7 @@ Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so 
 \subsection{Overwriting the Key}
 \label{sec:h3}
 % 調の上書きは音楽を書き込んだ調へ移し，ランダムな上書きは移さない．
-% 最終テストの新規 100 プロンプト（図3）では，編集の成功率は 0.355，ランダムベースラインは 0.039 で，比は 9.1 である．
+% 最終テストの新規 100 プロンプト（図2）では，編集の成功率は 0.355，ランダムベースラインは 0.039 で，比は 9.1 である．
 % 12 の標的の調はすべて補正後に分離し（最悪で p=4.8×10^-5，効果量 r=0.72–1.00），プロンプト単位の差のブートストラップ 95% 信頼区間は [0.284, 0.347] である．
 % 品質の限度は編集の 84% を通し，限度を課さない場合の同じ割合は 0.410 であり，音符も移る（継続の音の 0.936 が書き込んだ調に，0.617 がプロンプトの調に属する）．
 % 長さを揃えたランダムベースライン（3.2節）は 0.056 にとどまり，編集は補正後 12/12 の調でこれと分離する．
@@ -580,8 +581,10 @@ The edit therefore installs one specific key rather than merely disrupting the c
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.87\columnwidth]{fig_confirmatory.pdf}
-% 図3キャプション
+% 2026-08-11: 台紙拡大 (3.5->3.7in) に合わせて表示幅も拡大（実効文字サイズ維持＋余白増）。
+\includegraphics[width=0.95\columnwidth]{fig_confirmatory.pdf}
+% 図2（fig:confirm）キャプション [2026-08-11: 対訳の図番号を実番号に訂正——
+% fig:confirm は本文で2番目の図なので Fig. 2，fig:layers が Fig. 3]
 % 主要な因果結果．最終テストの新規プロンプト上での値である．
 % (a) 書き込んだ調ごとの成功率．編集と，同じ本数の方向を変えるランダムベースラインとの比較．
 % (b) 同じ指標をまとめたもの．全位置への編集と，その4つの比較条件：ランダム方向，同じランダム方向を編集と同じ大きさに揃えたもの，音高位置のみの書き込み，小節と音の長さの位置のみの書き込みである．
@@ -625,7 +628,7 @@ The model therefore reads the key back off the notes at every step and keeps no 
 \subsection{Where the Key Is Read and Where It Acts}
 \label{sec:h5}
 % 調が読める層は，モデルがそれを使う層ではない．
-% プローブは広い帯で平らになる（第2–6層で macro-F1 0.920–0.929）のに，各層を順に編集してランダムベースラインを差し引くと，ネットワークの中央に単一のピークが残る（最良の層と中央値の差の信頼区間は [0.038, 0.109] でゼロを含まない）：第0–1層ではプローブがすでに調をよく読めるのに，編集はほとんど何も起こさない（図2）．
+% プローブは広い帯で平らになる（第2–6層で macro-F1 0.920–0.929）のに，各層を順に編集してランダムベースラインを差し引くと，ネットワークの中央に単一のピークが残る（最良の層と中央値の差の信頼区間は [0.038, 0.109] でゼロを含まない）：第0–1層ではプローブがすでに調をよく読めるのに，編集はほとんど何も起こさない（図3）．
 % これは探索段階のデータであり，最終テストの新規プロンプトで層のスイープを繰り返していないので，この層プロファイルは検証済みの主張ではなく観察として報告する．
 The layers where we can read the key are not the layers where the model uses it.
 The probe is flat across a wide band (macro-$F_1$ $0.920$--$0.929$ for layers $2$--$6$), yet editing each layer in turn and subtracting the random baseline leaves a single peak in the middle of the network (best against median, CI $[0.038,0.109]$): at layers~$0$ and~$1$ the probe already reads the key well and the edit does almost nothing (Fig.~\ref{fig:layers}).
@@ -665,8 +668,9 @@ The edit fails exactly where the key is easiest to read.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.74\columnwidth]{fig_layer_profile.pdf}
-% 図2キャプション
+% 2026-08-11: 台紙拡大 (3.5->3.7in) に合わせて表示幅も拡大（実効文字サイズ維持＋余白増）。
+\includegraphics[width=0.80\columnwidth]{fig_layer_profile.pdf}
+% 図3（fig:layers）キャプション [2026-08-11: 対訳の図番号を実番号に訂正]
 % 2026-08-11 FIG-CONSISTENCY: 描画物と一致するよう微修正——(a) 図中の縦軸名
 % probe score と本文の macro-F1 を橋渡し，(b)「因果効果」→実際に描いている
 % 成功率へ，灰色領域と chance 点線の説明を追加。

@@ -929,3 +929,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-08-11T22:41:21+09:00 — P5 figures
+- git: `f1961a878149fe7a19d722f5fdea76a879d0f65c+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+

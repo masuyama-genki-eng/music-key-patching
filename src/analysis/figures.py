@@ -87,7 +87,8 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     cm, cl, ch = curve(k1)
     peak = int(layers[int(np.argmax(em))])
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.4), sharex=True,
+    # 2026-08-11 著者指示: 台紙拡大（つめつめ解消）。(3.5, 3.4) -> (3.7, 3.9)。
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.7, 3.9), sharex=True,
                                    height_ratios=[1, 1.2],
                                    constrained_layout=True)
 
@@ -342,7 +343,8 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
 
     k_clean, k_edit = est(clean), est(edited)
     xmax = 18 * 16
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 2.7), sharex=True)
+    # 2026-08-11 著者指示: 台紙拡大（つめつめ解消）。(3.5, 2.7) -> (3.7, 3.0)。
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.7, 3.0), sharex=True)
     # 2026-08-11: "clean" は本文から追放した内部コード名なので図でも使わない。
     _pianoroll(ax1, clean, plen, READ,
                f"(a) no edit — continues in {kname(k_clean)}",
@@ -737,7 +739,9 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     not by value."""
     v = json.loads((confirm_root / "verdict.json").read_text())
     e = v["conditions"]["edit"]
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.5, 1.95),
+    # 2026-08-11 著者指示「つめつめ・凡例が棒にかぶる」: 台紙を (3.5,1.95) から
+    # 拡大し，(a) の ylim に凡例ぶんの頭上余白を確保（凡例下端 ≈0.47 > 最高棒 0.45）。
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.7, 2.4),
                                    gridspec_kw={"width_ratios": [1.5, 1]})
 
     # ---- (a) per target
@@ -747,15 +751,16 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     ax1.bar(x - 0.21, edit, 0.42, color=EDIT, zorder=3, label="edit")
     ax1.bar(x + 0.21, k1, 0.42, color=CTRL, zorder=3, label="random baseline")
     ax1.set_xticks(x, [KEY_NAMES[r["target"]] for r in e["per_target"]],
-                   fontsize=5.4)
+                   fontsize=6.0)
     ax1.set_ylabel("success rate")
-    ax1.set_ylim(0, 0.56)
+    ax1.set_ylim(0, 0.62)
     ax1.set_title("(a) every installed key separates", loc="left",
                   fontsize=7.5, color=INK)
     leg = ax1.legend(frameon=True, edgecolor="black", framealpha=1.0,
-                     fancybox=False, fontsize=6, handlelength=1.1,
-                     loc="upper left", borderpad=0.3, handletextpad=0.5,
-                     title="$12/12$ after correction", title_fontsize=6.2)
+                     fancybox=False, fontsize=6.4, handlelength=1.1,
+                     loc="upper left", borderpad=0.4, handletextpad=0.5,
+                     borderaxespad=0.4,
+                     title="$12/12$ after correction", title_fontsize=6.6)
     leg.get_title().set_color("#5A5A5A")
 
     # ---- (b) pooled: controls, restricted writes, full edit
@@ -770,8 +775,8 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     xb = np.arange(len(bars))
     ax2.bar(xb, [b[1] for b in bars], 0.66, color=[b[2] for b in bars], zorder=3)
     for i, b in enumerate(bars):
-        ax2.annotate(f"{b[1]:.3f}", (i, b[1]), xytext=(0, 2),
-                     textcoords="offset points", ha="center", fontsize=5.6,
+        ax2.annotate(f"{b[1]:.3f}", (i, b[1]), xytext=(0, 2.5),
+                     textcoords="offset points", ha="center", fontsize=6.0,
                      color=INK)
     ax2.set_xticks(xb, [b[0] for b in bars], fontsize=6.2, rotation=45,
                    ha="right", rotation_mode="anchor")
