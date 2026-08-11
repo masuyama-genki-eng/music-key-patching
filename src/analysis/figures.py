@@ -56,7 +56,7 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     """The paper's central claim in one figure: the layer where the key can be READ
     is the layer where editing it ACTS. A band + guide line ties the two panels at
     the shared peak so the reader does not have to align two curves by eye."""
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.6), sharex=True,
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.15), sharex=True,
                                    height_ratios=[1, 1.15])
 
     # ---- (a) readout: ensemble of all six models, the highlighted one in front
