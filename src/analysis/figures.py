@@ -96,29 +96,28 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
         if name != highlight:
             ax1.plot(range(8), c, color="#9A9A9A", lw=1.0, alpha=0.8, zorder=2)
     ax1.plot(range(8), f1, color=READ, lw=2.4, zorder=4)
-    ax1.annotate("seed 0", xy=(5.6, f1[5] + 0.012), fontsize=8,
-                 fontweight="bold", color=READ, ha="center", va="bottom",
+    ax1.annotate("seed 0", xy=(5.6, f1[5] + 0.012), fontsize=7.5,
+                 color=READ, ha="center", va="bottom",
                  path_effects=halo, zorder=6)
     ax1.annotate("5 other models", xy=(2.4, 0.80), fontsize=6.8,
-                 fontweight="bold", color="#8A8A8A", ha="left", va="top",
+                 color="#8A8A8A", ha="left", va="top",
                  path_effects=halo, zorder=6)
-    ax1.set_ylabel("probe score", fontsize=8.5, fontweight="bold")
+    ax1.set_ylabel("probe score", fontsize=8)
     ax1.set_ylim(0.35, 1.02)
     ax1.tick_params(labelsize=7.5)
     ax1.set_title("the key is readable at almost every layer",
-                  loc="left", fontsize=8, color=INK, pad=4)
+                  fontsize=8, color=INK, pad=4)
     ax1.text(-0.16, 1.03, "(a)", transform=ax1.transAxes, fontsize=11,
              fontweight="bold", color="black")
 
     # ---- (b) baseline as a filled gray region, reference-style
     ax2.fill_between(layers, 0, ch, color="#DCDCDC", zorder=1)
-    ax2.annotate("random baseline", xy=(3.5, 0.018), fontsize=7.5,
-                 fontweight="bold", color="#8A8A8A", ha="center", va="bottom",
-                 zorder=2)
+    ax2.annotate("random baseline", xy=(3.5, 0.018), fontsize=7.2,
+                 color="#8A8A8A", ha="center", va="bottom", zorder=2)
     ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.15, lw=0, zorder=2)
     ax2.plot(layers, em, color=EDIT, lw=2.4, zorder=4)
-    ax2.annotate("edit", xy=(6.0, em[6] + 0.014), fontsize=8,
-                 fontweight="bold", color=EDIT, ha="center", va="bottom",
+    ax2.annotate("edit", xy=(6.0, em[6] + 0.014), fontsize=7.5,
+                 color=EDIT, ha="center", va="bottom",
                  path_effects=halo, zorder=6)
     ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=3)
     ax2.annotate("chance", xy=(0.985, 1 / 12), xycoords=ax2.get_yaxis_transform(),
@@ -131,24 +130,23 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                  color="#404040", ha="left", va="top", linespacing=1.25,
                  arrowprops=dict(arrowstyle="->", lw=1.1, color="#707070",
                                  shrinkB=2, relpos=(0.4, 0.0)))
-    ax2.set_xlabel("layer", fontsize=8.5, fontweight="bold")
-    ax2.set_ylabel("success rate", fontsize=8.5, fontweight="bold")
+    ax2.set_xlabel("layer", fontsize=8)
+    ax2.set_ylabel("success rate", fontsize=8)
     ax2.set_ylim(0, max(eh) * 1.16)
     ax2.set_xlim(-0.45, 7.45)
     ax2.set_xticks(range(8))
     ax2.tick_params(labelsize=7.5)
     ax2.set_title("yet the edit works only in the middle layers",
-                  loc="left", fontsize=8, color=INK, pad=4)
+                  fontsize=8, color=INK, pad=4)
     ax2.text(-0.16, 1.03, "(b)", transform=ax2.transAxes, fontsize=11,
              fontweight="bold", color="black")
 
     # ---- layer-4 guide
     ax1.axvline(peak, color="#C41E1E", lw=1.3, ls="--", zorder=1)
     ax2.axvline(peak, ymin=0.09, color="#C41E1E", lw=1.3, ls="--", zorder=3)
-    ax2.annotate(f"final test: layer {peak}", xy=(peak, 0.062),
-                 xytext=(0, 1), textcoords="offset points", va="bottom",
-                 ha="center", fontsize=6.6, color="#C41E1E",
-                 fontweight="bold", path_effects=halo, zorder=6)
+    ax2.annotate(f"final test: layer {peak}", xy=(peak + 0.15, 0.112),
+                 va="bottom", ha="left", fontsize=6.6, color="#C41E1E",
+                 path_effects=halo, zorder=6)
 
     fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
@@ -336,7 +334,8 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
         return estimate_key(pitches)
 
     def kname(k: int) -> str:
-        n = KEY_NAMES[k % 12].replace("b", "♭")   # Bb -> B♭ etc.
+        # Bb -> B$\flat$: mathtext glyph, so any text font works
+        n = KEY_NAMES[k % 12].replace("b", "$\\flat$")
         return n + (" minor" if k >= 12 else " major")
 
     k_clean, k_edit = est(clean), est(edited)
@@ -355,7 +354,7 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
     ax2.annotate("edit on", xy=(8 * 16, 92), xytext=(4, -1),
                  textcoords="offset points", ha="left", va="top",
                  fontsize=6.4, color=EDIT, fontweight="bold", zorder=6)
-    src_flat = src.replace("b", "♭")
+    src_flat = src.replace("b", "$\\flat$")
     ax1.text(4 * 16, 41.0, f"{src_flat}-major prompt", ha="center", fontsize=6.2,
              color="#5A5A5A", zorder=6,
              bbox=dict(fc="white", ec="none", alpha=0.85, pad=0.7))
@@ -750,12 +749,11 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     ax1.set_ylim(0, 0.56)
     ax1.set_title("(a) every installed key separates", loc="left",
                   fontsize=7.5, color=INK)
-    ax1.legend(frameon=True, edgecolor="black", framealpha=1.0, fancybox=False,
-               fontsize=6, handlelength=1.1, loc="upper left",
-               borderpad=0.3, handletextpad=0.5)
-    ax1.annotate("$12/12$ after correction", xy=(0.98, 0.90),
-                 xycoords="axes fraction", ha="right", fontsize=6.2,
-                 color="#5A5A5A")
+    leg = ax1.legend(frameon=True, edgecolor="black", framealpha=1.0,
+                     fancybox=False, fontsize=6, handlelength=1.1,
+                     loc="upper left", borderpad=0.3, handletextpad=0.5,
+                     title="$12/12$ after correction", title_fontsize=6.2)
+    leg.get_title().set_color("#5A5A5A")
 
     # ---- (b) pooled: controls, restricted writes, full edit
     kn = v["edit_vs_k1norm"]

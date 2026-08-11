@@ -47,7 +47,9 @@ def rcparams() -> dict:
     return {
         "font.size": 8, "axes.titlesize": 8, "axes.labelsize": 8,
         "xtick.labelsize": 7, "ytick.labelsize": 7, "legend.fontsize": 7,
-        "font.family": "STIXGeneral", "mathtext.fontset": "stix",
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Liberation Sans", "Nimbus Sans", "DejaVu Sans"],
+        "mathtext.fontset": "dejavusans",
         "axes.spines.top": True, "axes.spines.right": True,   # 参照図の box 軸
         "axes.edgecolor": "#000000", "axes.linewidth": 0.9,
         "axes.labelcolor": "#000000",
