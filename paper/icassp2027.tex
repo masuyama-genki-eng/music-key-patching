@@ -160,12 +160,15 @@ pitch decisions.
 
 \subsection{Data, models, and protocol}
 % データ。真の調ラベルが全音符に必要なので合成する。語彙に調は入らない。
+% 調は一様に近く抽出される — §3.5 の F♯ 事故の教訓により，この事実は主結果の前提。
 We need the true key at every note, so we generate the training data.
 \textbf{D-SYN} comes from a functional-harmony state machine that voices each
 chord for four parts and optionally adds a melody. It writes $200$k/$10$k/$10$k
 train/validation/test pieces of $278$--$508$ tokens, and each piece contains
 $0$--$3$ modulations. The machine knows the key it writes in, so every token
-carries a true key label $\kappa(t)$ over $24$ classes. \textbf{We never give
+carries a true key label $\kappa(t)$ over $24$ classes. The machine draws keys
+near-uniformly: in the test split, every major key occupies between $214$k and
+$239$k tokens (max/min $1.12$), so no key is rare. \textbf{We never give
 these labels to the model}: they train and score the probe only. The vocabulary
 holds $124$ types---\texttt{BAR}, \texttt{POS}, absolute-MIDI \texttt{PITCH},
 \texttt{DUR}, and structural symbols---and a unit test enforces the absence of
@@ -244,6 +247,8 @@ musicality budget, $\ppl{=}0.613$. We call a $\tkr$ scored under this budget
 \subsection{Selection phase and confirmatory phase}
 \label{sec:confirm}
 % 設計上の最重要点。旧掃引は「選択」であって「確認」ではない，と自ら明言する。
+% 見出し数値のモデル群 (R-Aug seed 0) を明記し，μ の調別標本数も明記する
+% （F♯ 事故と同じ失敗が主モデルに無いことの検証）。
 Our first sweep compared $8$ layers and $3$ subspace families on $100$ prompts,
 and it evaluated the best cell (V-PROBE at L$4$) on those same prompts. Those
 prompts also lie inside the pool that trained the probe. Holm correction covered
@@ -254,7 +259,12 @@ split that neither probe training nor any earlier run has touched. We fix the
 layer, the subspace, the timing, the targets, the controls, the guard, the
 metrics, the tests, the seeds, and the sample size in a version-controlled
 document, and we commit that document before the first confirmatory number
-exists. We repeat no layer or subspace search. We exclude identity cells, in
+exists. We repeat no layer or subspace search. All headline numbers come from the
+transposition-augmented model with seed $0$; the second augmented seed
+replicates every selection-phase verdict. Because Sec.~\ref{sec:wild} shows
+what imbalanced target estimation can fabricate, we also verify the targets
+here: every major key contributes $7{,}530$--$9{,}237$ positions to its class
+mean (max/min $1.23$), and no mean is degenerate. We exclude identity cells, in
 which the injected key equals the key of the prompt, from the primary analysis,
 and we report them separately as a sanity check. \textbf{We froze all
 intervention choices and evaluation criteria before we evaluated the held-out
@@ -348,10 +358,8 @@ on the key we inject. On the held-out set, the estimated key of the continuation
 matches the injected key in $41.0\%$ of cases, against $4.1\%$ for K1, and only
 $8.5\%$ of continuations stay in the key of the prompt, against $51.7\%$ for K1.
 Most of the remaining mass falls on a neighbour a fifth away ($34.8\%$), which
-the KS estimator is known to confuse. Success also falls gently as the target
-moves away around the circle of fifths, from $0.395$ at one step to $0.280$ at
-the tritone. The edit therefore installs a specific counterfactual key rather
-than merely disrupting the current one.
+the KS estimator is known to confuse. The edit therefore installs a specific
+counterfactual key rather than merely disrupting the current one.
 
 \subsection{The edit acts before the model hears a single new note}
 \label{sec:nextpitch}
@@ -488,9 +496,9 @@ ceiling and fails exactly where the state is most readable (L$0$--L$1$ and
 not run it. The KS estimator confuses keys a fifth apart, and $\ikr$
 triangulates around that weakness. Our guard measures distributional damage
 under a reference model, not musicality itself, and we ran no listening test.
-The public-model result covers one checkpoint at one size, and it keeps its
-original design: we chose its layer on disjoint prompts and froze its budget
-before evaluation, but we did not run a second held-out round for it.
+The public-model result covers one checkpoint at one size and keeps its
+original design (layer chosen on disjoint prompts, budget frozen before
+evaluation, no second held-out round).
 
 \section{Conclusion}
 % 結論。読めること != 使っていること，を最後にもう一度置く。
@@ -500,8 +508,8 @@ replacing a rank-$24$ component of the hidden state moves composition to the
 injected key: before any generated note can feed back, specifically toward the
 target, within a frozen musicality budget, and in a public model trained on real
 music. Decodability and causal use come apart across layers and across token
-positions, so reading a representation does not show that the model consults it.
-We release the testbed, the labels, and the frozen protocols as a benchmark.
+positions, so reading a representation does not show that the model consults
+it. We release the testbed and the frozen protocols as a benchmark.
 
 \vspace{2pt}\noindent\footnotesize\textbf{Reproducibility.} Code, data
 generator, pre-registration, freeze documents and audio demos:

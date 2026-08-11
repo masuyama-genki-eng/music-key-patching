@@ -908,3 +908,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: n/a
 - note: K2 sham gate failed 1/100 on the held-out prompts. Diagnosed: max |logit diff| clean vs sham = 1.14e-5, i.e. fp non-associativity in (x - comp) + comp (documented in edit.py), not a detached hook. The frozen rule says gate failure = stop, so NO seed-1 held-out numbers exist and none are reported. Seed evidence in the paper remains the selection-phase replication (supported, 12/12, peak L2).
 
+## 2026-08-11T16:56:10+09:00 — mu balance check R-Aug_s0 (manuscript audit)
+- git: `adf2c18d960843cb5ddb82393532df117e4b6f65`
+- config_hash: `f7ba6b08d0a5f335e3e3eab579fc9a0dd8d16d254aa7a98babd5c9301890058d`
+- seeds: [0]
+- artifacts: `results/probing/R-Aug_s0/mu_balance.json`
+- note: majors 7530-9237/class (ratio 1.23); all 24 mu nonzero (L4 norms 107.3-132.0); the main model's targets pass the check the M-WILD first run failed
+
