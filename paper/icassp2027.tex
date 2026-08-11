@@ -531,12 +531,12 @@ The edit fails exactly where the key is easiest to read.
 \includegraphics[width=0.95\columnwidth]{fig_layer_profile.pdf}
 % 図2キャプション
 % (a) 層ごとのプローブの点数（プローブの点数は 5.1 節の macro-F1）．細い灰色の線は残り5モデルである．
-% (b) 同じ層で編集を行ったときの成功率．ランダムベースラインとの比較で，帯はプロンプト単位のブートストラップ 95% 信頼区間である．
+% (b) 同じ層で編集を行ったときの成功率．橙の帯はプロンプト単位のブートストラップ 95% 信頼区間，灰色の領域はランダムベースライン（その信頼区間の上端まで）である．
 % 赤い破線は最終テストが固定する編集層を両パネルで結ぶ．
 % 第1層では調がすでによく読めるのに，編集はほとんど何も起こさない：読める場所と効く場所は別である．
 % 探索段階のデータ（シード0）．
 \caption{(a)~The probe score at each layer (the probe score is the macro-$F_1$ of Section~\ref{sec:h1}); thin gray lines show the five other models.
-(b)~The success rate when we edit at that same layer, against the random baseline; bands are prompt-level bootstrap $95\%$ confidence intervals.
+(b)~The success rate when we edit at that same layer; the orange band is a prompt-level bootstrap $95\%$ confidence interval, and the gray region reaches up to the random baseline's confidence ceiling.
 The dashed red line ties the two panels at the layer the final test fixes.
 At layer~$1$ the key already reads well, yet the edit does almost nothing: where the key is read is not where it acts.
 Search-stage data, seed~$0$.}

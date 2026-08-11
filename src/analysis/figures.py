@@ -53,12 +53,15 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """Figure 2, redesigned so the CLAIM is the figure (authors, 2026-08-11):
-    two stacked full-width panels on a shared layer axis -- the small-multiples
-    answer to two measures of different scale (dual axes were the previous
-    design's mistake). The panel titles state the claim in plain words, and one
-    annotation points at the dissociation itself: layer 1 reads well yet the
-    edit does almost nothing there. Plain vocabulary only."""
+    """Figure 2 in the MetaOthello-reference style the authors chose
+    (2026-08-11): bold outside (a)/(b) tags, thick vivid curves with bold
+    white-haloed labels directly on them (no legend boxes), the random baseline
+    drawn as a gray filled region with a bold in-fill label, bold axis labels.
+    Kept from earlier direction: STIX serif, black box axes, butt caps, the
+    claim-bearing titles, the layer-4 guide, and the dissociation pointer."""
+    import matplotlib.patheffects as pe
+    halo = [pe.withStroke(linewidth=2.2, foreground="white")]
+
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
@@ -88,57 +91,64 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                                    height_ratios=[1, 1.2],
                                    constrained_layout=True)
 
-    # ---- (a) reading: the title IS the claim
+    # ---- (a)
     for name, c in curves.items():
         if name != highlight:
-            ax1.plot(range(8), c, color="#8A8A8A", lw=0.9, alpha=0.8, zorder=2)
-    ax1.plot(range(8), f1, color=READ, lw=1.6, zorder=4, label="seed 0")
-    ax1.plot([], [], color="#8A8A8A", lw=1.0, label="5 other models")
-    ax1.legend(frameon=True, edgecolor="black", framealpha=1.0,
-               fancybox=False, fontsize=6.5, loc="lower right",
-               borderpad=0.4, handlelength=1.6)
-    ax1.set_ylabel("probe score", fontsize=8)
+            ax1.plot(range(8), c, color="#9A9A9A", lw=1.0, alpha=0.8, zorder=2)
+    ax1.plot(range(8), f1, color=READ, lw=2.4, zorder=4)
+    ax1.annotate("seed 0", xy=(5.6, f1[5] + 0.012), fontsize=8,
+                 fontweight="bold", color=READ, ha="center", va="bottom",
+                 path_effects=halo, zorder=6)
+    ax1.annotate("5 other models", xy=(2.4, 0.80), fontsize=6.8,
+                 fontweight="bold", color="#8A8A8A", ha="left", va="top",
+                 path_effects=halo, zorder=6)
+    ax1.set_ylabel("probe score", fontsize=8.5, fontweight="bold")
     ax1.set_ylim(0.35, 1.02)
-    ax1.tick_params(labelsize=7)
-    ax1.set_title("(a) the key is readable at almost every layer",
-                  loc="left", fontsize=8.2, color=INK, pad=4)
+    ax1.tick_params(labelsize=7.5)
+    ax1.set_title("the key is readable at almost every layer",
+                  loc="left", fontsize=8, color=INK, pad=4)
+    ax1.text(-0.16, 1.03, "(a)", transform=ax1.transAxes, fontsize=11,
+             fontweight="bold", color="black")
 
-    # ---- (b) acting: title carries the contrast; annotation names the gap
+    # ---- (b) baseline as a filled gray region, reference-style
+    ax2.fill_between(layers, 0, ch, color="#DCDCDC", zorder=1)
+    ax2.annotate("random baseline", xy=(3.5, 0.018), fontsize=7.5,
+                 fontweight="bold", color="#8A8A8A", ha="center", va="bottom",
+                 zorder=2)
     ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.15, lw=0, zorder=2)
-    ax2.plot(layers, em, color=EDIT, lw=1.6, zorder=4, label="edit")
-    ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.12, lw=0, zorder=2)
-    ax2.plot(layers, cm, color="#3A3A3A", lw=1.4, zorder=3,
-             label="random baseline")
-    ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=1,
-                label="chance")
-    ax2.legend(frameon=True, edgecolor="black", framealpha=1.0,
-               fancybox=False, fontsize=6.5, loc="upper right",
-               borderpad=0.4, handlelength=1.6)
-    # the dissociation, pointed at directly -- text in the empty upper-left,
-    # arrow descending through empty space to the layer-1 point
+    ax2.plot(layers, em, color=EDIT, lw=2.4, zorder=4)
+    ax2.annotate("edit", xy=(6.0, em[6] + 0.014), fontsize=8,
+                 fontweight="bold", color=EDIT, ha="center", va="bottom",
+                 path_effects=halo, zorder=6)
+    ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=3)
+    ax2.annotate("chance", xy=(0.985, 1 / 12), xycoords=ax2.get_yaxis_transform(),
+                 xytext=(0, 2), textcoords="offset points", color="#606060",
+                 ha="right", va="bottom", fontsize=6.8, path_effects=halo,
+                 zorder=6)
     ax2.annotate("reads well,\nno effect",
                  xy=(1.05, em[1] + 0.012), xytext=(0.04, 0.93),
                  textcoords="axes fraction", fontsize=7.4,
                  color="#404040", ha="left", va="top", linespacing=1.25,
                  arrowprops=dict(arrowstyle="->", lw=1.1, color="#707070",
                                  shrinkB=2, relpos=(0.4, 0.0)))
-    ax2.set_xlabel("layer", fontsize=8)
-    ax2.set_ylabel("success rate", fontsize=8)
+    ax2.set_xlabel("layer", fontsize=8.5, fontweight="bold")
+    ax2.set_ylabel("success rate", fontsize=8.5, fontweight="bold")
     ax2.set_ylim(0, max(eh) * 1.16)
     ax2.set_xlim(-0.45, 7.45)
     ax2.set_xticks(range(8))
-    ax2.tick_params(labelsize=7)
-    ax2.set_title("(b) yet the edit works only in the middle layers",
-                  loc="left", fontsize=8.2, color=INK, pad=4)
+    ax2.tick_params(labelsize=7.5)
+    ax2.set_title("yet the edit works only in the middle layers",
+                  loc="left", fontsize=8, color=INK, pad=4)
+    ax2.text(-0.16, 1.03, "(b)", transform=ax2.transAxes, fontsize=11,
+             fontweight="bold", color="black")
 
-    # ---- one guide ties the panels at the final-test layer; in (b) the line
-    #      stops above its own label so the two never cross
+    # ---- layer-4 guide
     ax1.axvline(peak, color="#C41E1E", lw=1.3, ls="--", zorder=1)
-    ax2.axvline(peak, ymin=0.09, color="#C41E1E", lw=1.3, ls="--", zorder=1)
-    ax2.annotate(f"final test: layer {peak}", xy=(peak, 0.004),
+    ax2.axvline(peak, ymin=0.09, color="#C41E1E", lw=1.3, ls="--", zorder=3)
+    ax2.annotate(f"final test: layer {peak}", xy=(peak, 0.062),
                  xytext=(0, 1), textcoords="offset points", va="bottom",
                  ha="center", fontsize=6.6, color="#C41E1E",
-                 fontweight="bold")
+                 fontweight="bold", path_effects=halo, zorder=6)
 
     fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
