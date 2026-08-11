@@ -104,7 +104,7 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     ax1.set_ylabel("probe score", fontsize=8)
     ax1.set_ylim(0.35, 1.02)
     ax1.tick_params(labelsize=7)
-    ax1.set_title("(a) the key can be read from almost every layer",
+    ax1.set_title("(a) the key is readable at almost every layer",
                   loc="left", fontsize=8.2, color=INK, pad=4)
 
     # ---- (b) acting: title carries the contrast; annotation names the gap
@@ -139,15 +139,17 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     ax2.set_xlim(-0.45, 7.45)
     ax2.set_xticks(range(8))
     ax2.tick_params(labelsize=7)
-    ax2.set_title("(b) but the edit changes the music only in the middle",
+    ax2.set_title("(b) yet the edit works only in the middle layers",
                   loc="left", fontsize=8.2, color=INK, pad=4)
 
-    # ---- one guide ties the panels at the final-test layer
-    for ax in (ax1, ax2):
-        ax.axvline(peak, color="#C41E1E", lw=1.3, ls="--", zorder=1)
-    ax2.annotate(f"final test edits layer {peak}", xy=(peak, 0.004),
+    # ---- one guide ties the panels at the final-test layer; in (b) the line
+    #      stops above its own label so the two never cross
+    ax1.axvline(peak, color="#C41E1E", lw=1.3, ls="--", zorder=1)
+    ax2.axvline(peak, ymin=0.09, color="#C41E1E", lw=1.3, ls="--", zorder=1)
+    ax2.annotate(f"final test: layer {peak}", xy=(peak, 0.004),
                  xytext=(0, 1), textcoords="offset points", va="bottom",
-                 ha="center", fontsize=6.6, color="#D02020")
+                 ha="center", fontsize=6.6, color="#C41E1E",
+                 fontweight="bold")
 
     fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
