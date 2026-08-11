@@ -237,8 +237,7 @@ prompt itself and gives the behavioral ceiling.
 We score continuations with two measures. The \emph{target-key rate} ($\tkr$) is
 the fraction of continuations whose KS estimate equals the injected key, and we
 report it strictly. The \emph{in-key rate} ($\ikr$) is the fraction of
-continuation pitches that belong to a given scale, and it needs no estimator. We
-also cap the damage an edit may do. Before we ran a single edit, we measured how
+continuation pitches that belong to a given scale, and it needs no estimator. Before we ran a single edit, we measured how
 far the perplexity of M-REF rises across $7{,}989$ \emph{natural} modulations in
 the validation data, and we froze the $90$th percentile of that rise as our
 musicality budget, $\ppl{=}0.613$. We call a $\tkr$ scored under this budget
@@ -324,7 +323,8 @@ al.~\cite{wu2025axbench} that a simple representation-based direction can
 outperform an optimized one. V-MEAN edits destroy the music at deep layers, where
 at most $5\%$ stay in budget.
 
-% 確認フェーズ。結果待ち。
+% 確認フェーズ。held-out で 9.1 倍，12/12。ガードは編集側だけを削り，
+% ランダム統制はほぼ素通し — ガード超過は「調を動かすことの代償」である。
 \textbf{Confirmatory phase.} The result holds on data that no earlier step
 touched. On the $100$ held-out prompts, with every choice frozen beforehand and
 identity cells excluded (Fig.~\ref{fig:confirm}), the edit reaches a guarded
@@ -335,9 +335,12 @@ paired prompt-level difference has a BCa $95\%$ CI of $[0.284,0.347]$. The guard
 admits $84\%$ of edits, raw $\tkr$ is $0.410$, and pitch content again crosses
 ($\ikr$ $0.936$ for the injected key against $0.617$ for the prompt's). The edit
 also beats K1$^{\mathrm{norm}}$, the control we rescale to the edit's exact
-perturbation magnitude ($0.056$; $12/12$ after Holm correction), so perturbation
-size does not explain the effect. In the identity cells, where we inject the key
-the prompt is already in, the model simply stays there ($0.650$), as it should.
+perturbation magnitude ($0.056$; $12/12$ after Holm correction), and both random
+controls pass the guard more often than the edit does ($0.96$ and $0.93$ against
+$0.84$) while reaching only $0.041$ and $0.059$ unguarded: perturbation size
+does not explain the effect, and the guard costs the edit, not the controls. In the
+identity cells, where we inject the prompt's own key, the model simply stays
+there ($0.650$).
 
 \begin{figure}[t]
 \centering
@@ -465,8 +468,8 @@ an imbalanced corpus can manufacture a false model prior.
 \subsection{What our results do not show}
 \label{sec:limits}
 % 主張の境界を3つ，測定値つきで述べる。
-We bound three further claims with measurements, and the supplementary reports
-all three in full. \emph{Capacity}: next-token accuracy stays flat from $0.5$M
+We bound three further claims with measurements; the supplementary reports them
+in full. \emph{Capacity}: next-token accuracy stays flat from $0.5$M
 to $86$M parameters, yet the smallest model has no decodable key state and
 $90\%$ of its edits leave the budget. \emph{Persistence}: after a one-shot
 installation the pitch content stays shifted, but splicing the tokens of that
@@ -487,8 +490,8 @@ token positions. Readers may call it a world model; we use that term only as an
 interpretation, not as a result.
 
 % ギャップも情報である。
-The gaps inform us as well. The edit reaches only $58\%$ of the behavioral
-ceiling and fails exactly where the state is most readable (L$0$--L$1$ and
+The gaps inform us as well: the edit reaches only $58\%$ of the behavioral
+ceiling, and it fails exactly where the state is most readable (L$0$--L$1$,
 \texttt{PITCH} positions).
 
 % 限界。
@@ -509,11 +512,9 @@ injected key: before any generated note can feed back, specifically toward the
 target, within a frozen musicality budget, and in a public model trained on real
 music. Decodability and causal use come apart across layers and across token
 positions, so reading a representation does not show that the model consults
-it. We release the testbed and the frozen protocols as a benchmark.
-
-\vspace{2pt}\noindent\footnotesize\textbf{Reproducibility.} Code, data
-generator, pre-registration, freeze documents and audio demos:
-\url{https://anonymous.4open.science/r/TBD}. \TBD{create before submission.}\normalsize
+it. We release the testbed, the freeze documents, and audio demos at
+\url{https://anonymous.4open.science/r/TBD}.
+% TBD (作業): 匿名リポジトリを投稿前に作成し，URL を差し替える。
 
 \ifspconf
 \bibliographystyle{IEEEbib}
