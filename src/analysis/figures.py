@@ -53,16 +53,13 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """Styled after the SIGIR-style reference the authors supplied (2026-08-11):
-    (a) a dual-axis layer profile with axis labels tinted in their curve's color
-    and a dashed marker line at the frozen edit layer; (b) a metric-vs-metric
-    scatter (causal effect vs readability) with the layer index encoded by a
-    viridis colorbar and the frozen layer circled. Panel (b) states the paper's
-    dissociation in one look: readability clusters while causal effect spans an
-    order of magnitude. NOTE: (a) deliberately deviates from the repo's
-    one-axis-per-panel rule at the authors' direction; the two axes are
-    color-matched to their curves, as in the reference."""
-    # ---- data
+    """(a) dual-axis layer profile (axis labels tinted per curve, dashed marker
+    at the frozen edit layer, direct labels instead of a legend box); (b) causal
+    effect vs readability, one point per layer, layer index written AT each
+    point (numbers resolve the overlap a colorbar cannot: six layers share
+    x~0.92 and stack vertically -- which is the finding). The frozen layer is
+    circled, K1 is the dotted floor. Dual axes in (a) deviate from the repo
+    one-axis rule at the authors' direction (2026-08-11)."""
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
@@ -79,56 +76,60 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     peak = int(layers[int(np.argmax(tkr))])
 
     fig, (ax1, axs) = plt.subplots(1, 2, figsize=(3.5, 1.95),
-                                   gridspec_kw={"width_ratios": [1.0, 1.12]})
+                                   gridspec_kw={"width_ratios": [1.0, 1.05]})
 
-    # ---- (a) dual-axis profile, axis labels tinted like the reference
-    l1, = ax1.plot(range(8), f1, color=READ, lw=1.6, marker="o", ms=3,
-                   zorder=4, label="probe $F_1$")
+    # ---- (a): direct labels, no legend box
+    ax1.plot(range(8), f1, color=READ, lw=1.6, marker="o", ms=3, zorder=4)
+    ax1.annotate("probe $F_1$", xy=(4.6, 0.965), color=READ, fontsize=6.6,
+                 fontweight="bold", ha="left")
     ax1.set_ylabel("key macro-$F_1$", color=READ, fontsize=7)
     ax1.tick_params(axis="y", labelcolor=READ, labelsize=6.5)
-    ax1.set_ylim(0.3, 1.0)
+    ax1.set_ylim(0.3, 1.02)
     ax1.set_xlabel("layer", fontsize=7)
     ax1.set_xticks(range(0, 8, 2))
     ax1.tick_params(axis="x", labelsize=6.5)
     ax1b = ax1.twinx()
-    l2, = ax1b.plot(range(8), tkr, color=EDIT, lw=1.6, marker="s", ms=3,
-                    zorder=4, label="guarded $\\mathrm{TKR}$")
+    ax1b.plot(range(8), tkr, color=EDIT, lw=1.6, marker="s", ms=3, zorder=4)
+    ax1b.annotate("guarded TKR", xy=(2.1, 0.135), color=EDIT, fontsize=6.6,
+                  fontweight="bold", ha="left")
     ax1b.set_ylabel("guarded TKR", color=EDIT, fontsize=7)
     ax1b.tick_params(axis="y", labelcolor=EDIT, labelsize=6.5)
     ax1b.set_ylim(0, 0.45)
-    lv = ax1.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=2)
-    ax1.legend([l1, l2, lv], ["probe $F_1$", "guarded TKR", f"edit layer L{peak}"],
-               frameon=True, framealpha=0.9, edgecolor="#CCCCCC",
-               fontsize=5.6, loc="lower right", borderpad=0.3,
-               handlelength=1.5)
+    ax1.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=2)
+    ax1b.annotate(f"edit layer L{peak}", xy=(peak, 0.004), xytext=(0, 1),
+                  textcoords="offset points", va="bottom", ha="center",
+                  fontsize=5.6, color="#D02020")
     ax1.set_title("(a) profile by layer", fontsize=7.2, color=INK)
 
-    # ---- (b) causal effect vs readability, layer as a viridis colorbar
-    order = np.argsort(range(8))
-    axs.plot(f1, tkr, color="#BBBBBB", lw=0.8, zorder=2)
-    sc = axs.scatter(f1, tkr, c=range(8), cmap="viridis", s=26, zorder=4,
-                     edgecolors="white", linewidths=0.4)
-    # circle the frozen layer, reference-style
-    axs.scatter([f1[peak]], [tkr[peak]], s=64, facecolors="none",
+    # ---- (b): numbers at points instead of a colorbar
+    cmap = plt.get_cmap("viridis")
+    cols = [cmap(li / 7) for li in range(8)]
+    axs.plot(f1, tkr, color="#C8C8C8", lw=0.8, zorder=2)
+    axs.scatter(f1, tkr, c=cols, s=18, zorder=4, edgecolors="white",
+                linewidths=0.4)
+    # layer numbers, nudged to avoid each other in the dense column
+    dx = {0: (5, -1), 1: (5, -1), 2: (6, -3), 3: (-7, 1), 4: (-8, 2),
+          5: (6, 0), 6: (6, -2), 7: (-8, -3)}
+    for li in range(8):
+        dark = tuple(0.72 * c for c in cols[li][:3])   # readable on white
+        axs.annotate(str(li), xy=(f1[li], tkr[li]), xytext=dx[li],
+                     textcoords="offset points", fontsize=6.2,
+                     fontweight="bold", color=dark,
+                     ha="center", va="center", zorder=6)
+    axs.scatter([f1[peak]], [tkr[peak]], s=54, facecolors="none",
                 edgecolors="black", linewidths=1.0, zorder=5)
-    axs.annotate(f"L{peak}", xy=(f1[peak], tkr[peak]), xytext=(-2, 6),
-                 textcoords="offset points", ha="right", fontsize=6.2,
-                 color=INK, fontweight="bold")
     axs.axhline(k1m, color=BASE, lw=0.9, ls=":", zorder=1)
-    axs.annotate("K1 random", xy=(0.03, k1m), xycoords=axs.get_yaxis_transform(),
+    axs.annotate("K1 random", xy=(0.97, k1m), xycoords=axs.get_yaxis_transform(),
                  xytext=(0, 2), textcoords="offset points", fontsize=5.8,
-                 color=BASE, ha="left", va="bottom")
+                 color=BASE, ha="right", va="bottom")
+    axs.set_xlim(0.58, 0.99)
+    axs.set_ylim(0, 0.45)
     axs.set_xlabel("key macro-$F_1$ (readability)", fontsize=7)
     axs.set_ylabel("guarded TKR (causal)", fontsize=7)
-    axs.set_ylim(0, 0.45)
     axs.tick_params(labelsize=6.5)
-    axs.set_title("(b) causal effect vs readability", fontsize=7.2, color=INK)
-    cb = fig.colorbar(sc, ax=axs, fraction=0.055, pad=0.03)
-    cb.set_label("layer", fontsize=6.5)
-    cb.set_ticks([0, 2, 4, 6])
-    cb.ax.tick_params(labelsize=6)
+    axs.set_title("(b) causal vs readability", fontsize=7.2, color=INK)
 
-    fig.subplots_adjust(wspace=0.55)
+    fig.subplots_adjust(wspace=0.52)
     fig.savefig(out)
     plt.close(fig)
 
