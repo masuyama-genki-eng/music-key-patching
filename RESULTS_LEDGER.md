@@ -936,3 +936,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-08-11T23:01:37+09:00 — POST-HOC fifths-distance breakdown R-Aug_s0 (supplement, not pre-registered)
+- git: `bb5a878ae93e6c420f40bb20d7c6a58e9c5e4d4a`
+- config_hash: `340370fb2a0009287236e41e52aaed497407224be58b95640a0ad619a25d79e7`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/fifths_distance_posthoc.json`
+- note: edit flat across distance (0.295-0.425); k1 mass at distance 1 (0.200) else <=0.01; derived only, no new generation
+

@@ -1,5 +1,42 @@
 % TonalWM — ICASSP 2027 submission (4 pages + references)
 % ==========================================================================
+% 2026-08-11 CHECKLIST PASS (Claude)，投稿前チェックリスト v1 に対応。数値と
+%   凍結済み設計は不変。本文変更は記述の正確化と引用のみ。
+%   §1.1 直交性 → 分岐A確定: v_probe/v_mean は SVD で正規直交化（subspaces.py
+%     orthonormal_rows），V-DAS は torch の直交拘束。第4層プローブ V の実測
+%     max|V^⊤V−I| = 2.4e-7。§3.2 に「P_V は直交射影」の1文を追加。
+%   §1.2 層スイープ → 各層はその層自身の方向（06_sweep.py L173）。§5.4 の
+%     整合文の前提どおり。変更不要。
+%   §2.1 syntheory2024 は key タスクを含まない（7概念: tempo/拍子/notes/
+%     intervals/scales/chords/progressions; arXiv:2410.00872 で確認）→
+%     プロービング文を修正し castellon2021calm（ISMIR 2021, key detection を
+%     プローブ; arXiv:2107.05677）を追加。
+%   §2.2 追加引用: singh2026discovering（ICLR 2026, SAE 概念発見+ステアリング;
+%     arXiv:2505.18186）を §2.1 ステアリング群へ; ma2024root（ICML 2024 MI WS,
+%     MusicGen の和音 root/quality への probe+intervene; OpenReview Kr6nkNa4TQ）
+%     を引用し差別化1文。musicrfm は notes/chords 対象の加算注入で確認 →
+%     既存の差別化で被覆，補強不要。smitin2024 = SMITIN（attention-head 介入）
+%     で被覆済み確認。
+%   §2.3 activation patching の語の衝突 → §2.2 に「音楽では加算型ステアリング
+%     にもこの名が使われる」の1文（facchiano2025patching）。
+%   §3 主張の較正 → Limitations に非主張の1文（使用であって理解ではない）。
+%     本文で know/understand を答えとして使っていないことを grep 確認。
+%   §5 標準性の係留 → §4.1 SynTheory の合成・概念単離設計への言及，
+%     §4.3 KS =標準のプロファイル照合法，§4.2 公開モデルの選定理由1文。
+%   §6 聴取実験 → 実施は著者判断待ち。設計テンプレを docs/LISTENING_TEST_
+%     DESIGN.md に凍結様式で用意。Limitations に客観判定可能性の1句。
+%   §7 可読性 → 要旨1語目 "Probes" → "A small classifier"。手続き説明の重複
+%     なし・activation patching の導入順は維持を確認。
+%   §8 体裁 → 0.71→0.710 桁揃え，§5.1 ダッシュ閉じ，音高のみ探索段階に床
+%     0.075 を明記。図はベクター（matplotlib PDF）・(a)(b) ラベル図中に有り。
+%   §9a 五度圏距離分解（post-hoc, 補足行き）→ results/confirmatory/R-Aug_s0/
+%     fifths_distance_posthoc.json + 台帳。編集は距離に対しフラット
+%     (0.295–0.425)，K1 は距離1（KS の五度混同）にほぼ全依存（0.200，他 ≤0.01）。
+%   未処置（著者判断/環境が必要）: 短調ラン（事前チェックは全て通過:
+%     短調12クラスの標的平均 3,365–4,293 位置・比1.28 で退化なし; コーパスは
+%     和声的短音階 — ただし現在 GPU がドライバ不整合で使用不可），聴取実験の
+%     実施，匿名リポジトリ，Paper ID，spconf 実機ビルド，非専門家読者テスト。
+% ==========================================================================
 % 2026-08-11 FIG-CONSISTENCY PASS (Claude)，「図は論文と整合しているか」の照合で
 %   本文側の丸め誤り2件を発見・訂正（図の値が正しかった）:
 %   * 0.356 → 0.355: verdict.json の編集の成功率は pooled 0.355455 /
@@ -166,14 +203,14 @@ Causal Interventions on an Emergent Tonal Representation}
 % 括弧内）を削って約165語。80mm以内はビルド後に実測。100–150語へさらに縮めるのは
 % 内容判断（候補: S2 か S6 を隣接文へ併合）なので著者に委ねる。
 \begin{abstract}
-% プローブは音楽モデルの活性から調を読み出せるが，調が読めることは，モデルが書く間にそれを使っていることを示さない．
+% 小さな分類器は音楽モデルの活性から調を読み出せるが，調が読めることは，モデルが書く間にそれを使っていることを示さない．
 % 我々は，語彙が音高と時間だけを名指しし，調を決して名指ししない記号音楽で Transformer を訓練する．
 % 生成の途中で，1つの層で調を担う24次元の活性を，別の調でのその平均値に上書きし，入力の音符には1音も触れない．
 % 設計を事前に固定した最終テストでは，それ以前のどの実験も見ていないプロンプト上で，継続が書き込んだ調に入る割合は 0.355 であり，同じ書き込みをランダムな方向へ行うと 0.039 である．
 % モデルが何も生成しないうちに，新しい調の音に置かれる確率がすでに +0.26 上がる（ランダムでは +0.02）ので，効果は自分の出力からのフィードバックに先行する．
 % どちらの結果も，実音楽で訓練された公開モデルへそのまま移る．
 % したがって音楽 Transformer は調を計算し，上書きできる形で保持し，書きながらそれを参照している．テストベッドを公開する．
-Probes can read the musical key from a music model's activations, but reading a key does not show that the model uses it while it writes.
+A small classifier can read the musical key from a music model's activations, but reading a key does not show that the model uses it while it writes.
 We train Transformers on symbolic music whose vocabulary names pitches and timing, never a key.
 During generation we overwrite, in one layer, the $24$ activation dimensions that carry the key with their average in another key, leaving every input note untouched.
 In a final test fixed in advance, on prompts no earlier run had seen, the continuation is in the key we install for $0.355$ of the prompts, against $0.039$ for the same write into random directions.
@@ -276,16 +313,20 @@ The second is the test we bring to music.
 % activation-patching 由来ステアリング; 加算型でテンポ・音色が対象）。
 \subsection{Probing and Steering in Music}
 % 音楽モデルの既存研究が示しているのは，調が読めることであって，モデルがそれを使っていることではない．
-% プロービング研究は，活性の上で小さな分類器を訓練し，調を含む音楽理論の概念を読み出す．
+% プロービング研究は，活性の上で小さな分類器を訓練し，音符や和音から音階までの音楽理論の概念を読み出す；曲の調そのものもプローブされてきた．
+% [2026-08-11 CHECKLIST: syntheory2024 の7概念に key は無い（確認済み）——
+%  key プロービングの正しい出典は castellon2021calm（Jukebox 表現で key detection）]
 % ステアリング研究は，言語モデル由来の技法を使う：学習したベクトルを活性に足すと，出力の属性が動く．
 % 本研究と同様に，どちらもモデルの内部に働きかけ，再訓練なしに推論時に介入する．
+% プロービングと介入を音楽モデルの内部で組み合わせた研究もあるが，その介入は和音の表現に向けられており，モデルに従わせる調を据え付けるものではない．
 % しかし読めることは使っていることを意味しない：モデルは信号を内部に持ったまま，書くときにそれを無視できる．
 % ステアリングも答えられない：ベクトルを足すだけでは，活性のうち現在の調を担う部分がそのまま残る．だからホ長調の方向へ押しても，モデルの調がホ長調に設定されるわけではなく，モデルが従うべき「書き込まれた調」がそもそも存在しない．
 % 我々の問いはその一歩先にある：調を書き込み，音楽がそれに従うかを見る．
 Existing work on music models shows that the key is readable, not that the model uses it.
-Probing studies train a small classifier on the activations and read out music-theory concepts, including the key~\cite{syntheory2024}.
-Steering studies use a technique adapted from language models~\cite{li2023iti,zou2023repe}: they add a learned vector to the activations, and an attribute of the output moves~\cite{smitin2024,facchiano2025patching,musicrfm2026}.
+Probing studies train a small classifier on the activations and read out music-theory concepts, from notes and chords to scales~\cite{syntheory2024}; the key of a piece has been probed as well~\cite{castellon2021calm}.
+Steering studies use a technique adapted from language models~\cite{li2023iti,zou2023repe}: they add a learned vector to the activations, and an attribute of the output moves~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026}.
 Similar to our work, both act on the inside of the model, at inference time and without retraining.
+Probing and intervening have also been combined inside a music model, but with the intervention aimed at chord representations, not at installing a key for the model to follow~\cite{ma2024root}.
 Reading, however, does not mean using: a model can carry a signal inside and still ignore it when it writes~\cite{hewitt2019control,belinkov2022probing}.
 Steering cannot answer it either: an added vector leaves the part of the activation that carries the current key in place, so pushing toward E major never sets the model's key to E major, and no installed key exists for the model to follow.
 Our question sits one step further: write the key in, and watch whether the music follows.
@@ -299,6 +340,7 @@ Our question sits one step further: write the key in, and watch whether the musi
 % 研究者がその盤面を偽の盤面に書き換えると，モデルは偽の盤面のほうで合法な手を指す．
 % 入力は何も変わっていないので，新しい指し手は書き込まれた値からしか来ようがない：モデルは盤面を使っている．
 % この型の介入は activation patching と呼ばれ，同じテストは現在，チェスを指す言語モデル，迷路，強化学習の学習済み環境シミュレータに及んでいる．
+% 音楽ではこの名前が加算型ステアリングにも使われているが，そちらは値を置き換えるのではなくベクトルを足すものである．
 % ゲームでは手が合法か違法か一目で決まるのと異なり，音楽の継続は単純な正誤を持たない．
 % 我々の編集はこの patching テストを音楽へ持ち込むものであり，第3節では音楽で必要になる2つの道具——継続がどの調にいるかの判定基準と，編集が音楽を壊してよい上限——を用意する．
 Game domains have already taken that step.
@@ -308,6 +350,7 @@ A Transformer trained only to predict moves builds an Othello board inside itsel
 When researchers overwrite that board with a fake one, the model plays the moves that are legal on the fake board.
 Nothing in the input changed, so the new moves can only follow from the value that was written in: the model uses its board.
 Interventions of this type are called activation patching~\cite{geiger2021causal,meng2022rome}, and the same test now covers chess-playing language models~\cite{karvonen2024chess}, mazes~\cite{maze2024}, and learned environment simulators in reinforcement learning~\cite{iris2026}.
+In music the same name has also been used for additive steering~\cite{facchiano2025patching}, which adds a vector instead of replacing a value.
 Different from a game, where a move is legal or illegal at a glance, a musical continuation is never simply right or wrong.
 Our edit brings this patching test to music, and Section~\ref{sec:method} adds the two tools music needs: a criterion for which key a continuation is in, and a limit on how much an edit may damage the music.
 
@@ -359,6 +402,10 @@ What the probe must beat, and by how much, is fixed in Section~\ref{sec:measures
 % 第2の，そして主要な問いは，生成中に調を上書きしたとき音楽がそれに従うかである．
 % 安定した調の8小節をプロンプトとして与え，第9小節以降，モデルが生成する各位置で1つの層の活性を，activation patching の文献に従って次のように編集する．
 % ここで V は調を担う 24 本の方向を並べたもの，P_V=VV^T は活性のうちその方向に沿う部分だけを取り出す射影，μ_{κ*} は書き込みたい調の平均活性である．
+% V の列は P_V を作る前に（特異値分解で）正規直交化するので，P_V は直交射影である．
+% [確認済み 2026-08-11: subspaces.py orthonormal_rows が v_probe/v_mean を SVD で
+%  正規直交化，V-DAS は torch の直交拘束。第4層プローブ V の実測
+%  max|V^⊤V−I| = 2.4e-7 → 「沿う部分を取り出す/取り替える」の表現は実装どおり]
 % 平易に言えば：活性のうち調を担う部分を別の調の同じ部分に取り替え，他には何も触らない——特に，プロンプトには決して手を加えない．
 % 方向の作り方は3通り試す：プローブの重み，調ごとの平均活性，そして編集そのものに合わせて最適化した方向である．どれを使うかは 4.4 節の探索が選ぶ．
 % 同じ編集は，生成を伴わない読み取りにも使える：調に中立な小節記号と拍位置を我々自身が付け足し，第9小節の境界で編集を適用し，何も生成させずに次の音の確率を読む（5.3節）．
@@ -374,6 +421,7 @@ h \;\leftarrow\; h - P_V h + P_V\,\mu_{\kappa^{*}},
 \label{eq:edit}
 \end{equation}
 where $V$ collects the $24$ directions that carry the key, $P_V{=}VV^{\!\top}$ keeps only the part of the activation that lies along them, and $\mu_{\kappa^{*}}$ is the average activation of the key we install.
+We orthonormalize the columns of $V$ (by a singular value decomposition) before forming $P_V$, so $P_V$ is an orthogonal projection.
 In plain terms, we swap the key-carrying part of the activation for the same part of a different key and touch nothing else---in particular, we never change the prompt.
 We build $V$ in three ways: from the probe weights, from the per-key average activations, and from directions optimized for the edit itself~\cite{geiger2024das}; the search of Section~\ref{sec:confirm} selects among them.
 The same edit also supports a generation-free reading: we append a key-neutral bar mark and beat position ourselves, apply the edit at the bar-$9$ boundary, and read the next-note probabilities without generating anything (Sec.~\ref{sec:nextpitch}).
@@ -407,14 +455,14 @@ In this section we describe what produces the results of Section~\ref{sec:result
 
 % 4.1 データ
 \subsection{Data}
-% 全ての音符で真の調が必要なので，訓練データは自分たちで生成する．
+% 全ての音符で真の調が必要なので，訓練データは自分たちで生成する——SynTheory のような診断用データセットの，合成で概念を単離する設計に倣う．
 % 教科書的な和声規則に従うプログラムが，調を選び，各和音を4声に書き，任意で旋律を加える．
 % 訓練・検証・テスト用に 200k/10k/10k 曲を生成し，各曲は 278–508 トークンで 0–3 回の転調を含む．
 % プログラムは書き始める前に調を選んでいるので，全トークンに 24 種のうちの真の調が付く．
 % プログラムは調をほぼ一様に引く：テスト分割では，どの長調も 214k から 239k トークンを占める（最大/最小 1.12）ので，希少な調は存在しない．
 % モデルはこのラベルを決して見ない：プローブの訓練と採点にだけ使う．
 % 語彙は 124 記号——小節，位置，絶対 MIDI 音高，音の長さ，構造記号——で，調・和音・音度の記号が混入していないことを単体テストで確認する．
-We need the true key at every note, so we generate the training data ourselves.
+We need the true key at every note, so we generate the training data ourselves, following the synthetic, concept-isolating design of diagnostic datasets such as SynTheory~\cite{syntheory2024}.
 A program that follows textbook harmony rules picks a key and writes each chord for four voices, optionally adding a melody.
 It produces $200$k/$10$k/$10$k pieces for training, validation, and test, each $278$--$508$ tokens long and containing $0$--$3$ key changes.
 Because the program picked the key before writing, every token carries its true key, one of the $24$ classes.
@@ -436,11 +484,13 @@ We never probe or edit the judge; it only rates whether edited music still looks
 All six models pass a quality gate that we set in advance: next-token top-$1$ accuracy of $0.878$--$0.881$ on validation, against $0.434$ for always guessing the most frequent token.
 
 % さらに，我々が訓練していない公開モデルを1つ調べる：Anticipatory Music Transformer で，原著者が Lakh MIDI，MetaMIDI，FMA で訓練したものであり，評価は人手の調ラベルが付いたバッハのコラール 300 曲で行う．
+% このモデルを選んだのは，標準コーパスで訓練された記号領域の公開チェックポイントであり，公刊の調分析が付いたコラールが標準的な評価セットだからである．
 % このモデルではプローブを，モデルがまさに音高を選ぼうとする位置で読む：（時間，長さ，音）というエンコーディングがその規約を強制するためである．音の後で読むと判定が反転する——そこではプローブが音符数えを上回らない——ことは補足資料に示す．
 % 確認済み 2026-08-11: results/mwild/music-small-800k/at_note/mwild_probe.json —
 % 音の後読みでは probe 0.545 対 最良の音符数え 0.454，床補正マージン +0.042
 % [−0.033, +0.092] がゼロを跨ぐ → 「上回らない」の要約は補足資料の実数と一致。
 We also study one public model that we did not train: the Anticipatory Music Transformer~\cite{thickstun2023anticipatory}, which its authors trained on Lakh MIDI~\cite{raffel2016lakh}, MetaMIDI~\cite{ens2021metamidi}, and FMA~\cite{defferrard2017fma}, and which we evaluate on $300$ Bach chorales~\cite{hadjeres2017deepbach,huang2017coconet} with human key labels~\cite{gotham2023wheninrome}.
+We chose it because it is a public checkpoint in the symbolic domain trained on standard corpora, and the chorales with their published key analyses are a standard evaluation set.
 In that model we read the probe at the positions where it is about to choose a pitch, because its (time, duration, note) encoding forces that convention; the supplementary shows that the verdict flips if we read after the note instead, where the probe no longer beats the note counts.
 
 % 4.3 測るもの
@@ -450,7 +500,7 @@ In that model we read the probe at the positions where it is about to choose a p
 % プローブの成功規則：床を引いたプローブの点数が，最良の音符数えベースラインを，ゼロを含まない曲単位のブートストラップ 95% 信頼区間で上回ること．
 % 編集には，2つの指標と1つの限度を使う．
 % 編集の各条件では，プロンプト1本・標的1調につき1本の継続を，温度 1.0・top-p 0.95・固定シードで最大 384 トークンサンプリングし，最初の 16 小節を採点する．
-% 第1の指標は成功率であり，KS 推定器で判定した継続が，書き込んだ調とちょうど一致する割合である．
+% 第1の指標は成功率であり，KS 推定器——プロファイル照合による標準的な調推定法——で判定した継続が，書き込んだ調とちょうど一致する割合である．
 % 推定器は採点対象の継続の音高全体を判定し，音高が 8 個に満たない継続は失敗として数える．
 % 第2の指標は，継続の音のうち与えられた音階に属する割合であり，調の推定器をまったく必要としない．
 % 限度は音楽としての品質を守る：編集を1回も走らせる前に，検証データ中 7,989 件の自然な転調で審査モデルのパープレキシティがどれだけ上がるか——転調直後の 24 トークンを直前の 24 トークンと比べて——を測り，その 90 パーセンタイルである 0.613 を，編集に許す上限として固定した．
@@ -470,7 +520,7 @@ We fixed every measure and every rule for success before the corresponding run.
 For the probe, success means that the floor-corrected probe score beats the best note-counting baseline, with a bootstrap $95\%$ confidence interval over pieces~\cite{efron1987bca} that excludes zero.
 For the edit we use two measures and one limit.
 In every edited condition the model samples one continuation per prompt and target key, at temperature $1.0$ with top-$p$ $0.95$ under a fixed seed, for at most $384$ tokens, and we score its first $16$ bars.
-The first measure is the success rate: how often the continuation, as judged by the KS estimator, is in exactly the key we installed.
+The first measure is the success rate: how often the continuation, as judged by the KS estimator---the standard profile-matching key finder---is in exactly the key we installed.
 The estimator judges all the pitches of the scored continuation, and a continuation with fewer than $8$ pitches counts as a failure.
 The second is the share of continuation notes that belong to a given scale, which needs no key estimator at all.
 The limit protects musical quality: before we ran a single edit, we measured how far the judge model's perplexity rises across $7{,}989$ natural key changes in the validation data---comparing the $24$ tokens after each change with the $24$ tokens before it---and fixed the $90$th percentile of that rise, $0.613$, as the most an edit may cost.
@@ -533,14 +583,14 @@ This margin stays above zero in layers $1$--$7$ of all six trained models, so th
 It turns negative only at layer~$0$, the first block's output and the reading point closest to the input ($-0.20$), and an untrained model reaches only $0.243$.
 
 % より長い履歴を与えてもこの差は埋まらない．
-% 上の音符数えベースラインは最大 64 トークンしか見ないので，3通りに拡張した——当初の手続き（W≤64 で固定）の後，最終テストの凍結の前に加えた解析である：履歴全体への拡張，新しい音を重く数える版，短い窓と長い窓をつないだ版である．
+% 上の音符数えベースラインは最大 64 トークンしか見ないので，3通りに拡張した（当初の手続き——W≤64 で固定——の後，最終テストの凍結の前に加えた解析である）：履歴全体への拡張，新しい音を重く数える版，短い窓と長い窓をつないだ版である．
 % 窓を広げるだけの拡張は W=96 の 0.801 で頭打ちになり，W=512 では 0.752 まで下がる（転調前の音符が数え上げを誤った方向へ引っぱる）．3変種の最強——短い窓と長い窓をつないだ版——は 0.824 に達する．
 % その最強変種に対してもマージンは +0.071 [0.056, 0.081] なので，活性がこれらの音符数えより調を線形に読みやすくしていると主張する——音符のあらゆる関数に勝つとは主張しない．
 % 確認済み 2026-08-11: c3_window_ext.json — best_c3 = lr_W16cat512（W16とW512の連結）
 % 0.8243; 台帳 2026-08-05（実験D）は凍結 0d621e4（08-08）より前・当初プロトコル
 % （W≤64, G1ゲート）より後。L4 マージン +0.0706 [0.0560, 0.0812] → 本文と一致。
 A longer history does not close this gap.
-The note-counting baseline above sees at most $64$ tokens, so we extended it in three ways---analyses we added after our original protocol, which had fixed $W\le 64$, and before the final-test freeze: to the whole prefix, to a recency-weighted count, and to a count that joins a short and a long window.
+The note-counting baseline above sees at most $64$ tokens, so we extended it in three ways (analyses added after our original protocol, which had fixed $W\le 64$, and before the final-test freeze): to the whole prefix, to a recency-weighted count, and to a count that joins a short and a long window.
 Widening the window alone peaks at $0.801$ for $W{=}96$ and falls to $0.752$ at $W{=}512$, because notes from before a key change pull the count the wrong way; the strongest of the three variants, the one that joins a short and a long window, reaches $0.824$.
 Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so we claim that the activation makes the key easier to read linearly than these note counts do---not that it beats every function of the notes.
 
@@ -554,7 +604,7 @@ Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so 
 % 長さを揃えたランダムベースライン（3.2節）は 0.056 にとどまり，編集は補正後 12/12 の調でこれと分離する．
 % さらに，2つのランダムベースラインはいずれも編集より品質の限度を通りやすく（0.96 と 0.93 対 0.84），限度を課さなくても 0.041 と 0.059 にしか届かない．
 % したがって効果は，どの方向に書き込むかから生じており，活性をどれだけ強く押すかから生じているのでもなく，限度がベースラインを不利にしているのでもない．
-% プロンプトが既にいる調をそのまま書き込んだ場合，モデルはそこに留まり（見出しと同じ採点で 0.650，品質の限度を課す前は 0.71——下の特異性分析でランダム編集が元調に留まる 51.7%（同じく限度なし）と対比されたい），何もしない編集は編集なしの出力をトークン単位で再現する（100/100）：どちらも本来そうあるべき挙動である．
+% プロンプトが既にいる調をそのまま書き込んだ場合，モデルはそこに留まり（見出しと同じ採点で 0.650，品質の限度を課す前は 0.710——下の特異性分析でランダム編集が元調に留まる 51.7%（同じく限度なし）と対比されたい），何もしない編集は編集なしの出力をトークン単位で再現する（100/100）：どちらも本来そうあるべき挙動である．
 % 確認済み 2026-08-11: verdict.json identity_sanity 0.650 はガード付き（見出しと同じ
 % 採点; scripts/26 の succ = tkr & guard）。限度なしでは 0.71（confirmatory_L4.parquet
 % から算出，分母100，推定不能0件）。51.7% は限度なし → 対比は限度なし同士に揃えた。
@@ -565,7 +615,7 @@ The quality limit admits $84\%$ of edits, the same rate without that limit is $0
 The length-matched random baseline of Section~\ref{sec:methodB} reaches $0.056$, and the edit separates from it in $12/12$ keys after correction.
 Both random baselines also pass the quality limit more often than the edit does ($0.96$ and $0.93$ against $0.84$), and without that limit they still reach only $0.041$ and $0.059$.
 The effect therefore follows from which directions we write to, and not from how far we push the activation or from a limit that penalizes the baselines.
-When we install the key the prompt is already in, the model simply stays there ($0.650$ scored as the headline rate, $0.71$ before the quality limit, against the $51.7\%$ of continuations---also before the limit---that stay in the prompt's key under the random edit below), and the do-nothing edit reproduces the unedited output token by token ($100/100$), as both should.
+When we install the key the prompt is already in, the model simply stays there ($0.650$ scored as the headline rate, $0.710$ before the quality limit, against the $51.7\%$ of continuations---also before the limit---that stay in the prompt's key under the random edit below), and the do-nothing edit reproduces the unedited output token by token ($100/100$), as both should.
 
 % 狙った調に着地するか．編集は元の調から離れるだけでなく，新しい調に着地する．
 % 新規プロンプト上で，品質の限度が違反を失敗に数える前，かつ推定器が調を判定できた継続の中で集計すると，継続の推定調が書き込んだ調と一致するのは 41.0% で，ランダムベースラインでは 4.1% である．一方，プロンプトの調に留まるのは 8.5% だけで，ランダムベースラインでは 51.7% である．
@@ -652,14 +702,14 @@ Section~\ref{sec:nextpitch} suggests why the edit stays below that bound: the mo
 Like the layer profile, we report both comparisons as observations, not as tested claims.
 
 % どのトークン位置に書き込むかも，層の深さと同じくらい効く．
-% 音高の位置だけに書き込むと何も起こらず（成功率 0.077，ランダムベースラインの床と同じ）音楽も無傷のままだが，小節と音の長さの位置だけに書き込むと効果全体の 69% を運ぶ．
+% 音高の位置だけに書き込むと何も起こらず（成功率 0.077，ランダムベースラインの床 0.075 と同水準）音楽も無傷のままだが，小節と音の長さの位置だけに書き込むと効果全体の 69% を運ぶ．
 % 最終テストは両方の半分を再現する：音高位置のみの書き込みは 0.035 で，ランダムベースラインの床 0.039 を下回り，分離するのは 0/12 の調である．一方，小節と音の長さの位置のみの書き込みは 0.233，すなわち効果全体の 65% に達し，11/12 で分離する．
 % 音高位置のみの書き込みは，たしかに品質の限度内に収まる継続が多い（98% 対 84%）が，それは音楽をほとんど変えていないからにすぎない．
 % 音高の確率を単に押すだけの介入なら，逆の振る舞いを示すはずである．
 % したがって値が線形に読めることは，それがどこで使われるかの手掛かりとしては弱く，最も読み取りやすい方向が最もよくステアリングできる方向ではないという言語モデルでの報告と一致する．
 % 編集は，調が最も読みやすい場所でこそ効かない．
 The positions we write to matter as much as the depth.
-Writing only at pitch positions does nothing (success rate $0.077$, at the floor set by the random baseline) and leaves the music intact, while writing only at bar and note-length positions carries $69\%$ of the full effect.
+Writing only at pitch positions does nothing (success rate $0.077$, at the random-baseline floor of $0.075$) and leaves the music intact, while writing only at bar and note-length positions carries $69\%$ of the full effect.
 The final test reproduces both halves: writing only at pitch positions reaches $0.035$, below the random-baseline floor of $0.039$, and separates from it in $0/12$ keys, while writing only at bar and note-length positions reaches $0.233$, or $65\%$ of the full effect, and separates in $11/12$.
 Writing only at pitch positions does keep more continuations inside the quality limit ($98\%$ against $84\%$), but only because it barely changes the music.
 An intervention that merely pushed on pitch probabilities would behave the other way around.
@@ -709,16 +759,18 @@ One first-run finding did not survive its control and we withdraw it: what looke
 \section{Limitations}
 \label{sec:limits}
 % 本研究が主張しないことを明示する．
+% 我々が主張するのは因果的に使用される調の内部表現であって，人間のような調の概念ではない：モデルは自分が書いた音符のほかに調の記憶を持たず（5.3節），このテストが語るのは使用であって理解ではない．
 % 書き込むのは長調だけである：短調は二次的な条件として登録したが，まだ走らせていない．
 % KS 推定器は五度違いの調を混同するので，音階に属する音の割合も併せて報告している．
-% 品質の限度は，編集が参照モデルをどれだけ乱すかを測るもので，音楽としての良さそのものではなく，聴取実験は行っていない．
+% 品質の限度は，編集が参照モデルをどれだけ乱すかを測るもので，音楽としての良さそのものではなく，聴取実験は行っていない——ただし記号領域では，音階への所属は音符そのものから客観的に確かめられる．
 % 公開モデルの結果は1つのサイズの1つのチェックポイントに限られ，設計も当初のまま——層は別のプロンプトで選び，限度は評価の前に固定したが，2度目の最終テストは行っていない——である．
 % モデル規模と幾何に関する測定は補足資料で報告する．
 % 短調と聴取実験は今後の課題とする．
 We state what this study does not claim.
+We claim a causally used internal representation of key, not a human-like concept of it: the model keeps no memory of the key apart from the notes it has written (Sec.~\ref{sec:nextpitch}), and our test speaks to use, not to understanding.
 We install major keys only; we registered minor keys as a secondary condition and have not run them.
 The KS estimator confuses keys a fifth apart, which is why we also report the share of notes that belong to the scale.
-Our quality limit measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test.
+Our quality limit measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test, although in the symbolic domain the notes themselves let us check scale membership objectively.
 The public-model result covers one checkpoint at one size, and it keeps its original design, in which we chose the layer on separate prompts and fixed the limit before evaluation but did not run a second final test.
 The supplementary reports our scaling and geometry analyses.
 We leave minor keys and a listening test for future work.

@@ -1165,3 +1165,23 @@ pre-submission task (run 08 with --supplementary).
 - 図2キャプション（tex）を描画物に合わせて微修正: probe score＝macro-F1 の
   橋渡し，(b) は「因果効果」でなく成功率の描画である旨＋灰色領域（ランダム
   ベースラインの信頼上限）と chance 点線（1/12）の説明。
+
+## 2026-08-11 — CHECKLIST PASS: 投稿前チェックリスト v1 対応（数値・凍結設計は不変）
+
+対応状況の全表は docs/PRESUBMISSION_CHECKLIST_STATUS.md。要点:
+- §1.1 P_V 直交性 → 分岐A確定（v_probe/v_mean=SVD, V-DAS=直交拘束;
+  L4 プローブ V 実測 max|V^⊤V−I|=2.4e-7）。§3.2 に直交射影の1文を追加。
+- §2 引用: syntheory2024 は key タスクを含まないため §2.1 を修正し
+  castellon2021calm を追加。singh2026discovering / ma2024root を追加
+  （すべてウェブで実物確認）。§2.2 に activation patching の語義注1文。
+- §3 Limitations に非主張1文（使用であって理解ではない）。
+- §5 標準性の係留3句（SynTheory 設計・KS=標準法・公開モデル選定理由）。
+- §7 要旨 "Probes"→"A small classifier"。§8 0.71→0.710・ダッシュ閉じ・
+  探索段階の床 0.075 明記。
+- §9a 五度圏距離分解を post-hoc 補足として実施・台帳記載
+  （fifths_distance_posthoc.json）: 編集は距離にフラット 0.295–0.425，
+  K1 は距離1（KS 五度混同）に集中 0.200・他 ≤0.01。
+- 新規 docs: LISTENING_TEST_DESIGN.md（凍結様式の設計テンプレ・DRAFT），
+  REBUTTAL_NOTES.md（検定等価性・ガード窓非対称・距離分解表・評価対応表）。
+- 未処置（著者判断/環境待ち）: 短調ラン（事前チェック全通過，GPU ドライバ
+  不整合が障害），聴取実験の実施判断，匿名リポジトリ，Paper ID，spconf 実機。
