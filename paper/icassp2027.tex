@@ -528,15 +528,17 @@ The edit fails exactly where the key is easiest to read.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.74\columnwidth]{fig_layer_profile.pdf}
+\includegraphics[width=0.95\columnwidth]{fig_layer_profile.pdf}
 % 図2キャプション
-% (a) 各層でのプローブの点数（青，左軸）と編集の成功率（橙，右軸）．赤い破線は最終テストが固定する編集層を示す．
-% (b) 同じ2つの数値を層ごとに1点として突き合わせたもの．数字は層の深さ，黒丸は最終テストの層，点線はランダムベースラインである．
-% 調は第2–7層でほぼ同じようによく読めるのに，編集が効くのは中央の層だけである．プローブの点数は 5.1 節の macro-F1 である．
+% (a) 層ごとのプローブの点数（プローブの点数は 5.1 節の macro-F1）．細い灰色の線は残り5モデルである．
+% (b) 同じ層で編集を行ったときの成功率．ランダムベースラインとの比較で，帯はプロンプト単位のブートストラップ 95% 信頼区間である．
+% 赤い破線は最終テストが固定する編集層を両パネルで結ぶ．
+% 第1層では調がすでによく読めるのに，編集はほとんど何も起こさない：読める場所と効く場所は別である．
 % 探索段階のデータ（シード0）．
-\caption{(a)~The probe score (blue, left axis) and the success rate of the edit (orange, right axis) at each layer; the dashed line marks the edit layer that the final test fixes.
-(b)~The same two numbers plotted against each other, one point per layer, numbered by depth; the black circle marks the final-test layer, and the dotted line is the random baseline.
-The key reads almost equally well from layers $2$--$7$, yet the edit acts only in the middle; the probe score is the macro-$F_1$ of Section~\ref{sec:h1}.
+\caption{(a)~The probe score at each layer (the probe score is the macro-$F_1$ of Section~\ref{sec:h1}); thin gray lines show the five other models.
+(b)~The success rate when we edit at that same layer, against the random baseline; bands are prompt-level bootstrap $95\%$ confidence intervals.
+The dashed red line ties the two panels at the layer the final test fixes.
+At layer~$1$ the key already reads well, yet the edit does almost nothing: where the key is read is not where it acts.
 Search-stage data, seed~$0$.}
 \label{fig:layers}
 \end{figure}

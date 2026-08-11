@@ -53,13 +53,12 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """Figure 2, back to the SIGIR-style design the authors preferred
-    (2026-08-11): (a) dual-axis profile per layer, (b) the same numbers plotted
-    against each other with layers as numbered points. Axis labels use plain
-    words only -- "probe score" and "success rate" -- because the authors
-    flagged "key macro-F1" as jargon; the caption states that the probe score
-    is macro-F1. Dual axes deviate from the repo one-axis rule at the authors'
-    direction."""
+    """Figure 2, redesigned so the CLAIM is the figure (authors, 2026-08-11):
+    two stacked full-width panels on a shared layer axis -- the small-multiples
+    answer to two measures of different scale (dual axes were the previous
+    design's mistake). The panel titles state the claim in plain words, and one
+    annotation points at the dissociation itself: layer 1 reads well yet the
+    edit does almost nothing there. Plain vocabulary only."""
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
@@ -71,66 +70,80 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     edit = _load_sweep(sweep_dir, "v_probe_L*.parquet")
     k1 = _load_sweep(sweep_dir, "k1_r24_L*.parquet")
     layers = sorted(edit["layer"].unique())
-    tkr = np.array([edit[edit["layer"] == li]["succ"].mean() for li in layers])
-    k1m = float(k1["succ"].mean())
-    peak = int(layers[int(np.argmax(tkr))])
 
-    fig, (ax1, axs) = plt.subplots(1, 2, figsize=(3.5, 1.95),
-                                   gridspec_kw={"width_ratios": [1.0, 1.05]},
+    def curve(df):
+        mean, lo, hi = [], [], []
+        for li in layers:
+            per_prompt = (df[df["layer"] == li].groupby("prompt_idx")["succ"].mean())
+            mean.append(per_prompt.mean())
+            l, h = _boot_ci(per_prompt.values)
+            lo.append(l); hi.append(h)
+        return np.array(mean), np.array(lo), np.array(hi)
+
+    em, el, eh = curve(edit)
+    cm, cl, ch = curve(k1)
+    peak = int(layers[int(np.argmax(em))])
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.4), sharex=True,
+                                   height_ratios=[1, 1.2],
                                    constrained_layout=True)
 
-    # ---- (a): dual axis, direct labels, no legend box
-    ax1.plot(range(8), f1, color=READ, lw=1.6, marker="o", ms=3, zorder=4)
-    ax1.annotate("probe score", xy=(3.4, 0.985), color=READ, fontsize=6.4,
-                 fontweight="bold", ha="left")
-    ax1.set_ylabel("probe score", color=READ, fontsize=7)
-    ax1.tick_params(axis="y", labelcolor=READ, labelsize=6.5)
-    ax1.set_ylim(0.3, 1.02)
-    ax1.set_xlabel("layer", fontsize=7)
-    ax1.set_xticks(range(0, 8, 2))
-    ax1.tick_params(axis="x", labelsize=6.5)
-    ax1b = ax1.twinx()
-    ax1b.plot(range(8), tkr, color=EDIT, lw=1.6, marker="s", ms=3, zorder=4)
-    ax1b.annotate("success rate", xy=(1.6, 0.135), color=EDIT, fontsize=6.4,
-                  fontweight="bold", ha="left")
-    ax1b.set_ylabel("success rate", color=EDIT, fontsize=7)
-    ax1b.tick_params(axis="y", labelcolor=EDIT, labelsize=6.5)
-    ax1b.set_ylim(0, 0.45)
-    ax1.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=2)
-    ax1b.annotate(f"edit layer {peak}", xy=(peak, 0.004), xytext=(0, 1),
-                  textcoords="offset points", va="bottom", ha="center",
-                  fontsize=5.6, color="#D02020")
-    ax1.set_title("(a) profile by layer", loc="left", fontsize=6.8,
-                  color=INK)
+    # ---- (a) reading: the title IS the claim
+    for name, c in curves.items():
+        if name != highlight:
+            ax1.plot(range(8), c, color=CTRL2, lw=0.9, alpha=0.55, zorder=2)
+    ax1.plot(range(8), f1, color=READ, lw=2.2, marker="o", ms=4, zorder=4)
+    ax1.annotate("seed 0", xy=(7, f1[7]), xytext=(6, 4),
+                 textcoords="offset points", color=READ, fontsize=7.5,
+                 fontweight="bold", ha="left", clip_on=False)
+    ax1.annotate("5 other models", xy=(7, min(c[7] for n, c in curves.items()
+                                              if n != highlight)),
+                 xytext=(6, -9), textcoords="offset points", color="#8A8A8A",
+                 fontsize=6.8, ha="left", clip_on=False)
+    ax1.set_ylabel("probe score", fontsize=8)
+    ax1.set_ylim(0.35, 1.02)
+    ax1.tick_params(labelsize=7)
+    ax1.set_title("(a) the key can be read from almost every layer",
+                  loc="left", fontsize=8.2, color=INK, pad=4)
 
-    # ---- (b): one point per layer, numbered; circled = final-test layer
-    cmap = plt.get_cmap("viridis")
-    cols = [cmap(li / 7) for li in range(8)]
-    axs.plot(f1, tkr, color="#C8C8C8", lw=0.8, zorder=2)
-    axs.scatter(f1, tkr, c=cols, s=18, zorder=4, edgecolors="white",
-                linewidths=0.4)
-    dx = {0: (5, -1), 1: (5, -1), 2: (6, -3), 3: (-7, 1), 4: (-8, 2),
-          5: (6, 0), 6: (6, -2), 7: (-8, -3)}
-    for li in range(8):
-        dark = tuple(0.72 * c for c in cols[li][:3])
-        axs.annotate(str(li), xy=(f1[li], tkr[li]), xytext=dx[li],
-                     textcoords="offset points", fontsize=6.2,
-                     fontweight="bold", color=dark,
-                     ha="center", va="center", zorder=6)
-    axs.scatter([f1[peak]], [tkr[peak]], s=54, facecolors="none",
-                edgecolors="black", linewidths=1.0, zorder=5)
-    axs.axhline(k1m, color=BASE, lw=0.9, ls=":", zorder=1)
-    axs.annotate("random baseline", xy=(0.97, k1m),
-                 xycoords=axs.get_yaxis_transform(), xytext=(0, 2),
-                 textcoords="offset points", fontsize=5.8, color=BASE,
-                 ha="right", va="bottom")
-    axs.set_xlim(0.58, 0.99)
-    axs.set_ylim(0, 0.45)
-    axs.set_xlabel("probe score", fontsize=7)
-    axs.set_ylabel("success rate", fontsize=7)
-    axs.tick_params(labelsize=6.5)
-    axs.set_title("(b) success vs probe score", loc="left",
-                  fontsize=6.8, color=INK)
+    # ---- (b) acting: title carries the contrast; annotation names the gap
+    ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.18, lw=0, zorder=2)
+    ax2.plot(layers, em, color=EDIT, lw=2.2, marker="o", ms=4, zorder=4)
+    ax2.annotate("edit", xy=(7, em[7]), xytext=(6, 2),
+                 textcoords="offset points", color=EDIT, fontsize=7.5,
+                 fontweight="bold", ha="left", va="center", clip_on=False)
+    ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.15, lw=0, zorder=2)
+    ax2.plot(layers, cm, color=CTRL, lw=1.5, marker="s", ms=3.2, zorder=3)
+    ax2.annotate("random\nbaseline", xy=(7, cm[7]), xytext=(6, -2),
+                 textcoords="offset points", color="#707070", fontsize=6.8,
+                 ha="left", va="top", clip_on=False, linespacing=1.1)
+    ax2.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
+    ax2.annotate("chance", xy=(0.985, 1 / 12), xycoords=ax2.get_yaxis_transform(),
+                 xytext=(0, 2), textcoords="offset points", color=BASE,
+                 ha="right", va="bottom", fontsize=6.8)
+    # the dissociation, pointed at directly -- text in the empty upper-left,
+    # arrow descending through empty space to the layer-1 point
+    ax2.annotate("readable above,\nyet almost nothing happens",
+                 xy=(1.05, em[1] + 0.012), xytext=(0.03, 0.95),
+                 textcoords="axes fraction", fontsize=7.2,
+                 color="#5A5A5A", ha="left", va="top", linespacing=1.25,
+                 arrowprops=dict(arrowstyle="->", lw=0.9, color="#9A9A9A",
+                                 shrinkB=2, relpos=(0.35, 0.0)))
+    ax2.set_xlabel("layer", fontsize=8)
+    ax2.set_ylabel("success rate", fontsize=8)
+    ax2.set_ylim(0, max(eh) * 1.16)
+    ax2.set_xlim(-0.45, 7.45)
+    ax2.set_xticks(range(8))
+    ax2.tick_params(labelsize=7)
+    ax2.set_title("(b) but the edit changes the music only in the middle",
+                  loc="left", fontsize=8.2, color=INK, pad=4)
+
+    # ---- one guide ties the panels at the final-test layer
+    for ax in (ax1, ax2):
+        ax.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=1, alpha=0.85)
+    ax2.annotate(f"final test edits layer {peak}", xy=(peak, 0.004),
+                 xytext=(0, 1), textcoords="offset points", va="bottom",
+                 ha="center", fontsize=6.6, color="#D02020")
 
     fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
