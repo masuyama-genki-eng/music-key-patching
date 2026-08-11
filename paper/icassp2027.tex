@@ -208,6 +208,7 @@ Causal Interventions on an Emergent Tonal Representation}
 % 生成の途中で，1つの層で調を担う24次元の活性を，別の調でのその平均値に上書きし，入力の音符には1音も触れない．
 % 設計を事前に固定した最終テストでは，それ以前のどの実験も見ていないプロンプト上で，継続が書き込んだ調に入る割合は 0.355 であり，同じ書き込みをランダムな方向へ行うと 0.039 である．
 % モデルが何も生成しないうちに，新しい調の音に置かれる確率がすでに +0.26 上がる（ランダムでは +0.02）ので，効果は自分の出力からのフィードバックに先行する．
+% 事前登録済みの短調の条件は，この結果をそのまま再現する．
 % どちらの結果も，実音楽で訓練された公開モデルへそのまま移る．
 % したがって音楽 Transformer は調を計算し，上書きできる形で保持し，書きながらそれを参照している．テストベッドを公開する．
 A small classifier can read the musical key from a music model's activations, but reading a key does not show that the model uses it while it writes.
@@ -215,6 +216,7 @@ We train Transformers on symbolic music whose vocabulary names pitches and timin
 During generation we overwrite, in one layer, the $24$ activation dimensions that carry the key with their average in another key, leaving every input note untouched.
 In a final test fixed in advance, on prompts no earlier run had seen, the continuation is in the key we install for $0.355$ of the prompts, against $0.039$ for the same write into random directions.
 Before the model generates anything, the probability it assigns to the notes of the new key already rises by $+0.26$, against $+0.02$, so the effect precedes feedback from its own output.
+A pre-registered minor-key condition replicates the result.
 Both results carry over to a public model trained on real music.
 A music Transformer therefore computes its key, holds it in a form we can overwrite, and consults it while it writes; we release the testbed.
 \end{abstract}
@@ -361,7 +363,7 @@ Our edit brings this patching test to music, and Section~\ref{sec:method} adds t
 % 本節では，本論文の2つの解析——調を読むことと，調を書き換えること——をこの順に述べる．
 % 記法として，層 ℓ・位置 t における活性を h_ℓ(t)，そこでの真の調を κ(t) と書く．κ(t) は 24 クラス（12 の主音それぞれに長調と短調）を取る．
 % 自作モデルでは，層は8つの Transformer ブロックの出力を指して 0–7 の番号を付ける：生のトークン埋め込みからは読まない．
-% プローブは 24 クラスすべてを判別するが，編集が書き込むのは 12 の長調だけである（第6節）．
+% プローブは 24 クラスすべてを判別する；編集は，主テストでは 12 の長調を，事前登録済みの副テストでは 12 の短調を書き込む．
 % データ・モデル・評価手続きは第4節で述べる．
 % 確認済み 2026-08-11: gpt.py の forward() は各ブロックの出力のみを capture し，
 % probe_report.json の読み取り点は層0–7の8点だけ（埋め込みの読み取り点は無い）。
@@ -370,7 +372,7 @@ Our edit brings this patching test to music, and Section~\ref{sec:method} adds t
 In this section we present the two analyses of the paper, first reading the key and then overwriting it.
 As notation, write $h_\ell(t)$ for the activation at layer $\ell$ and position $t$, and $\kappa(t)$ for the true key there, one of $24$ classes ($12$ tonics, each major or minor).
 In our own models, layers index the outputs of the eight Transformer blocks, $0$ through $7$: we never read from the raw token embedding.
-The probe distinguishes all $24$ classes; the edits install the $12$ major keys only (Sec.~\ref{sec:limits}).
+The probe distinguishes all $24$ classes; the edits install the $12$ major keys in the primary test and the $12$ minor keys in a pre-registered secondary test.
 Section~\ref{sec:exp} describes the data, the models, and the evaluation protocol.
 
 % 3.1 調の読み方
@@ -541,6 +543,7 @@ A rate on its own means little, so we report every rate against the same write i
 % 本論文を通じて，検定は標的の調ごとにプロンプトで対にした片側 Wilcoxon 符号順位検定であり，12 の調にわたり Holm 法で補正し，効果量 r には順位双列相関を用いる．
 % 層や方向の探索は繰り返さない．
 % 偏った標的推定が何を捏造しうるかは 5.5 節が示すので，標的そのものもここで検証した：どの長調もクラス平均に 7,530 から 9,237 位置を寄せており（最大/最小 1.23），退化した平均は1つもない．
+% 事前登録済みの副条件が，同じ一式を安定した短調のプロンプトと短調12標的で繰り返す（設計は同じ文書に，短調の実行が1つも存在しない時点で固定した）．
 % 標的の調がプロンプトの調と同じ編集は主解析から外し，サニティチェックとして別に報告する．
 % この時点から先，設計にできるのは合格するか失敗するかだけであり，報告する結果に合わせて調整できる余地は残っていない．
 % 確認済み 2026-08-11: scripts/26_confirmatory.py と src/analysis/stats.py —
@@ -554,6 +557,7 @@ We wrote every such choice---the layer, the directions, the timing, the target k
 Throughout the paper, the tests are one-sided Wilcoxon signed-rank tests for each target key, paired by prompt and corrected across the $12$ keys with Holm's method~\cite{holm1979}, and the effect size $r$ is the rank-biserial correlation.
 We repeat no search over layers or directions.
 Because Section~\ref{sec:wild} shows what an imbalanced estimate of the targets can fabricate, we also checked the targets here: every major key contributes between $7{,}530$ and $9{,}237$ positions to its class mean (max over min, $1.23$), and no mean is degenerate.
+A pre-registered secondary condition repeats the whole battery with stable-minor prompts and the $12$ minor keys as targets, its design fixed in the same document before any minor run existed.
 We leave out edits whose target key equals the key of the prompt and report them separately as a sanity check.
 From this point on the design could only pass or fail, and nothing in it was left to tune toward the outcome we report.
 
@@ -604,6 +608,10 @@ Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so 
 % 長さを揃えたランダムベースライン（3.2節）は 0.056 にとどまり，編集は補正後 12/12 の調でこれと分離する．
 % さらに，2つのランダムベースラインはいずれも編集より品質の限度を通りやすく（0.96 と 0.93 対 0.84），限度を課さなくても 0.041 と 0.059 にしか届かない．
 % したがって効果は，どの方向に書き込むかから生じており，活性をどれだけ強く押すかから生じているのでもなく，限度がベースラインを不利にしているのでもない．
+% プロンプト自体を移調する上限は，この新規プロンプトでは 0.648 なので，編集はその 55% を覆う．
+% [出典: results/confirmatory/R-Aug_s0/k4_ceiling.json (AMENDMENT 2) —
+%  k4_raw_tkr_nonidentity 0.6482, edit_over_k4 0.5484。ガードは移調に未定義のため
+%  「ガード付き編集 / 生の上限」= 最も不利な比。§5.4 の 58% は探索段階の別数値]
 % プロンプトが既にいる調をそのまま書き込んだ場合，モデルはそこに留まり（見出しと同じ採点で 0.650，品質の限度を課す前は 0.710——下の特異性分析でランダム編集が元調に留まる 51.7%（同じく限度なし）と対比されたい），何もしない編集は編集なしの出力をトークン単位で再現する（100/100）：どちらも本来そうあるべき挙動である．
 % 確認済み 2026-08-11: verdict.json identity_sanity 0.650 はガード付き（見出しと同じ
 % 採点; scripts/26 の succ = tkr & guard）。限度なしでは 0.71（confirmatory_L4.parquet
@@ -615,12 +623,29 @@ The quality limit admits $84\%$ of edits, the same rate without that limit is $0
 The length-matched random baseline of Section~\ref{sec:methodB} reaches $0.056$, and the edit separates from it in $12/12$ keys after correction.
 Both random baselines also pass the quality limit more often than the edit does ($0.96$ and $0.93$ against $0.84$), and without that limit they still reach only $0.041$ and $0.059$.
 The effect therefore follows from which directions we write to, and not from how far we push the activation or from a limit that penalizes the baselines.
+Transposing the prompt itself---the upper bound---reaches $0.648$ on these prompts, so the edit covers $55\%$ of it.
 When we install the key the prompt is already in, the model simply stays there ($0.650$ scored as the headline rate, $0.710$ before the quality limit, against the $51.7\%$ of continuations---also before the limit---that stay in the prompt's key under the random edit below), and the do-nothing edit reproduces the unedited output token by token ($100/100$), as both should.
 
 % 狙った調に着地するか．編集は元の調から離れるだけでなく，新しい調に着地する．
 % 新規プロンプト上で，品質の限度が違反を失敗に数える前，かつ推定器が調を判定できた継続の中で集計すると，継続の推定調が書き込んだ調と一致するのは 41.0% で，ランダムベースラインでは 4.1% である．一方，プロンプトの調に留まるのは 8.5% だけで，ランダムベースラインでは 51.7% である．
 % 残りの大部分は五度隣の調に落ちる（34.8%）が，これは KS 推定器が混同することが知られている調である．
 % したがって編集は，今の調を単に壊すのではなく，特定の調を1つ据え付けている．
+
+% 短調．事前登録済みの副条件——安定した短調のプロンプトに短調12標的——は，この発見をそのまま繰り返す．
+% 編集の成功率は 0.495，ランダムベースラインは 0.003 であり——ランダムな上書きが特定の短調に着地することはほぼ無い——12 の標的すべてが補正後に分離する（最悪 p=1.7×10^-7，r≥0.96，差の 95% 信頼区間 [0.458, 0.528]）．
+% 長さを揃えたベースラインは 0.026 にとどまり（12/12 で分離），品質の限度は編集の 79% を通し，限度なしでは 0.617，音符も移る（0.957 対 0.779）．
+% 特異性も再現する：継続の 61.7% が書き込んだ短調そのものと推定され（ランダムでは 0.3%），元の調に留まるのは 5.2%（ランダムでは 77.2%），相対長調に流れるのはわずか 4.1% である．
+% 同じ調を書き込むとモデルは 0.800 でそこに留まる．
+% 移調の上限は 0.877 で，編集はその 56% を覆う——長調と同じ割合である．
+% (この段落は 2026-08-12 の短調ラン results/confirmatory/R-Aug_s0_minor/verdict.json
+%  から。凍結: AMENDMENT 3 @ 89a09d5 が実行に先行。丸めは artifact から再計算済み。
+%  相対長調 4.1%/1.9% は parquet からの導出セル(AMENDMENT 3 項5), CHANGELOG 記載)
+\textbf{Minor keys.} The pre-registered secondary condition---stable-minor prompts with the $12$ minor keys as targets---repeats the finding.
+The edit reaches a success rate of $0.495$ against $0.003$ for the random baseline---a random overwrite almost never lands on a specific minor key---and all $12$ targets separate after correction (worst $p=1.7\times10^{-7}$, $r\ge0.96$, difference CI $[0.458,0.528]$).
+The length-matched baseline reaches $0.026$ (separated in $12/12$), the quality limit admits $79\%$ of edits, the rate without it is $0.617$, and the notes cross over as well ($0.957$ against $0.779$).
+Specificity repeats too: $61.7\%$ of continuations are estimated as the installed minor key itself (against $0.3\%$), only $5.2\%$ stay in the prompt's key (against $77.2\%$), and only $4.1\%$ drift to the relative major.
+When we install the key the prompt is already in, the model stays there ($0.800$).
+The transposition ceiling is $0.877$, of which the edit covers $56\%$---the same share as in the major condition.
 % 確認済み 2026-08-11: confirmatory_L4.parquet — 限度なし・非同一調・推定可能セルで
 % edit est==target 0.410, est==src 0.0845; k1 est==src 0.5173 → 41.0/8.5/51.7 一致。
 % 4.1/34.8 は verdict.json の特異性ブロック（既監査）と一致。
@@ -704,6 +729,7 @@ Like the layer profile, we report both comparisons as observations, not as teste
 % どのトークン位置に書き込むかも，層の深さと同じくらい効く．
 % 音高の位置だけに書き込むと何も起こらず（成功率 0.077，ランダムベースラインの床 0.075 と同水準）音楽も無傷のままだが，小節と音の長さの位置だけに書き込むと効果全体の 69% を運ぶ．
 % 最終テストは両方の半分を再現する：音高位置のみの書き込みは 0.035 で，ランダムベースラインの床 0.039 を下回り，分離するのは 0/12 の調である．一方，小節と音の長さの位置のみの書き込みは 0.233，すなわち効果全体の 65% に達し，11/12 で分離する．
+% 短調の副条件も両方の半分を繰り返す：音高位置のみは 0.000（0/12），小節と音の長さの位置のみは 0.212，すなわち効果全体の 43% である．
 % 音高位置のみの書き込みは，たしかに品質の限度内に収まる継続が多い（98% 対 84%）が，それは音楽をほとんど変えていないからにすぎない．
 % 音高の確率を単に押すだけの介入なら，逆の振る舞いを示すはずである．
 % したがって値が線形に読めることは，それがどこで使われるかの手掛かりとしては弱く，最も読み取りやすい方向が最もよくステアリングできる方向ではないという言語モデルでの報告と一致する．
@@ -711,6 +737,7 @@ Like the layer profile, we report both comparisons as observations, not as teste
 The positions we write to matter as much as the depth.
 Writing only at pitch positions does nothing (success rate $0.077$, at the random-baseline floor of $0.075$) and leaves the music intact, while writing only at bar and note-length positions carries $69\%$ of the full effect.
 The final test reproduces both halves: writing only at pitch positions reaches $0.035$, below the random-baseline floor of $0.039$, and separates from it in $0/12$ keys, while writing only at bar and note-length positions reaches $0.233$, or $65\%$ of the full effect, and separates in $11/12$.
+The minor-key condition repeats both halves as well: pitch positions only, $0.000$ ($0/12$); bar and note-length positions only, $0.212$, or $43\%$ of its full effect.
 Writing only at pitch positions does keep more continuations inside the quality limit ($98\%$ against $84\%$), but only because it barely changes the music.
 An intervention that merely pushed on pitch probabilities would behave the other way around.
 Reading a value linearly is therefore a weak guide to where that value is used, which matches the report from language models that the direction easiest to read is not the one that steers best~\cite{wu2025axbench,arad2025selecting}.
@@ -760,7 +787,7 @@ One first-run finding did not survive its control and we withdraw it: what looke
 \label{sec:limits}
 % 本研究が主張しないことを明示する．
 % 我々が主張するのは因果的に使用される調の内部表現であって，人間のような調の概念ではない：モデルは自分が書いた音符のほかに調の記憶を持たず（5.3節），このテストが語るのは使用であって理解ではない．
-% 書き込むのは長調だけである：短調は二次的な条件として登録したが，まだ走らせていない．
+% 短調は事前登録済みの副条件として1回だけ走らせ，結果がどうであれ報告する規則だった；音階内割合の定義には短音階諸形の合併を使っている．
 % KS 推定器は五度違いの調を混同するので，音階に属する音の割合も併せて報告している．
 % 品質の限度は，編集が参照モデルをどれだけ乱すかを測るもので，音楽としての良さそのものではなく，聴取実験は行っていない——ただし記号領域では，音階への所属は音符そのものから客観的に確かめられる．
 % 公開モデルの結果は1つのサイズの1つのチェックポイントに限られ，設計も当初のまま——層は別のプロンプトで選び，限度は評価の前に固定したが，2度目の最終テストは行っていない——である．
@@ -768,7 +795,7 @@ One first-run finding did not survive its control and we withdraw it: what looke
 % 短調と聴取実験は今後の課題とする．
 We state what this study does not claim.
 We claim a causally used internal representation of key, not a human-like concept of it: the model keeps no memory of the key apart from the notes it has written (Sec.~\ref{sec:nextpitch}), and our test speaks to use, not to understanding.
-We install major keys only; we registered minor keys as a secondary condition and have not run them.
+The minor-key condition ran exactly once, as a pre-registered secondary test whose outcome we had committed to report either way; its share-of-in-key-notes measure uses the union of the minor scale forms.
 The KS estimator confuses keys a fifth apart, which is why we also report the share of notes that belong to the scale.
 Our quality limit measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test, although in the symbolic domain the notes themselves let us check scale membership objectively.
 The public-model result covers one checkpoint at one size, and it keeps its original design, in which we chose the layer on separate prompts and fixed the limit before evaluation but did not run a second final test.

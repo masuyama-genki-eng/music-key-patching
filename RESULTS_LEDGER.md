@@ -943,3 +943,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/confirmatory/R-Aug_s0/fifths_distance_posthoc.json`
 - note: edit flat across distance (0.295-0.425); k1 mass at distance 1 (0.200) else <=0.01; derived only, no new generation
 
+## 2026-08-12T01:08:26+09:00 — CONFIRMATORY held-out sweep R-Aug_s0_minor L4
+- git: `89a09d5cdcad792a6b56955af04a20ccc05d061d`
+- config_hash: `37a115a4641244d44d09e7ab78063b9f13cd155708cb6dd6ba9be59205a038cb`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/parts/confirmatory_L4.parquet`, `results/confirmatory/R-Aug_s0_minor/verdict.json`
+- note: edit: guarded=0.495 sig=12/12; pitch: guarded=0.000 sig=0/12; bar_dur: guarded=0.212 sig=12/12
+
+## 2026-08-12T01:19:30+09:00 — CONFIRMATORY K4 ceiling R-Aug_s0_minor (AMENDMENT 2)
+- git: `89a09d5cdcad792a6b56955af04a20ccc05d061d+DIRTY`
+- config_hash: `f99573e08cbd7f918d123aec72fb5fd759dcf4fbd88edb71bfcd22b6f93c47e4`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/parts/k4_ceiling.parquet`, `results/confirmatory/R-Aug_s0_minor/k4_ceiling.json`
+- note: K4 raw=0.8773 (non-identity); edit/K4=0.5637
+
