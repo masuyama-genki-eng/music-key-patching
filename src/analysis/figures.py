@@ -327,7 +327,8 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
         return estimate_key(pitches)
 
     def kname(k: int) -> str:
-        return KEY_NAMES[k % 12] + (" minor" if k >= 12 else " major")
+        n = KEY_NAMES[k % 12].replace("b", "♭")   # Bb -> B♭ etc.
+        return n + (" minor" if k >= 12 else " major")
 
     k_clean, k_edit = est(clean), est(edited)
     xmax = 18 * 16
@@ -336,18 +337,19 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
                f"(a) clean — continues in {kname(k_clean)}",
                p["src_key"], k_clean, xmax)
     _pianoroll(ax2, edited, plen, EDIT,
-               f"(b) key state edited to {tgt} — continues in {kname(k_edit)}",
+               f"(b) key edited to {tgt} — continues in {kname(k_edit)}",
                p["src_key"], k_edit, xmax)
     ax2.set_xlabel("bar")
-    # the edit, named where it happens — placed to the RIGHT of the barline so the
-    # leader never crosses the panel title
-    # The dashed barline already marks WHERE the edit starts, so the equation needs
-    # no leader line — one would have to cross the panel title to reach it.
-    ax1.text(8.15 * 16, 101,
-             "edit from here: $h \\leftarrow h - P_V h + P_V\\,\\mu_{%s}$  (L4)" % tgt,
-             fontsize=6.8, color=INK, ha="left", va="center", clip_on=False)
-    ax1.text(4 * 16, 40.2, f"prompt: {src} major", ha="center", fontsize=6.5,
-             color="#5A5A5A", bbox=dict(fc="white", ec="none", pad=0.8))
+    # The equation lives in the paper (Eq. 1); the figure only marks WHERE.
+    # (a): the barline is just the prompt boundary. (b): it is where the edit
+    # turns on — one small tag in the edit color, nothing else.
+    ax2.annotate("edit on", xy=(8 * 16, 92), xytext=(4, -1),
+                 textcoords="offset points", ha="left", va="top",
+                 fontsize=6.4, color=EDIT, fontweight="bold", zorder=6)
+    src_flat = src.replace("b", "♭")
+    ax1.text(4 * 16, 41.0, f"{src_flat}-major prompt", ha="center", fontsize=6.2,
+             color="#5A5A5A", zorder=6,
+             bbox=dict(fc="white", ec="none", alpha=0.85, pad=0.7))
     fig.savefig(out)
     plt.close(fig)
 
