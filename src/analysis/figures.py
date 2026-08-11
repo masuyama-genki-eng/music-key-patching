@@ -53,13 +53,17 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """(a) dual-axis layer profile (axis labels tinted per curve, dashed marker
-    at the frozen edit layer, direct labels instead of a legend box); (b) causal
-    effect vs readability, one point per layer, layer index written AT each
-    point (numbers resolve the overlap a colorbar cannot: six layers share
-    x~0.92 and stack vertically -- which is the finding). The frozen layer is
-    circled, K1 is the dotted floor. Dual axes in (a) deviate from the repo
-    one-axis rule at the authors' direction (2026-08-11)."""
+    """Figure 2 of the plain-language manuscript (2026-08-11). The caption
+    promises: (a) probe macro-F1 per layer for all six models, thin lines with
+    seed 0 highlighted; (b) causal effect of the edit against the random
+    baseline with prompt-level bootstrap 95% CI bands. Labels use the paper's
+    vocabulary only: "edit", "random baseline", "chance", "success rate" --
+    no internal code names (K1, V-PROBE, TKR) anywhere."""
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.0), sharex=True,
+                                   height_ratios=[1, 1.15],
+                                   constrained_layout=True)
+
+    # ---- (a) probe per layer, six models
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
@@ -67,68 +71,61 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
         if not name.startswith(("R-Aug_", "R-NoAug_")):
             continue
         curves[name] = [r["layers"][str(li)]["probe"]["macro_f1_24"] for li in range(8)]
-    f1 = np.array(curves[highlight])
+    for name, f1 in curves.items():
+        if name != highlight:
+            ax1.plot(range(8), f1, color=CTRL2, lw=0.8, alpha=0.55, zorder=2)
+    ax1.plot(range(8), curves[highlight], color=READ, lw=2.0, marker="o", ms=3.4,
+             zorder=4)
+    ax1.annotate("seed 0", xy=(7, curves[highlight][7]), xytext=(5, 3),
+                 textcoords="offset points", color=READ, fontsize=6.6,
+                 fontweight="bold", ha="left", clip_on=False)
+    ax1.annotate("5 other models", xy=(7, min(c[7] for n, c in curves.items()
+                                              if n != highlight)),
+                 xytext=(5, -8), textcoords="offset points", color="#9A9A9A",
+                 fontsize=6.2, ha="left", clip_on=False)
+    ax1.set_ylabel("key macro-$F_1$", fontsize=7)
+    ax1.set_ylim(0.35, 1.02)
+    ax1.tick_params(labelsize=6.5)
+    ax1.set_title("(a) where the key can be read", loc="left", fontsize=7.5,
+                  color=INK)
+
+    # ---- (b) edit vs random baseline, CI bands
     edit = _load_sweep(sweep_dir, "v_probe_L*.parquet")
     k1 = _load_sweep(sweep_dir, "k1_r24_L*.parquet")
     layers = sorted(edit["layer"].unique())
-    tkr = np.array([edit[edit["layer"] == li]["succ"].mean() for li in layers])
-    k1m = float(k1["succ"].mean())
-    peak = int(layers[int(np.argmax(tkr))])
 
-    fig, (ax1, axs) = plt.subplots(1, 2, figsize=(3.5, 1.95),
-                                   gridspec_kw={"width_ratios": [1.0, 1.05]},
-                                   constrained_layout=True)
+    def curve(df):
+        mean, lo, hi = [], [], []
+        for li in layers:
+            per_prompt = (df[df["layer"] == li].groupby("prompt_idx")["succ"].mean())
+            m = per_prompt.mean()
+            l, h = _boot_ci(per_prompt.values)
+            mean.append(m); lo.append(l); hi.append(h)
+        return np.array(mean), np.array(lo), np.array(hi)
 
-    # ---- (a): direct labels, no legend box
-    ax1.plot(range(8), f1, color=READ, lw=1.6, marker="o", ms=3, zorder=4)
-    ax1.annotate("probe $F_1$", xy=(4.6, 0.965), color=READ, fontsize=6.6,
-                 fontweight="bold", ha="left")
-    ax1.set_ylabel("key macro-$F_1$", color=READ, fontsize=7)
-    ax1.tick_params(axis="y", labelcolor=READ, labelsize=6.5)
-    ax1.set_ylim(0.3, 1.02)
-    ax1.set_xlabel("layer", fontsize=7)
-    ax1.set_xticks(range(0, 8, 2))
-    ax1.tick_params(axis="x", labelsize=6.5)
-    ax1b = ax1.twinx()
-    ax1b.plot(range(8), tkr, color=EDIT, lw=1.6, marker="s", ms=3, zorder=4)
-    ax1b.annotate("guarded TKR", xy=(2.1, 0.135), color=EDIT, fontsize=6.6,
-                  fontweight="bold", ha="left")
-    ax1b.set_ylabel("guarded TKR", color=EDIT, fontsize=7)
-    ax1b.tick_params(axis="y", labelcolor=EDIT, labelsize=6.5)
-    ax1b.set_ylim(0, 0.45)
-    ax1.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=2)
-    ax1b.annotate(f"edit layer L{peak}", xy=(peak, 0.004), xytext=(0, 1),
-                  textcoords="offset points", va="bottom", ha="center",
-                  fontsize=5.6, color="#D02020")
-    ax1.set_title("(a) profile by layer", fontsize=7.2, color=INK)
-
-    # ---- (b): numbers at points instead of a colorbar
-    cmap = plt.get_cmap("viridis")
-    cols = [cmap(li / 7) for li in range(8)]
-    axs.plot(f1, tkr, color="#C8C8C8", lw=0.8, zorder=2)
-    axs.scatter(f1, tkr, c=cols, s=18, zorder=4, edgecolors="white",
-                linewidths=0.4)
-    # layer numbers, nudged to avoid each other in the dense column
-    dx = {0: (5, -1), 1: (5, -1), 2: (6, -3), 3: (-7, 1), 4: (-8, 2),
-          5: (6, 0), 6: (6, -2), 7: (-8, -3)}
-    for li in range(8):
-        dark = tuple(0.72 * c for c in cols[li][:3])   # readable on white
-        axs.annotate(str(li), xy=(f1[li], tkr[li]), xytext=dx[li],
-                     textcoords="offset points", fontsize=6.2,
-                     fontweight="bold", color=dark,
-                     ha="center", va="center", zorder=6)
-    axs.scatter([f1[peak]], [tkr[peak]], s=54, facecolors="none",
-                edgecolors="black", linewidths=1.0, zorder=5)
-    axs.axhline(k1m, color=BASE, lw=0.9, ls=":", zorder=1)
-    axs.annotate("K1 random", xy=(0.97, k1m), xycoords=axs.get_yaxis_transform(),
-                 xytext=(0, 2), textcoords="offset points", fontsize=5.8,
-                 color=BASE, ha="right", va="bottom")
-    axs.set_xlim(0.58, 0.99)
-    axs.set_ylim(0, 0.45)
-    axs.set_xlabel("key macro-$F_1$ (readability)", fontsize=7)
-    axs.set_ylabel("guarded TKR (causal)", fontsize=7)
-    axs.tick_params(labelsize=6.5)
-    axs.set_title("(b) causal vs readability", fontsize=7.2, color=INK)
+    em, el, eh = curve(edit)
+    cm, cl, ch = curve(k1)
+    ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.18, lw=0, zorder=2)
+    ax2.plot(layers, em, color=EDIT, lw=2.0, marker="o", ms=3.4, zorder=4)
+    ax2.annotate("edit", xy=(7, em[7]), xytext=(5, 2),
+                 textcoords="offset points", color=EDIT, fontsize=6.6,
+                 fontweight="bold", ha="left", va="center", clip_on=False)
+    ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.15, lw=0, zorder=2)
+    ax2.plot(layers, cm, color=CTRL, lw=1.4, marker="s", ms=3, zorder=3)
+    ax2.annotate("random\nbaseline", xy=(7, cm[7]), xytext=(5, -2),
+                 textcoords="offset points", color="#707070", fontsize=6.2,
+                 ha="left", va="top", clip_on=False, linespacing=1.1)
+    ax2.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
+    ax2.annotate("chance", xy=(0.98, 1 / 12), xycoords=ax2.get_yaxis_transform(),
+                 xytext=(0, 2), textcoords="offset points", color=BASE,
+                 ha="right", va="bottom", fontsize=6.2, zorder=5)
+    ax2.set_xlabel("layer", fontsize=7)
+    ax2.set_ylabel("success rate", fontsize=7)
+    ax2.set_ylim(0, max(eh) * 1.15)
+    ax2.set_xlim(-0.45, 7.45)
+    ax2.set_xticks(range(8))
+    ax2.tick_params(labelsize=6.5)
+    ax2.set_title("(b) where the edit acts", loc="left", fontsize=7.5, color=INK)
 
     fig.savefig(out)
     plt.close(fig)
@@ -722,27 +719,28 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     x = np.arange(12)
     edit = [r["tkr_edit"] for r in e["per_target"]]
     k1 = [r["tkr_k1"] for r in e["per_target"]]
-    ax1.bar(x - 0.21, edit, 0.42, color=EDIT, zorder=3, label="key edit")
-    ax1.bar(x + 0.21, k1, 0.42, color=CTRL, zorder=3, label="random (K1)")
+    ax1.bar(x - 0.21, edit, 0.42, color=EDIT, zorder=3, label="edit")
+    ax1.bar(x + 0.21, k1, 0.42, color=CTRL, zorder=3, label="random baseline")
     ax1.set_xticks(x, [KEY_NAMES[r["target"]] for r in e["per_target"]],
                    fontsize=5.4)
-    ax1.set_ylabel("guarded TKR")
+    ax1.set_ylabel("success rate")
     ax1.set_ylim(0, 0.56)
-    ax1.set_title("(a) every injected key separates", loc="left", fontsize=7.5,
-                  color=INK)
+    ax1.set_title("(a) every installed key separates", loc="left",
+                  fontsize=7.5, color=INK)
     ax1.legend(frameon=False, fontsize=6, handlelength=1.1, loc="upper left",
                borderpad=0.1, handletextpad=0.5)
-    ax1.annotate("$12/12$ after Holm", xy=(0.98, 0.90), xycoords="axes fraction",
-                 ha="right", fontsize=6.2, color="#5A5A5A")
+    ax1.annotate("$12/12$ after correction", xy=(0.98, 0.90),
+                 xycoords="axes fraction", ha="right", fontsize=6.2,
+                 color="#5A5A5A")
 
     # ---- (b) pooled: controls, restricted writes, full edit
     kn = v["edit_vs_k1norm"]
     # short tick labels: the caption spells the conditions out, so the axis stays
     # legible at 3.5in. Two random controls first, then restricted writes, then all.
-    bars = [("K1", e["pooled_k1"], CTRL),
-            ("K1$^{\\mathrm{n}}$", kn["pooled_k1_norm"], CTRL2),
-            ("PITCH", v["conditions"]["pitch"]["pooled_guarded_tkr"], EDIT2),
-            ("B/D", v["conditions"]["bar_dur"]["pooled_guarded_tkr"], EDIT2),
+    bars = [("random", e["pooled_k1"], CTRL),
+            ("rescaled", kn["pooled_k1_norm"], CTRL2),
+            ("pitch only", v["conditions"]["pitch"]["pooled_guarded_tkr"], EDIT2),
+            ("bar+length", v["conditions"]["bar_dur"]["pooled_guarded_tkr"], EDIT2),
             ("all", e["pooled_guarded_tkr"], EDIT)]
     xb = np.arange(len(bars))
     ax2.bar(xb, [b[1] for b in bars], 0.66, color=[b[2] for b in bars], zorder=3)
