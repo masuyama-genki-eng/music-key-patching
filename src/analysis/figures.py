@@ -306,7 +306,9 @@ def _pianoroll(ax, ids: list[int], plen: int, cont_color: str, label: str,
     ax.set_xlim(0, xmax)
     ax.set_ylim(38, 92)
     ax.set_yticks([48, 60, 72, 84], ["C3", "C4", "C5", "C6"])
-    ax.set_xticks(range(0, xmax + 1, 64), [str(b) for b in range(0, xmax // 16 + 1, 4)])
+    # 小節番号は1始まり: 本文「8小節のプロンプト，第9小節から編集」と一致させ，
+    # 破線（位置 8*16）がちょうど bar 9 の開始に立つ。[2026-08-11]
+    ax.set_xticks(range(0, xmax + 1, 64), [str(b + 1) for b in range(0, xmax // 16 + 1, 4)])
     ax.set_title(label, loc="left", fontsize=7.2, color=INK, pad=2)
 
 
@@ -341,8 +343,9 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
     k_clean, k_edit = est(clean), est(edited)
     xmax = 18 * 16
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 2.7), sharex=True)
+    # 2026-08-11: "clean" は本文から追放した内部コード名なので図でも使わない。
     _pianoroll(ax1, clean, plen, READ,
-               f"(a) clean — continues in {kname(k_clean)}",
+               f"(a) no edit — continues in {kname(k_clean)}",
                p["src_key"], k_clean, xmax)
     _pianoroll(ax2, edited, plen, EDIT,
                f"(b) key edited to {tgt} — continues in {kname(k_edit)}",

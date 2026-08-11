@@ -922,3 +922,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/confirmatory/R-Aug_s0/parts/k4_ceiling.parquet`, `results/confirmatory/R-Aug_s0/k4_ceiling.json`
 - note: K4 raw=0.6482 (non-identity); edit/K4=0.5484
 
+## 2026-08-11T22:33:09+09:00 — P5 figures
+- git: `a30992720ed629fa1490a25bb6f8b8cfe4079e03+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+

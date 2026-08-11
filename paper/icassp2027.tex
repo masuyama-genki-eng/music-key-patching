@@ -1,5 +1,17 @@
 % TonalWM — ICASSP 2027 submission (4 pages + references)
 % ==========================================================================
+% 2026-08-11 FIG-CONSISTENCY PASS (Claude)，「図は論文と整合しているか」の照合で
+%   本文側の丸め誤り2件を発見・訂正（図の値が正しかった）:
+%   * 0.356 → 0.355: verdict.json の編集の成功率は pooled 0.355455 /
+%     調別平均 0.355472 で，3桁丸めはどちらも 0.355。0.356 は初期の誤丸めが
+%     監査をすり抜けて伝播していた。要旨と §5.2 を訂正（比 9.1・65%・CI は不変）。
+%   * 0.036 → 0.035: 音高位置のみは pooled 0.035455 / 調別平均 0.035458 → 0.035。
+%     §5.4 を訂正（「床 0.039 を下回る」は 0.035 でも成立）。
+%   図側の訂正2件（論文の表記に合わせる）: fig_framework (a) の "clean" を
+%   "no edit" に（内部コード名の残骸），小節番号を1始まりに（本文「第9小節から」
+%   と一致させ，破線が bar 9 に立つ）。図2キャプションは描画物に合わせて微修正
+%   （probe score と macro-F1 の橋渡し，灰色領域と chance 線の説明）。
+%
 % 2026-08-11 VERIFY PASS (Claude)，REVIEW-FIX v1 の★を全件照合して充足。
 %   * 誤り訂正1件: 「生のトークン埋め込みは別の読み取り点」は事実誤り。gpt.py の
 %     capture は8ブロックの出力のみを保存し，probe_report.json の読み取り点は
@@ -157,14 +169,14 @@ Causal Interventions on an Emergent Tonal Representation}
 % プローブは音楽モデルの活性から調を読み出せるが，調が読めることは，モデルが書く間にそれを使っていることを示さない．
 % 我々は，語彙が音高と時間だけを名指しし，調を決して名指ししない記号音楽で Transformer を訓練する．
 % 生成の途中で，1つの層で調を担う24次元の活性を，別の調でのその平均値に上書きし，入力の音符には1音も触れない．
-% 設計を事前に固定した最終テストでは，それ以前のどの実験も見ていないプロンプト上で，継続が書き込んだ調に入る割合は 0.356 であり，同じ書き込みをランダムな方向へ行うと 0.039 である．
+% 設計を事前に固定した最終テストでは，それ以前のどの実験も見ていないプロンプト上で，継続が書き込んだ調に入る割合は 0.355 であり，同じ書き込みをランダムな方向へ行うと 0.039 である．
 % モデルが何も生成しないうちに，新しい調の音に置かれる確率がすでに +0.26 上がる（ランダムでは +0.02）ので，効果は自分の出力からのフィードバックに先行する．
 % どちらの結果も，実音楽で訓練された公開モデルへそのまま移る．
 % したがって音楽 Transformer は調を計算し，上書きできる形で保持し，書きながらそれを参照している．テストベッドを公開する．
 Probes can read the musical key from a music model's activations, but reading a key does not show that the model uses it while it writes.
 We train Transformers on symbolic music whose vocabulary names pitches and timing, never a key.
 During generation we overwrite, in one layer, the $24$ activation dimensions that carry the key with their average in another key, leaving every input note untouched.
-In a final test fixed in advance, on prompts no earlier run had seen, the continuation is in the key we install for $0.356$ of the prompts, against $0.039$ for the same write into random directions.
+In a final test fixed in advance, on prompts no earlier run had seen, the continuation is in the key we install for $0.355$ of the prompts, against $0.039$ for the same write into random directions.
 Before the model generates anything, the probability it assigns to the notes of the new key already rises by $+0.26$, against $+0.02$, so the effect precedes feedback from its own output.
 Both results carry over to a public model trained on real music.
 A music Transformer therefore computes its key, holds it in a form we can overwrite, and consults it while it writes; we release the testbed.
@@ -535,7 +547,7 @@ Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so 
 \subsection{Overwriting the Key}
 \label{sec:h3}
 % 調の上書きは音楽を書き込んだ調へ移し，ランダムな上書きは移さない．
-% 最終テストの新規 100 プロンプト（図3）では，編集の成功率は 0.356，ランダムベースラインは 0.039 で，比は 9.1 である．
+% 最終テストの新規 100 プロンプト（図3）では，編集の成功率は 0.355，ランダムベースラインは 0.039 で，比は 9.1 である．
 % 12 の標的の調はすべて補正後に分離し（最悪で p=4.8×10^-5，効果量 r=0.72–1.00），プロンプト単位の差のブートストラップ 95% 信頼区間は [0.284, 0.347] である．
 % 品質の限度は編集の 84% を通し，限度を課さない場合の同じ割合は 0.410 であり，音符も移る（継続の音の 0.936 が書き込んだ調に，0.617 がプロンプトの調に属する）．
 % 長さを揃えたランダムベースライン（3.2節）は 0.056 にとどまり，編集は補正後 12/12 の調でこれと分離する．
@@ -546,7 +558,7 @@ Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so 
 % 採点; scripts/26 の succ = tkr & guard）。限度なしでは 0.71（confirmatory_L4.parquet
 % から算出，分母100，推定不能0件）。51.7% は限度なし → 対比は限度なし同士に揃えた。
 Overwriting the key moves the music into the key we install, and a random overwrite does not.
-On the $100$ fresh prompts of the final test (Fig.~\ref{fig:confirm}), the edit reaches a success rate of $0.356$ against $0.039$ for the random baseline, a ratio of $9.1$.
+On the $100$ fresh prompts of the final test (Fig.~\ref{fig:confirm}), the edit reaches a success rate of $0.355$ against $0.039$ for the random baseline, a ratio of $9.1$.
 All $12$ target keys separate after correction (worst $p=4.8\times10^{-5}$, effect size $r=0.72$--$1.00$), and the prompt-by-prompt difference has a bootstrap $95\%$ CI of $[0.284,0.347]$.
 The quality limit admits $84\%$ of edits, the same rate without that limit is $0.410$, and the notes cross over as well ($0.936$ of them in the installed key against $0.617$ in the prompt's).
 The length-matched random baseline of Section~\ref{sec:methodB} reaches $0.056$, and the edit separates from it in $12/12$ keys after correction.
@@ -638,14 +650,14 @@ Like the layer profile, we report both comparisons as observations, not as teste
 
 % どのトークン位置に書き込むかも，層の深さと同じくらい効く．
 % 音高の位置だけに書き込むと何も起こらず（成功率 0.077，ランダムベースラインの床と同じ）音楽も無傷のままだが，小節と音の長さの位置だけに書き込むと効果全体の 69% を運ぶ．
-% 最終テストは両方の半分を再現する：音高位置のみの書き込みは 0.036 で，ランダムベースラインの床 0.039 を下回り，分離するのは 0/12 の調である．一方，小節と音の長さの位置のみの書き込みは 0.233，すなわち効果全体の 65% に達し，11/12 で分離する．
+% 最終テストは両方の半分を再現する：音高位置のみの書き込みは 0.035 で，ランダムベースラインの床 0.039 を下回り，分離するのは 0/12 の調である．一方，小節と音の長さの位置のみの書き込みは 0.233，すなわち効果全体の 65% に達し，11/12 で分離する．
 % 音高位置のみの書き込みは，たしかに品質の限度内に収まる継続が多い（98% 対 84%）が，それは音楽をほとんど変えていないからにすぎない．
 % 音高の確率を単に押すだけの介入なら，逆の振る舞いを示すはずである．
 % したがって値が線形に読めることは，それがどこで使われるかの手掛かりとしては弱く，最も読み取りやすい方向が最もよくステアリングできる方向ではないという言語モデルでの報告と一致する．
 % 編集は，調が最も読みやすい場所でこそ効かない．
 The positions we write to matter as much as the depth.
 Writing only at pitch positions does nothing (success rate $0.077$, at the floor set by the random baseline) and leaves the music intact, while writing only at bar and note-length positions carries $69\%$ of the full effect.
-The final test reproduces both halves: writing only at pitch positions reaches $0.036$, below the random-baseline floor of $0.039$, and separates from it in $0/12$ keys, while writing only at bar and note-length positions reaches $0.233$, or $65\%$ of the full effect, and separates in $11/12$.
+The final test reproduces both halves: writing only at pitch positions reaches $0.035$, below the random-baseline floor of $0.039$, and separates from it in $0/12$ keys, while writing only at bar and note-length positions reaches $0.233$, or $65\%$ of the full effect, and separates in $11/12$.
 Writing only at pitch positions does keep more continuations inside the quality limit ($98\%$ against $84\%$), but only because it barely changes the music.
 An intervention that merely pushed on pitch probabilities would behave the other way around.
 Reading a value linearly is therefore a weak guide to where that value is used, which matches the report from language models that the direction easiest to read is not the one that steers best~\cite{wu2025axbench,arad2025selecting}.
@@ -655,14 +667,17 @@ The edit fails exactly where the key is easiest to read.
 \centering
 \includegraphics[width=0.74\columnwidth]{fig_layer_profile.pdf}
 % 図2キャプション
-% (a) 6モデルの層ごとのプローブ macro-F1（細線；シード0を強調）．
+% 2026-08-11 FIG-CONSISTENCY: 描画物と一致するよう微修正——(a) 図中の縦軸名
+% probe score と本文の macro-F1 を橋渡し，(b)「因果効果」→実際に描いている
+% 成功率へ，灰色領域と chance 点線の説明を追加。
+% (a) 6モデルの層ごとのプローブの点数——5.1節の macro-F1——（シード0を強調）．
 % 調は広い帯で読める．
-% (b) ランダムベースラインに対する編集の因果効果（帯：プロンプト単位のブートストラップ 95% CI）．
+% (b) 各層で編集したときの成功率（帯：プロンプト単位のブートストラップ 95% CI）；灰色の領域はランダムベースラインの信頼上限まで届き，点線は当てずっぽう（12分の1）を示す．
 % 出力が変わるのは狭い帯だけである．
 % 探索段階のデータである．最終テストは第4層に固定する．
-\caption{(a)~Probe macro-$F_1$ per layer for all six models (thin lines; seed~$0$ highlighted).
+\caption{(a)~The probe score per layer---the macro-$F_1$ of Section~\ref{sec:h1}---for all six models (seed~$0$ highlighted).
 We can read the key across a broad band.
-(b)~Causal effect of the edit against the random baseline (bands: prompt-level bootstrap $95\%$ CI).
+(b)~Success rate when we edit at each layer (band: prompt-level bootstrap $95\%$ CI); the gray region reaches up to the random baseline's confidence ceiling, and the dotted line marks chance (one key in $12$).
 The output changes only in a narrow band.
 Search-stage data; the final test fixes layer~$4$.}
 \label{fig:layers}

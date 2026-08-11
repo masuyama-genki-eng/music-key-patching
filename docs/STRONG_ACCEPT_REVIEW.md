@@ -42,7 +42,7 @@ rank 24) were selected on the old data and were **not** re-searched.
 
 | Quantity | Value |
 |---|---|
-| Edit, guarded strict TKR | **0.356** |
+| Edit, guarded strict TKR | **0.355** (pooled 0.355455) |
 | K1 (rank-matched random) | 0.039 → ratio **9.1×** |
 | K1-norm (magnitude-matched) | 0.056 |
 | Targets significant after Holm | **12/12** vs K1; **12/12** vs K1-norm |
@@ -72,8 +72,8 @@ Clean baseline mass 0.547; worst p = 5 × 10⁻¹⁶; r ≥ 0.99.
 
 | Arm | Guarded TKR | Significant | Guard |
 |---|---|---|---|
-| All positions | 0.356 | 12/12 | 84.0% |
-| PITCH only | **0.036** (below the K1 floor) | **0/12** | 98.4% |
+| All positions | 0.355 | 12/12 | 84.0% |
+| PITCH only | **0.035** (below the K1 floor) | **0/12** | 98.4% |
 | BAR/DUR only | 0.233 (**65%** of full) | 11/12 | 82.2% |
 
 An edit that worked by writing directly into pitch decisions would show the
