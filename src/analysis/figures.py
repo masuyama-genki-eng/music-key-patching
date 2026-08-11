@@ -76,7 +76,8 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     peak = int(layers[int(np.argmax(tkr))])
 
     fig, (ax1, axs) = plt.subplots(1, 2, figsize=(3.5, 1.95),
-                                   gridspec_kw={"width_ratios": [1.0, 1.05]})
+                                   gridspec_kw={"width_ratios": [1.0, 1.05]},
+                                   constrained_layout=True)
 
     # ---- (a): direct labels, no legend box
     ax1.plot(range(8), f1, color=READ, lw=1.6, marker="o", ms=3, zorder=4)
@@ -129,7 +130,6 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     axs.tick_params(labelsize=6.5)
     axs.set_title("(b) causal vs readability", fontsize=7.2, color=INK)
 
-    fig.subplots_adjust(wspace=0.52)
     fig.savefig(out)
     plt.close(fig)
 
