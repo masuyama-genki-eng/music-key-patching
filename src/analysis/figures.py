@@ -53,44 +53,47 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """The paper's central claim in one figure: the layer where the key can be READ
-    is the layer where editing it ACTS. A band + guide line ties the two panels at
-    the shared peak so the reader does not have to align two curves by eye."""
+    """The paper's central dissociation, styled after the MetaOthello layer
+    figures: bold outside panel tags, no legend boxes (direct labels only), and
+    the baseline drawn as a filled gray region with a bold in-fill label. The
+    palette stays Okabe-Ito (repo convention) rather than the reference's
+    sequential map, because here only two curves compete per panel."""
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.15), sharex=True,
                                    height_ratios=[1, 1.15])
 
-    # ---- (a) readout: ensemble of all six models, the highlighted one in front
+    # ---- (a) readout: all six models; baseline as a filled region
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
         name = r["model"]
         if not name.startswith(("R-Aug_", "R-NoAug_")):
-            continue                          # main-line L8 models only
+            continue
         curves[name] = [r["layers"][str(li)]["probe"]["macro_f1_24"] for li in range(8)]
-    for name, f1 in curves.items():
-        if name != highlight:
-            ax1.plot(range(8), f1, color=CTRL2, lw=0.8, alpha=0.55, zorder=2)
-    ax1.plot(range(8), curves[highlight], color=READ, lw=2.0, marker="o", ms=3.5,
-             zorder=4, label="probe (this model)")
-    ax1.plot([], [], color=CTRL2, lw=0.8, label="probe (5 other models)")
-
     r = json.loads((probing_root / highlight / "probe_report.json").read_text())
     best_c3 = max(v["macro_f1_24"] for v in r["c3"].values())
-    ax1.axhline(best_c3, color=BASE, lw=1.1, ls="--", zorder=3)
-    ax1.annotate("input baseline (C3)", xy=(0.99, best_c3),
-                 xycoords=ax1.get_yaxis_transform(), xytext=(0, 2),
-                 textcoords="offset points", color=BASE, ha="right", va="bottom",
-                 fontsize=6.5, zorder=5)
-    # the readout is a PLATEAU, not a peak: report the saturated band honestly
-    f1 = np.array(curves[highlight])
-    plateau = [i for i in range(8) if f1[i] >= f1.max() - 0.01]
-    ax1.set_ylabel("key macro-$F_1$")
-    ax1.set_ylim(0.32, 1.14)
-    ax1.set_title("(a) readout — decodable across a broad plateau", loc="left",
-                  fontsize=7.5, color=INK)
-    ax1.legend(frameon=False, loc="lower right", fontsize=6.5, handlelength=1.4)
 
-    # ---- (b) causal: edit vs matched random control, with prompt-level CIs
+    ax1.fill_between([-0.45, 7.45], 0, best_c3, color="#E4E4E4", zorder=0)
+    ax1.text(3.5, best_c3 - 0.045, "Input baseline", ha="center", va="top",
+             fontsize=7.5, fontweight="bold", color="#8A8A8A", zorder=1)
+    for name, f1 in curves.items():
+        if name != highlight:
+            ax1.plot(range(8), f1, color=CTRL2, lw=0.9, alpha=0.5, zorder=2)
+    ax1.plot(range(8), curves[highlight], color=READ, lw=2.2, marker="o", ms=3.6,
+             zorder=4)
+    # direct labels at the curve's right end — no legend box
+    ax1.annotate("probe", xy=(7, curves[highlight][7]), xytext=(5, 4),
+                 textcoords="offset points", color=READ, fontsize=7.5,
+                 fontweight="bold", ha="left", clip_on=False)
+    ax1.annotate("5 other models", xy=(7, min(c[7] for n, c in curves.items()
+                                              if n != highlight)),
+                 xytext=(5, -9), textcoords="offset points", color="#9A9A9A",
+                 fontsize=6.4, ha="left", clip_on=False)
+    ax1.set_ylabel("key macro-$F_1$")
+    ax1.set_ylim(0.35, 1.04)
+    ax1.text(-0.13, 1.02, "(a)", transform=ax1.transAxes, fontsize=10,
+             fontweight="bold", color="black")
+
+    # ---- (b) causal: edit vs K1, the control as a filled gray region
     edit = _load_sweep(sweep_dir, "v_probe_L*.parquet")
     k1 = _load_sweep(sweep_dir, "k1_r24_L*.parquet")
     layers = sorted(edit["layer"].unique())
@@ -106,41 +109,40 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
 
     em, el, eh = curve(edit)
     cm, cl, ch = curve(k1)
+    ax2.fill_between(layers, 0, ch, color="#E4E4E4", zorder=0)
+    ax2.text(3.5, 0.021, "Random control", ha="center", va="bottom",
+             fontsize=7.5, fontweight="bold", color="#8A8A8A", zorder=1)
     ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.18, lw=0, zorder=2)
-    ax2.plot(layers, em, color=EDIT, lw=2.0, marker="o", ms=3.5, zorder=4,
-             label="V-PROBE edit")
-    ax2.fill_between(layers, cl, ch, color=CTRL, alpha=0.15, lw=0, zorder=2)
-    ax2.plot(layers, cm, color=CTRL, lw=1.4, marker="s", ms=3, zorder=3,
-             label="K1 random matched")
+    ax2.plot(layers, em, color=EDIT, lw=2.2, marker="o", ms=3.6, zorder=4)
+    ax2.annotate("edit", xy=(7, em[7]), xytext=(5, 0),
+                 textcoords="offset points", color=EDIT, fontsize=7.5,
+                 fontweight="bold", ha="left", va="center", clip_on=False)
     ax2.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
-    # axis coords, so the label cannot drift off the plot when the layer count changes
     ax2.annotate("chance", xy=(0.99, 1 / 12), xycoords=ax2.get_yaxis_transform(),
                  xytext=(0, 2), textcoords="offset points", color=BASE, ha="right",
-                 va="bottom", fontsize=6.5, zorder=5)
+                 va="bottom", fontsize=6.4, zorder=5)
     peak_act = int(layers[int(np.argmax(em))])
-    ymax = max(eh) * 1.42
+    ymax = max(eh) * 1.38
     ax2.set_xlabel("layer")
     ax2.set_ylabel("guarded strict TKR")
     ax2.set_ylim(0, ymax)
-    ax2.set_xlim(-0.45, 7.5)
-    ax2.set_title("(b) causal — but only a narrow band acts", loc="left",
-                  fontsize=7.5, color=INK)
-    ax2.legend(frameon=False, loc="upper left", fontsize=6.5, handlelength=1.4,
-               borderpad=0.2)
+    ax2.set_xlim(-0.45, 7.45)
+    ax2.set_xticks(range(8))
+    ax2.text(-0.13, 1.02, "(b)", transform=ax2.transAxes, fontsize=10,
+             fontweight="bold", color="black")
 
-    # ---- tie the panels: the readout plateau (a) vs the causal peak (b)
-    ax1.axvspan(min(plateau) - 0.45, max(plateau) + 0.45, color=BAND, zorder=0)
-    ax1.annotate(f"readout saturates L{min(plateau)}–L{max(plateau)}",
-                 xy=(np.mean(plateau), 1.03), ha="center", va="bottom", fontsize=6.8,
-                 color="#5A5A5A")
+    # ---- tie the panels at the causal peak
     for ax in (ax1, ax2):
         ax.axvline(peak_act, color="#9A9A9A", lw=0.9, ls="--", zorder=1)
-    ax2.axvspan(peak_act - 0.42, peak_act + 0.42, color=BAND, zorder=0)
     ax2.annotate(f"causal peak L{peak_act}", xy=(peak_act, eh[peak_act] + 0.012),
-                 xytext=(peak_act, ymax * 0.985), fontsize=6.8, color=EDIT,
+                 xytext=(peak_act, ymax * 0.985), fontsize=7.2, color=EDIT,
                  fontweight="bold", ha="center", va="top",
-                 arrowprops=dict(arrowstyle="->", lw=0.8, color=EDIT,
+                 arrowprops=dict(arrowstyle="->", lw=0.9, color=EDIT,
                                  shrinkA=1, shrinkB=0))
+    for ax in (ax1, ax2):
+        for sp in ax.spines.values():
+            sp.set_linewidth(0.9)
+        ax.tick_params(labelsize=7)
     fig.savefig(out)
     plt.close(fig)
 
