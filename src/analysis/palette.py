@@ -40,12 +40,20 @@ ROLE = {                  # for legends / captions
 
 
 def rcparams() -> dict:
+    # 2026-08-11 著者指示による改訂:
+    #   軸・目盛は黒 (旧: 灰の「控えめな軸」スタイル)，
+    #   フォントは STIX セリフ (旧: DejaVu Sans — 丸文字に見える)，
+    #   線端は butt/miter でシャープに (旧: 既定の丸キャップ)。
     return {
         "font.size": 8, "axes.titlesize": 8, "axes.labelsize": 8,
         "xtick.labelsize": 7, "ytick.labelsize": 7, "legend.fontsize": 7,
+        "font.family": "STIXGeneral", "mathtext.fontset": "stix",
         "axes.spines.top": False, "axes.spines.right": False,
-        "axes.edgecolor": "#999999", "axes.labelcolor": INK,
-        "xtick.color": "#666666", "ytick.color": "#666666",
-        "text.color": INK,
+        "axes.edgecolor": "#000000", "axes.linewidth": 0.9,
+        "axes.labelcolor": "#000000",
+        "xtick.color": "#000000", "ytick.color": "#000000",
+        "xtick.major.width": 0.9, "ytick.major.width": 0.9,
+        "text.color": "#111111",
+        "lines.solid_capstyle": "butt", "lines.solid_joinstyle": "miter",
         "figure.constrained_layout.use": True, "pdf.fonttype": 42,
     }
