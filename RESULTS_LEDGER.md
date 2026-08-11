@@ -915,3 +915,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/probing/R-Aug_s0/mu_balance.json`
 - note: majors 7530-9237/class (ratio 1.23); all 24 mu nonzero (L4 norms 107.3-132.0); the main model's targets pass the check the M-WILD first run failed
 
+## 2026-08-11T18:04:29+09:00 — CONFIRMATORY K4 ceiling R-Aug_s0 (AMENDMENT 2)
+- git: `00421dc82f4566f4398950bc875973ad8c0e952c+DIRTY`
+- config_hash: `58fa472777c351cd0929ffd222a168f05a86d18dfe5f611ec71d5ce8ccaa72f7`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/parts/k4_ceiling.parquet`, `results/confirmatory/R-Aug_s0/k4_ceiling.json`
+- note: K4 raw=0.6482 (non-identity); edit/K4=0.5484
+

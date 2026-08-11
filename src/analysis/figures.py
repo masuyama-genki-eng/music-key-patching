@@ -331,7 +331,7 @@ def fig_framework(samples_dir: Path, out: Path, prompt_idx: int = 0,
 
     k_clean, k_edit = est(clean), est(edited)
     xmax = 18 * 16
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 2.95), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 2.7), sharex=True)
     _pianoroll(ax1, clean, plen, READ,
                f"(a) clean — continues in {kname(k_clean)}",
                p["src_key"], k_clean, xmax)
@@ -724,7 +724,7 @@ def fig_confirmatory(confirm_root: Path, out: Path) -> None:
     not by value."""
     v = json.loads((confirm_root / "verdict.json").read_text())
     e = v["conditions"]["edit"]
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.5, 2.1),
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.5, 1.95),
                                    gridspec_kw={"width_ratios": [1.5, 1]})
 
     # ---- (a) per target
