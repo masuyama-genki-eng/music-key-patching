@@ -53,15 +53,16 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """The paper's central dissociation, styled after the MetaOthello layer
-    figures: bold outside panel tags, no legend boxes (direct labels only), and
-    the baseline drawn as a filled gray region with a bold in-fill label. The
-    palette stays Okabe-Ito (repo convention) rather than the reference's
-    sequential map, because here only two curves compete per panel."""
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.5, 3.15), sharex=True,
-                                   height_ratios=[1, 1.15])
-
-    # ---- (a) readout: all six models; baseline as a filled region
+    """Styled after the SIGIR-style reference the authors supplied (2026-08-11):
+    (a) a dual-axis layer profile with axis labels tinted in their curve's color
+    and a dashed marker line at the frozen edit layer; (b) a metric-vs-metric
+    scatter (causal effect vs readability) with the layer index encoded by a
+    viridis colorbar and the frozen layer circled. Panel (b) states the paper's
+    dissociation in one look: readability clusters while causal effect spans an
+    order of magnitude. NOTE: (a) deliberately deviates from the repo's
+    one-axis-per-panel rule at the authors' direction; the two axes are
+    color-matched to their curves, as in the reference."""
+    # ---- data
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
@@ -69,80 +70,65 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
         if not name.startswith(("R-Aug_", "R-NoAug_")):
             continue
         curves[name] = [r["layers"][str(li)]["probe"]["macro_f1_24"] for li in range(8)]
-    r = json.loads((probing_root / highlight / "probe_report.json").read_text())
-    best_c3 = max(v["macro_f1_24"] for v in r["c3"].values())
-
-    ax1.fill_between([-0.45, 7.45], 0, best_c3, color="#E4E4E4", zorder=0)
-    ax1.text(3.5, best_c3 - 0.045, "Input baseline", ha="center", va="top",
-             fontsize=7.5, fontweight="bold", color="#8A8A8A", zorder=1)
-    for name, f1 in curves.items():
-        if name != highlight:
-            ax1.plot(range(8), f1, color=CTRL2, lw=0.9, alpha=0.5, zorder=2)
-    ax1.plot(range(8), curves[highlight], color=READ, lw=2.2, marker="o", ms=3.6,
-             zorder=4)
-    # direct labels at the curve's right end — no legend box
-    ax1.annotate("probe", xy=(7, curves[highlight][7]), xytext=(5, 4),
-                 textcoords="offset points", color=READ, fontsize=7.5,
-                 fontweight="bold", ha="left", clip_on=False)
-    ax1.annotate("5 other models", xy=(7, min(c[7] for n, c in curves.items()
-                                              if n != highlight)),
-                 xytext=(5, -9), textcoords="offset points", color="#9A9A9A",
-                 fontsize=6.4, ha="left", clip_on=False)
-    ax1.set_ylabel("key macro-$F_1$")
-    ax1.set_ylim(0.35, 1.04)
-    ax1.text(-0.13, 1.02, "(a)", transform=ax1.transAxes, fontsize=10,
-             fontweight="bold", color="black")
-
-    # ---- (b) causal: edit vs K1, the control as a filled gray region
+    f1 = np.array(curves[highlight])
     edit = _load_sweep(sweep_dir, "v_probe_L*.parquet")
     k1 = _load_sweep(sweep_dir, "k1_r24_L*.parquet")
     layers = sorted(edit["layer"].unique())
+    tkr = np.array([edit[edit["layer"] == li]["succ"].mean() for li in layers])
+    k1m = float(k1["succ"].mean())
+    peak = int(layers[int(np.argmax(tkr))])
 
-    def curve(df):
-        mean, lo, hi = [], [], []
-        for li in layers:
-            per_prompt = (df[df["layer"] == li].groupby("prompt_idx")["succ"].mean())
-            m = per_prompt.mean()
-            l, h = _boot_ci(per_prompt.values)
-            mean.append(m); lo.append(l); hi.append(h)
-        return np.array(mean), np.array(lo), np.array(hi)
+    fig, (ax1, axs) = plt.subplots(1, 2, figsize=(3.5, 1.95),
+                                   gridspec_kw={"width_ratios": [1.0, 1.12]})
 
-    em, el, eh = curve(edit)
-    cm, cl, ch = curve(k1)
-    ax2.fill_between(layers, 0, ch, color="#E4E4E4", zorder=0)
-    ax2.text(3.5, 0.021, "Random control", ha="center", va="bottom",
-             fontsize=7.5, fontweight="bold", color="#8A8A8A", zorder=1)
-    ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.18, lw=0, zorder=2)
-    ax2.plot(layers, em, color=EDIT, lw=2.2, marker="o", ms=3.6, zorder=4)
-    ax2.annotate("edit", xy=(7, em[7]), xytext=(5, 0),
-                 textcoords="offset points", color=EDIT, fontsize=7.5,
-                 fontweight="bold", ha="left", va="center", clip_on=False)
-    ax2.axhline(1 / 12, color=BASE, lw=0.9, ls=":", zorder=1)
-    ax2.annotate("chance", xy=(0.99, 1 / 12), xycoords=ax2.get_yaxis_transform(),
-                 xytext=(0, 2), textcoords="offset points", color=BASE, ha="right",
-                 va="bottom", fontsize=6.4, zorder=5)
-    peak_act = int(layers[int(np.argmax(em))])
-    ymax = max(eh) * 1.38
-    ax2.set_xlabel("layer")
-    ax2.set_ylabel("guarded strict TKR")
-    ax2.set_ylim(0, ymax)
-    ax2.set_xlim(-0.45, 7.45)
-    ax2.set_xticks(range(8))
-    ax2.text(-0.13, 1.02, "(b)", transform=ax2.transAxes, fontsize=10,
-             fontweight="bold", color="black")
+    # ---- (a) dual-axis profile, axis labels tinted like the reference
+    l1, = ax1.plot(range(8), f1, color=READ, lw=1.6, marker="o", ms=3,
+                   zorder=4, label="probe $F_1$")
+    ax1.set_ylabel("key macro-$F_1$", color=READ, fontsize=7)
+    ax1.tick_params(axis="y", labelcolor=READ, labelsize=6.5)
+    ax1.set_ylim(0.3, 1.0)
+    ax1.set_xlabel("layer", fontsize=7)
+    ax1.set_xticks(range(0, 8, 2))
+    ax1.tick_params(axis="x", labelsize=6.5)
+    ax1b = ax1.twinx()
+    l2, = ax1b.plot(range(8), tkr, color=EDIT, lw=1.6, marker="s", ms=3,
+                    zorder=4, label="guarded $\\mathrm{TKR}$")
+    ax1b.set_ylabel("guarded TKR", color=EDIT, fontsize=7)
+    ax1b.tick_params(axis="y", labelcolor=EDIT, labelsize=6.5)
+    ax1b.set_ylim(0, 0.45)
+    lv = ax1.axvline(peak, color="#D02020", lw=1.0, ls="--", zorder=2)
+    ax1.legend([l1, l2, lv], ["probe $F_1$", "guarded TKR", f"edit layer L{peak}"],
+               frameon=True, framealpha=0.9, edgecolor="#CCCCCC",
+               fontsize=5.6, loc="lower right", borderpad=0.3,
+               handlelength=1.5)
+    ax1.set_title("(a) profile by layer", fontsize=7.2, color=INK)
 
-    # ---- tie the panels at the causal peak
-    for ax in (ax1, ax2):
-        ax.axvline(peak_act, color="#9A9A9A", lw=0.9, ls="--", zorder=1)
-    ax2.annotate(f"causal peak L{peak_act}", xy=(peak_act, eh[peak_act] + 0.012),
-                 xytext=(peak_act, ymax * 0.985), fontsize=7.2, color=EDIT,
-                 fontweight="bold", ha="center", va="top",
-                 arrowprops=dict(arrowstyle="->", lw=0.9, color=EDIT,
-                                 shrinkA=1, shrinkB=0))
-    for ax in (ax1, ax2):
-        for sp in ax.spines.values():
-            sp.set_linewidth(0.9)
-        ax.tick_params(labelsize=7)
+    # ---- (b) causal effect vs readability, layer as a viridis colorbar
+    order = np.argsort(range(8))
+    axs.plot(f1, tkr, color="#BBBBBB", lw=0.8, zorder=2)
+    sc = axs.scatter(f1, tkr, c=range(8), cmap="viridis", s=26, zorder=4,
+                     edgecolors="white", linewidths=0.4)
+    # circle the frozen layer, reference-style
+    axs.scatter([f1[peak]], [tkr[peak]], s=64, facecolors="none",
+                edgecolors="black", linewidths=1.0, zorder=5)
+    axs.annotate(f"L{peak}", xy=(f1[peak], tkr[peak]), xytext=(-2, 6),
+                 textcoords="offset points", ha="right", fontsize=6.2,
+                 color=INK, fontweight="bold")
+    axs.axhline(k1m, color=BASE, lw=0.9, ls=":", zorder=1)
+    axs.annotate("K1 random", xy=(0.03, k1m), xycoords=axs.get_yaxis_transform(),
+                 xytext=(0, 2), textcoords="offset points", fontsize=5.8,
+                 color=BASE, ha="left", va="bottom")
+    axs.set_xlabel("key macro-$F_1$ (readability)", fontsize=7)
+    axs.set_ylabel("guarded TKR (causal)", fontsize=7)
+    axs.set_ylim(0, 0.45)
+    axs.tick_params(labelsize=6.5)
+    axs.set_title("(b) causal effect vs readability", fontsize=7.2, color=INK)
+    cb = fig.colorbar(sc, ax=axs, fraction=0.055, pad=0.03)
+    cb.set_label("layer", fontsize=6.5)
+    cb.set_ticks([0, 2, 4, 6])
+    cb.ax.tick_params(labelsize=6)
+
+    fig.subplots_adjust(wspace=0.55)
     fig.savefig(out)
     plt.close(fig)
 

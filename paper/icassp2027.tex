@@ -431,11 +431,12 @@ al.~\cite{arad2025selecting} in language models.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.74\columnwidth]{fig_layer_profile.pdf}
-\caption{(a)~Probe macro-$F_1$ per layer, all six models; gray marks the best
-input baseline. The key is readable across a broad band. (b)~Causal effect of
-the edit (band: prompt-level bootstrap $95\%$ CI); gray reaches to the K1
-control's CI ceiling. Only a narrow band acts. Selection-phase data; the
-confirmatory run fixes L$4$.}
+\caption{(a)~Probe macro-$F_1$ (blue, left axis) and guarded $\tkr$ of the
+edit (vermilion, right axis) per layer; the dashed line marks the frozen edit
+layer. (b)~Causal effect against readability, one point per layer (color:
+depth); the frozen layer is circled and the dotted line is the K1 random
+control. Readability clusters while causal effect spans an order of magnitude.
+Selection-phase data, seed~$0$; per-seed variants in the supplementary.}
 \label{fig:layers}
 \end{figure}
 
