@@ -41,20 +41,27 @@ def main() -> None:
     ap.add_argument("--n-prompts", type=int, default=100)
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--no-ledger", action="store_true")
+    ap.add_argument("--mode", choices=["major", "minor"], default="major",
+                    help="minor = AMENDMENT 3 secondary condition")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     from src.probing.extract import load_model
     name = Path(args.model_dir).name
+    if args.mode == "minor":                       # AMENDMENT 3 artifact tree
+        name = f"{name}_minor"
     outdir = REPO / "results/confirmatory" / name
     gen_cfg = yaml.safe_load(Path(args.gen_config).read_text())
 
     model = load_model(str(Path(args.model_dir) / "final.pt"), device)
     prompts, rows_used = confirm.select_prompts_holdout(args.test_parquet,
-                                                        args.n_prompts)
+                                                        args.n_prompts,
+                                                        mode=args.mode)
+    targets = MAJOR_TARGETS if args.mode == "major" \
+        else [t + 12 for t in MAJOR_TARGETS]
     rows = []
-    for tgt in MAJOR_TARGETS:
+    for tgt in targets:
         log.info("k4 target %d", tgt)
         tp = [SW.transpose_prompt(p, (tgt - p.src_key) % 12) for p in prompts]
         conts = SW.generate_batch(model, tp, lambda plen: None, gen_cfg, device,

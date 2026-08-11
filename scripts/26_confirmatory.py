@@ -48,8 +48,15 @@ GEN_SEED = 7                                     # frozen
 ARMS = {"edit": None, "pitch": sel.MASKS["pitch"], "bar_dur": sel.MASKS["bar_dur"]}
 
 
-def select_prompts_holdout(test_parquet: str, n: int, prompt_bars: int = 8):
-    """First n stable-major pieces at rows >= HOLDOUT_START (frozen rule)."""
+def select_prompts_holdout(test_parquet: str, n: int, prompt_bars: int = 8,
+                           mode: str = "major"):
+    """First n stable pieces of the given mode at rows >= HOLDOUT_START.
+
+    mode="major" is the frozen rule of the primary final test (0d621e4).
+    mode="minor" is the pre-registered secondary condition (AMENDMENT 3):
+    same rule with the mode flipped (stable pieces whose key is 12..23).
+    A piece is stable-major or stable-minor, never both, so the two prompt
+    sets cannot overlap."""
     tbl = pq.read_table(test_parquet, columns=["token_ids", "key_labels"])
     out, rows = [], []
     ids_all = tbl.column("token_ids").to_pylist()
@@ -60,7 +67,11 @@ def select_prompts_holdout(test_parquet: str, n: int, prompt_bars: int = 8):
         if len(bar_pos) <= prompt_bars:
             continue
         cut = bar_pos[prompt_bars]
-        if len(set(lab[:cut])) != 1 or lab[0] >= 12:
+        if len(set(lab[:cut])) != 1:
+            continue
+        if mode == "major" and lab[0] >= 12:
+            continue
+        if mode == "minor" and lab[0] < 12:
             continue
         out.append(Prompt(ids=ids[:cut], src_key=lab[0]))
         rows.append(ri)
@@ -83,12 +94,18 @@ def main() -> None:
     ap.add_argument("--n-prompts", type=int, default=100)
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--no-ledger", action="store_true")
+    ap.add_argument("--mode", choices=["major", "minor"], default="major",
+                    help="minor = pre-registered secondary condition "
+                         "(AMENDMENT 3): stable-minor prompts, minor targets, "
+                         "artifacts under <model>_minor/")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     name = Path(args.model_dir).name
-    outdir = REPO / "results/confirmatory" / name
+    if args.mode == "minor":                       # AMENDMENT 3: separate artifact
+        name = f"{name}_minor"                     # tree; never overwrite the
+    outdir = REPO / "results/confirmatory" / name  # primary (major) verdict
     (outdir / "parts").mkdir(parents=True, exist_ok=True)
     gen_cfg = yaml.safe_load(Path(args.gen_config).read_text())
     gen_cfg["layer"] = args.layer
@@ -96,8 +113,11 @@ def main() -> None:
 
     model = load_model(str(Path(args.model_dir) / "final.pt"), device)
     mref = load_model(str(Path(args.mref_dir) / "final.pt"), device)
-    prompts, rows_used = select_prompts_holdout(args.test_parquet, args.n_prompts)
-    log.info("holdout prompts: rows %d..%d (frozen rule)", rows_used[0], rows_used[-1])
+    prompts, rows_used = select_prompts_holdout(args.test_parquet, args.n_prompts,
+                                                mode=args.mode)
+    targets = MAJOR_TARGETS if args.mode == "major" else [t + 12 for t in MAJOR_TARGETS]
+    log.info("holdout prompts (%s): rows %d..%d (frozen rule)", args.mode,
+             rows_used[0], rows_used[-1])
     pw = np.load(Path(args.probing_dir) / "probe_weights.npz")
     cm = np.load(Path(args.probing_dir) / "class_means.npz")
     V = v_probe(pw[f"layer_{args.layer}"], rank=24)
@@ -141,7 +161,7 @@ def main() -> None:
                                mode="replace", norm_ref=r)
             return e
 
-        for tgt in MAJOR_TARGETS:
+        for tgt in targets:
             log.info("%s target %d", cond, tgt)
             conts = gen(lambda plen, t=tgt: ed_fn(plen, t), mask_fn)
             rows, _ = SW.rows_for_condition(
@@ -157,7 +177,7 @@ def main() -> None:
     # ---------------- frozen statistics (identity cells excluded from primary)
     def per_target_stats(cond, ctrl="k1"):
         recs, pvals = [], []
-        for tgt in MAJOR_TARGETS:
+        for tgt in targets:
             e = df[(df["cond"] == cond) & (df["target_key"] == tgt) & ~df["identity"]]
             k = df[(df["cond"] == ctrl) & (df["target_key"] == tgt) & ~df["identity"]]
             e = e.sort_values("prompt_idx"); k = k.sort_values("prompt_idx")

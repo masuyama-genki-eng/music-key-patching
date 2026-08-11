@@ -151,3 +151,62 @@ without the held-out ceiling's own raw value (author review, 2026-08-11).
 - Identity cells excluded from the ratio, matching the primary analysis.
 - Frozen prediction, stated before the run: raw K4 near the selection-phase
   0.652; the held-out edit/K4 ratio near 55%.
+
+---
+
+## AMENDMENT 3 — minor-mode secondary condition (pre-registered before any minor artifact exists)
+
+Date: 2026-08-11. At this commit, `results/confirmatory/R-Aug_s0_minor/` does
+not exist and no minor-target edit has ever been generated; this amendment
+therefore predates every artifact of the condition it registers, in the same
+sense as the original freeze (0d621e4) and AMENDMENTS 1–2.
+
+SPEC registers minor-mode targets as the secondary condition ("mode 固定
+major を主、minor は副"). This amendment fixes its execution. **Everything not
+listed below is identical to the frozen primary design**, including: layer 4,
+V-PROBE rank 24 (SVD-orthonormalized), sustained replace edit from bar 9,
+guard delta_ppl = 0.613 with limit-breakers counted as failures in the
+denominator, arms edit / pitch / bar_dur plus K1 / K1-norm (K1 basis formula
+`GEN_SEED + 31 * layer`), K2 sham gate FIRST with gate-failure = stop,
+GEN_SEED = 7, n = 100 prompts, identity cells (target == src) excluded from
+the primary statistics and reported as a sanity check, one-sided Wilcoxon
+signed-rank per target paired by prompt, Holm across the 12 targets,
+rank-biserial r, BCa bootstrap CI, and the generation config (temperature 1.0,
+top-p 0.95, max 384 tokens, first 16 bars scored).
+
+What changes:
+
+1. **Prompts**: the first 100 stable-**minor** pieces at test.parquet rows
+   >= 6000 (`select_prompts_holdout(..., mode="minor")` — the frozen major
+   rule with the mode test flipped). Feasibility verified without generating
+   anything: rows 6004–6417 supply 100 stable-minor prompts covering all 12
+   minor classes (3–14 prompts per class). A piece is stable-major or
+   stable-minor, never both, so no prompt is shared with the primary test.
+2. **Targets**: the 12 minor keys (classes 12–23). Class-mean targets are not
+   degenerate: 3,365–4,293 positions per minor class (max/min 1.28;
+   `results/probing/R-Aug_s0/mu_balance.json`, checked 2026-08-11 before this
+   amendment).
+3. **Artifacts**: `results/confirmatory/R-Aug_s0_minor/{parts/, verdict.json}`
+   (+ `k4_ceiling.json` via scripts/29 `--mode minor`, AMENDMENT 2
+   conventions). The primary (major) artifact tree is never touched.
+4. **Scale membership (share-of-in-key-notes)**: the code's existing frozen
+   definition — for minor keys the union of the minor scale forms
+   (`DIATONIC_MINOR_UNION`, src/eval/keyest.py, documented there). The
+   corpus generates harmonic minor, a subset of that union; the paper states
+   the union definition explicitly.
+5. **Specificity**: computed as in the primary run; additionally one derived
+   cell from the parquet — the share of continuations whose estimated key is
+   the **relative major** of the installed minor key (the KS confusion
+   specific to mode).
+6. **Decision rule**: same as the primary — the edit separates from K1 (and
+   from K1-norm) per target after Holm; we report the number of separating
+   targets and the pooled guarded success rate. The outcome is reported in
+   the paper whichever way it goes.
+
+NOT registered here: a minor-mode next-pitch test (scripts/27 currently
+builds major-scale masks only). If we run one, a further amendment must be
+committed before it, defining the minor scale mask.
+
+Runner: `scripts/26_confirmatory.py --mode minor` then
+`scripts/29_confirmatory_k4.py --mode minor` (code prepared at this commit;
+nothing has been executed — the GPU is down pending a reboot).

@@ -1185,3 +1185,18 @@ pre-submission task (run 08 with --supplementary).
   REBUTTAL_NOTES.md（検定等価性・ガード窓非対称・距離分解表・評価対応表）。
 - 未処置（著者判断/環境待ち）: 短調ラン（事前チェック全通過，GPU ドライバ
   不整合が障害），聴取実験の実施判断，匿名リポジトリ，Paper ID，spconf 実機。
+
+## 2026-08-11 — AMENDMENT 3 事前登録 + 短調ランのコード準備（実行はまだ）
+
+- docs/CONFIRMATORY_FREEZE.md に AMENDMENT 3 を追記: 短調の副条件
+  （安定短調プロンプト rows≥6000 の先頭100本・短調12標的・アーティファクトは
+  R-Aug_s0_minor/ 別ツリー・音階内割合は短音階諸形の合併・特異性に相対長調
+  セル・判定規則は主解析と同一）。**短調のアーティファクトが1つも存在しない
+  時点でのコミット** = 主凍結と同じ意味で事前登録。
+- scripts/26_confirmatory.py / 29_confirmatory_k4.py に --mode minor を追加
+  （選択規則は主規則の mode 反転のみ; 実行可能性チェックのみ実施 —
+  短調100本 rows 6004–6417・全12クラス, 生成ゼロ）。
+- 聴取実験は著者指示により最後尾へ（docs/LISTENING_TEST_DESIGN.md は DRAFT のまま）。
+- GPU はドライバ不整合のため再起動待ち。再起動後の手順:
+  1) nvidia-smi 確認 → 2) `scripts/26_confirmatory.py --mode minor`
+  → 3) `scripts/29_confirmatory_k4.py --mode minor` → 4) 監査・本文反映。
