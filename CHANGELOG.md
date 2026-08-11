@@ -1098,3 +1098,46 @@ default build produces only what the paper needs. The generation functions
 stay in src/analysis/figures.py because the manuscript promises these analyses
 in the supplementary at the reproducibility URL; building that pack is a
 pre-submission task (run 08 with --supplementary).
+
+## 2026-08-11 — VERIFY PASS: REVIEW-FIX v1 の★項目を全件照合して充足 (manuscript only)
+
+著者提供の REVIEW-FIX PASS v1 版を採用し，★（要確認/要追記）を artifact・コード・
+文献で全件検証して埋めた。実験・図・artifact は一切変更していない。
+
+**事実誤りの訂正 (1件)**
+- 「生のトークン埋め込みは別の読み取り点」→ 誤り。src/model/gpt.py の forward() は
+  8ブロックの出力のみ capture し，probe_report.json の読み取り点は層0–7の8点だけ。
+  −0.20 は層0（第1ブロック出力）のマージン（verdict_DR-H1.json: −0.197
+  [−0.211, −0.182]）。§3冒頭・§5.1 を「層0＝第1ブロック出力，埋め込みからは
+  読まない」に訂正。
+
+**本文に新規追加した数値と，その導出**
+- identity 限度なし 0.71: results/confirmatory/R-Aug_s0/parts/confirmatory_L4.parquet
+  の edit×identity セル（n=100，est 不能 0 件）の tkr_strict 平均。ガード付き 0.650
+  （verdict.json identity_sanity）との対比を限度なし同士（0.71 vs 51.7%）に整合。
+- 層間転移: sweep parts（k3_L{ℓ}_from{(ℓ+4)%8}）から guarded 成功率を算出。
+  L1←L5 0.274 / L2←L6 0.387 / L3←L7 0.312（本文「0.27–0.39」），逆向き
+  L0←L4 0.003, L4←L0 0.064, L5←L1 0.081, L6←L2 0.082, L7←L3 0.078
+  （本文「0.003–0.082」）。CHANGELOG 既存の K3 表と一致。
+- 手続きの定数（すべて既存 config/コードの転記）: 温度 1.0 / top-p 0.95 /
+  max 384 トークン / 16小節採点（configs/gen.yaml, sweep.py pitches_and_bars），
+  KS は音高8個未満で判定不能→失敗（metrics.py continuation_key + fillna(False)），
+  ガード窓 = 転調境界の前後24トークン（guard.py, delta_ppl.json window_tokens=24），
+  検定 = 調ごと・プロンプト対の片側 Wilcoxon 符号順位 + Holm，r = 順位双列相関
+  （26_confirmatory.py, stats.py）。
+- 次ピッチ 0.695 → 「比が約2倍」（e^0.6953 = 2.004，next_pitch.json）。
+
+**その他の充足**
+- 0.824 = lr_W16cat512（2窓連結; c3_window_ext.json best_c3）。実験D（台帳
+  2026-08-05）は当初プロトコル（W≤64）の後・凍結 0d621e4（08-08）の前 → 本文に明記。
+- at_note 反転: probe 0.545 vs 数え 0.454，マージン +0.042 [−0.033, +0.092]
+  （mwild/at_note/mwild_probe.json）→ §4.2 の要約と一致。
+- 特異性の分母 = 限度なし・非同一調・推定可能セル（0.410/0.0845/0.5173 を再計算し
+  本文 41.0/8.5/51.7 と一致確認）→ 1句明示。
+- 要旨: 著者キット規定「約100–150語」＋80mm。指定の2箇所を削って約170語，
+  実測 66.1mm（80mm 以内）。さらなる短縮は内容判断として著者へ。
+- 文献再確認: Facchiano+ 2025 (arXiv:2504.04479) は加算型ステアリング（テンポ・
+  音色）で調の上書きテストではない → §1 の主張維持，§2.1 に引用追加
+  （refs.bib: facchiano2025patching）。
+- スプライス＝探索段階（scripts/19,20 は select_prompts 使用），K2 ゲート文言，
+  §5 冒頭の前提条件記述，図3(b) の項目 — すべて照合済み。

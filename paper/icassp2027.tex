@@ -1,71 +1,107 @@
 % TonalWM — ICASSP 2027 submission (4 pages + references)
 % ==========================================================================
+% 2026-08-11 VERIFY PASS (Claude)，REVIEW-FIX v1 の★を全件照合して充足。
+%   * 誤り訂正1件: 「生のトークン埋め込みは別の読み取り点」は事実誤り。gpt.py の
+%     capture は8ブロックの出力のみを保存し，probe_report.json の読み取り点は
+%     層0–7の8点だけ。−0.20 は層0（第1ブロック出力）のマージン
+%     （正確には −0.197 [−0.211, −0.182]）。§3冒頭と§5.1を訂正した。
+%   * 要旨: 著者キットの規定は「約100–150語」＋物理 80 mm 以内（複数年版で共通）。
+%     指定の2箇所（S4後半の詳細・S6括弧）を削って約165語。80 mm 以内はビルドで
+%     実測すること。100–150語まで縮めるにはさらに内容判断が要るため，そこで止めた。
+%   * 文献再確認 (2026-08-11): Facchiano+ 2025 (arXiv:2504.04479) は加算型
+%     ステアリング（テンポ・音色）で調の上書きテストではない → §1の主張は維持，
+%     §2.1 に引用として追加（refs.bib に facchiano2025patching を追加）。
+%   * 0.824 = 2窓連結 lr_W16cat512（台帳 2026-08-05, c3_window_ext.json）。
+%     拡張3種は当初プロトコル（W≤64）の後・最終テスト凍結 0d621e4（08-08）の前
+%     → その旨を §5.1 に明記。
+%   * 同一調据え付け 0.650 はガード付き（見出しと同じ採点）。限度なしでは 0.71
+%     （分母100，推定不能0件）→ 51.7%（限度なし）との対比を限度なし同士に揃えた。
+%   * 特異性の分母 = 限度なし・推定可能セル（41.0% = 0.410 と一致）→ 1句明示。
+%   * 層間転移の実数: 層5–7の方向を4層手前（層1–3）へ → 0.27–0.39; 逆向きは
+%     ランダム床相当 0.003–0.082（sweep parts から算出，CHANGELOG の表と一致）。
+%   * 要追記5件を充足: 継続の長さとサンプリング（最大384トークン=16小節，温度1.0，
+%     top-p 0.95，固定シード，1プロンプト×1標的につき1本）/ KS は継続全体
+%     （16小節打ち切り，音高8個未満は失敗扱い）/ 限度0.613の計算窓（転調境界の
+%     前後24トークンずつ; 編集時は継続全体の上昇で課金）/ 検定 = 調ごと・
+%     プロンプト対の片側 Wilcoxon 符号順位＋Holm 補正，r = 順位双列相関 /
+%     次ピッチ2量の定義（全語彙 softmax の音階質量とその対数比，0.695 ≈ 比2.00倍）。
+%   * at_note の反転: probe 0.545 対 最良の数え 0.454，床補正マージン +0.042
+%     [−0.033, +0.092] がゼロを跨ぐ → §4.2 の要約と一致（照合済み）。
+%   * K2ゲート文言（CONFIRMATORY_FREEZE.md「Gate failure = stop」）・スプライスの
+%     段階（scripts/20 は探索プロンプト使用）・§5冒頭の前提条件の記述も照合済み。
+%
+% 2026-08-11 REVIEW-FIX PASS v1 (Claude)，執筆ガイド照合レビューの指摘に対応。
+%   数値は1つも変更・追加・削除していない。★印はログ照合が必要な残作業。
+%
+%   A. 論理の修正:
+%      * §1 P3末尾: 「従わなければ調は読めるだけだった」の二分法を，一方向の
+%        読み（従わない場合は「この値が使われていた証拠は得られない」まで）に
+%        修正。§5.4（層0–1では読めるのに効かない）の慎重な解釈と，論文自身の
+%        主張が矛盾していたため。
+%      * §2.1: ステアリングが調を「設定」できない理由（足すだけでは現在の調の
+%        成分が残る）を明示。想定読者（ステアリング研究者）が最初に突く箇所。
+%      * 要旨: 「読み直しではない」の断言を「フィードバックに先行する」へ変更。
+%        §5.3末尾「各ステップで音符から読み直す」との字面矛盾を解消。
+%      * §5.2: 同一調据え付け 0.650 の錨として，ランダム編集で元調に留まる
+%        51.7% を対比（→ VERIFY PASS で条件を揃えて解決）。
+%      * §5.4: 層間転移と狭い因果帯が両立する理由の1文を追加。
+%   B. 記録（CONFIRMATORY MERGE v5）との不一致の解消:
+%      * §5冒頭: 第2シードで最終テストを走らせなかった理由（何もしない編集の
+%        照合が100件中1件失敗，原因は浮動小数点の加算順序）を本文に復元。
+%        v5記録は§5.4宛てだったが，シード再現の主張がある§5冒頭に置いた。
+%      * §5.4: 上限58%に届かない点の解釈1文（v5記録）を復元し，§5.3と接続。
+%      * INTEGRITY 注記を現状（TBDは公開URLとPaper IDのみ）に更新。
+%      * §5.5 対訳の向きを修正（preference against F# = 嬰ヘ長調を避ける偏り）。
+%   C. 未定義・不明瞭の解消:
+%      * §3.2: 生成なし読み取りの2つの量（対数比・音階上の質量）を定義し，
+%        §5.3の参照を「4.3節の2指標」→「そこで定義した2量」へ修正。
+%      * §5.1: 0.801（窓スイープの頂点）と 0.824（3変種の最強）を区別して記述。
+%      * §5.2 特異性: 限度なし集計であることを明記。
+%      * §4.2: 「判定が反転」の中身（音の後読みではプローブが音符数えを
+%        上回らない）を一句で要約。
+%      * 式(1): V が 24 本であることを明示。「same number of numbers」→
+%        「same number of directions」。
+%      * §3冒頭: 自作モデルの層番号の規約を明示（→ VERIFY PASS で訂正・確定）。
+%        §3対訳の「（5.6節）」→「（第6節）」（旧構成の残骸）。
+%      * §5.4: 取り残しの "held-out prompts" を平易語へ（PLAIN-LANGUAGE PASS の漏れ）。
+%   D. 構成（執筆ガイド遵守）:
+%      * §1 貢献リストを4項目化（読み取り結果を追加。旧§5.1の主張が貢献リスト
+%        の外にあり，§5冒頭「主張を順に検証」と不整合だった）。
+%      * §4 冒頭に章の役割文を追加。§4.2 を自作モデル/公開モデルの2段落に分割。
+%      * §4.4 末尾に締め文（凍結後は合否のみ）を追加。
+%      * §5.3 を2段落化: 持続（スプライス）の知見を独立段落に
+%        （1パラグラフ1メッセージ）。探索段階のラベルを付与。
+%      * §5.4 を3段落化: 層 / 探索段階の残り2比較（転移・上限58%＋解釈）/ 位置。
+%        節の締めは「編集は調が最も読みやすい場所でこそ効かない」のまま。
+%      * 図3(b) キャプションを実項目（全位置への編集＋4つの比較）に修正。
+%      * 図1が本文から一度も参照されていなかったため，§1 P3 冒頭に参照を追加。
+%   E. 体裁:
+%      * 要旨を圧縮（→ VERIFY PASS で規定確認のうえ約165語に確定）。
+%      * 米綴りに統一（penalises→penalizes, neighbour→neighbor）。
+%
 % 2026-08-11 PLAIN-LANGUAGE PASS v3 (Claude)，著者の読後コメントに対応:
 %   「用語が分かりにくい」「小学生でも分かる語で」「冗長な実験がノイズ」
 %   「繰り返しが目立つ」。
-%
-%   A. 論文独自の記号名を全廃 (これが難解さの主因: 16個を暗記させていた)。
-%      C1  -> shuffled labels (floor)        C2 -> an untrained model
-%      C3  -> the note-counting baseline
-%      K1  -> ランダム方向のベースライン        K1norm -> 長さを揃えたランダムベースライン
-%      K2  -> a do-nothing edit              K3 -> another layer's directions
-%      K4  -> transposing the prompt (upper bound)
-%      V-PROBE/V-MEAN/V-DAS -> probe / average-activation / optimized directions
-%      D-SYN -> our corpus   M-CTRL -> our model   M-REF -> the judge model
-%      TKR -> the success rate               IKR -> the share of in-key notes
-%      musicality budget, guarded, delta_PPL -> the quality limit
-%      selection/confirmatory phase -> search stage / final test
-%      selectivity floor -> the shuffled-label floor
-%      dissociation, manipulability, diatonic, teacher forcing, rank-24,
-%      logit-level, held-out -> すべて平易な説明文に置換。
-%   B. 繰り返しの削減: 「読める≠使っている」は要旨・§1・§5.4・§6 のみ
-%      (旧 §2.2 の長い再説明を削除)。pre-registered は 6回 -> 2回。
-%      各章冒頭の "In this section, we ..." は形骸化した2つを削除。
-%   C. 冗長さの圧縮 (数値は1つも削っていない):
-%      §5.1 の入力ベースライン拡張 2段落 -> 1段落，
-%      §5.5 の F# 撤回 5文 -> 3文，§5.6 の容量・持続・幾何 -> 各1文，
-%      §2.3 5文 -> 3文，§3.3 の比較条件 8文 -> 7文。
-%   D. 見出しも平易化 (Probing with Controls -> Reading the Key など)。
-%      \label は一切変えていないので \ref は全部そのまま通る。
-%   E. TBD プレースホルダの文面は指示どおり一字も変えていない。
-%      そのため TBD 内にだけ K1 / K1^norm / TKR が残る。§3.3 に
-%      「ログとプレースホルダではこの2つを K1 / K1^norm と呼ぶ」と
-%      一言だけ橋渡しを置いた。実数値を入れる時にこの一言も消せる。
+%   論文独自の記号名16個を全廃（C1/C2/C3, K1–K4, V-PROBE/V-MEAN/V-DAS, D-SYN,
+%   M-CTRL/M-REF, TKR/IKR, guarded, selection/confirmatory ほか）。
+%   繰り返しの削減・冗長さの圧縮（数値は1つも削っていない）。見出しも平易化。
+%   \label は一切変えていないので \ref は全部そのまま通る。
 %
 % 2026-08-11 FORMAT: 各段落は「日本語対訳コメント (英文と1対1，1文1行) →
 %   英語本文 (1文1行，途中で折り返さない)」。段落内に空行なし。
 %
-% 2026-08-11 REVISE PASS の記録 (v1): 章立てを標準形 (1 Introduction /
-%   2 Related Work / 3 Method / 4 Experiments / 5 Results / 6 Conclusion) へ。
-%   旧イントロ後半 (Othello / steering / AxBench) を §2 へ移設し3軸で整理。
-%   旧 §4 Discussion を解体: 層をまたぐ検証の論点 -> §5.4，world model -> §6，
-%   限界 -> §5.6。既存 bib エントリ mcgrath2022chess と holm1979 を新たに引用。
+% 2026-08-11 REVISE PASS の記録 (v1): 章立てを標準形へ。旧イントロ後半を §2 へ
+%   移設し3軸で整理。旧 §4 Discussion を解体。
 %
 % 2026-08-11 STRUCTURE PASS v16 (Claude): §3.1 Problem Setup を解体。
-%   モデル文は §4.2，語彙文は §4.1 と重複のため削除。記法と 24/12 の注記は
-%   §3 冒頭へ，2つの問いは各解析 (新3.1/3.2) の冒頭へ移動。訓練目標は §4.2 に明記。
 %
-% 2026-08-11 CONFIRMATORY MERGE v5 (Claude)。著者が結果の出た版を提供したので，
-%   その新数値を本版 (平易化・再構成済み) へ移植した:
-%   * 要旨: 最終テストの見出し数値 (0.356 対 0.039，12/12，長さを揃えた比較) を追加。
-%   * §5.2 最終テスト: 0.356/0.039/9.1，最悪 p=4.8e-5，r=0.72-1.00，
-%     CI [0.284,0.347]，ガード 84%，限度なし 0.410，音符 0.936/0.617，
-%     長さを揃えたベースライン 0.056 (12/12)，同一調の据え付け 0.650。
-%   * §5.2 特異性: 41.0% / 4.1% / 8.5% / 51.7% / 34.8% を追加。
-%   * §5.4: 音高位置のみ 0.036 (床 0.039，0/12)，小節・音長のみ 0.233 (65%，11/12)，
-%     予算通過 98% 対 84%。上限 58% に届かない点の解釈を1文追加。
-%   * §5.4: 第2シードの最終テスト再現が無い理由 (何もしない編集の照合が
-%     100 件中1件で失敗，原因は浮動小数点の加算順序) を明記。
-%   * 図3 (fig_confirmatory.pdf) を追加。
-%   * TBD は 5 個 -> 1 個 (公開 URL のみ)。コード名は本文から完全に消えた。
-%   ※ 削除した記述2件 (著者版に無いため追従): 「操作可能性は 26M 付近でピーク」，
-%     「移調はほぼ線形に作用する」。意図的な削除でなければ復帰させる。
-%   ※ 矛盾のため削除: 旧「どの制限もガード率を改善しない」。最終テストでは
-%     音高位置のみが 98% 対 84% でガード率を上げている。
+% 2026-08-11 CONFIRMATORY MERGE v5 (Claude): 最終テストの数値を移植
+%   （0.356/0.039/9.1，12/12，特異性，音高のみ/小節・音長のみ，第2シード停止理由）。
 %
-% 2026-08-11 refs.bib: wu2025axbench / arad2025selecting を追加済み ([?] 解消)。
+% 2026-08-11 refs.bib: wu2025axbench / arad2025selecting / facchiano2025patching 追加済み。
 %
-% INTEGRITY (SPEC §7): 数値は一切変更・推定していない。\TBD 5箇所は原文のまま。
+% INTEGRITY (SPEC §7): 数値は一切変更・推定していない。残る TBD は公開 URL と
+% Paper ID の2箇所のみ (\TBD マクロは廃止済み)。
 % every number traces to a ledgered artifact under results/.
 % The held-out design is fixed in docs/CONFIRMATORY_FREEZE.md @ commit 0d621e4,
 % which predates every confirmatory artifact.
@@ -113,26 +149,24 @@ Causal Interventions on an Emergent Tonal Representation}
 \maketitle
 
 % 概要
+% 確認済み 2026-08-11: 著者キット（2020–2026年版で共通）の規定は「約100–150語」＋
+% タイトル下約12mm・全長80mm以内。指定の2箇所（S4後半のランダム方向の詳細・S6の
+% 括弧内）を削って約165語。80mm以内はビルド後に実測。100–150語へさらに縮めるのは
+% 内容判断（候補: S2 か S6 を隣接文へ併合）なので著者に委ねる。
 \begin{abstract}
-% 近年の研究は音楽生成モデルの活性から調を読み取れることを示しているが，調が読めることは，モデルが作曲中にそれを使っていることを示さない．
-% 我々は，記号が音高と時間だけを表し，調を表す記号を一つも含まない記号音楽で Transformer を訓練する．
-% そのうえで，生成の途中で，活性のうち調を担う 24 次元分を，別の調でその部分が平均的に取る値に置き換える．与える8小節の音符は1音も変えない．
-% モデルが内部の調を参照しているなら，継続はいまや我々が書き込んだ調に従うはずである．
-% 実際に従う：層と方向を事前に決め，それ以前のどの実験も触れていない楽曲で1度だけ行った最終テストで，継続が書き込んだ調に入る割合は 0.356，すなわち3回に1回以上であり，同じ 24 本をランダムに選んだ場合は 0.039 である．12 の調すべてが多重比較補正後に分離する．
-% ランダム編集の変化を，活性を動かす距離が編集とちょうど同じになるまで引き上げても 0.056 にとどまるので，効くのは押す強さではなく，どの方向を編集するかである．
-% この変化は，モデルが自分の書いた音符から調を読み直した結果ではない：何も生成していない時点で，新しい調の音に置かれる確率がすでに +0.26 上がっており，ランダム編集では +0.02 である．
-% モデルが音高を選ぶ位置だけに書き込んでも何も起こらないので，この編集は音高の確率を直接押しているのではない．
-% どちらの結果も，実音楽で訓練された公開モデルへそのまま移る（ランダムベースラインの 7.8 倍，12/12 調）．
-% 以上より，音楽 Transformer は調を計算し，我々が上書きできる形で保持し，作曲中にそれを参照している．テストベッドを公開する．
-Recent work shows that we can read the musical key out of the activations of a music generation model, but reading a key does not show that the model uses it while it writes.
-We train Transformers on symbolic music whose symbols name pitches and timing only, never a key.
-While the model generates, we then replace the $24$-dimensional part of the activation that carries the key with the value that this part takes, on average, in a different key, and we leave every note of the eight-bar input untouched.
-If the model consults an internal key, the continuation should now follow the key we write in.
-It does: with the layer and the directions chosen in advance, on music no earlier run had touched, the continuation ends in the key we install for $0.356$ of the prompts---more than one in three---against $0.039$ when we edit $24$ randomly chosen directions instead, and all $12$ keys separate after correcting for multiple tests.
-Rescaling the random edit to move the activation exactly as far leaves it at $0.056$, so what matters is which directions we write to, not how hard we push.
-The shift is not the model reading the key back off its own notes: before it generates anything, the probability it assigns to the notes of the new key already rises by $+0.26$, against $+0.02$.
-Writing the key only where the model chooses pitches does nothing, so the edit is not a direct push on pitch probabilities.
-Both results carry over to a public model trained on real music ($7.8\times$ the random baseline, in $12/12$ keys).
+% プローブは音楽モデルの活性から調を読み出せるが，調が読めることは，モデルが書く間にそれを使っていることを示さない．
+% 我々は，語彙が音高と時間だけを名指しし，調を決して名指ししない記号音楽で Transformer を訓練する．
+% 生成の途中で，1つの層で調を担う24次元の活性を，別の調でのその平均値に上書きし，入力の音符には1音も触れない．
+% 設計を事前に固定した最終テストでは，それ以前のどの実験も見ていないプロンプト上で，継続が書き込んだ調に入る割合は 0.356 であり，同じ書き込みをランダムな方向へ行うと 0.039 である．
+% モデルが何も生成しないうちに，新しい調の音に置かれる確率がすでに +0.26 上がる（ランダムでは +0.02）ので，効果は自分の出力からのフィードバックに先行する．
+% どちらの結果も，実音楽で訓練された公開モデルへそのまま移る．
+% したがって音楽 Transformer は調を計算し，上書きできる形で保持し，書きながらそれを参照している．テストベッドを公開する．
+Probes can read the musical key from a music model's activations, but reading a key does not show that the model uses it while it writes.
+We train Transformers on symbolic music whose vocabulary names pitches and timing, never a key.
+During generation we overwrite, in one layer, the $24$ activation dimensions that carry the key with their average in another key, leaving every input note untouched.
+In a final test fixed in advance, on prompts no earlier run had seen, the continuation is in the key we install for $0.356$ of the prompts, against $0.039$ for the same write into random directions.
+Before the model generates anything, the probability it assigns to the notes of the new key already rises by $+0.26$, against $+0.02$, so the effect precedes feedback from its own output.
+Both results carry over to a public model trained on real music.
 A music Transformer therefore computes its key, holds it in a form we can overwrite, and consults it while it writes; we release the testbed.
 \end{abstract}
 
@@ -159,37 +193,43 @@ Their fluency raises one question that we can state precisely: does a model trac
 % 既存の証拠はこの問いに答えられない．示しているのは，調が読めるということだけである．
 % 分類器は活性から調を読み出せ，ステアリングは調を押せるが，どちらも，我々が設定した調にモデルが従うことは示せない（第2節）．
 % ゲームの分野は内部状態を書き換えることでこの種の問いを決着させており，音楽の調でそのテストを行った研究はない．それを我々が供給する．
+% 確認済み 2026-08-11: 文献再確認。「activation patching」を冠する音楽論文
+% Facchiano+ 2025 (arXiv:2504.04479) は加算型ステアリング（テンポ・音色）であり，
+% 調の上書き・追従テストではない → 主張維持（§2.1 に引用追加）。
+% ★投稿直前: 最新文献でもう一度だけ再確認（2026年後半の新規発表に注意）。
 The evidence we have cannot answer that question, because it only shows that the key is readable.
 Classifiers can read the key out of the activations~\cite{syntheory2024}, and steering can push it, but neither shows that the model follows a key that we set (Section~\ref{sec:related}).
 Game domains settle such questions by overwriting internal state; no study has run that test for musical key, and we supply it.
 
 % P3 着想。トピック文＝解決策の提示，結び＝テストの読み方（この論文の論理の要）。
-% 我々はこの問いを，モデルの内部で調を変え，その後に何を書くかを見ることで決着させる．
+% 我々はこの問いを，モデルの内部で調を変え，その後に何を書くかを見ることで決着させる（図1）．
 % テストの核にあるのは1回の置き換えである：ある層の活性のうち調を担う部分を取り，別の調でその部分が取る値を書き込み，入力の音符は1つも動かさない．これによりモデルの内部状態だけが変わる．
 % 音楽の調は，この種のテストの状態変数として大半の属性より適している．
 % 第一に，音楽理論が調をモデルの外側で定義するので，我々が自分で作った基準でモデルを採点することにならない．
 % 第二に，語彙は調を名指ししないので，調は音高そのものから来るしかない．
 % 第三に，調の音階は7つの音高を並べた決まった一覧なので，編集の成否は音符を数えれば確かめられる．音楽を採点する審査器を訓練する必要がない．
-% したがってこのテストの読み方は明快である：書き込んだ値に音楽が従えばモデルはその値を参照していたのであり，従わなければ調は読めるだけだったことになる．
-We settle that question by changing the key inside the model and looking at what it writes next.
+% したがってこのテストは一方向にだけ読める：書き込んだ値に音楽が従えばモデルはその値を参照していたことになる．従わない場合に分かるのは，この層のこの形の値は使われていなかった，ということまでである．
+We settle that question by changing the key inside the model and looking at what it writes next (Fig.~\ref{fig:overview}).
 At the core of our test is a single replacement: we take the part of one layer's activation that carries the key and write in the value that this part takes in a different key, while every note of the input stays where it was, thereby changing the internal state of the model and nothing else.
 Musical key suits such a test better than most attributes do.
 First, music theory defines a key outside the model~\cite{krumhansl1982}, so we do not grade the model against a standard of our own making.
 Second, our vocabulary never names a key, so the key can only come from the pitches themselves.
 Third, the scale of a key is a fixed list of seven pitches, so we can check the edit by counting notes instead of training a judge to grade the music.
-The test therefore reads cleanly: if the music follows the value we install, the model was consulting that value, and if it does not, the key was only readable.
+The test therefore reads in one direction: if the music follows the value we install, the model was consulting that value; if it does not, we learn only that this value, at this layer and in this form, was not the one in use.
 
 % P4 提案と貢献。トピック文＝期待値調整（何を主張し何を主張しないか），結び＝以降は証拠の確認であるという見通し。
 % 本論文は分析論文である：新しい生成手法は提案せず，生成品質の向上も主張しない．
 % 貢献は以下のとおりである．
 % 1）この問いのためのテストベッドを世に出す：調が漏れない語彙，全音符に付いた真の調，事前に固定した評価手続き．
-% 2）調を上書きすると音楽が書き込んだ調へ移ることを示す——それ以前のどの実験も見ていないプロンプトの上で，そして実音楽で訓練された公開モデルにおいても．
-% 3）この効果が見かけのものではないことを示す：モデルが何も書かないうちに次の音の確率へ現れ，モデルが音高を選ぶ位置だけに編集を限ると消える．
+% 2）調は，音符を数えるよりも活性からのほうが線形に読み取りやすいことを示す——プローブの強さと未訓練ネットワークに対する統制つきで．
+% 3）調を上書きすると音楽が書き込んだ調へ移ることを示す——それ以前のどの実験も見ていないプロンプトの上で，そして実音楽で訓練された公開モデルにおいても．
+% 4）この効果が見かけのものではないことを示す：モデルが何も書かないうちに次の音の確率へ現れ，モデルが音高を選ぶ位置だけに編集を限ると消える．
 This paper is an analysis paper: we introduce no new generation method, and we claim no gain in generation quality.
 Our contributions are as follows.
 1)~We introduce a testbed for this question: a vocabulary that cannot leak the key, the true key on every note, and an evaluation protocol fixed in advance.
-2)~We show that overwriting the key moves the music into the key we write in---on prompts that no earlier experiment had seen, and also in a public model trained on real music.
-3)~We show that this effect is not an artifact: it appears in the next-note probabilities before the model writes anything, and it disappears when we restrict the edit to the positions where the model chooses pitches.
+2)~We show that the key is easier to read linearly from the activations than from counts of the notes, with controls for probe power and for untrained networks.
+3)~We show that overwriting the key moves the music into the key we write in---on prompts that no earlier experiment had seen, and also in a public model trained on real music.
+4)~We show that this effect is not an artifact: it appears in the next-note probabilities before the model writes anything, and it disappears when we restrict the edit to the positions where the model chooses pitches.
 
 \begin{figure}[t]
 \centering
@@ -218,24 +258,26 @@ Shading marks the scale of the key in force.}
 In this section we review two lines of work: music studies that read or push the key inside a model, and game studies that overwrite internal state.
 The second is the test we bring to music.
 
-% 2.1 メッセージは1つ：「音楽で分かっているのは，調が読める・押せるところまで。使っているかは誰も検証していない」。
+% 2.1 メッセージは1つ：「音楽で分かっているのは、調が読める・押せるところまで。使っているかは誰も検証していない」。
+% 2026-08-11: ステアリング研究の引用に facchiano2025patching を追加（音楽への
+% activation-patching 由来ステアリング; 加算型でテンポ・音色が対象）。
 \subsection{Probing and Steering in Music}
 % 音楽モデルの既存研究が示しているのは，調が読めることであって，モデルがそれを使っていることではない．
 % プロービング研究は，活性の上で小さな分類器を訓練し，調を含む音楽理論の概念を読み出す．
 % ステアリング研究は，言語モデル由来の技法を使う：学習したベクトルを活性に足すと，出力の属性が動く．
 % 本研究と同様に，どちらもモデルの内部に働きかけ，再訓練なしに推論時に介入する．
 % しかし読めることは使っていることを意味しない：モデルは信号を内部に持ったまま，書くときにそれを無視できる．
-% ステアリングも答えられない：ホ長調の方向へ押しても，モデルの調がホ長調に設定されるわけではないので，モデルが従うべき「書き込まれた調」がそもそも存在しないからである．
+% ステアリングも答えられない：ベクトルを足すだけでは，活性のうち現在の調を担う部分がそのまま残る．だからホ長調の方向へ押しても，モデルの調がホ長調に設定されるわけではなく，モデルが従うべき「書き込まれた調」がそもそも存在しない．
 % 我々の問いはその一歩先にある：調を書き込み，音楽がそれに従うかを見る．
 Existing work on music models shows that the key is readable, not that the model uses it.
 Probing studies train a small classifier on the activations and read out music-theory concepts, including the key~\cite{syntheory2024}.
-Steering studies use a technique adapted from language models~\cite{li2023iti,zou2023repe}: they add a learned vector to the activations, and an attribute of the output moves~\cite{smitin2024,musicrfm2026}.
+Steering studies use a technique adapted from language models~\cite{li2023iti,zou2023repe}: they add a learned vector to the activations, and an attribute of the output moves~\cite{smitin2024,facchiano2025patching,musicrfm2026}.
 Similar to our work, both act on the inside of the model, at inference time and without retraining.
 Reading, however, does not mean using: a model can carry a signal inside and still ignore it when it writes~\cite{hewitt2019control,belinkov2022probing}.
-Steering cannot answer it either: pushing toward E major never sets the model's key to E major, so there is no installed key for the model to follow.
+Steering cannot answer it either: an added vector leaves the part of the activation that carries the current key in place, so pushing toward E major never sets the model's key to E major, and no installed key exists for the model to follow.
 Our question sits one step further: write the key in, and watch whether the music follows.
 
-% 2.2 メッセージは1つ：「ゲーム分野はその一歩（書き換えテスト）を確立済み。我々はそれを音楽に持ち込み，音楽に必要な2つの道具を足す」。
+% 2.2 メッセージは1つ：「ゲーム分野はその一歩（書き換えテスト）を確立済み。我々はそれを音楽に持ち込み、音楽に必要な2つの道具を足す」。
 \subsection{Causal Tests by Overwriting}
 % ゲームの分野は，その一歩をすでに踏み出している．
 % プロービングはゲームでも知識を示した：AlphaZero の内部からチェスの概念を追跡している．
@@ -262,10 +304,16 @@ Our edit brings this patching test to music, and Section~\ref{sec:method} adds t
 
 % 本節では，本論文の2つの解析——調を読むことと，調を書き換えること——をこの順に述べる．
 % 記法として，層 ℓ・位置 t における活性を h_ℓ(t)，そこでの真の調を κ(t) と書く．κ(t) は 24 クラス（12 の主音それぞれに長調と短調）を取る．
-% プローブは 24 クラスすべてを判別するが，編集が書き込むのは 12 の長調だけである（5.6節）．
+% 自作モデルでは，層は8つの Transformer ブロックの出力を指して 0–7 の番号を付ける：生のトークン埋め込みからは読まない．
+% プローブは 24 クラスすべてを判別するが，編集が書き込むのは 12 の長調だけである（第6節）．
 % データ・モデル・評価手続きは第4節で述べる．
+% 確認済み 2026-08-11: gpt.py の forward() は各ブロックの出力のみを capture し，
+% probe_report.json の読み取り点は層0–7の8点だけ（埋め込みの読み取り点は無い）。
+% 旧稿の「生の埋め込みは別の読み取り点」は事実誤りだったため削除。
+% この規約は §5.1（層0で負）・§5.4（層0–1）・図2の横軸と整合。
 In this section we present the two analyses of the paper, first reading the key and then overwriting it.
 As notation, write $h_\ell(t)$ for the activation at layer $\ell$ and position $t$, and $\kappa(t)$ for the true key there, one of $24$ classes ($12$ tonics, each major or minor).
+In our own models, layers index the outputs of the eight Transformer blocks, $0$ through $7$: we never read from the raw token embedding.
 The probe distinguishes all $24$ classes; the edits install the $12$ major keys only (Sec.~\ref{sec:limits}).
 Section~\ref{sec:exp} describes the data, the models, and the evaluation protocol.
 
@@ -297,23 +345,29 @@ What the probe must beat, and by how much, is fixed in Section~\ref{sec:measures
 \label{sec:methodB}
 % 第2の，そして主要な問いは，生成中に調を上書きしたとき音楽がそれに従うかである．
 % 安定した調の8小節をプロンプトとして与え，第9小節以降，モデルが生成する各位置で1つの層の活性を，activation patching の文献に従って次のように編集する．
-% ここで V は調を担う方向を並べたもの，P_V=VV^T は活性のうちその方向に沿う部分だけを取り出す射影，μ_{κ*} は書き込みたい調の平均活性である．
+% ここで V は調を担う 24 本の方向を並べたもの，P_V=VV^T は活性のうちその方向に沿う部分だけを取り出す射影，μ_{κ*} は書き込みたい調の平均活性である．
 % 平易に言えば：活性のうち調を担う部分を別の調の同じ部分に取り替え，他には何も触らない——特に，プロンプトには決して手を加えない．
 % 方向の作り方は3通り試す：プローブの重み，調ごとの平均活性，そして編集そのものに合わせて最適化した方向である．どれを使うかは 4.4 節の探索が選ぶ．
 % 同じ編集は，生成を伴わない読み取りにも使える：調に中立な小節記号と拍位置を我々自身が付け足し，第9小節の境界で編集を適用し，何も生成させずに次の音の確率を読む（5.3節）．
+% この読み取りは2つの量で採点する（4.3節の2指標の生成なし版）：次の音の分布が書き込んだ調の音階（オクターブは問わない）に載せる確率質量と元の調の音階に載せる質量との対数比の変化，および書き込んだ音階に載る質量そのものの変化である．
+% 確認済み 2026-08-11: scripts/27_next_pitch.py — 全語彙 softmax の音高トークン上の
+% 質量（再正規化なし），Δ_key = log P_target − log P_source（分母は元調の音階質量），
+% 主要統計量 D = Δ_key(条件) − Δ_key(編集なし)。0.695 = ln 2.00 → §5.3 に
+% 「比が約2倍」の注を追加した。
 Our second question, the main one, is whether the music follows the key when we overwrite it during generation.
 We prompt the model with $8$ bars in a stable key, and from bar~$9$ on we edit one layer's activations at every position it generates, following the activation-patching literature~\cite{geiger2021causal,meng2022rome}:
 \begin{equation}
 h \;\leftarrow\; h - P_V h + P_V\,\mu_{\kappa^{*}},
 \label{eq:edit}
 \end{equation}
-where $V$ collects the directions that carry the key, $P_V{=}VV^{\!\top}$ keeps only the part of the activation that lies along them, and $\mu_{\kappa^{*}}$ is the average activation of the key we install.
+where $V$ collects the $24$ directions that carry the key, $P_V{=}VV^{\!\top}$ keeps only the part of the activation that lies along them, and $\mu_{\kappa^{*}}$ is the average activation of the key we install.
 In plain terms, we swap the key-carrying part of the activation for the same part of a different key and touch nothing else---in particular, we never change the prompt.
 We build $V$ in three ways: from the probe weights, from the per-key average activations, and from directions optimized for the edit itself~\cite{geiger2024das}; the search of Section~\ref{sec:confirm} selects among them.
 The same edit also supports a generation-free reading: we append a key-neutral bar mark and beat position ourselves, apply the edit at the bar-$9$ boundary, and read the next-note probabilities without generating anything (Sec.~\ref{sec:nextpitch}).
+We score this reading with two quantities, the generation-free versions of the measures of Section~\ref{sec:measures}: the change in the log ratio between the probability mass that the next-note distribution puts on the installed key's scale, in any octave, and the mass it puts on the prompt key's scale, and the change in the mass on the installed scale itself.
 
 % 結果は5つの比較で挟み込む．
-% 第1は，ランダム方向のベースラインである：調の方向ではなく，ランダムに選んだ 24 本の方向へ同じ書き込みを行うので，書き換える数の個数は同じになる．
+% 第1は，ランダム方向のベースラインである：調の方向ではなく，ランダムに選んだ 24 本の方向へ同じ書き込みを行うので，活性の中で変える方向の本数は同じになる．
 % ただしこのベースラインは活性を編集ほど遠くまで動かさない：変化ベクトルの長さを各書き込み位置で測り，位置・プロンプト・標的の調で平均すると，編集は 34.6，ベースラインは 24.1（比 1.44）で，活性そのものの平均長は 169 である．
 % 我々の計画は距離も一致させるよう求めていたが，実装は本数だけを一致させたので，このずれを隠さず記録する．
 % そこで第2として，同じ 24 本のランダム方向のまま，変化の距離をちょうど 34.6 に引き上げたベースラインを加える．これで「押しが強かっただけ」という説明の余地が消える．
@@ -322,7 +376,7 @@ The same edit also supports a generation-free reading: we append a key-neutral b
 % 第5は，プロンプト自体を移調するもので，出力がそもそもどこまで動きうるか，すなわち上限を教える．
 % まとめると，プローブは調がそこにあるかを教え，これら5つの比較はモデルがそれを使っているかを教える．
 Five comparisons bound the result.
-The first is a random-direction baseline: it writes into $24$ randomly chosen directions instead of the key directions, so it overwrites the same number of numbers inside the activation.
+The first is a random-direction baseline: it writes into $24$ randomly chosen directions instead of the key directions, so it changes the same number of directions inside the activation.
 This baseline does not move the activation as far as the edit does: measuring the length of the change at each written position and averaging over positions, prompts, and target keys gives $\|\Delta\|=34.6$ for the edit against $24.1$ for the baseline, a ratio of $1.44$, on activations of mean length $169$.
 Our plan had asked the distances to match as well, the code matched only the number of directions, and we log that gap instead of hiding it.
 The second comparison therefore keeps the same $24$ random directions and scales the change up to a distance of exactly $34.6$, which removes the explanation that we simply pushed harder.
@@ -334,6 +388,9 @@ In sum, the probe tells us whether the key is there, and these five comparisons 
 % 4. 実験
 \section{Experiments}
 \label{sec:exp}
+
+% 本節では，第5節の結果を生む材料——データ，モデル，測るもの，2段階の手続き——をこの順に述べる．
+In this section we describe what produces the results of Section~\ref{sec:results}: the data, the models, what we measure, and the two-stage protocol, in that order.
 
 % 4.1 データ
 \subsection{Data}
@@ -359,15 +416,19 @@ The vocabulary holds $124$ symbols---bars, positions, absolute MIDI pitches, not
 % 別立ての審査モデルは同じアーキテクチャだが，異なるシードと重複しないデータ片を見る．
 % 審査モデルはプローブも編集もしない：編集後の音楽がまだ音楽に見えるかを評価するだけであり，どのモデルも自分の出力を採点しない．
 % 6モデルはすべて事前に設定した品質ゲートを通る：検証データの次トークン top-1 精度が 0.878–0.881 で，最頻トークンを当てるだけの 0.434 を上回る．
-% さらに，我々が訓練していない公開モデルを1つ調べる：Anticipatory Music Transformer で，原著者が Lakh MIDI，MetaMIDI，FMA で訓練したものであり，評価は人手の調ラベルが付いたバッハのコラール 300 曲で行う．
-% このモデルではプローブを，モデルがまさに音高を選ぼうとする位置で読む：（時間，長さ，音）というエンコーディングがその規約を強制するためである．音の後で読むと判定が反転することは補足資料に示す．
 Our model is a GPT-2 style decoder~\cite{vaswani2017attention,radford2019gpt2} with $8$ layers, width $512$, and about $25$M parameters.
 We train it for next-token prediction, with and without transposition augmentation and with three random seeds each, which gives six models.
 A separate judge model shares the architecture but sees a different seed and a disjoint slice of the data.
 We never probe or edit the judge; it only rates whether edited music still looks like music, so no model grades its own output.
 All six models pass a quality gate that we set in advance: next-token top-$1$ accuracy of $0.878$--$0.881$ on validation, against $0.434$ for always guessing the most frequent token.
+
+% さらに，我々が訓練していない公開モデルを1つ調べる：Anticipatory Music Transformer で，原著者が Lakh MIDI，MetaMIDI，FMA で訓練したものであり，評価は人手の調ラベルが付いたバッハのコラール 300 曲で行う．
+% このモデルではプローブを，モデルがまさに音高を選ぼうとする位置で読む：（時間，長さ，音）というエンコーディングがその規約を強制するためである．音の後で読むと判定が反転する——そこではプローブが音符数えを上回らない——ことは補足資料に示す．
+% 確認済み 2026-08-11: results/mwild/music-small-800k/at_note/mwild_probe.json —
+% 音の後読みでは probe 0.545 対 最良の音符数え 0.454，床補正マージン +0.042
+% [−0.033, +0.092] がゼロを跨ぐ → 「上回らない」の要約は補足資料の実数と一致。
 We also study one public model that we did not train: the Anticipatory Music Transformer~\cite{thickstun2023anticipatory}, which its authors trained on Lakh MIDI~\cite{raffel2016lakh}, MetaMIDI~\cite{ens2021metamidi}, and FMA~\cite{defferrard2017fma}, and which we evaluate on $300$ Bach chorales~\cite{hadjeres2017deepbach,huang2017coconet} with human key labels~\cite{gotham2023wheninrome}.
-In that model we read the probe at the positions where it is about to choose a pitch, because its (time, duration, note) encoding forces that convention; the supplementary shows that the verdict flips if we read after the note instead.
+In that model we read the probe at the positions where it is about to choose a pitch, because its (time, duration, note) encoding forces that convention; the supplementary shows that the verdict flips if we read after the note instead, where the probe no longer beats the note counts.
 
 % 4.3 測るもの
 \subsection{What We Measure}
@@ -375,19 +436,32 @@ In that model we read the probe at the positions where it is about to choose a p
 % 指標と成功の規則は，対応する実験を走らせる前にすべて固定した．
 % プローブの成功規則：床を引いたプローブの点数が，最良の音符数えベースラインを，ゼロを含まない曲単位のブートストラップ 95% 信頼区間で上回ること．
 % 編集には，2つの指標と1つの限度を使う．
+% 編集の各条件では，プロンプト1本・標的1調につき1本の継続を，温度 1.0・top-p 0.95・固定シードで最大 384 トークンサンプリングし，最初の 16 小節を採点する．
 % 第1の指標は成功率であり，KS 推定器で判定した継続が，書き込んだ調とちょうど一致する割合である．
+% 推定器は採点対象の継続の音高全体を判定し，音高が 8 個に満たない継続は失敗として数える．
 % 第2の指標は，継続の音のうち与えられた音階に属する割合であり，調の推定器をまったく必要としない．
-% 限度は音楽としての品質を守る：編集を1回も走らせる前に，検証データ中 7,989 件の自然な転調で審査モデルのパープレキシティがどれだけ上がるかを測り，その 90 パーセンタイルである 0.613 を，編集に許す上限として固定した．
+% 限度は音楽としての品質を守る：編集を1回も走らせる前に，検証データ中 7,989 件の自然な転調で審査モデルのパープレキシティがどれだけ上がるか——転調直後の 24 トークンを直前の 24 トークンと比べて——を測り，その 90 パーセンタイルである 0.613 を，編集に許す上限として固定した．
+% 編集時にこの限度を課すときは継続全体で測る：上昇分は，編集した継続に対する審査モデルのパープレキシティから，対になる編集なしの継続に対する値を引いたものである．
 % 公開モデルでは同じ限度をコラールの自然な転調から測り直し，審査には別の公開チェックポイントを使う．
 % したがって編集が音楽を乱してよいのは本物の転調と同程度までである．
 % 限度を超えた継続は分母に残したまま失敗として数える：除外は一切しない．
 % 割合そのものには基準が必要なので，同じ書き込みをランダムな方向へ行った場合を下限として必ず併記する．
+% 確認済み 2026-08-11（要追記3件の出典）: configs/gen.yaml（温度1.0, top-p 0.95,
+% max_new_tokens 384, シード固定; 16小節で打ち切り），src/intervene/sweep.py
+% pitches_and_bars（max_bars=16）と src/eval/metrics.py continuation_key
+% （音高8個未満は判定せず → 失敗扱い），src/eval/guard.py
+% （rise = PPL[t*, t*+24) − PPL[t*−24, t*); 編集時は PPL(編集継続) −
+% PPL(編集なし継続) ≤ 0.613; results/guard/delta_ppl.json window_tokens=24,
+% n=7989, percentile=90）。
 We fixed every measure and every rule for success before the corresponding run.
 For the probe, success means that the floor-corrected probe score beats the best note-counting baseline, with a bootstrap $95\%$ confidence interval over pieces~\cite{efron1987bca} that excludes zero.
 For the edit we use two measures and one limit.
+In every edited condition the model samples one continuation per prompt and target key, at temperature $1.0$ with top-$p$ $0.95$ under a fixed seed, for at most $384$ tokens, and we score its first $16$ bars.
 The first measure is the success rate: how often the continuation, as judged by the KS estimator, is in exactly the key we installed.
+The estimator judges all the pitches of the scored continuation, and a continuation with fewer than $8$ pitches counts as a failure.
 The second is the share of continuation notes that belong to a given scale, which needs no key estimator at all.
-The limit protects musical quality: before we ran a single edit, we measured how far the judge model's perplexity rises across $7{,}989$ natural key changes in the validation data and fixed the $90$th percentile of that rise, $0.613$, as the most an edit may cost.
+The limit protects musical quality: before we ran a single edit, we measured how far the judge model's perplexity rises across $7{,}989$ natural key changes in the validation data---comparing the $24$ tokens after each change with the $24$ tokens before it---and fixed the $90$th percentile of that rise, $0.613$, as the most an edit may cost.
+At edit time we charge the limit on the whole continuation: the rise is the judge's perplexity on the edited continuation minus its perplexity on the paired unedited one.
 For the public model we measure the same limit again from the natural key changes in the chorales, and we use a different public checkpoint as the judge.
 An edit may therefore disturb the music at most as much as a real key change does.
 A continuation that breaks the limit stays in the denominator and counts as a failure; we exclude nothing.
@@ -401,24 +475,35 @@ A rate on its own means little, so we report every rate against the same write i
 % したがって第1段階は「テスト」ではなく「探索」として報告する．
 % 第2段階は，プローブもそれ以前のどの実験も見ていないテスト分割の領域から，新規の 100 プロンプトを引く．
 % 層・方向・タイミング・標的の調・ベースライン・品質の限度・指標・検定・シード・標本サイズをバージョン管理された文書に書き，この段階の最初の数値が出る前にコミットした．計画からのずれはすべて記録し，我々に不利な結果も報告する．
+% 本論文を通じて，検定は標的の調ごとにプロンプトで対にした片側 Wilcoxon 符号順位検定であり，12 の調にわたり Holm 法で補正し，効果量 r には順位双列相関を用いる．
 % 層や方向の探索は繰り返さない．
 % 偏った標的推定が何を捏造しうるかは 5.5 節が示すので，標的そのものもここで検証した：どの長調もクラス平均に 7,530 から 9,237 位置を寄せており（最大/最小 1.23），退化した平均は1つもない．
 % 標的の調がプロンプトの調と同じ編集は主解析から外し，サニティチェックとして別に報告する．
+% この時点から先，設計にできるのは合格するか失敗するかだけであり，報告する結果に合わせて調整できる余地は残っていない．
+% 確認済み 2026-08-11: scripts/26_confirmatory.py と src/analysis/stats.py —
+% wilcoxon(alternative="greater", 対=プロンプト), holm_correct, 順位双列相関 r。
+% docs/CONFIRMATORY_FREEZE.md の凍結項目とも一致。
 An intervention involves many choices, and picking them on the data that also produces the headline number inflates it, so we ran the study in two stages.
 The first stage compared $8$ layers and $3$ kinds of directions on $100$ prompts and scored the best combination (probe directions at layer~$4$) on those same prompts, which the probe had also been trained on; we corrected for the $12$ keys~\cite{holm1979} but not for that search.
 We therefore report the first stage as a search, not as a test.
 The second stage draws $100$ fresh prompts from a region of the test split that neither the probe nor any earlier run has seen.
 We wrote every such choice---the layer, the directions, the timing, the target keys, the baselines, the quality limit, the measures, the tests, the seeds, and the sample size---into a version-controlled document and committed it before the first number of this stage existed; we log every departure from it and report the results that went against us.
+Throughout the paper, the tests are one-sided Wilcoxon signed-rank tests for each target key, paired by prompt and corrected across the $12$ keys with Holm's method~\cite{holm1979}, and the effect size $r$ is the rank-biserial correlation.
 We repeat no search over layers or directions.
 Because Section~\ref{sec:wild} shows what an imbalanced estimate of the targets can fabricate, we also checked the targets here: every major key contributes between $7{,}530$ and $9{,}237$ positions to its class mean (max over min, $1.23$), and no mean is degenerate.
 We leave out edits whose target key equals the key of the prompt and report them separately as a sanity check.
+From this point on the design could only pass or fail, and nothing in it was left to tune toward the outcome we report.
 
 % 5. 結果
 \section{Results}
 \label{sec:results}
 
 % 本節では第1節の主張を順に検証する．見出しの数値は移調増強ありシード0のモデルのものであり，増強ありの第2シードは探索段階の全ての判定を再現する．
+% その第2シードでは最終テストを走らせていない：何もしない編集が 100 件中 1 件で編集なしの出力を再現できず（浮動小数点の加算順序に起因），凍結した設計が求める前提を満たさなかったためである．
+% 確認済み 2026-08-11: CONFIRMATORY_FREEZE.md「K2 gate: ... MUST reproduce clean
+% continuations token-bit-identically ... Gate failure = stop.」と一致。
 In this section, we take the claims of Section~\ref{sec:intro} in order; headline numbers come from the transposition-augmented model with seed $0$, and a second augmented seed replicates every search-stage verdict.
+We did not run the final test on that second seed: its do-nothing edit failed to reproduce the unedited output on $1$ of the $100$ prompts, an artifact of floating-point summation order, so the seed did not meet a precondition of the frozen design.
 
 % 5.1 調を読む
 \subsection{Reading the Key}
@@ -426,18 +511,25 @@ In this section, we take the claims of Section~\ref{sec:intro} in order; headlin
 % モデルは調を自力で求めており，入力の表面から写しているのではない．
 % 第4層でプローブは macro-F1 0.927 に達し，最良の音符数えベースラインは 0.790，シャッフルの床は 0.032 なので，床を引いたマージンは +0.105（ブートストラップ 95% CI [0.091, 0.114]）である．
 % このマージンは6モデルすべての第1–7層でゼロを上回るので，事前に決めた規則は 6/6 で成立する．
-% 負になるのは生の埋め込み（−0.20）だけで，そこでは音符そのものが勝って当然であり，未訓練のモデルは 0.243 にとどまる．
+% 負になるのは層0——第1ブロックの出力で，入力に最も近い読み取り点——だけであり（−0.20），未訓練のモデルは 0.243 にとどまる．
+% 確認済み 2026-08-11: verdict_DR-H1.json 層0 stat −0.197 [−0.211, −0.182] → −0.20。
+% 「生の埋め込み」という読み取り点は存在しないため記述を訂正（層0＝第1ブロック出力）。
 The model works out the key; it does not copy it off the surface of the input.
 At layer~$4$ the probe reaches macro-$F_1$ $0.927$, the best note-counting baseline reaches $0.790$, and the shuffled-label floor is $0.032$, so the corrected margin is $+0.105$ (bootstrap $95\%$ CI $[0.091,0.114]$).
 This margin stays above zero in layers $1$--$7$ of all six trained models, so the rule we set in advance holds in $6/6$ cases.
-It turns negative only at the raw embedding ($-0.20$), where the notes themselves should indeed win, and an untrained model reaches only $0.243$.
+It turns negative only at layer~$0$, the first block's output and the reading point closest to the input ($-0.20$), and an untrained model reaches only $0.243$.
 
 % より長い履歴を与えてもこの差は埋まらない．
-% 上の音符数えベースラインは最大 64 トークンしか見ないので，これを履歴全体へ広げ，新しい音を重く数える版と，短い窓と長い窓をつないだ版も加えた：これらは W=96 で 0.801 と頭打ちになり，W=512 では 0.752 まで下がる（転調前の音符が数え上げを誤った方向へ引っぱる）．
-% 最も強い版（0.824）に対してもマージンは +0.071 [0.056, 0.081] なので，活性がこれらの音符数えより調を線形に読みやすくしていると主張する——音符のあらゆる関数に勝つとは主張しない．
+% 上の音符数えベースラインは最大 64 トークンしか見ないので，3通りに拡張した——当初の手続き（W≤64 で固定）の後，最終テストの凍結の前に加えた解析である：履歴全体への拡張，新しい音を重く数える版，短い窓と長い窓をつないだ版である．
+% 窓を広げるだけの拡張は W=96 の 0.801 で頭打ちになり，W=512 では 0.752 まで下がる（転調前の音符が数え上げを誤った方向へ引っぱる）．3変種の最強——短い窓と長い窓をつないだ版——は 0.824 に達する．
+% その最強変種に対してもマージンは +0.071 [0.056, 0.081] なので，活性がこれらの音符数えより調を線形に読みやすくしていると主張する——音符のあらゆる関数に勝つとは主張しない．
+% 確認済み 2026-08-11: c3_window_ext.json — best_c3 = lr_W16cat512（W16とW512の連結）
+% 0.8243; 台帳 2026-08-05（実験D）は凍結 0d621e4（08-08）より前・当初プロトコル
+% （W≤64, G1ゲート）より後。L4 マージン +0.0706 [0.0560, 0.0812] → 本文と一致。
 A longer history does not close this gap.
-The note-counting baseline above sees at most $64$ tokens, so we extended it to the whole prefix and added a recency-weighted version and a version that joins a short and a long window: these peak at $0.801$ for $W{=}96$ and fall to $0.752$ at $W{=}512$, because notes from before a key change pull the count the wrong way.
-Against the strongest of them ($0.824$) the margin is still $+0.071$ $[0.056,0.081]$, so we claim that the activation makes the key easier to read linearly than these note counts do---not that it beats every function of the notes.
+The note-counting baseline above sees at most $64$ tokens, so we extended it in three ways---analyses we added after our original protocol, which had fixed $W\le 64$, and before the final-test freeze: to the whole prefix, to a recency-weighted count, and to a count that joins a short and a long window.
+Widening the window alone peaks at $0.801$ for $W{=}96$ and falls to $0.752$ at $W{=}512$, because notes from before a key change pull the count the wrong way; the strongest of the three variants, the one that joins a short and a long window, reaches $0.824$.
+Against that strongest variant the margin is still $+0.071$ $[0.056,0.081]$, so we claim that the activation makes the key easier to read linearly than these note counts do---not that it beats every function of the notes.
 
 % 5.2 調を上書きする
 \subsection{Overwriting the Key}
@@ -449,23 +541,29 @@ Against the strongest of them ($0.824$) the margin is still $+0.071$ $[0.056,0.0
 % 長さを揃えたランダムベースライン（3.2節）は 0.056 にとどまり，編集は補正後 12/12 の調でこれと分離する．
 % さらに，2つのランダムベースラインはいずれも編集より品質の限度を通りやすく（0.96 と 0.93 対 0.84），限度を課さなくても 0.041 と 0.059 にしか届かない．
 % したがって効果は，どの方向に書き込むかから生じており，活性をどれだけ強く押すかから生じているのでもなく，限度がベースラインを不利にしているのでもない．
-% プロンプトが既にいる調をそのまま書き込んだ場合，モデルはそこに留まり（0.650），何もしない編集は編集なしの出力をトークン単位で再現する（100/100）：どちらも本来そうあるべき挙動である．
+% プロンプトが既にいる調をそのまま書き込んだ場合，モデルはそこに留まり（見出しと同じ採点で 0.650，品質の限度を課す前は 0.71——下の特異性分析でランダム編集が元調に留まる 51.7%（同じく限度なし）と対比されたい），何もしない編集は編集なしの出力をトークン単位で再現する（100/100）：どちらも本来そうあるべき挙動である．
+% 確認済み 2026-08-11: verdict.json identity_sanity 0.650 はガード付き（見出しと同じ
+% 採点; scripts/26 の succ = tkr & guard）。限度なしでは 0.71（confirmatory_L4.parquet
+% から算出，分母100，推定不能0件）。51.7% は限度なし → 対比は限度なし同士に揃えた。
 Overwriting the key moves the music into the key we install, and a random overwrite does not.
 On the $100$ fresh prompts of the final test (Fig.~\ref{fig:confirm}), the edit reaches a success rate of $0.356$ against $0.039$ for the random baseline, a ratio of $9.1$.
 All $12$ target keys separate after correction (worst $p=4.8\times10^{-5}$, effect size $r=0.72$--$1.00$), and the prompt-by-prompt difference has a bootstrap $95\%$ CI of $[0.284,0.347]$.
 The quality limit admits $84\%$ of edits, the same rate without that limit is $0.410$, and the notes cross over as well ($0.936$ of them in the installed key against $0.617$ in the prompt's).
 The length-matched random baseline of Section~\ref{sec:methodB} reaches $0.056$, and the edit separates from it in $12/12$ keys after correction.
 Both random baselines also pass the quality limit more often than the edit does ($0.96$ and $0.93$ against $0.84$), and without that limit they still reach only $0.041$ and $0.059$.
-The effect therefore follows from which directions we write to, and not from how far we push the activation or from a limit that penalises the baselines.
-When we install the key the prompt is already in, the model simply stays there ($0.650$), and the do-nothing edit reproduces the unedited output token by token ($100/100$), as both should.
+The effect therefore follows from which directions we write to, and not from how far we push the activation or from a limit that penalizes the baselines.
+When we install the key the prompt is already in, the model simply stays there ($0.650$ scored as the headline rate, $0.71$ before the quality limit, against the $51.7\%$ of continuations---also before the limit---that stay in the prompt's key under the random edit below), and the do-nothing edit reproduces the unedited output token by token ($100/100$), as both should.
 
 % 狙った調に着地するか．編集は元の調から離れるだけでなく，新しい調に着地する．
-% 新規プロンプトでは，継続の推定調が書き込んだ調と一致するのは 41.0% で，ランダムベースラインでは 4.1% である．一方，プロンプトの調に留まるのは 8.5% だけで，ランダムベースラインでは 51.7% である．
+% 新規プロンプト上で，品質の限度が違反を失敗に数える前，かつ推定器が調を判定できた継続の中で集計すると，継続の推定調が書き込んだ調と一致するのは 41.0% で，ランダムベースラインでは 4.1% である．一方，プロンプトの調に留まるのは 8.5% だけで，ランダムベースラインでは 51.7% である．
 % 残りの大部分は五度隣の調に落ちる（34.8%）が，これは KS 推定器が混同することが知られている調である．
 % したがって編集は，今の調を単に壊すのではなく，特定の調を1つ据え付けている．
+% 確認済み 2026-08-11: confirmatory_L4.parquet — 限度なし・非同一調・推定可能セルで
+% edit est==target 0.410, est==src 0.0845; k1 est==src 0.5173 → 41.0/8.5/51.7 一致。
+% 4.1/34.8 は verdict.json の特異性ブロック（既監査）と一致。
 \textbf{Specificity.} The edit does not merely leave the old key; it lands on the new one.
-On the fresh prompts, the estimated key of the continuation matches the key we install $41.0\%$ of the time, against $4.1\%$ for the random baseline, while only $8.5\%$ of continuations stay in the key of the prompt, against $51.7\%$.
-Most of what remains falls on the neighbour a fifth away ($34.8\%$), which the KS estimator is known to confuse.
+On the fresh prompts, scored before the quality limit turns violations into failures and over the continuations whose key the estimator can judge, the estimated key of the continuation matches the key we install $41.0\%$ of the time, against $4.1\%$ for the random baseline, while only $8.5\%$ of continuations stay in the key of the prompt, against $51.7\%$.
+Most of what remains falls on the neighbor a fifth away ($34.8\%$), which the KS estimator is known to confuse.
 The edit therefore installs one specific key rather than merely disrupting the current one.
 
 \begin{figure}[t]
@@ -474,10 +572,10 @@ The edit therefore installs one specific key rather than merely disrupting the c
 % 図3キャプション
 % 主要な因果結果．最終テストの新規プロンプト上での値である．
 % (a) 書き込んだ調ごとの成功率．編集と，同じ本数の方向を変えるランダムベースラインとの比較．
-% (b) 同じ指標をまとめたもの．2つのランダムベースラインと2つの限定書き込み：ランダムな方向，同じランダム方向を編集と同じ大きさに揃えたもの，音高位置のみ，小節と音の長さの位置のみ，そして全位置である．
+% (b) 同じ指標をまとめたもの．全位置への編集と，その4つの比較条件：ランダム方向，同じランダム方向を編集と同じ大きさに揃えたもの，音高位置のみの書き込み，小節と音の長さの位置のみの書き込みである．
 \caption{The main causal result, on the fresh prompts of the final test.
 (a)~Success rate for each key we install, edit against the random baseline that changes the same number of directions.
-(b)~The same measure pooled, for the two random baselines and the two restricted writes: random directions; the same random directions rescaled to the size of the edit; pitch positions only; bar and note-length positions only; and all positions.}
+(b)~The same measure pooled, for the edit at all positions and its four comparisons: random directions; the same random directions rescaled to the size of the edit; the write at pitch positions only; and the write at bar and note-length positions only.}
 \label{fig:confirm}
 \end{figure}
 
@@ -486,30 +584,57 @@ The edit therefore installs one specific key rather than merely disrupting the c
 \label{sec:nextpitch}
 % 編集は，モデルが書いた音が戻ってくる前に，次の決定を変える．
 % 編集を続けた場合の代替説明が1つある：編集が最初の数音を乱し，モデルが自分の出力から調を読み直したのではないか，というものである．
-% この説明は，3.2節の生成を伴わない読み取りで排除する．採点には，4.3節で固定した2つの量を使う．
-% 編集は，書き込んだ調の側への対数比を 0.695 上げるのに対し，ランダムベースラインは 0.041 しか上げない．
+% この説明は，3.2節の生成を伴わない読み取りで排除する．採点にはそこで定義した2つの量を使う．
+% 編集は，書き込んだ調の側への対数比を 0.695——比にしておよそ2倍——上げるのに対し，ランダムベースラインは 0.041 しか上げない．
 % 書き込んだ音階の上の質量は，編集なしの 0.547 から 0.255 上がり，ベースラインでは 0.017 である．
 % この分離は補正後に 12/12 の調で成立し，最悪でも p=5×10^-16，効果量は r≥0.99 である．
-% 生成が始まった後は逆になる：一度書き込むと音符は何小節も新しい調に留まるが，その1小節のトークンを継ぎ足すだけで効果全体が再現されるので，モデルは各ステップで音符から調を読み直しており，自分が書いたもの以外に調の記憶を持たない．
+% したがって確率の押し上げは，編集された音が1つも存在しないうちから既に生じている．
+% 確認済み 2026-08-11: next_pitch.json mean_D_edit 0.6953 → e^0.6953 = 2.004 ≈ 2倍。
 The edit changes the model's next decision before any note it wrote can feed back.
 A sustained edit leaves one alternative explanation: the edit may disturb the first few notes, and the model may then read the key back off its own output.
-We rule that out with the generation-free reading of Section~\ref{sec:methodB}, scored with the two quantities of Section~\ref{sec:measures}.
-The edit raises the log ratio toward the installed key by $0.695$, while the random baseline raises it by $0.041$.
+We rule that out with the generation-free reading of Section~\ref{sec:methodB}, scored with the two quantities defined there.
+The edit raises the log ratio toward the installed key by $0.695$---it roughly doubles the ratio---while the random baseline raises it by $0.041$.
 The mass on the installed scale rises by $0.255$ from $0.547$ without an edit, against $0.017$ for it.
 The separation holds in $12/12$ keys after correction, with a worst case of $p=5\times10^{-16}$ and an effect size of $r\ge0.99$.
-Once generation starts the picture reverses: after a single write the notes stay in the new key for many bars, yet splicing in the tokens of that one bar reproduces the whole effect, so the model reads the key back off the notes at every step and keeps no memory of it apart from what it has written.
+The push in the probabilities is therefore already there before a single edited note exists.
+
+% 効果が何小節も続くのは，モデルが調を覚えているからではなく，書かれた音符が調を運ぶからである．
+% 探索段階では，一度だけ書き込んでも，音符は何小節も新しい調に留まった．
+% しかし，その1小節ぶんのトークンを編集なしで継ぎ足すだけで，効果全体が再現される．
+% したがってモデルは各ステップで音符から調を読み直しており，自分が書いたもの以外に調の記憶を持たない．
+% 確認済み 2026-08-11: scripts/19_persistence.py / 20_splice_control.py はともに
+% SW.select_prompts（探索段階のプロンプト）を使用 → 「探索段階」の表記は正しい。
+The effect persists through the notes, not through a memory inside the model.
+In the search stage, a single write kept the notes in the new key for many bars.
+Yet splicing in the tokens of that one bar, with no edit in force, reproduces the whole effect.
+The model therefore reads the key back off the notes at every step and keeps no memory of the key apart from what it has written.
 
 % 5.4 調が読める場所と，効く場所
 \subsection{Where the Key Is Read and Where It Acts}
 \label{sec:h5}
 % 調が読める層は，モデルがそれを使う層ではない．
 % プローブは広い帯で平らになる（第2–6層で macro-F1 0.920–0.929）のに，各層を順に編集してランダムベースラインを差し引くと，ネットワークの中央に単一のピークが残る（最良の層と中央値の差の信頼区間は [0.038, 0.109] でゼロを含まない）：第0–1層ではプローブがすでに調をよく読めるのに，編集はほとんど何も起こさない（図2）．
-% 探索段階は残る2つの比較も閉じた：ある層の方向は別の層に書き込んでも働き，編集はプロンプト自体を移調したときに動く距離の 58% を覆った．
-% これらは探索段階のデータであり，最終テストで層のスイープを繰り返していないので，検証済みの主張ではなく観察として報告する．
+% これは探索段階のデータであり，最終テストの新規プロンプトで層のスイープを繰り返していないので，この層プロファイルは検証済みの主張ではなく観察として報告する．
 The layers where we can read the key are not the layers where the model uses it.
 The probe is flat across a wide band (macro-$F_1$ $0.920$--$0.929$ for layers $2$--$6$), yet editing each layer in turn and subtracting the random baseline leaves a single peak in the middle of the network (best against median, CI $[0.038,0.109]$): at layers~$0$ and~$1$ the probe already reads the key well and the edit does almost nothing (Fig.~\ref{fig:layers}).
-The search stage also closed the last two comparisons: one layer's directions still worked when written at another layer, and the edit covered $58\%$ of the distance that transposing the prompt itself covers.
-These are search-stage data and we did not repeat the sweep on held-out prompts, so we report the profile as an observation rather than as a tested claim.
+These are search-stage data and we did not repeat the sweep on the fresh prompts of the final test, so we report the layer profile as an observation rather than as a tested claim.
+
+% 探索段階の残る2つの比較も，効果の範囲を区切る．
+% 第一に，ある層の方向は，別の層に書き込んでも働いた：第5–7層の方向を4層手前（第1–3層）に書き込むと成功率 0.27–0.39 に達し，逆向きの書き込みはランダムベースラインの床に留まった（0.003–0.082）．
+% これは狭い因果の帯と矛盾しない：転移は，方向が深さをまたいで通用するかを問い，帯は，どこに書き込めば出力が変わるかを問うからである．
+% 第二に，編集は，プロンプト自体を移調したときに出力が動く距離の 58% を覆った．この移調が上限を与える．
+% 編集がこの上限に届かない理由は 5.3 節が示唆する：モデルは各ステップで音符から調を読み直すので，我々が決して触らないプロンプトの音符が，継続を元の調へ引き戻し続けるのである．
+% 層プロファイルと同じく，この2つも検証済みの主張ではなく観察として報告する．
+% 確認済み 2026-08-11: sweep parts（k3_L{ℓ}_from{ℓ+4 mod 8}）から算出——
+% L1←L5 0.274, L2←L6 0.387, L3←L7 0.312; 逆向き L4←L0 0.064, L5←L1 0.081,
+% L6←L2 0.082, L7←L3 0.078, L0←L4 0.003（CHANGELOG の K3 表と一致;
+% 探索段階のランダム床は 0.075）。
+Two further search-stage comparisons bound the effect.
+First, one layer's directions still worked when we wrote them at another layer: the directions of layers $5$--$7$, written four layers earlier at layers $1$--$3$, reached success rates of $0.27$--$0.39$, while the writes in the other direction stayed at the random-baseline floor ($0.003$--$0.082$).
+This does not contradict the narrow causal band: transfer asks whether the directions carry across depths, while the band asks where writing them changes the output.
+Second, the edit covered $58\%$ of the distance that the output moves when we transpose the prompt itself, and that transposition gives the upper bound.
+Section~\ref{sec:nextpitch} suggests why the edit stays below that bound: the model re-reads the key off the notes at every step, so the notes of the prompt, which we never touch, keep pulling the continuation back toward the old key.
+Like the layer profile, we report both comparisons as observations, not as tested claims.
 
 % どのトークン位置に書き込むかも，層の深さと同じくらい効く．
 % 音高の位置だけに書き込むと何も起こらず（成功率 0.077，ランダムベースラインの床と同じ）音楽も無傷のままだが，小節と音の長さの位置だけに書き込むと効果全体の 69% を運ぶ．
@@ -528,18 +653,18 @@ The edit fails exactly where the key is easiest to read.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\columnwidth]{fig_layer_profile.pdf}
+\includegraphics[width=0.74\columnwidth]{fig_layer_profile.pdf}
 % 図2キャプション
-% (a) 層ごとのプローブの点数（プローブの点数は 5.1 節の macro-F1）．細い灰色の線は残り5モデルである．
-% (b) 同じ層で編集を行ったときの成功率．橙の帯はプロンプト単位のブートストラップ 95% 信頼区間，灰色の領域はランダムベースライン（その信頼区間の上端まで）である．
-% 赤い破線は最終テストが固定する編集層を両パネルで結ぶ．
-% 第1層では調がすでによく読めるのに，編集はほとんど何も起こさない：読める場所と効く場所は別である．
-% 探索段階のデータ（シード0）．
-\caption{(a)~The probe score at each layer (the probe score is the macro-$F_1$ of Section~\ref{sec:h1}); thin gray lines show the five other models.
-(b)~The success rate when we edit at that same layer; the orange band is a prompt-level bootstrap $95\%$ confidence interval, and the gray region reaches up to the random baseline's confidence ceiling.
-The dashed red line ties the two panels at the layer the final test fixes.
-At layer~$1$ the key already reads well, yet the edit does almost nothing: where the key is read is not where it acts.
-Search-stage data, seed~$0$.}
+% (a) 6モデルの層ごとのプローブ macro-F1（細線；シード0を強調）．
+% 調は広い帯で読める．
+% (b) ランダムベースラインに対する編集の因果効果（帯：プロンプト単位のブートストラップ 95% CI）．
+% 出力が変わるのは狭い帯だけである．
+% 探索段階のデータである．最終テストは第4層に固定する．
+\caption{(a)~Probe macro-$F_1$ per layer for all six models (thin lines; seed~$0$ highlighted).
+We can read the key across a broad band.
+(b)~Causal effect of the edit against the random baseline (bands: prompt-level bootstrap $95\%$ CI).
+The output changes only in a narrow band.
+Search-stage data; the final test fixes layer~$4$.}
 \label{fig:layers}
 \end{figure}
 
@@ -558,7 +683,7 @@ The edit transfers too.
 It reaches $7.8\times$ the random baseline ($0.479$ against $0.061$), separates all $12$ targets, keeps $99.7\%$ of continuations inside the limit, and moves the notes across as well ($0.890$ of them in the installed key against $0.753$ in the prompt's).
 Here too the layer that acts (layer~$8$) is not the layer that reads best (layer~$10$).
 
-% 最初の実験で得た結果のうち1つは撤回する：嬰ヘ長調への「学習された好み」に見えたものは，その調が一度も現れないコーパスから標的を推定したことによる産物であり，補足資料に訂正後の数値を載せる．
+% 最初の実験で得た結果のうち1つは撤回する：嬰ヘ長調を避ける「学習された好み」に見えたものは，その調が一度も現れないコーパスから標的を推定したことによる産物であり，補足資料に訂正後の数値を載せる．
 One first-run finding did not survive its control and we withdraw it: what looked like a learned preference against F$\sharp$ major came from estimating the targets on a corpus in which that key never occurs, and the supplementary reports the corrected numbers.
 
 % 6. 限界
