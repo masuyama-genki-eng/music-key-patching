@@ -132,3 +132,22 @@ Added control, frozen here:
   (magnitude alone should not install a key).
 
 Nothing else in this document changes.
+
+## AMENDMENT 2 (2026-08-11, after the confirmatory arms were observed)
+
+Scope and legitimacy: this amendment ADDS a reference measurement (the K4
+behavioral ceiling) on the held-out prompts. It changes no frozen choice, no
+metric, no test, and no analysis of any observed arm; the frozen edit-vs-K1 and
+edit-vs-K1norm verdicts cannot be altered by its outcome. Reason: the paper
+reports the edit as a fraction of the ceiling, and a reader cannot judge 0.356
+without the held-out ceiling's own raw value (author review, 2026-08-11).
+
+- **K4 arm**: transpose each held-out prompt so its key becomes the target
+  (sweep.transpose_prompt, the selection-phase semantics), generate with the
+  same frozen gen settings and seed formula, score raw strict TKR. The guard is
+  undefined for K4 (its clean twin is untransposed), exactly as in the
+  selection phase; we report raw only, and the edit/K4 ratio uses guarded edit
+  over raw K4, the least favorable of the conventions (as in the paper).
+- Identity cells excluded from the ratio, matching the primary analysis.
+- Frozen prediction, stated before the run: raw K4 near the selection-phase
+  0.652; the held-out edit/K4 ratio near 55%.
