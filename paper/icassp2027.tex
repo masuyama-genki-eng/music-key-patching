@@ -530,16 +530,14 @@ The edit fails exactly where the key is easiest to read.
 \centering
 \includegraphics[width=0.74\columnwidth]{fig_layer_profile.pdf}
 % 図2キャプション
-% (a) 6モデルの層ごとのプローブ macro-F1（細線；シード0を強調）．
-% 調は広い帯で読める．
-% (b) ランダムベースラインに対する編集の因果効果（帯：プロンプト単位のブートストラップ 95% CI）．
-% 出力が変わるのは狭い帯だけである．
-% 探索段階のデータである．最終テストは第4層に固定する．
-\caption{(a)~Probe macro-$F_1$ per layer for all six models (thin lines; seed~$0$ highlighted).
-We can read the key across a broad band.
-(b)~Causal effect of the edit against the random baseline (bands: prompt-level bootstrap $95\%$ CI).
-The output changes only in a narrow band.
-Search-stage data; the final test fixes layer~$4$.}
+% (a) 各層でのプローブの点数（青，左軸）と編集の成功率（橙，右軸）．赤い破線は最終テストが固定する編集層を示す．
+% (b) 同じ2つの数値を層ごとに1点として突き合わせたもの．数字は層の深さ，黒丸は最終テストの層，点線はランダムベースラインである．
+% 調は第2–7層でほぼ同じようによく読めるのに，編集が効くのは中央の層だけである．プローブの点数は 5.1 節の macro-F1 である．
+% 探索段階のデータ（シード0）．
+\caption{(a)~The probe score (blue, left axis) and the success rate of the edit (orange, right axis) at each layer; the dashed line marks the edit layer that the final test fixes.
+(b)~The same two numbers plotted against each other, one point per layer, numbered by depth; the black circle marks the final-test layer, and the dotted line is the random baseline.
+The key reads almost equally well from layers $2$--$7$, yet the edit acts only in the middle; the probe score is the macro-$F_1$ of Section~\ref{sec:h1}.
+Search-stage data, seed~$0$.}
 \label{fig:layers}
 \end{figure}
 
