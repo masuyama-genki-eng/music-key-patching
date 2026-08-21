@@ -39,6 +39,7 @@ from src.intervene.public_model_edit import (HookSubspaceEditor,
                                              generate_edited, orthonormal_rows,
                                       random_matched, ref_nll)
 from src.publicmodels import get_adapter
+from src.publicmodels.pop909 import load_pop909_part
 from src.publicmodels.corpus import chorale_to_events
 from src.utils.ledger import append_entry, snapshot
 
@@ -85,6 +86,11 @@ def main() -> None:
                     help="stage 1 only: comma-separated layer subset to scan, e.g. "
                          "0,2,4 (SPEC §8 strided fallback). Default: every layer. A "
                          "later run may add layers; the scan file keeps the union.")
+    ap.add_argument("--corpus", choices=["bach", "pop909"], default="bach",
+                   help="evaluation corpus; pop909 draws stage-1 prompts from the "
+                        "SEARCH split and stage-2 prompts from the FINAL split "
+                        "(docs/CROSS_CORPUS_FREEZE.md §3) and keeps artifacts in a "
+                        "separate results tree")
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--n-prompts-stage1", type=int, default=20)
@@ -112,24 +118,37 @@ def main() -> None:
     checkpoint = args.model or adapter.default_checkpoint
     ref_checkpoint = args.ref_model or adapter.reference_checkpoint
     short = checkpoint.split("/")[-1]
-    outdir = REPO / "results/mwild_sweep" / short
+    outdir = REPO / ("results/mwild_sweep_pop909" if args.corpus == "pop909"
+                     else "results/mwild_sweep") / short
     outdir.mkdir(parents=True, exist_ok=True)
     gen_kw = dict(temperature=args.temperature, top_p=args.top_p)
 
     model = adapter.load(checkpoint, device)
     n_layers = adapter.n_layers(model)
-    chorales, _ = load_corpus_local(Path(args.scores) / "kern",
-                                    Path(args.analyses) / ANALYSES_SUBDIR)
-    # DISJOINT prompt sets: the layer is chosen on stage-1 chorales and judged on
-    # stage-2 chorales it has never been selected against.
     n1, n2 = args.n_prompts_stage1, args.n_prompts_stage2
-    all_prompts = build_prompts(adapter, chorales, n1 + n2)
-    prompts = all_prompts[:n1] if args.stage == 1 else all_prompts[n1:n1 + n2]
+    if args.corpus == "pop909":
+        # stage 1 chooses on SEARCH pieces, stage 2 judges on FINAL pieces — whole
+        # pieces, not slices of one list, so nothing the layer was chosen against
+        # can reappear at test time even in part
+        pc = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())
+        part = "search" if args.stage == 1 else "final"
+        chorales, _ = load_pop909_part(
+            REPO / pc["corpus"]["root"], part, pc["split"]["seed"],
+            tuple(pc["split"]["frac"]), pc["corpus"]["min_labeled_events"])
+        prompts = build_prompts(adapter, chorales, n1 if args.stage == 1 else n2)
+    else:
+        chorales, _ = load_corpus_local(Path(args.scores) / "kern",
+                                        Path(args.analyses) / ANALYSES_SUBDIR)
+        # DISJOINT prompt sets: the layer is chosen on stage-1 chorales and judged on
+        # stage-2 chorales it has never been selected against.
+        all_prompts = build_prompts(adapter, chorales, n1 + n2)
+        prompts = all_prompts[:n1] if args.stage == 1 else all_prompts[n1:n1 + n2]
     log.info("stage %d: %d prompts (%d layers, rank %d)", args.stage, len(prompts),
              n_layers, args.rank)
 
     adir = Path(args.artifacts_dir) if args.artifacts_dir \
-        else REPO / "results/mwild" / short
+        else REPO / ("results/mwild_pop909" if args.corpus == "pop909"
+                     else "results/mwild") / short
     pw = np.load(adir / "probe_weights.npz")
     cm = np.load(adir / "class_means.npz")
 
@@ -212,7 +231,7 @@ def main() -> None:
                      li, tkr, tkr_k1, ikr_t, ikr_s)
         prof.sort(key=lambda r: r["layer"])
         best = max(prof, key=lambda r: r["tkr_edit"] - r["tkr_k1"])
-        out = {"stage": 1, "model": checkpoint, "n_prompts": len(prompts),
+        out = {"stage": 1, "model": checkpoint, "corpus": args.corpus, "n_prompts": len(prompts),
                "profile": prof, "best_layer": best["layer"],
                "layers_scanned": [r["layer"] for r in prof],
                "all_layers": n_layers,
@@ -240,6 +259,15 @@ def main() -> None:
                          "(the budget must be fixed before any edit is scored)")
     guard = json.loads(guard_path.read_text())
     delta = guard["delta_ppl"]
+    # a budget is frozen per corpus: nats measured on Bach say nothing about pop.
+    # Legacy artifacts predate the field and were all Bach (hence the default).
+    frozen_corpus = guard.get("corpus", "bach")
+    if frozen_corpus != args.corpus:
+        raise SystemExit(
+            f"guard corpus mismatch: the budget was frozen on {frozen_corpus!r} but "
+            f"this run scores {args.corpus!r}. A perplexity budget does not transfer "
+            "between corpora; freeze one for this corpus first "
+            "(docs/CROSS_CORPUS_FREEZE.md §4).")
     frozen_ref = guard.get("reference_model")
     if frozen_ref and frozen_ref != ref_checkpoint:
         raise SystemExit(
@@ -309,7 +337,7 @@ def main() -> None:
     n_sig = sum(r["sig"] for r in per_target)
 
     res = {
-        "stage": 2, "model": checkpoint, "layer": layer, "delta_ppl": delta,
+        "stage": 2, "model": checkpoint, "corpus": args.corpus, "layer": layer, "delta_ppl": delta,
         "n_prompts": len(prompts), "guard_reference": ref_checkpoint,
         "tkr_edit_guarded": float(np.mean([r["success"] for r in df_e])),
         "tkr_k1_guarded": float(np.mean([r["success"] for r in df_k])),

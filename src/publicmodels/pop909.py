@@ -237,3 +237,19 @@ def split_pieces(names: list[str], seed: int,
     n1 = int(len(order) * frac[0]); n2 = int(len(order) * (frac[0] + frac[1]))
     return {"train": sorted(order[:n1]), "search": sorted(order[n1:n2]),
             "final": sorted(order[n2:])}
+
+
+def load_pop909_part(root: str | Path, part: str, seed: int,
+                     frac: tuple[float, float, float],
+                     min_labeled_events: int = 32) -> tuple[list[dict], dict]:
+    """Load one split part ("train" | "search" | "final"). The probe, the per-key
+    means and the guard budget are allowed TRAIN only; layer/hyperparameter choices
+    SEARCH only; FINAL is touched once (docs/CROSS_CORPUS_FREEZE.md §3)."""
+    assert part in ("train", "search", "final"), part
+    pieces, stats = load_pop909(root, min_labeled_events)
+    parts = split_pieces([q["name"] for q in pieces], seed, frac)
+    want = set(parts[part])
+    kept = [q for q in pieces if q["name"] in want]
+    stats = dict(stats, split_part=part, split_seed=seed, split_frac=list(frac),
+                 n_in_part=len(kept))
+    return kept, stats

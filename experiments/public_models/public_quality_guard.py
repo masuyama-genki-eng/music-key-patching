@@ -28,9 +28,11 @@ sys.path.insert(0, str(REPO))
 import numpy as np
 import torch
 import torch.nn.functional as F
+import yaml
 
 from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
 from src.publicmodels import get_adapter
+from src.publicmodels.pop909 import load_pop909_part
 from src.publicmodels.corpus import chorale_to_events
 from src.utils.ledger import append_entry, snapshot
 
@@ -54,6 +56,9 @@ def main() -> None:
                    help="guard reference checkpoint; default = the adapter's")
     ap.add_argument("--target-model", default=None,
                    help="checkpoint being guarded; default = the adapter's")
+    ap.add_argument("--corpus", choices=["bach", "pop909"], default="bach",
+                   help="evaluation corpus; pop909 reads configs/pop909.yaml and "
+                        "keeps its artifacts in a separate results tree")
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--window-events", type=int, default=16,
@@ -68,7 +73,9 @@ def main() -> None:
     target_checkpoint = args.target_model or adapter.default_checkpoint
     short = target_checkpoint.split("/")[-1]
 
-    out = Path(args.out) if args.out else REPO / "results/mwild_sweep" / short / "delta_ppl.json"
+    tree = "results/mwild_sweep_pop909" if args.corpus == "pop909" \
+        else "results/mwild_sweep"
+    out = Path(args.out) if args.out else REPO / tree / short / "delta_ppl.json"
     if out.exists():
         raise SystemExit(f"{out} exists — a frozen budget must not be recomputed after "
                          "edit results exist (SPEC §4.3). Delete by hand only if no "
@@ -79,8 +86,16 @@ def main() -> None:
     ref_checkpoint = args.ref_model or adapter.reference_checkpoint
     ref = adapter.load(ref_checkpoint, device)
     ref_ctx = adapter.context_length(ref)
-    chorales, _ = load_corpus_local(Path(args.scores) / "kern",
-                                    Path(args.analyses) / ANALYSES_SUBDIR)
+    if args.corpus == "pop909":
+        # budget from the TRAIN split's natural key changes, per the freeze: the
+        # search and final pieces must not shape the bar they will be judged by
+        pc = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())
+        chorales, _ = load_pop909_part(
+            REPO / pc["corpus"]["root"], "train", pc["split"]["seed"],
+            tuple(pc["split"]["frac"]), pc["corpus"]["min_labeled_events"])
+    else:
+        chorales, _ = load_corpus_local(Path(args.scores) / "kern",
+                                        Path(args.analyses) / ANALYSES_SUBDIR)
     log.info("measuring natural-modulation NLL rises on %d chorales with %s",
              len(chorales), ref_checkpoint)
 
@@ -118,6 +133,7 @@ def main() -> None:
         "percentile": args.percentile,
         "window_events": W,
         "n_modulation_events": int(len(arr)),
+        "corpus": args.corpus,
         "reference_model": ref_checkpoint,
         "target_model": target_checkpoint,
         "deviation_note": (

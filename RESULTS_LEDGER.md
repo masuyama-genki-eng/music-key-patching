@@ -1006,3 +1006,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/pop909/label_gate.json`
 - note: 1060 segments: exact 0.769, near 0.958, chance 0.042 -> PASS
 
+## 2026-08-22T03:47:09+09:00 — M-WILD intervention stage 1 (music-medium-800k)
+- git: `860dfc036ff9ba1987996ef70f8479ac0b8276bb`
+- config_hash: `73c533d0df125dd36dbc71a846864d992a26a4769cd33579e17551735992e651`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-medium-800k/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L12 TKR 0.429 vs K1 0.054
+

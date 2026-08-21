@@ -32,6 +32,7 @@ from src.analysis.stats import bca_ci
 from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
 from src.probing import controls as C
 from src.publicmodels import get_adapter
+from src.publicmodels.pop909 import load_pop909_part
 from src.probing.public_model import (extract_activations,
                                pc_hists)
 from src.probing.probes import (ProbeConfig, confusion, macro_f1_from_conf,
@@ -49,6 +50,9 @@ def main() -> None:
                    help="checkpoint; default = the adapter's own")
     ap.add_argument("--adapter", default="anticipatory",
                    help="public-model adapter (src/publicmodels/registry.py)")
+    ap.add_argument("--corpus", choices=["bach", "pop909"], default="bach",
+                   help="evaluation corpus; pop909 reads configs/pop909.yaml and "
+                        "keeps its artifacts in a separate results tree")
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--config", default=str(REPO / "configs/probe.yaml"))
@@ -75,7 +79,8 @@ def main() -> None:
     # a shared path silently overwrites one with the other (this bit us once already in
     # the D-REAL probe — CHANGELOG 2026-07-15). predict_pitch keeps the original,
     # unsuffixed location so existing artifacts and their ledger entries stay valid.
-    outdir = REPO / "results/mwild" / short
+    outdir = REPO / ("results/mwild_pop909" if args.corpus == "pop909"
+                     else "results/mwild") / short
     if args.probe_at != "predict_pitch":
         outdir = outdir / args.probe_at
     outdir.mkdir(parents=True, exist_ok=True)
@@ -89,9 +94,19 @@ def main() -> None:
     log.info("%s: %d layers, d=%d, vocab %d (leak-free: time/dur/note only)",
              short, arch["n_layer"], arch["d"], arch["vocab"])
 
-    chorales, match_stats = load_corpus_local(
-        Path(args.scores) / "kern", Path(args.analyses) / ANALYSES_SUBDIR)
-    log.info("%d chorales with human local-key labels", len(chorales))
+    if args.corpus == "pop909":
+        # TRAIN split only: the probe and the per-key means may never see the
+        # search or final pieces (docs/CROSS_CORPUS_FREEZE.md §3)
+        pc = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())
+        chorales, match_stats = load_pop909_part(
+            REPO / pc["corpus"]["root"], "train", pc["split"]["seed"],
+            tuple(pc["split"]["frac"]), pc["corpus"]["min_labeled_events"])
+        log.info("%d POP909-CL train-split pieces with human local-key labels",
+                 len(chorales))
+    else:
+        chorales, match_stats = load_corpus_local(
+            Path(args.scores) / "kern", Path(args.analyses) / ANALYSES_SUBDIR)
+        log.info("%d chorales with human local-key labels", len(chorales))
 
     # GATE: prove the reimplemented tokenizer is the one the model was trained with,
     # before reading a single activation. A wrong offset yields plausible-looking but
@@ -166,9 +181,14 @@ def main() -> None:
         "arch": arch,
         "encoding_gate": sanity,
         "probe_at": args.probe_at,
-        "corpus": {"n_chorales": data["n_chorales"], "n_positions": int(len(y)),
-                   "labels": "human Roman-numeral LOCAL key (When-in-Rome, CC BY-SA)",
-                   "match_stats": match_stats},
+        "corpus": {"id": args.corpus,
+                   "n_chorales": data["n_chorales"], "n_positions": int(len(y)),
+                   "labels": ("human-corrected key signatures (POP909-CL, MIT), "
+                              "TRAIN split only" if args.corpus == "pop909" else
+                              "human Roman-numeral LOCAL key (When-in-Rome, CC BY-SA)"),
+                   "match_stats": {k: v for k, v in match_stats.items()
+                                   if k != "excluded"} if args.corpus == "pop909"
+                                  else match_stats},
         "probe_per_layer": {str(li): probes[li]["report"] for li in probes},
         "best_layer": int(best),
         "best_probe_f1": probes[best]["report"]["macro_f1_24"],
