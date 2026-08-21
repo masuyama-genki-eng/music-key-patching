@@ -101,6 +101,12 @@ cross-check each annotated key against a Krumhansl–Schmuckler estimate of the 
 its span, and refuse to probe if they disagree more often than chance. A corpus whose
 key labels are wrong would produce plausible-looking probe numbers that mean nothing.
 
+## DECISION 2026-08-22 (author)
+
+REMI is dropped from this study — not deferred, dropped: the author confirmed the
+recommendation below. The audit section on REMI stays as the record of why. FIGARO
+was already out of scope per the author's instruction of the same date.
+
 ## Recommendation for ICASSP scope
 
 1. **POP909-CL as the genre axis.** Cheap, permissively licensed, human-corrected,

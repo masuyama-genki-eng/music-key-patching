@@ -13,7 +13,16 @@ from src.tokenizer.vocab import pitch_of
 
 def chorale_to_events(chorale: dict, seconds_per_16th: float = 0.25
                       ) -> tuple[list[tuple[float, float, int]], list[int]]:
-    """A parsed D-REAL chorale -> (timed events, per-event LOCAL key label)."""
+    """A parsed piece -> (timed events, per-event LOCAL key label).
+
+    Two corpus schemas arrive here. POP909-CL pieces (src/publicmodels/pop909.py)
+    already carry timed events and per-event labels — tick-aligned at the source,
+    which is more precise than anything this function could recompute — so they pass
+    through untouched. Bach chorales arrive as kern tokens with onsets in sixteenth
+    units and one label per TOKEN, and take the conversion below.
+    """
+    if "events" in chorale:
+        return chorale["events"], chorale["event_key_labels"]
     events, labels = [], []
     onsets, toks, keys = chorale["onsets"], chorale["tokens"], chorale["key_labels"]
     for i, tk in enumerate(toks):
