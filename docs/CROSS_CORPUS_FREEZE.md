@@ -70,6 +70,29 @@ bootstrap CI); the search-then-final-test discipline; and every Bach number — 
 regression obligation is that AMT x Bach reproduces under the same settings after
 any shared-code change.
 
+## 6b. Public models admitted, and what trained them (author's condition, 2026-08-22)
+
+The author's rule: a public model enters this study only if its training data is
+known. All three qualify, from primary sources:
+
+| model | checkpoint (sha256-pinned in the ledgered INVENTORY) | training data | source of that fact |
+|---|---|---|---|
+| Anticipatory Music Transformer | `stanford-crfm/music-{small,medium,large}-800k` | Lakh MIDI + MetaMIDI + FMA transcripts | the model's paper; ledgered licence check 2026-07-14 |
+| MMT | `mmt/lmd/ape/checkpoints/best_model.pt` (`201ae91d…`) | **LMD** (Lakh MIDI Dataset), per its own `train-args.json: dataset="lmd"` | file shipped inside the checkpoint download |
+| REMI-representation baseline | `mmt/lmd/remi/checkpoints/best_model.pt` (`65ecfbc2…`) | **LMD**, same field, same value | same |
+
+**The REMI axis returns, as a different model.** The dropped model stays dropped:
+YatingMusic's Pop Music Transformer is out (chord tokens in one checkpoint, TF 1.14,
+Transformer-XL segment memory — docs/GENRE_EXTENSION_AUDIT.md). What is adopted
+instead is the MMT authors' own REMI-representation baseline: trained on the SAME
+LMD data with the SAME x-transformers backbone as MMT, differing in tokenisation
+alone — which makes MMT-vs-REMI a tokenisation contrast with the training data and
+architecture held fixed, something the original REMI could never have given. Its
+vocabulary was checked directly (`baseline/encoding_remi.json`): beat, position,
+pitch, duration, instrument and structural marks only — 1268 types, **no chord and
+no key symbol**, so the leak-freedom precondition holds. It recomputes the full
+window every generation step, like every other model here.
+
 ## 7. Order
 
 Step 1: AMT x POP909-CL (corpus adapter done; probe -> subspace -> identity ->
