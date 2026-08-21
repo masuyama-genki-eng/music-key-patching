@@ -123,3 +123,24 @@ reference model's own nats. A budget frozen on Bach chorales does not transfer t
 so pop needs its own frozen budget and its own reference checkpoint. The stage-2
 consistency check added on 2026-08-21 catches a wrong reference model but not a wrong
 genre; that check should be widened before the first pop run.
+
+## MMT Phase 0 — deep audit (2026-08-22, from the real code)
+
+Repository `salu133445/mmt` @ HEAD, read directly; nothing below is from the paper.
+
+| question | answer, with the line that settles it |
+|---|---|
+| licence | **MIT** (LICENSE, Hao-Wen Dong 2022) |
+| architecture | x-transformers Decoder, defaults **6 layers, d=512, 8 heads** (train.py:74-79); the checkpoint's own train-args JSON is the authority once downloaded |
+| compound token | 6 fields per EVENT: `(type, beat, position, pitch, duration, instrument)` (representation.py:19) |
+| how fields combine | the six field embeddings are **summed into one d-dim vector per event** (music_x_transformers.py:149-151) — so the residual stream has ONE position per note, and `edits_per_bar` is ~1/3 of AMT's |
+| how fields are predicted | six output heads all read **the same hidden state** and jointly predict the NEXT event's six fields (line 179: `[to_logit(x) for to_logit in self.to_logits]`) |
+| **probe location** | h at event index i−1 predicts event i's pitch, and event i's fields are not in the input at i−1 — so `probe_offset = −1` in EVENT coordinates with the key label of event i. Same shape as AMT's convention, but derived from this model's forward pass, not copied |
+| KV cache | **none** — generation recomputes `net(out[:, -max_seq_len:])` every step (line 342-353), so the one-application-per-position property and its gate transfer unchanged |
+| generation interface | `MusicAutoregressiveWrapper.generate` exists; per-field sampling with type constraints |
+| dependencies | pinned `x-transformers==0.25.9` + einops (environment.yml:23). muspy is NOT needed: `encode_notes` consumes plain `(beat, position, pitch, duration, instrument)` tuples, which our POP909 reader can emit directly |
+| checkpoints | SOD / LMD / LMD_full / SND on UCSD SharePoint. **Programmatic download fails (302 -> 403)** — needs a manual browser download. For POP909 the LMD checkpoint is the right one (Lakh MIDI is web pop; SOD is orchestral); the OOD check (unedited NLL on POP909 train pieces) decides whether the cell is honest to fill |
+
+Contract impact confirmed: sampling must move behind the adapter (six joint heads,
+not one softmax); probing and editing need nothing new — the residual stream is
+still `(B, T, d)` and forward hooks apply.
