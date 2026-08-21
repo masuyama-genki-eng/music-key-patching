@@ -27,6 +27,12 @@ from pathlib import Path
 
 from src.tokenizer.vocab import DUR_MAX, PITCH_MAX, PITCH_MIN, POS_RES, VOCAB
 
+# Corpus layout. Both corpora are fetched at run time and are NOT redistributed
+# here; the licence verdicts are recorded in RESULTS_LEDGER.md (2026-07-13).
+SCORES_URL = "https://github.com/craigsapp/bach-370-chorales.git"     # CC BY-NC-SA 4.0
+ANALYSES_URL = "https://github.com/MarkGotham/When-in-Rome.git"       # CC BY-SA 4.0
+ANALYSES_SUBDIR = "Corpus/Early_Choral/Bach,_Johann_Sebastian/Chorales"
+
 PC = {"c": 0, "d": 2, "e": 4, "f": 5, "g": 7, "a": 9, "b": 11}
 KEY_RE = re.compile(r"^\*([a-gA-G])([#-]?):$")
 NOTE_RE = re.compile(r"(\d+)(\.*)([a-gA-G]+)([#\-n]*)")
