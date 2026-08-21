@@ -101,27 +101,55 @@ def main() -> None:
 
     W = args.window_events
     rises = []
+
+    def window_rises(events, labels):
+        """The frozen estimation rule: at each label change with a full W-note
+        window either side, the mean NLL of the W note tokens after minus the W
+        before, from one forward pass. Returns the rises found in this sequence."""
+        ids, note_pos = adapter.encode_events(events)
+        if len(ids) > ref_ctx:
+            keep = max(i for i, q in enumerate(note_pos) if q < ref_ctx)
+            ids, note_pos, labels = (ids[:ref_ctx],
+                                     note_pos[:keep + 1], labels[:keep + 1])
+        labels = labels[:len(note_pos)]              # encoder may suffix-trim
+        if len(note_pos) < 3 * W:
+            return []
+        nll = token_nll(ref, ids, device)
+        out = []
+        for i in range(1, len(note_pos)):
+            if labels[i] == labels[i - 1]:
+                continue
+            if i < W or i + W >= len(note_pos):
+                continue
+            pre = np.mean([nll[note_pos[j] - 1] for j in range(i - W, i)])
+            post = np.mean([nll[note_pos[j] - 1] for j in range(i, i + W)])
+            out.append(float(post - pre))
+        return out
+
     for ch in chorales:
         adapter.set_piece_context(ch)
         events, labels = chorale_to_events(ch)
-        ids, note_pos = adapter.encode_events(events)
-        if len(ids) > ref_ctx:
-            keep = max(i for i, p in enumerate(note_pos)
-                       if p < ref_ctx)
-            ids, note_pos, labels = (ids[:ref_ctx],
-                                     note_pos[:keep + 1], labels[:keep + 1])
-        if len(note_pos) < 3 * W:
+        if args.corpus == "pop909":
+            # Pop modulations concentrate LATE in songs (the final-chorus shift:
+            # measured 2026-08-22, only 2 of the train split's ~100 key changes
+            # fall inside the absolute-time vocabulary's 100 s window, against 87
+            # multi-key pieces). Each modulation is therefore presented as its own
+            # TIME-SHIFTED CLIP — 3W notes of context either side, re-anchored to
+            # t=0 — which fits both the 100 s ceiling and the reference's context.
+            # The estimation rule itself (P90 of the W-note window rise) is the
+            # frozen one; only the presentation changes, and that is recorded in
+            # the artifact's deviation note and the CHANGELOG.
+            for m in range(1, len(labels)):
+                if labels[m] == labels[m - 1]:
+                    continue
+                lo = max(0, m - 3 * W)
+                hi = min(len(events), m + 3 * W)
+                t0 = events[lo][0]
+                clip = [(t - t0, d, pt) for t, d, pt in events[lo:hi]]
+                rises.extend(window_rises(clip, labels[lo:hi]))
             continue
-        nll = token_nll(ref, ids, device)
-        for i in range(1, len(note_pos)):
-            if labels[i] == labels[i - 1]:
-                continue                            # not a modulation
-            if i < W or i + W >= len(note_pos):
-                continue                            # need a full window either side
-            # nll[j] costs token j+1, so token p costs nll[p-1]
-            pre = np.mean([nll[note_pos[j] - 1] for j in range(i - W, i)])
-            post = np.mean([nll[note_pos[j] - 1] for j in range(i, i + W)])
-            rises.append(float(post - pre))
+        rises.extend(window_rises(events, labels))
+        continue
 
     arr = np.array(rises)
     if len(arr) < 50:
@@ -137,6 +165,9 @@ def main() -> None:
         "corpus": args.corpus,
         "reference_model": ref_checkpoint,
         "target_model": target_checkpoint,
+        "presentation": ("time-shifted clips of 3W notes around each key change "
+                         "(pop modulations sit past the 100 s vocabulary ceiling)"
+                         if args.corpus == "pop909" else "whole pieces"),
         "deviation_note": (
             "SPEC §4.3 specifies M-REF: same architecture, disjoint seed AND data split. "
             "A public checkpoint has no such twin, so the reference is a DIFFERENT public "

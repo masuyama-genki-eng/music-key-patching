@@ -1362,3 +1362,16 @@ offset correctness is carried, as it always really was, by check_vocab, the deco
 round-trip tests, and the time-scramble. Both gates re-verified before relaunching
 (Bach and POP909 must both pass under the stronger corruption); the MMT adapter's
 gate had the same flaw and gets the same fix.
+
+## 2026-08-22 — pop909 guard: modulations presented as time-shifted clips
+
+The Bach guard walks whole pieces and measures the reference's NLL rise across each
+natural key change. On POP909 that walk found 2 modulations in 633 train pieces
+against 87 multi-key pieces — pop modulations concentrate in the final chorus,
+past the absolute-time vocabulary's 100 s ceiling, so the encoder's suffix trim
+removed nearly all of them. Each modulation is now presented as its own clip (3W
+notes of context either side, re-anchored to t=0), which fits both the 100 s
+ceiling and the reference's context window. The ESTIMATION RULE is unchanged —
+P90 of the W=16-note window rise, train split only, frozen before evaluation —
+only the presentation changed, and the guard artifact now records which
+presentation produced it. The Bach path is untouched.

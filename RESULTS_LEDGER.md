@@ -1055,3 +1055,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/music-medium-800k/stage2_eval_balanced.json`
 - note: L11 chosen on disjoint prompts; guarded TKR 0.557 vs K1 0.057 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-large-800k
 
+## 2026-08-22T08:30:59+09:00 — M-WILD probe music-small-800k
+- git: `4b15b291bacf35e1f9dc4ec2e1144b3d3cacbb51`
+- config_hash: `2888ea8f482bdc06ab0624b83b7b5023f1b519a1a6e61e06f999f3f7e825f4c8`
+- seeds: [0]
+- artifacts: `results/mwild_pop909/music-small-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6703 (L9) vs best C3 0.5115; corrected margin 0.1321 CI[0.0720,0.2014]; beats_surface=True
+
