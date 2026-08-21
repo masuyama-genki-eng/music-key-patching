@@ -346,8 +346,13 @@ class MMTAdapter(PublicModelAdapter):
             bad = [list(r) for r in codes]
             n_pitch = R.get_encoding()["n_tokens"][DIM["pitch"]]
             for i in npos:
-                if bad[i][DIM["pitch"]] < n_pitch - 1:
-                    bad[i][DIM["pitch"]] += 1        # every pitch off by one slot
+                # per-note RANDOM displacement: a uniform +1 is a transposition,
+                # which is valid music and provably indistinguishable from the
+                # off-by-one offset error it pretended to catch (see the
+                # anticipatory gate's docstring, 2026-08-22)
+                step = int(rng.integers(1, 7)) * (1 if rng.random() < 0.5 else -1)
+                bad[i][DIM["pitch"]] = min(n_pitch - 1, max(1,
+                                           bad[i][DIM["pitch"]] + step))
             shift.append(nll([tuple(r) for r in bad]))
             ev = list(events)
             rng.shuffle(ev)

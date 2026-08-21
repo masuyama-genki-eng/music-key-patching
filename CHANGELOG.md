@@ -1347,3 +1347,18 @@ music-large-800k, budget from natural key changes in the TRAIN split, frozen
 pre-evaluation), and the edit-density recording obligation. The label gate ran
 before this entry under thresholds committed first (d05740d): PASS. KS criteria,
 statistics and the search-then-test discipline are unchanged across corpora.
+
+## 2026-08-22 — public-model encoding gate: the pitch corruption was a transposition
+
+The gate compares the NLL of correctly encoded music against corruptions; its pitch
+corruption shifted every note by the SAME one slot. That is a transposition —
+musically valid — and it is byte-identical to what an off-by-one NOTE_OFFSET would
+produce, so the check could never detect the error it named. POP909 exposed it:
+correct 1.323 vs shifted 1.322 (a coin flip), while the time-scramble (2.676)
+proved the encoding itself sound. On Bach the same comparison had passed on the
+corpus's key prior alone (0.689 vs 0.702). The corruption is now a per-note random
+displacement of 1..6 semitones, which destroys harmony rather than transposing it;
+offset correctness is carried, as it always really was, by check_vocab, the decode
+round-trip tests, and the time-scramble. Both gates re-verified before relaunching
+(Bach and POP909 must both pass under the stronger corruption); the MMT adapter's
+gate had the same flaw and gets the same fix.

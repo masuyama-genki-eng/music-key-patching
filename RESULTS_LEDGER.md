@@ -1048,3 +1048,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild/music-medium-800k/balanced/probe_weights.npz`, `results/mwild/music-medium-800k/balanced/class_means.npz`, `results/mwild/music-medium-800k/balanced/balanced_report.json`
 - note: 12-key transposed corpus (3600 chorales); balanced 993/class; L11 probe F1 0.6835; all 24 mu nonzero
 
+## 2026-08-22T08:26:16+09:00 — M-WILD intervention stage 2 (music-medium-800k)
+- git: `52c214eed8988e2aac91604baa7829b66bd8368d`
+- config_hash: `8d5fbc653c037352376b0e1b1e8fc219cfca9f5096fca4cc231d64dd9d66a109`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-medium-800k/stage2_eval_balanced.json`
+- note: L11 chosen on disjoint prompts; guarded TKR 0.557 vs K1 0.057 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-large-800k
+

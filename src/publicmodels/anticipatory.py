@@ -159,9 +159,20 @@ def encoding_is_sane(model, chorales: list[dict], device: str, n: int = 12) -> d
     on real music; if any offset is wrong the model sees noise. We therefore compare
     the NLL of correctly-encoded chorales against two corruptions that leave the token
     ids in-range but destroy the encoding's meaning:
-        shift : every note token moved by one pitch-slot (offsets off by one)
+        shift : every note displaced by its own RANDOM interval (+-1..6 semitones,
+                per note) — destroys the harmony while keeping the time grid
         shuf  : the event triples randomly permuted in time (real vocab, no structure)
     A correct encoding must be markedly cheaper than both.
+
+    The first version shifted every note by the SAME one slot. That is a
+    transposition — musically valid — and it is also exactly what an off-by-one
+    NOTE_OFFSET would produce, which is why it could never detect that error: the
+    two are indistinguishable by construction. Measured when POP909 exposed it
+    (2026-08-22): correct 1.323 vs uniformly-shifted 1.322 on pop, 0.689 vs 0.702
+    on Bach — the Bach pass was the corpus's key prior, not the encoding. Offset
+    correctness is carried by check_vocab, the decode round-trip tests and the
+    time-scramble; this corruption's job is to destroy pitch STRUCTURE, so now it
+    does.
     """
     import torch.nn.functional as F
     rng = np.random.default_rng(0)
@@ -183,7 +194,10 @@ def encoding_is_sane(model, chorales: list[dict], device: str, n: int = 12) -> d
         bad = list(ids)
         for p in npos:
             if p < len(bad):
-                bad[p] += 1                       # note token off by one pitch slot
+                pitch = (bad[p] - NOTE_OFFSET) % MAX_PITCH
+                step = int(rng.integers(1, 7)) * (1 if rng.random() < 0.5 else -1)
+                new_pitch = min(127, max(0, pitch + step))
+                bad[p] += new_pitch - pitch       # same instrument, broken harmony
         shift.append(nll(bad))
         ev = list(events)
         rng.shuffle(ev)
