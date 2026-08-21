@@ -78,7 +78,7 @@ def test_probe_offset_targets_the_pitch_decision(name):
 def test_every_emitted_id_is_in_range(name):
     a = _adapter(name)
     ids, _ = a.encode_events(EVENTS)
-    if name == "anticipatory":                      # flat ids, one vocabulary
+    if not a.compound:                              # flat ids, one vocabulary
         assert all(0 <= i < VOCAB_SIZE for i in ids)
     else:                                           # compound rows, one per field
         from src.publicmodels.mmt_vendor import representation_min as R

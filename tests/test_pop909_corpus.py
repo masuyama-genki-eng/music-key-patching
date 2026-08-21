@@ -221,4 +221,7 @@ def test_corpus_survives_the_hardened_invariants(corpus):
     signatures) must hold on the real corpus — load_pop909 would have raised."""
     pieces, stats = corpus
     assert stats["n_pieces"] == 905
-    assert stats["dropped_zero_duration_notes"] >= 0
+    # audited 2026-08-22 (clean-tree gate run): pinned, not merely non-negative —
+    # ">= 0" tested nothing
+    assert stats["dropped_zero_duration_notes"] == 0
+    assert stats["orphan_note_offs"] == 4

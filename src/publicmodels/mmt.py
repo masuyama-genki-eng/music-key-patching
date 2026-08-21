@@ -61,6 +61,7 @@ class MMTAdapter(PublicModelAdapter):
     """x-transformers backbone, compound (multitrack) event encoding."""
 
     name = "mmt"
+    compound = True
     default_checkpoint = "data/mmt-checkpoints/mmt/lmd/ape"
     # None ON PURPOSE: the quality-guard reference is a property of the CORPUS
     # (docs/CROSS_CORPUS_FREEZE.md §4 — one reference serves every generated model
@@ -238,85 +239,56 @@ class MMTAdapter(PublicModelAdapter):
         return out
 
     # ---------------------------------------------------------- generation
-    @torch.no_grad()
-    def generate(self, model, prompt_ids: torch.Tensor, n_new: int,
-                 layer: int | None, editor, temperature: float, top_p: float,
-                 rng: torch.Generator) -> torch.Tensor:
-        """Compound sampling: one hidden state yields six field logits; the type is
-        drawn first and decides which other fields are drawn (upstream's scheme).
-        Faithful to the upstream sampler where it constrains STRUCTURE — type and
-        beat are monotonic, field code 0 ("none") is masked — but the draw itself
-        is this study's fixed convention (temperature + nucleus top-p, driven by
-        the caller's torch.Generator), applied per field, so clean/edit pairs share
-        randomness exactly as they do for every other model here. n_new counts
-        EVENTS; generation stops early at end-of-song."""
+    def _begin_generation(self, prompt_ids) -> None:
+        note_rows = prompt_ids[0, :, DIM["type"]] == NOTE_TYPE
+        # rows store beat CODES (value + 1); the monotone constraint tracks VALUES
+        self._cur_beat = (int(prompt_ids[0, note_rows, DIM["beat"]].max()) - 1
+                          if note_rows.any() else 0)
+        self._cur_type = int(prompt_ids[0, -1, DIM["type"]])
+
+    def _generate_step(self, model, window, temperature: float, top_p: float,
+                       rng: torch.Generator):
+        """One compound event: the TYPE field is drawn first and decides which
+        other fields are drawn (the upstream scheme); type and beat are monotone,
+        the start-of-song code is masked, and each field uses the study's shared
+        nucleus draw. Reduced to TWO host syncs per event (the two control values,
+        type and beat) — the first version's seven syncs cost tens of minutes per
+        layer scan. Token-identity-verified against the saved pre-refactor
+        outputs."""
+        logits = [l[0, -1].float() for l in model.decoder.net(window)]
+        lt = logits[DIM["type"]].clone()
+        lt[0] = -torch.inf                           # sos: code 0 of TYPE is sos
+        lt[:self._cur_type] = -torch.inf             # types never move backward
+        t = self.nucleus_draw(lt, temperature, top_p, rng)
+        self._cur_type = t
+        if t != NOTE_TYPE:                           # end-of-song (or degenerate)
+            row = torch.zeros(1, 1, len(R.DIMENSIONS), dtype=window.dtype)
+            row[0, 0, DIM["type"]] = t
+            # append the closing row, then stop
+            self._stop_after = True
+            return row
+        vals = [t]
+        for name in R.DIMENSIONS[1:]:
+            lf = logits[DIM[name]].clone()
+            lf[0] = -torch.inf                       # "none" is not a field value
+            if name == "beat":
+                # allow beat >= cur: mask the none code and every earlier beat
+                lf[:self._cur_beat + 1] = -torch.inf
+                if torch.isinf(lf).all():
+                    return None                      # at the last representable beat
+                v = self.nucleus_draw(lf, temperature, top_p, rng)
+                self._cur_beat = max(self._cur_beat, v - 1)
+            else:
+                v = self.nucleus_draw(lf, temperature, top_p, rng)
+            vals.append(v)
+        return torch.tensor([[vals]], dtype=window.dtype)
+
+    def generate(self, model, prompt_ids, n_new, layer, editor,
+                 temperature, top_p, rng):
         assert prompt_ids.shape[0] == 1, "the sweep generates one prompt at a time"
-        net = model.decoder.net
-        ctx = self.context_length(model)
-        ids = prompt_ids
-        plen = ids.shape[1]
-        note_rows = ids[0, :, DIM["type"]] == NOTE_TYPE
-        # rows store beat CODES (value + 1, code 0 = none); the monotonic mask below
-        # works in VALUES. The first version initialised this with the code and so
-        # forbade the first generated note from sharing the prompt's final beat —
-        # an off-by-one splice gap at exactly the position being judged (review,
-        # 2026-08-22)
-        cur_beat = (int(ids[0, note_rows, DIM["beat"]].max()) - 1
-                    if note_rows.any() else 0)
-        cur_type = int(ids[0, -1, DIM["type"]])
-
-        def draw(logit_row: torch.Tensor) -> int:
-            probs = torch.softmax(logit_row / temperature, dim=-1)
-            sp, si = torch.sort(probs, descending=True)
-            keep = (sp.cumsum(-1) - sp) <= top_p
-            sp = sp * keep
-            sp = sp / sp.sum()
-            return int(si[torch.multinomial(sp, 1, generator=rng)])
-
-        handle = None
-        if editor is not None:
-            handle = self.block(model, layer).register_forward_hook(editor)
-        try:
-            for _ in range(n_new):
-                window = ids[:, -ctx:]
-                if editor is not None:
-                    off = max(0, ids.shape[1] - ctx)
-                    editor.from_position = max(0, plen - off)
-                logits = [l[0, -1].float() for l in net(window)]
-                lt = logits[DIM["type"]].clone()
-                lt[0] = -torch.inf                       # mask start-of-song (code 0
-                                                         # of the TYPE field is sos,
-                                                         # not "none" — upstream masks
-                                                         # the same index)
-                lt[:cur_type] = -torch.inf               # types never move backward
-                t = draw(lt)
-                cur_type = t
-                if t != NOTE_TYPE:                       # end-of-song (or degenerate)
-                    row = [t, 0, 0, 0, 0, 0]
-                    ids = torch.cat([ids, torch.tensor([[row]], device=ids.device)], 1)
-                    break
-                row = [t]
-                for name in R.DIMENSIONS[1:]:
-                    lf = logits[DIM[name]].clone()
-                    lf[0] = -torch.inf
-                    if name == "beat":
-                        # allow beat >= cur_beat: mask codes 0..cur_beat, i.e. the
-                        # none code and every beat value below the current one
-                        lf[:cur_beat + 1] = -torch.inf
-                        if torch.isinf(lf).all():
-                            # the prompt sits at the last representable beat: the
-                            # song cannot continue — stop instead of sampling NaN
-                            return ids
-                        v = draw(lf)
-                        cur_beat = max(cur_beat, v - 1)
-                    else:
-                        v = draw(lf)
-                    row.append(v)
-                ids = torch.cat([ids, torch.tensor([[row]], device=ids.device)], 1)
-        finally:
-            if handle is not None:
-                handle.remove()
-        return ids
+        self._stop_after = False
+        return super().generate(model, prompt_ids, n_new, layer, editor,
+                                temperature, top_p, rng)
 
     # ---------------------------------------------------------- sanity
     @torch.no_grad()

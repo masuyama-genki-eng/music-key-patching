@@ -1069,3 +1069,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep_pop909/music-small-800k/delta_ppl.json`
 - note: delta_ppl=1.1185 nats frozen from 103 natural modulations in real chorales, judged by stanford-crfm/music-large-800k; BEFORE any edit result is reported
 
+## 2026-08-22T08:39:05+09:00 — MMT checkpoint download verification
+- git: `776706b0255d7c04dfc131c47607dbd68444bb24+DIRTY`
+- config_hash: `7afad3b2eed2686a686bc3e4a01180c37127249c77afbf5085feece02858b160`
+- seeds: []
+- artifacts: `data/mmt-checkpoints/INVENTORY.json`
+- note: 18 checkpoint file(s) and 18 train-args files, sha256-pinned; architectures and hashes in the INVENTORY artifact (the ledger does not duplicate derivable state)
+

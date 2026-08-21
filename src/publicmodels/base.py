@@ -26,6 +26,11 @@ class PublicModelAdapter(ABC):
 
     #: short identifier used by --adapter and written into every artifact
     name: str = "abstract"
+    #: False: encode_events yields flat ids from one vocabulary. True: compound
+    #: rows, one per event, each field with its own vocabulary. Tests and any
+    #: id-space validation branch on THIS, never on adapter names, so the next
+    #: flat-scheme adapter (the REMI-representation baseline) needs no test edits.
+    compound: bool = False
     #: checkpoint probed by default
     default_checkpoint: str = ""
     #: a DIFFERENT checkpoint used as the quality guard's reference model, so the
@@ -102,21 +107,78 @@ class PublicModelAdapter(ABC):
         """Well-formed events only, for scoring under the reference model."""
 
     # ---------------------------------------------------------- generation
-    @abstractmethod
+    @staticmethod
+    def nucleus_draw(logits: "torch.Tensor", temperature: float, top_p: float,
+                     rng: "torch.Generator") -> int:
+        """This study's one sampling convention — temperature then nucleus top-p,
+        driven by the caller's generator — shared so the public models cannot fork
+        it from each other. (The same arithmetic exists, deliberately untouched, in
+        TonalGPT.generate and token_masks.generate_masked: those two carry
+        byte-identity provenance proofs and stay as committed.)"""
+        import torch
+        probs = torch.softmax(logits / temperature, dim=-1)
+        sp, si = torch.sort(probs, descending=True)
+        keep = (sp.cumsum(-1) - sp) <= top_p
+        sp = sp * keep
+        sp = sp / sp.sum()
+        return int(si[torch.multinomial(sp, 1, generator=rng)])
+
     def generate(self, model, prompt_ids: "torch.Tensor", n_new: int,
                  layer: int | None, editor, temperature: float, top_p: float,
                  rng: "torch.Generator") -> "torch.Tensor":
         """Autoregressive sampling with an optional edit live at `layer`.
 
-        Lives on the adapter because sampling is token-scheme-specific: the
-        Anticipatory scheme draws one token from one softmax per step, while MMT
-        predicts six fields jointly from one hidden state. The contract holds the
-        parts every scheme shares: the editor is installed by forward hook on
-        `self.block(model, layer)`, is sustained from the end of the prompt, has
-        its from_position recomputed each step in window coordinates when the
-        context slides, and sampling is driven by the caller's torch.Generator so
-        clean/edit pairs share randomness.
+        TEMPLATE METHOD: this body owns everything every scheme shares — the
+        editor installed by forward hook on `self.block(model, layer)`, sustained
+        from the end of the prompt, its from_position recomputed each step in
+        window coordinates as the context slides, and the try/finally that removes
+        the hook. What differs per token scheme (one softmax per step for the
+        Anticipatory encoding; six joint field heads for MMT) lives in
+        `_generate_step`, which returns the row(s) to append or None to stop.
+        Keeping the shared arithmetic in ONE place is what makes cross-model
+        success rates comparable: a fix applied to one copy of the sliding-window
+        arithmetic and not another would quietly compare different edit-sustain
+        semantics (2026-08-22 review).
         """
+        import torch
+        with torch.no_grad():
+            ctx = self.context_length(model)
+            ids = prompt_ids
+            plen = ids.shape[1]
+            self._begin_generation(ids)
+            handle = None
+            if editor is not None:
+                handle = self.block(model, layer).register_forward_hook(editor)
+            try:
+                for _ in range(n_new):
+                    window = ids[:, -ctx:]
+                    if editor is not None:
+                        off = max(0, ids.shape[1] - ctx)
+                        editor.from_position = max(0, plen - off)
+                    step = self._generate_step(model, window, temperature, top_p, rng)
+                    if step is None:
+                        break
+                    ids = torch.cat([ids, step.to(ids.device)], dim=1)
+                    if getattr(self, "_stop_after", False):
+                        # the step appended a terminal row (end-of-song) and the
+                        # sequence must not continue past it
+                        self._stop_after = False
+                        break
+            finally:
+                if handle is not None:
+                    handle.remove()
+        return ids
+
+    def _begin_generation(self, prompt_ids) -> None:
+        """Per-run state reset for schemes that track constraints (MMT's monotone
+        beat and type). Default: nothing."""
+
+    @abstractmethod
+    def _generate_step(self, model, window, temperature: float, top_p: float,
+                       rng) -> "torch.Tensor | None":
+        """One sampling step over the current window. Returns the token(s) to
+        append — shape (1, 1) for flat schemes, (1, 1, k) for compound rows — or
+        None to stop early."""
 
     # ---------------------------------------------------------- sanity
     @abstractmethod

@@ -37,13 +37,15 @@ def main() -> None:
             "  unzip ~/Downloads/<the sharepoint zip>\n"
             "The LMD checkpoint is the one POP909 needs (Lakh MIDI is web pop;\n"
             "SOD is orchestral).")
-    files = sorted(p for p in root.rglob("*") if p.is_file())
+    files = sorted(p for p in root.rglob("*")
+                   if p.is_file() and p.name != "INVENTORY.json")
     if not files:
         raise SystemExit(f"{root} is empty — unzip the SharePoint download into it.")
 
     inventory, args_found = [], []
     for p in files:
-        h = hashlib.sha256(p.read_bytes()).hexdigest()
+        with open(p, "rb") as fh:                 # stream: checkpoints are ~80 MB
+            h = hashlib.file_digest(fh, "sha256").hexdigest()
         inventory.append({"path": str(p.relative_to(REPO)),
                           "bytes": p.stat().st_size, "sha256": h})
         log.info("%-60s %10d  %s", p.relative_to(root), p.stat().st_size, h[:16])
@@ -55,8 +57,11 @@ def main() -> None:
                 if keys:
                     args_found.append({"file": str(p.relative_to(REPO)), **keys})
                     log.info("   train args: %s", keys)
-            except Exception:
-                pass
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                # a corrupt train-args.json must not silently vanish from the
+                # inventory: the admission rule rests on these files
+                raise SystemExit(f"{p}: unreadable train-args JSON ({e}) — the "
+                                 "download looks corrupt; do not proceed.")
 
     out = root / "INVENTORY.json"
     out.write_text(json.dumps({"files": inventory, "train_args": args_found},
@@ -73,8 +78,10 @@ def main() -> None:
                          "n_files": len(inventory)},
                  seeds=[],
                  artifacts=[str(out.relative_to(REPO))],
-                 note=f"{len(ckpts)} checkpoint file(s), sha256-pinned in the "
-                      f"inventory; train args: {args_found or 'no JSON found'}")
+                 note=f"{len(ckpts)} checkpoint file(s) and {len(args_found)} "
+                      "train-args files, sha256-pinned; architectures and hashes "
+                      "in the INVENTORY artifact (the ledger does not duplicate "
+                      "derivable state)")
     log.info("ledgered. Tell Claude it is in place.")
 
 
