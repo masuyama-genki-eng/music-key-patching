@@ -5,7 +5,7 @@ Idempotent: finished runs (final.pt + matching config hash) are skipped, so the
 script can be re-run after an interruption.
 
 Usage:
-  .venv/bin/python scripts/01_train.py [--config configs/train.yaml]
+  .venv/bin/python experiments/data_and_models/train_models.py [--config configs/train.yaml]
       [--data results/data_syn] [--outdir results/models] [--only NAME]
       [--max-steps N]   # override for smoke tests only
 """

@@ -3,9 +3,9 @@ paper's main-line regime (R-Aug), same data/optimizer/protocol as P2.
 
 Trains sizes x seeds from configs/train_sizes.yaml into results/models/size-<name>_s<seed>.
 Idempotent (finished runs skipped). Probing/equivariance then run via the standard
-scripts/03,04 on each model dir; the L8d512 point reuses R-Aug_s0/s1.
+experiments/probing/probe_key.py and transposition_equivariance.py on each model dir; the L8d512 point reuses R-Aug_s0/s1.
 
-Usage: .venv/bin/python scripts/10_size_sweep.py [--only L2d128_s0]
+Usage: .venv/bin/python experiments/scaling/size_sweep.py [--only L2d128_s0]
 """
 from __future__ import annotations
 import argparse

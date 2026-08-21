@@ -1,5 +1,5 @@
 # D-SYN corpus (SPEC §1.1). Deterministic: piece_seed = base_seed + split_offset + idx
-# (offsets in scripts/00_gen_data.py; M-REF split range reserved for P2).
+# (offsets in experiments/data_and_models/generate_corpus.py; M-REF split range reserved for P2).
 n_train: 200000
 n_val: 10000
 n_test: 10000

@@ -1,6 +1,6 @@
 """Training for M-CTRL (R-Aug / R-NoAug) and M-REF (SPEC §2).
 
-One invocation trains ONE model (regime, seed, split) — see scripts/01_train.py.
+One invocation trains ONE model (regime, seed, split) — see experiments/data_and_models/train_models.py.
 Deterministic under (config, seed). Resumable from the latest checkpoint; a finished
 run (final.pt + matching config hash) is skipped. Every finished run is ledgered with
 final val loss / perplexity / top-1 (SPEC §2.1 requires these in the LEDGER).

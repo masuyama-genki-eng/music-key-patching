@@ -18,7 +18,7 @@ chorales modulate internally, so the label is noisy away from home. The same
 label is used for probe and baseline, so the comparison stays fair, but absolute
 numbers sit below D-SYN.
 
-Usage: .venv/bin/python scripts/11_dreal_probe.py [--model-dir results/models/R-Aug_s0]
+Usage: .venv/bin/python experiments/real_music/chorale_probe.py [--model-dir results/models/R-Aug_s0]
 """
 from __future__ import annotations
 import argparse

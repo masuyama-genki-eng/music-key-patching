@@ -5,7 +5,7 @@ continuation (sustained subspace edit from the bar-9 boundary), and write standa
 MIDI files (hand-rolled SMF-0 writer — no new dependencies) to results/samples/.
 These are DEMO artifacts (ledgered as such), not SPEC metrics.
 
-Usage: .venv/bin/python scripts/90_render_midi.py [--targets 7,4] [--n 2]
+Usage: .venv/bin/python experiments/figures/render_midi_demo.py [--targets 7,4] [--n 2]
 """
 from __future__ import annotations
 import argparse

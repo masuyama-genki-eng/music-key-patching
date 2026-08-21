@@ -2,7 +2,7 @@
 REAL music change the key it composes in?
 
 The probe says a real-trained model carries a key state that beats the pitch surface
-(scripts/12). This asks the Othello-GPT question of it: is that state USED?
+(experiments/public_models/public_probe.py). This asks the Othello-GPT question of it: is that state USED?
 
 Design, fixed before running (CHANGELOG 2026-07-14):
   * Prompts     : Bach chorales, key-stable prefix (first half), disjoint sets for

@@ -1,7 +1,7 @@
 """P4 intervention sweep (SPEC §4.2): targets x prompts x layers with K1-K4 controls.
 
 Prerequisites (enforced):
-  - frozen guard results/guard/delta_ppl.json (scripts/05_freeze_guard.py)
+  - frozen guard results/guard/delta_ppl.json (experiments/editing/freeze_quality_guard.py)
   - Phase A artifacts results/probing/<model>/{probe_weights,class_means}.npz
 Order of operations:
   1. clean twins (paired rng with every condition)
@@ -87,7 +87,7 @@ def main() -> None:
 
     guard_path = Path(args.guard)
     if not guard_path.exists():
-        raise SystemExit("frozen guard missing — run scripts/05_freeze_guard.py first "
+        raise SystemExit("frozen guard missing — run experiments/editing/freeze_quality_guard.py first "
                          "(SPEC §4.3 requires delta_PPL frozen before any edit run)")
     delta_ppl = json.loads(guard_path.read_text())["delta_ppl"]
 

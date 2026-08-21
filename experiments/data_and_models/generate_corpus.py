@@ -6,7 +6,7 @@ piece can be regenerated in isolation. --verify regenerates every non-skipped sp
 to a temp file and requires byte-identical parquet output (P1 gate).
 
 Usage:
-  .venv/bin/python scripts/00_gen_data.py [--config configs/data_syn.yaml]
+  .venv/bin/python experiments/data_and_models/generate_corpus.py [--config configs/data_syn.yaml]
       [--outdir results/data_syn] [--workers N] [--no-verify]
 """
 from __future__ import annotations

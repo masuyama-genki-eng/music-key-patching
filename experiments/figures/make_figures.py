@@ -2,7 +2,7 @@
 
 Reads only results/ (SPEC §7.5). Each PDF gets a meta sidecar; one ledger entry.
 
-Usage: .venv/bin/python scripts/08_figures.py [--model R-Aug_s0] [--layer 4]
+Usage: .venv/bin/python experiments/figures/make_figures.py [--model R-Aug_s0] [--layer 4]
 """
 from __future__ import annotations
 import argparse
