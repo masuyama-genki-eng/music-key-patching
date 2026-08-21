@@ -42,6 +42,7 @@ def extract_activations(adapter: PublicModelAdapter, model, chorales: list[dict]
     labels, seq_idx, pitches_hist = [], [], []
     kept = 0
     for si, ch in enumerate(chorales):
+        adapter.set_piece_context(ch)
         events, ev_labels = chorale_to_events(ch)
         ids, note_pos = adapter.encode_events(events)
         if len(ids) > ctx:                            # keep the first ctx tokens

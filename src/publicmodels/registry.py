@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 from src.publicmodels.anticipatory import AnticipatoryAdapter
+from src.publicmodels.mmt import MMTAdapter
 from src.publicmodels.base import PublicModelAdapter
 
 ADAPTERS: dict[str, type[PublicModelAdapter]] = {
     AnticipatoryAdapter.name: AnticipatoryAdapter,
+    MMTAdapter.name: MMTAdapter,
 }
 
 

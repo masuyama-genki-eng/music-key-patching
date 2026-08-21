@@ -63,6 +63,14 @@ class PublicModelAdapter(ABC):
         """Residual stream after every block, layer 0 first, embeddings excluded."""
 
     # ------------------------------------------------------- token scheme
+    def set_piece_context(self, piece: dict) -> None:
+        """Announce the piece the next encode/decode calls belong to. Default:
+        nothing — the Anticipatory scheme is absolute-time and needs no context.
+        MMT overrides this to read the piece's tempo, because its beat grid cannot
+        be recovered from seconds alone. The shared pipeline calls it once per
+        piece; an adapter that needs context and was not given any must raise
+        rather than guess."""
+
     @abstractmethod
     def encode_events(self, events: list[tuple[float, float, int]]
                       ) -> tuple[list[int], list[int]]:

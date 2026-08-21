@@ -54,6 +54,7 @@ def build_prompts(adapter, chorales: list[dict], n: int,
     the one it started in, up to `frac` of its events."""
     out = []
     for ch in chorales:
+        adapter.set_piece_context(ch)
         events, labels = chorale_to_events(ch)
         k0 = labels[0]
         stable = 0

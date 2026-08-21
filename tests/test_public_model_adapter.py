@@ -14,6 +14,15 @@ from src.publicmodels.anticipatory import (DUR_OFFSET, NOTE_OFFSET, TIME_OFFSET,
 from src.publicmodels.base import PublicModelAdapter
 
 EVENTS = [(0.0, 0.5, 60), (0.5, 0.5, 62), (1.0, 1.0, 64), (2.0, 0.25, 67)]
+# the piece context every contract test announces first: 120 bpm, the MIDI default.
+# A no-op for absolute-time schemes (anticipatory); the tempo for beat-grid ones (mmt).
+PIECE = {"tempo_us": 500_000}
+
+
+def _adapter(name):
+    a = get_adapter(name)
+    a.set_piece_context(PIECE)
+    return a
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
@@ -33,7 +42,7 @@ def test_unknown_adapter_is_refused():
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_encode_decode_round_trip(name):
-    a = get_adapter(name)
+    a = _adapter(name)
     ids, note_pos = a.encode_events(EVENTS)
     assert len(note_pos) == len(EVENTS)
     assert a.decode_pitches(ids) == [p for _, _, p in EVENTS]
@@ -45,15 +54,16 @@ def test_encode_decode_round_trip(name):
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_note_positions_point_at_note_tokens(name):
-    a = get_adapter(name)
+    a = _adapter(name)
     ids, note_pos = a.encode_events(EVENTS)
     assert all(0 <= i < len(ids) for i in note_pos)
+    assert len(note_pos) == len(EVENTS)
     assert a.decode_pitches([ids[i] for i in note_pos]) == [p for _, _, p in EVENTS]
 
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_probe_offset_targets_the_pitch_decision(name):
-    a = get_adapter(name)
+    a = _adapter(name)
     assert a.probe_offset("at_note") == 0
     assert a.probe_offset("predict_pitch") < 0, \
         "the pitch decision must be read BEFORE the note token is emitted"
@@ -63,9 +73,16 @@ def test_probe_offset_targets_the_pitch_decision(name):
 
 @pytest.mark.parametrize("name", sorted(ADAPTERS))
 def test_every_emitted_id_is_in_range(name):
-    a = get_adapter(name)
+    a = _adapter(name)
     ids, _ = a.encode_events(EVENTS)
-    assert all(0 <= i < VOCAB_SIZE for i in ids)
+    if name == "anticipatory":                      # flat ids, one vocabulary
+        assert all(0 <= i < VOCAB_SIZE for i in ids)
+    else:                                           # compound rows, one per field
+        from src.publicmodels.mmt_vendor import representation_min as R
+        n = R.get_encoding()["n_tokens"]
+        for row in ids:
+            assert len(row) == len(n)
+            assert all(0 <= v < nf for v, nf in zip(row, n))
 
 
 def test_out_of_range_events_are_dropped_not_clipped():
@@ -91,3 +108,11 @@ def test_vocab_shortfall_is_refused_padding_accepted():
 
 def test_anticipatory_offsets_are_ordered():
     assert TIME_OFFSET < DUR_OFFSET < NOTE_OFFSET < VOCAB_SIZE
+
+
+
+def test_beat_grid_adapters_refuse_to_encode_without_a_piece_context():
+    """Guessing a tempo would silently mistime every event; the adapter must raise."""
+    a = get_adapter("mmt")
+    with pytest.raises(RuntimeError, match="set_piece_context"):
+        a.encode_events(EVENTS)

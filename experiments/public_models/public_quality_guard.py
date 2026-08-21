@@ -102,6 +102,7 @@ def main() -> None:
     W = args.window_events
     rises = []
     for ch in chorales:
+        adapter.set_piece_context(ch)
         events, labels = chorale_to_events(ch)
         ids, note_pos = adapter.encode_events(events)
         if len(ids) > ref_ctx:
