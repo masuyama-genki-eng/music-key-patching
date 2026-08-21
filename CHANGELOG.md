@@ -1288,3 +1288,35 @@ Anticipatory Music Transformer's token scheme and GPT-2's block access hardwired
 shared code. `src/publicmodels/` now isolates both, so the two additional public
 models planned next are one adapter each. `--adapter` defaults to the previous
 behaviour, so published runs reproduce unchanged.
+
+## 2026-08-21 — A ledgered artifact was overwritten and restored (integrity record)
+
+While verifying the fixes to the public-model scripts, I ran
+`experiments/public_models/public_balanced_probe.py --layer 4` as a smoke test. The
+script writes to a fixed directory and does not refuse to overwrite, so that test
+destroyed the experiment-I artifacts of 2026-08-08T13:35:43 — `probe_weights.npz`,
+`class_means.npz` and `balanced_report.json` under
+`results/mwild/music-small-800k/balanced/` — replacing a layer-8 estimate with a
+layer-4 one. `--layer 4` was an arbitrary value typed to satisfy a required argument.
+
+**What was and was not affected.** The paper's public-model edit numbers come from
+`results/mwild_sweep/music-small-800k/stage2_eval_balanced.json`
+(2026-08-08T14:10:20), which was not touched: guarded TKR 0.479 against K1 0.061,
+12/12 targets, guard-pass 99.7%, in-key shares 0.890/0.753. What was destroyed was
+the upstream subspace those numbers were computed from, so the loss was to
+reproducibility, not to any reported value.
+
+**Restored by re-running at the ledgered layer.** The ledger entry recorded the
+original configuration (layer 8, seed 0, 12-key transposed corpus of 3600 chorales,
+993 positions per class) and its result (balanced probe macro-F1 0.6609). Re-running
+with `--layer 8` reproduced 0.6608897094053399, which rounds to the ledgered 0.6609,
+with 993 per class, 3600 chorales, and all 24 class means nonzero — so the run is
+deterministic under its seed and the restored artifacts are equivalent to the ones
+destroyed. Both the accidental run and the restoring run appended their own ledger
+entries, which is what an append-only ledger is for; no past entry was edited.
+
+**The real defect is that this was possible.** `freeze_quality_guard.py` and
+`public_quality_guard.py` already refuse to overwrite a frozen budget and say why.
+Artifacts that later runs consume should have the same protection, and a smoke test
+should not be able to reach them at all. Left as a task rather than fixed here,
+because the right fix touches how every script names its output directory.

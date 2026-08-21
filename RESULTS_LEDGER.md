@@ -971,3 +971,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild/music-small-800k/mwild_probe.json`
 - note: public model trained on REAL music (Apache-2.0); probe F1=0.6902 (L10) vs best C3 0.4537; corrected margin 0.1956 CI[0.1315,0.2596]; beats_surface=True
 
+## 2026-08-21T19:38:32+09:00 — Experiment I: balanced re-estimation (music-small-800k)
+- git: `b91266a7d3e7fc44de12a9527db3905dc86de141`
+- config_hash: `2dce6601b0ad5e5ff3df3f341b7f08272d968f434b16a209d2fc16d7f0bd7586`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/balanced/probe_weights.npz`, `results/mwild/music-small-800k/balanced/class_means.npz`, `results/mwild/music-small-800k/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 993/class; L8 probe F1 0.6609; all 24 mu nonzero
+
