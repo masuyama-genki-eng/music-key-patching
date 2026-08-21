@@ -11,6 +11,9 @@ from pathlib import Path
 
 import pytest
 
+import yaml
+
+from src.eval.metrics import key_relation
 from src.publicmodels.corpus import chorale_to_events
 from src.publicmodels.pop909 import (EXCLUDED, bar_of_tick, key_index, load_pop909,
                                      read_midi, split_pieces)
@@ -126,21 +129,26 @@ def test_the_shared_pipeline_sees_the_same_events(corpus):
     pieces, _ = corpus
     p = pieces[0]
     ev, lab = chorale_to_events(p)
-    assert ev is p["events"] and lab is p["event_key_labels"]
+    assert ev == p["events"] and lab == p["event_key_labels"]
+    assert ev is not p["events"], "must be a copy: callers may mutate what they get"
+    with pytest.raises(ValueError):
+        chorale_to_events(p, seconds_per_16th=0.5)     # knob is meaningless here
 
 
 @needs_data
 def test_split_is_deterministic_disjoint_and_piece_level(corpus):
     pieces, _ = corpus
     names = [p["name"] for p in pieces]
-    a = split_pieces(names, seed=0)
-    b = split_pieces(names, seed=0)
-    assert a == b
+    cfg = yaml.safe_load((Path(__file__).resolve().parents[1] /
+                          "configs/pop909.yaml").read_text())["split"]
+    seed, frac = cfg["seed"], tuple(cfg["frac"])
+    a = split_pieces(names, seed, frac)
+    assert a == split_pieces(names, seed, frac)
     parts = [set(a[k]) for k in ("train", "search", "final")]
     assert not (parts[0] & parts[1]) and not (parts[0] & parts[2]) \
         and not (parts[1] & parts[2])
     assert set().union(*parts) == set(names)
-    assert split_pieces(names, seed=1) != a            # the seed is real
+    assert split_pieces(names, seed + 1, frac) != a    # the seed is real
 
 
 # ------------------------------------------------------- raw parser sanity
@@ -153,16 +161,64 @@ def test_parser_agrees_with_the_audit_on_song_003():
     assert first == 1440                               # beat 4 pickup (shift log)
 
 
-# ---------------------------------------------------- label-gate classifier
-def test_relation_classifier_textbook_cases():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "gate", Path(__file__).resolve().parents[1] /
-        "experiments/real_music/pop909_label_gate.py")
-    g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+# ------------------------------------------------------ shared key classifier
+def test_key_relation_textbook_cases():
     C, G, F, Am, Cm, Em = 0, 7, 5, 21, 12, 16
-    assert g.relation(C, C) == "exact"
-    assert g.relation(G, C) == "fifth" and g.relation(F, C) == "fifth"
-    assert g.relation(Am, C) == "relative" and g.relation(C, Am) == "relative"
-    assert g.relation(Cm, C) == "parallel"
-    assert g.relation(Em, C) == "other"           # mediant minor is neither
+    assert key_relation(C, C) == "exact"
+    assert key_relation(G, C) == "fifth" and key_relation(F, C) == "fifth"
+    assert key_relation(Am, C) == "relative" and key_relation(C, Am) == "relative"
+    assert key_relation(Cm, C) == "parallel"
+    assert key_relation(Em, C) == "other"          # mediant minor is neither
+
+
+def test_key_relation_rejects_the_spurious_minor_third_pair():
+    """The 2026-08-22 fix: the old symmetric check accepted C major ~ Eb minor
+    (24 such pairs, all false positives that inflated tolerant TKR)."""
+    C, Ebm = 0, 15
+    assert key_relation(Ebm, C) == "other"
+    assert key_relation(C, Ebm) == "other"
+    from src.eval.metrics import closely_related
+    assert not closely_related(C, Ebm)
+    assert closely_related(0, 21) and closely_related(21, 0)   # true relatives stay
+
+
+# ------------------------------------------------- hardened parser invariants
+def test_bar_counting_ceils_a_mid_bar_time_signature_change():
+    # 4/4 from 0, change at tick 2880 = 1.5 bars in: the truncated bar counts,
+    # so tick 2880 opens bar 2, not bar 1
+    ts = [(0, 4, 4), (2880, 3, 4)]
+    assert bar_of_tick(2879, ts, 480) == 1
+    assert bar_of_tick(2880, ts, 480) == 2
+
+
+def test_smpte_division_is_refused(tmp_path):
+    b = b"MThd" + (6).to_bytes(4, "big") + (0).to_bytes(2, "big") \
+        + (1).to_bytes(2, "big") + (0xE728).to_bytes(2, "big") \
+        + b"MTrk" + (4).to_bytes(4, "big") + bytes([0, 0xFF, 0x2F, 0])
+    f = tmp_path / "smpte.mid"; f.write_bytes(b)
+    with pytest.raises(ValueError, match="SMPTE"):
+        read_midi(f)
+
+
+def test_zero_duration_notes_are_counted_not_vanished(tmp_path):
+    # note_on and note_off of pitch 60 at the SAME tick
+    track = bytes([0, 0x90, 60, 64,      # on
+                   0, 0x80, 60, 0,       # off at the same tick
+                   0, 0x80, 61, 0,       # orphan off: nothing open on 61
+                   0, 0xFF, 0x2F, 0])
+    b = b"MThd" + (6).to_bytes(4, "big") + (0).to_bytes(2, "big") \
+        + (1).to_bytes(2, "big") + (480).to_bytes(2, "big") \
+        + b"MTrk" + len(track).to_bytes(4, "big") + track
+    f = tmp_path / "zd.mid"; f.write_bytes(b)
+    m = read_midi(f)
+    assert m["notes"] == []
+    assert m["n_zero_duration"] == 1 and m["n_orphan_offs"] == 1
+
+
+@needs_data
+def test_corpus_survives_the_hardened_invariants(corpus):
+    """The guards added 2026-08-22 (single tempo, no conflicting same-tick key
+    signatures) must hold on the real corpus — load_pop909 would have raised."""
+    pieces, stats = corpus
+    assert stats["n_pieces"] == 905
+    assert stats["dropped_zero_duration_notes"] >= 0

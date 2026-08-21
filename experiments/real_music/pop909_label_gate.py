@@ -33,30 +33,13 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from src.eval.keyest import estimate_key
+from src.eval.metrics import key_relation
 from src.publicmodels.pop909 import load_pop909
 from src.utils.ledger import append_entry, snapshot
 
 log = logging.getLogger("pop909_gate")
 
 MIN_NOTES = 16
-
-
-def relation(est: int, lab: int) -> str:
-    if est == lab:
-        return "exact"
-    et, em, lt, lm = est % 12, est // 12, lab % 12, lab // 12
-    if em == lm and (et - lt) % 12 in (5, 7):
-        return "fifth"
-    # relative pairs: the minor tonic sits 9 semitones above its relative major
-    # (A minor for C major), so est-lt is +9 when the LABEL is major and +3 when it
-    # is minor. The first committed version had these two swapped, which pushed every
-    # relative confusion into "other" and UNDERSTATED the near rate (gate still
-    # passed); caught by checking the breakdown against KS's known confusion pattern.
-    if em != lm and (et - lt) % 12 == (9 if lm == 0 else 3):
-        return "relative"                    # A minor <-> C major
-    if em != lm and et == lt:
-        return "parallel"                    # C minor <-> C major
-    return "other"
 
 
 def main() -> None:
@@ -71,24 +54,46 @@ def main() -> None:
     cats, n_skipped = Counter(), 0
     per_mode = {0: Counter(), 1: Counter()}
     for p in pieces:
-        sec = p["tempo_us"] / (p["div"] * 1e6)
-        bounds = [t * sec for t, _ in p["key_changes"]] + [float("inf")]
-        for si, (t0, lab) in enumerate(p["key_changes"]):
-            lo, hi = bounds[si], bounds[si + 1]
-            pitches = [pt for on, _, pt in p["events"] if lo <= on < hi]
+        # Segments come from the loader's own event->label pairing, so the gate
+        # scores exactly the assignment the probes will use — no second float
+        # bucketing that could disagree at a boundary. Consecutive key signatures
+        # with the same key merge into one segment, which is the right unit for a
+        # KS estimate anyway.
+        from itertools import groupby
+        for lab, grp in groupby(zip(p["events"], p["event_key_labels"]),
+                                key=lambda x: x[1]):
+            pitches = [ev[2] for ev, _ in grp]
             if len(pitches) < MIN_NOTES:
                 n_skipped += 1
                 continue
-            r = relation(estimate_key(pitches), lab)
+            r = key_relation(estimate_key(pitches), lab)
             cats[r] += 1
             per_mode[lab // 12][r] += 1
 
     n = sum(cats.values())
+    if n == 0:
+        raise SystemExit("LABEL GATE FAILED: no segment reached the minimum note "
+                         "count — nothing was scored, which is a fail, not a pass.")
     exact = cats["exact"] / n
     near = (cats["exact"] + cats["fifth"] + cats["relative"] + cats["parallel"]) / n
     passed = exact >= 0.40 and near >= 0.75
+    keyset = sorted({k for p in pieces for k in p["event_key_labels"]})
+    corpus_stats = {
+        "n_midi_files": stats["n_files"],
+        "excluded": stats["excluded"], "too_short": stats["too_short"],
+        "n_pieces_loaded": stats["n_pieces"],
+        "n_multi_key_pieces": sum(len({k for _, k in p["key_changes"]}) > 1
+                                  for p in pieces),
+        "n_key_classes_present": len(keyset),
+        "n_events_major": sum(k < 12 for p in pieces for k in p["event_key_labels"]),
+        "n_events_minor": sum(k >= 12 for p in pieces for k in p["event_key_labels"]),
+        "dropped_unlabeled_notes": stats["dropped_unlabeled_notes"],
+        "dropped_zero_duration_notes": stats.get("dropped_zero_duration_notes", 0),
+        "orphan_note_offs": stats.get("orphan_note_offs", 0),
+    }
     out = {
         "corpus": "POP909-CL (POP909_processed)", "n_pieces": stats["n_pieces"],
+        "corpus_stats": corpus_stats,
         "n_segments_scored": n, "n_segments_skipped_lt16_notes": n_skipped,
         "breakdown": dict(cats),
         "per_mode": {"major": dict(per_mode[0]), "minor": dict(per_mode[1])},

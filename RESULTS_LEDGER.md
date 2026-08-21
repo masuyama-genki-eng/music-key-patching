@@ -992,3 +992,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/pop909/label_gate.json`
 - note: 1063 segments: exact 0.768, near 0.958, chance 0.042 -> PASS
 
+## 2026-08-22T02:19:36+09:00 — POP909-CL license + provenance check
+- git: `3cd7f0ba9884f3783a7fd99be3cd1e98bbc2b5af+DIRTY`
+- config_hash: `d2e43888e4a4f4a405596876361184958113faa9f40673305ffaa6ba1f4c1004`
+- seeds: []
+- artifacts: `data/POP909-CL/LICENSE`
+- note: VERDICT: USABLE. MIT (free redistribution incl. processed forms; less restrictive than the CC BY-NC-SA Bach scores). Human corrections verified against the release edit log: 158/158 add_key_change operations present as key-signature meta events. Fetched 2026-08-21; 909 files, PPQ 480 throughout, <=1 tempo event per file.
+

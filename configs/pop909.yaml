@@ -1,0 +1,12 @@
+# POP909-CL corpus (cross-genre extension; docs/CROSS_CORPUS_FREEZE.md)
+corpus:
+  root: data/POP909-CL            # AndyWeasley2004/POP909-CL-Dataset, MIT
+  subdir: POP909_processed        # the expert-corrected files (audited 2026-08-22)
+  min_labeled_events: 32          # pieces with fewer labeled notes are excluded
+split:                            # piece-level; defines the held-out final test
+  seed: 0
+  frac: [0.7, 0.15, 0.15]         # train (probe + mu + guard budget) / search / final
+label_gate:                       # thresholds ALSO frozen in the committed gate file
+  min_notes_per_segment: 16
+  exact_min: 0.40
+  near_min: 0.75

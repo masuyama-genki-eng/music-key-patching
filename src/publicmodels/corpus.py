@@ -22,7 +22,14 @@ def chorale_to_events(chorale: dict, seconds_per_16th: float = 0.25
     units and one label per TOKEN, and take the conversion below.
     """
     if "events" in chorale:
-        return chorale["events"], chorale["event_key_labels"]
+        if seconds_per_16th != 0.25:
+            raise ValueError(
+                "seconds_per_16th has no effect on a piece that already carries "
+                "timed events (POP909-CL fixes its own tempo per file); refusing "
+                "to silently ignore it")
+        # fresh lists, like the kern path below: callers may slice or sort what
+        # they get back without corrupting the loaded corpus for later users
+        return list(chorale["events"]), list(chorale["event_key_labels"])
     events, labels = [], []
     onsets, toks, keys = chorale["onsets"], chorale["tokens"], chorale["key_labels"]
     for i, tk in enumerate(toks):

@@ -15,18 +15,35 @@ from src.datagen.generator import fifths_distance
 from src.eval.keyest import estimate_key, in_key_ratio
 
 
-def closely_related(a: int, b: int) -> bool:
-    """Key indices 0..23: fifths-distance <= 1 (any mode), relative, or parallel."""
+def key_relation(a: int, b: int) -> str:
+    """Key indices 0..23 -> "exact" | "fifth" | "relative" | "parallel" | "other".
+
+    One classifier for every place that asks how near two keys are (tolerant TKR
+    here; the POP909-CL label gate), so the notion of "near key" cannot fork.
+    The relative pair is DIRECTIONAL in tonic space: a minor key's tonic sits 9
+    semitones above its relative major's (A minor over C major), so the check must
+    know which side is minor. The previous symmetric form `diff in (3, 9)` also
+    accepted the spurious pair a minor third apart (C major ~ Eb minor) — found by
+    the 2026-08-22 review; no reported number used it (the manuscript cites strict
+    TKR only, and no artifact stores a tolerant value).
+    """
     if a == b:
-        return True
+        return "exact"
     same_mode = (a >= 12) == (b >= 12)
-    if fifths_distance(a % 12, b % 12) <= 1 and same_mode:
-        return True
-    if not same_mode and (a % 12 - b % 12) % 12 in (3, 9):   # relative maj/min
-        return True
-    if not same_mode and a % 12 == b % 12:                    # parallel
-        return True
-    return False
+    if same_mode:
+        return "fifth" if fifths_distance(a % 12, b % 12) <= 1 else "other"
+    minor_t, major_t = (a % 12, b % 12) if a >= 12 else (b % 12, a % 12)
+    if (minor_t - major_t) % 12 == 9:
+        return "relative"                                     # A minor <-> C major
+    if a % 12 == b % 12:
+        return "parallel"                                     # C minor <-> C major
+    return "other"
+
+
+def closely_related(a: int, b: int) -> bool:
+    """Key indices 0..23: fifths-distance <= 1 same-mode, relative, or parallel
+    (SPEC §4.3's tolerant set)."""
+    return key_relation(a, b) != "other"
 
 
 def continuation_key(pitches: list[int]) -> int | None:

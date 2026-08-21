@@ -79,9 +79,13 @@ def read_midi(path: str | Path) -> dict:
     if b[:4] != b"MThd":
         raise ValueError(f"{path}: not a MIDI file")
     ntrk, div = struct.unpack(">HH", b[10:14])
+    if div & 0x8000:
+        raise ValueError(f"{path}: SMPTE time division — this reader assumes "
+                         "ticks-per-quarter (every audited file is PPQ 480)")
     i = 14
     key_sigs, time_sigs, notes = [], [], []
     tempo_us, n_tempo, n_unclosed = None, 0, 0
+    n_zero_dur, n_orphan_off = 0, 0
     for _ in range(ntrk):
         if b[i:i + 4] != b"MTrk":
             raise ValueError(f"{path}: bad track header")
@@ -92,8 +96,15 @@ def read_midi(path: str | Path) -> dict:
             dt, j = _vlq(b, j); t += dt
             st = b[j]
             if st & 0x80:
-                running = st; j += 1
+                j += 1
+                # meta and sysex CANCEL running status (SMF spec); only channel
+                # events establish it. A status-less byte after a meta event then
+                # fails loudly (st is None) instead of desyncing the track.
+                running = st if st < 0xF0 else None
             else:
+                if running is None:
+                    raise ValueError(f"{path}: running status after a meta/sysex "
+                                     "event — malformed track")
                 st = running
             hi = st & 0xF0
             if st == 0xFF:
@@ -123,13 +134,18 @@ def read_midi(path: str | Path) -> dict:
                         onset = stack.pop(0)               # FIFO
                         if t > onset:
                             notes.append((onset, t - onset, d1))
+                        else:
+                            n_zero_dur += 1                # dropped, but counted
+                    else:
+                        n_orphan_off += 1                  # off with no open note
         n_unclosed += sum(len(v) for v in open_notes.values())
         i = end
     notes.sort(key=lambda n: (n[0], n[2]))
     key_sigs.sort(); time_sigs.sort()
     return {"div": div, "tempo_us": tempo_us or DEFAULT_TEMPO_US,
             "n_tempo_events": n_tempo, "key_sigs": key_sigs,
-            "time_sigs": time_sigs, "notes": notes, "n_unclosed": n_unclosed}
+            "time_sigs": time_sigs, "notes": notes, "n_unclosed": n_unclosed,
+            "n_zero_duration": n_zero_dur, "n_orphan_offs": n_orphan_off}
 
 
 def bar_of_tick(tick: int, time_sigs: list[tuple[int, int, int]], div: int) -> int:
@@ -143,7 +159,8 @@ def bar_of_tick(tick: int, time_sigs: list[tuple[int, int, int]], div: int) -> i
     for t, num, den in sigs[1:]:
         if t > tick:
             break
-        bar += (t - prev_t) // prev_len
+        # ceiling: a change landing mid-bar truncates that bar, which still counts
+        bar += -((t - prev_t) // -prev_len)
         prev_t, prev_len = t, num * 4 * div // den
     return bar + (tick - prev_t) // prev_len
 
@@ -162,7 +179,8 @@ def load_pop909(root: str | Path, min_labeled_events: int = 32
     if not files:
         raise FileNotFoundError(f"no .mid files under {mididir}")
     pieces, stats = [], {"excluded": dict(EXCLUDED), "too_short": [],
-                         "n_files": len(files), "dropped_unlabeled_notes": 0}
+                         "n_files": len(files), "dropped_unlabeled_notes": 0,
+                         "dropped_zero_duration_notes": 0, "orphan_note_offs": 0}
     for f in files:
         name = f.stem
         if name in EXCLUDED:
@@ -172,26 +190,34 @@ def load_pop909(root: str | Path, min_labeled_events: int = 32
             raise RuntimeError(
                 f"{f}: no key signature, but not in the frozen exclusion list — "
                 "the corpus changed; stop and re-audit instead of guessing")
+        if m["n_tempo_events"] > 1:
+            raise RuntimeError(
+                f"{f}: {m['n_tempo_events']} tempo events — the audited corpus has "
+                "at most one per file, and a tempo curve would silently mistime "
+                "every event under the single scale factor used here; re-audit")
+        ks = sorted(set(m["key_sigs"]))                # collapse cross-track copies
+        for (t0, k0), (t1, k1) in zip(ks, ks[1:]):
+            if t0 == t1:
+                raise RuntimeError(
+                    f"{f}: conflicting key signatures at tick {t0} "
+                    f"({k0} vs {k1}) — no rule can pick one; re-audit")
         sec = m["tempo_us"] / (m["div"] * 1e6)         # seconds per tick
-        ks = m["key_sigs"]
         events, labels = [], []
-        dropped = 0
-        for onset, dur, pitch in m["notes"]:
+        dropped, ki = 0, 0
+        for onset, dur, pitch in m["notes"]:           # notes sorted: pointer only advances
             if onset < ks[0][0]:
                 dropped += 1                           # never guess a label
                 continue
-            k = ks[0][1]
-            for t, ki in ks:
-                if t <= onset:
-                    k = ki
-                else:
-                    break
+            while ki + 1 < len(ks) and ks[ki + 1][0] <= onset:
+                ki += 1
             events.append((onset * sec, dur * sec, pitch))
-            labels.append(k)
+            labels.append(ks[ki][1])
         if len(events) < min_labeled_events:
             stats["too_short"].append(name)
             continue
         stats["dropped_unlabeled_notes"] += dropped
+        stats["dropped_zero_duration_notes"] += m["n_zero_duration"]
+        stats["orphan_note_offs"] += m["n_orphan_offs"]
         pieces.append({"name": name, "events": events, "event_key_labels": labels,
                        "key": labels[0], "key_changes": ks, "div": m["div"],
                        "tempo_us": m["tempo_us"], "time_sigs": m["time_sigs"],
@@ -200,12 +226,13 @@ def load_pop909(root: str | Path, min_labeled_events: int = 32
     return pieces, stats
 
 
-def split_pieces(names: list[str], seed: int = 0,
-                 frac: tuple[float, float, float] = (0.7, 0.15, 0.15)
-                 ) -> dict[str, list[str]]:
+def split_pieces(names: list[str], seed: int,
+                 frac: tuple[float, float, float]) -> dict[str, list[str]]:
     """Deterministic piece-level split: train (probe + mu + guard budget),
     search (layer/hyperparameter choice), final (held-out test). Every piece lands
-    wholly in one part, so nothing the probe saw can appear in the final test."""
+    wholly in one part, so nothing the probe saw can appear in the final test.
+    seed and frac carry no defaults on purpose: the values that define the held-out
+    split live in configs/pop909.yaml, where every other frozen seed lives."""
     order = list(np.random.default_rng(seed).permutation(sorted(names)))
     n1 = int(len(order) * frac[0]); n2 = int(len(order) * (frac[0] + frac[1]))
     return {"train": sorted(order[:n1]), "search": sorted(order[n1:n2]),

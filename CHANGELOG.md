@@ -1320,3 +1320,30 @@ entries, which is what an append-only ledger is for; no past entry was edited.
 Artifacts that later runs consume should have the same protection, and a smoke test
 should not be able to reach them at all. Left as a task rather than fixed here,
 because the right fix touches how every script names its output directory.
+
+## 2026-08-22 — tolerant-TKR key classifier corrected (code deviated from SPEC §4.3)
+
+`closely_related` accepted relative pairs symmetrically: `(a%12 - b%12) % 12 in
+(3, 9)` for any opposite-mode pair. The true relative relation is directional in
+tonic space (a minor key's tonic sits 9 semitones above its relative major's), so
+the symmetric form also accepted the 24 spurious pairs a minor third apart
+(C major ~ Eb minor). All 24 errors are false positives — they would only ever have
+INFLATED tolerant TKR. Measured blast radius: zero. The manuscript cites strict TKR
+only, and no artifact under results/ stores a tolerant value; the definition in
+SPEC §4.3 was always the correct one, and the code now matches it. The classifier
+now lives once, as `src/eval/metrics.py::key_relation` (exact / fifth / relative /
+parallel / other), shared by tolerant TKR and by the POP909-CL label gate, with the
+spurious pair pinned in tests. Found by the 2026-08-22 review of the POP909-CL gate,
+whose own first version had the mirror-image bug (relative cases swapped,
+UNDERSTATING its near rate — both directions of this mistake have now occurred,
+which is why one shared classifier replaces the two copies).
+
+## 2026-08-22 — POP909-CL extension pre-registered (no protocol change)
+
+docs/CROSS_CORPUS_FREEZE.md fixes, before any probe on the corpus: the 4-piece
+exclusion list with reasons, the split (configs/pop909.yaml, piece-level,
+seed 0, 0.7/0.15/0.15), the per-corpus guard design (reference
+music-large-800k, budget from natural key changes in the TRAIN split, frozen
+pre-evaluation), and the edit-density recording obligation. The label gate ran
+before this entry under thresholds committed first (d05740d): PASS. KS criteria,
+statistics and the search-then-test discipline are unchanged across corpora.
