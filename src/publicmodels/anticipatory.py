@@ -31,6 +31,7 @@ import logging
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from src.publicmodels.base import PublicModelAdapter
 from src.publicmodels.corpus import chorale_to_events
@@ -223,6 +224,38 @@ class AnticipatoryAdapter(PublicModelAdapter):
 
     def decode_events(self, ids: list[int]) -> list[tuple[float, float, int]]:
         return continuation_events(ids)
+
+    @torch.no_grad()
+    def generate(self, model, prompt_ids: torch.Tensor, n_new: int,
+                     layer: int | None, editor, temperature: float,
+                     top_p: float, rng: torch.Generator) -> torch.Tensor:
+        """Autoregressive sampling with the edit live at `layer`. The edit is sustained
+        from the end of the prompt onward; because the context can slide past ctx, the
+        hook's from_position is recomputed each step in window coordinates."""
+        ctx = self.context_length(model)
+        ids = prompt_ids
+        plen = ids.shape[1]
+        handle = None
+        if editor is not None:
+            handle = self.block(model, layer).register_forward_hook(editor)
+        try:
+            for _ in range(n_new):
+                window = ids[:, -ctx:]
+                if editor is not None:
+                    off = max(0, ids.shape[1] - ctx)
+                    editor.from_position = max(0, plen - off)
+                logits = model(window).logits[:, -1] / temperature
+                probs = F.softmax(logits, dim=-1)
+                sp, si = torch.sort(probs, descending=True, dim=-1)
+                keep = (sp.cumsum(-1) - sp) <= top_p
+                sp = sp * keep
+                sp = sp / sp.sum(-1, keepdim=True)
+                nxt = si.gather(-1, torch.multinomial(sp, 1, generator=rng))
+                ids = torch.cat([ids, nxt], dim=1)
+        finally:
+            if handle is not None:
+                handle.remove()
+        return ids
 
     # ---------------------------------------------------------- sanity
     def encoding_is_sane(self, model, chorales, device: str, n: int = 12) -> dict:

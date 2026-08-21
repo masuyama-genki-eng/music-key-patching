@@ -148,6 +148,12 @@ class MMTAdapter(PublicModelAdapter):
             notes.append((beat, position, pitch, duration, 0))   # program 0: piano
         notes.sort()
         codes = R.encode_notes(notes, R.get_encoding())
+        # encode_notes closes the sequence with an end-of-song row. A prompt that
+        # ends with end-of-song is a FINISHED song — the model then (correctly)
+        # predicts start-of-song and generation is over before it begins, which is
+        # exactly how this bug announced itself. Continuations must end open.
+        if len(codes) and int(codes[-1][DIM["type"]]) == EOS:
+            codes = codes[:-1]
         note_positions = [i for i, row in enumerate(codes)
                           if row[DIM["type"]] == NOTE_TYPE]
         # encode_notes silently drops notes past max_beat; that must not desync
@@ -191,6 +197,75 @@ class MMTAdapter(PublicModelAdapter):
             onset = (beat + pos / res) * spb
             out.append((onset, dur / res * spb, int(pitch)))
         return out
+
+    # ---------------------------------------------------------- generation
+    @torch.no_grad()
+    def generate(self, model, prompt_ids: torch.Tensor, n_new: int,
+                 layer: int | None, editor, temperature: float, top_p: float,
+                 rng: torch.Generator) -> torch.Tensor:
+        """Compound sampling: one hidden state yields six field logits; the type is
+        drawn first and decides which other fields are drawn (upstream's scheme).
+        Faithful to the upstream sampler where it constrains STRUCTURE — type and
+        beat are monotonic, field code 0 ("none") is masked — but the draw itself
+        is this study's fixed convention (temperature + nucleus top-p, driven by
+        the caller's torch.Generator), applied per field, so clean/edit pairs share
+        randomness exactly as they do for every other model here. n_new counts
+        EVENTS; generation stops early at end-of-song."""
+        assert prompt_ids.shape[0] == 1, "the sweep generates one prompt at a time"
+        net = model.decoder.net
+        ctx = self.context_length(model)
+        ids = prompt_ids
+        plen = ids.shape[1]
+        note_rows = ids[0, :, DIM["type"]] == NOTE_TYPE
+        cur_beat = int(ids[0, note_rows, DIM["beat"]].max()) if note_rows.any() else 0
+        cur_type = int(ids[0, -1, DIM["type"]])
+
+        def draw(logit_row: torch.Tensor) -> int:
+            probs = torch.softmax(logit_row / temperature, dim=-1)
+            sp, si = torch.sort(probs, descending=True)
+            keep = (sp.cumsum(-1) - sp) <= top_p
+            sp = sp * keep
+            sp = sp / sp.sum()
+            return int(si[torch.multinomial(sp, 1, generator=rng)])
+
+        handle = None
+        if editor is not None:
+            handle = self.block(model, layer).register_forward_hook(editor)
+        try:
+            for _ in range(n_new):
+                window = ids[:, -ctx:]
+                if editor is not None:
+                    off = max(0, ids.shape[1] - ctx)
+                    editor.from_position = max(0, plen - off)
+                logits = [l[0, -1].float() for l in net(window)]
+                lt = logits[DIM["type"]].clone()
+                lt[0] = -torch.inf                       # mask start-of-song (code 0
+                                                         # of the TYPE field is sos,
+                                                         # not "none" — upstream masks
+                                                         # the same index)
+                lt[:cur_type] = -torch.inf               # types never move backward
+                t = draw(lt)
+                cur_type = t
+                if t != NOTE_TYPE:                       # end-of-song (or degenerate)
+                    row = [t, 0, 0, 0, 0, 0]
+                    ids = torch.cat([ids, torch.tensor([[row]], device=ids.device)], 1)
+                    break
+                row = [t]
+                for name in R.DIMENSIONS[1:]:
+                    lf = logits[DIM[name]].clone()
+                    lf[0] = -torch.inf
+                    if name == "beat":
+                        lf[:cur_beat + 1] = -torch.inf   # beat codes: beat b -> b+1;
+                        v = draw(lf)                     # forbid moving before cur
+                        cur_beat = max(cur_beat, v - 1)
+                    else:
+                        v = draw(lf)
+                    row.append(v)
+                ids = torch.cat([ids, torch.tensor([[row]], device=ids.device)], 1)
+        finally:
+            if handle is not None:
+                handle.remove()
+        return ids
 
     # ---------------------------------------------------------- sanity
     @torch.no_grad()

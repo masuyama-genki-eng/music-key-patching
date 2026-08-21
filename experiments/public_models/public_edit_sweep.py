@@ -36,7 +36,7 @@ from src.analysis.stats import holm_correct, wilcoxon_rank_biserial
 from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
 from src.eval.keyest import estimate_key, in_key_ratio
 from src.intervene.public_model_edit import (HookSubspaceEditor,
-                                             generate_edited, orthonormal_rows,
+                                             orthonormal_rows,
                                       random_matched, ref_nll)
 from src.publicmodels import get_adapter
 from src.publicmodels.pop909 import load_pop909_part
@@ -173,7 +173,7 @@ def main() -> None:
             if mode != "clean":
                 ed = HookSubspaceEditor(V, mu[tgt] if tgt is not None else None,
                                       mode="sham" if mode == "sham" else "replace")
-            out = generate_edited(adapter, model, ids, args.n_new, li, ed, rng=rng, **gen_kw)
+            out = adapter.generate(model, ids, args.n_new, li, ed, rng=rng, **gen_kw)
             cont = out[0, ids.shape[1]:].tolist()
             pitches = adapter.decode_pitches(cont)
             est = estimate_key(pitches) if len(pitches) >= 8 else None

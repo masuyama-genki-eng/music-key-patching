@@ -168,3 +168,38 @@ def test_encoding_gate_passes_on_a_synthetic_diatonic_piece(setup):
     out = a.encoding_is_sane(model, pieces, "cpu", n=4)
     assert out["n"] == 4
     assert out["sane"], f"gate failed on clean diatonic input: {out}"
+
+
+@needs_ckpt
+def test_generation_contract(setup):
+    """Deterministic under seed; edits change the continuation; the sham edit is
+    bit-identical to clean (K2 for MMT); prompt rows are never touched."""
+    from src.intervene.public_model_edit import HookSubspaceEditor
+    a, model, x, _ = setup
+    def gen(editor, seed=3):
+        r = torch.Generator().manual_seed(seed)
+        return a.generate(model, x, 12, 3, editor, 1.0, 0.95, r)
+    clean1, clean2 = gen(None), gen(None)
+    assert torch.equal(clean1, clean2), "same seed must reproduce"
+    assert torch.equal(clean1[:, :x.shape[1]], x), "prompt rows were touched"
+    g = torch.Generator().manual_seed(0)
+    V = torch.linalg.qr(torch.randn(512, 24, generator=g))[0]
+    mu = torch.randn(512, generator=g) * 3
+    edited = gen(HookSubspaceEditor(V, mu, mode="replace"))
+    assert not torch.equal(edited, clean1), "a large edit changed nothing"
+    sham = gen(HookSubspaceEditor(V, None, mode="sham"))
+    assert torch.equal(sham, clean1), "K2: the sham edit must be a bit-exact no-op"
+
+
+@needs_ckpt
+def test_prompts_end_open_not_with_end_of_song(setup):
+    """The bug that announced itself as instant end-of-song: encode_notes closes
+    its output with an EOS row, and a prompt ending in EOS is a FINISHED song —
+    the model then predicts start-of-song with probability ~1. Continuation
+    prompts must end open."""
+    from src.publicmodels.mmt import EOS, DIM
+    a, model, x, _ = setup
+    assert int(x[0, -1, DIM["type"]]) != EOS
+    with torch.no_grad():
+        lt = model.decoder.net(x)[0][0, -1]
+    assert int(lt.argmax()) != 0, "the model still predicts start-of-song next"

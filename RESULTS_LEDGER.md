@@ -1034,3 +1034,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/music-medium-800k/delta_ppl.json`
 - note: delta_ppl=0.8478 nats frozen from 1180 natural modulations in real chorales, judged by stanford-crfm/music-large-800k; BEFORE any edit result is reported
 
+## 2026-08-22T06:27:18+09:00 — M-WILD intervention stage 2 (music-medium-800k)
+- git: `bffe864c12118a5781983addafee5f64c9670455`
+- config_hash: `108edbfe5957833497d661e83d733a32e917fe63710f890c82b04fb3af144a34`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-medium-800k/stage2_eval.json`
+- note: L11 chosen on disjoint prompts; guarded TKR 0.439 vs K1 0.050 on 60 held-out prompts; DR-H3 supported=True (11/12); guard ref stanford-crfm/music-large-800k
+
+## 2026-08-22T06:30:02+09:00 — Experiment I: balanced re-estimation (music-medium-800k)
+- git: `bffe864c12118a5781983addafee5f64c9670455+DIRTY`
+- config_hash: `f7f8fecb1452b813c0e0dfda8f7f3b1cc4e1094ced2bb454ee0a1ae767db945c`
+- seeds: [0]
+- artifacts: `results/mwild/music-medium-800k/balanced/probe_weights.npz`, `results/mwild/music-medium-800k/balanced/class_means.npz`, `results/mwild/music-medium-800k/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 993/class; L11 probe F1 0.6835; all 24 mu nonzero
+

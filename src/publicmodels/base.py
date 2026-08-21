@@ -93,6 +93,23 @@ class PublicModelAdapter(ABC):
     def decode_events(self, ids: list[int]) -> list[tuple[float, float, int]]:
         """Well-formed events only, for scoring under the reference model."""
 
+    # ---------------------------------------------------------- generation
+    @abstractmethod
+    def generate(self, model, prompt_ids: "torch.Tensor", n_new: int,
+                 layer: int | None, editor, temperature: float, top_p: float,
+                 rng: "torch.Generator") -> "torch.Tensor":
+        """Autoregressive sampling with an optional edit live at `layer`.
+
+        Lives on the adapter because sampling is token-scheme-specific: the
+        Anticipatory scheme draws one token from one softmax per step, while MMT
+        predicts six fields jointly from one hidden state. The contract holds the
+        parts every scheme shares: the editor is installed by forward hook on
+        `self.block(model, layer)`, is sustained from the end of the prompt, has
+        its from_position recomputed each step in window coordinates when the
+        context slides, and sampling is driven by the caller's torch.Generator so
+        clean/edit pairs share randomness.
+        """
+
     # ---------------------------------------------------------- sanity
     @abstractmethod
     def encoding_is_sane(self, model, chorales: list[dict], device: str,

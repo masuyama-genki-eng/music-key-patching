@@ -2,7 +2,10 @@
 
 Same edit as our own models (SPEC §4.2), h <- h - P_V h + P_V mu_target, but applied
 by forward hook on the block the adapter names, rather than through our TonalGPT
-`editors` argument. K2 still holds: the sham edit must reproduce the clean
+`editors` argument. Sampling itself lives on the adapter (`adapter.generate`),
+because it is token-scheme-specific; the move was proven token-identical for the
+Anticipatory path on the real checkpoint before the old copy here was deleted
+(2026-08-22, clean and edited runs, fixed seed). K2 still holds: the sham edit must reproduce the clean
 generation exactly. Which module to hook and how long the context is come from the
 PublicModelAdapter, so no part of this file is specific to one public model.
 
@@ -65,40 +68,6 @@ def random_matched(V: np.ndarray, seed: int) -> np.ndarray:
     R = torch.randn(V.shape, generator=g)
     Q, _ = torch.linalg.qr(R)
     return Q[:, : V.shape[1]].numpy().astype(np.float32)
-
-
-@torch.no_grad()
-def generate_edited(adapter: PublicModelAdapter, model, prompt_ids: torch.Tensor,
-                    n_new: int, layer: int | None,
-                    editor: HookSubspaceEditor | None, temperature: float, top_p: float,
-                    rng: torch.Generator) -> torch.Tensor:
-    """Autoregressive sampling with the edit live at `layer`. The edit is sustained
-    from the end of the prompt onward; because the context can slide past ctx, the
-    hook's from_position is recomputed each step in window coordinates."""
-    ctx = adapter.context_length(model)
-    ids = prompt_ids
-    plen = ids.shape[1]
-    handle = None
-    if editor is not None:
-        handle = adapter.block(model, layer).register_forward_hook(editor)
-    try:
-        for _ in range(n_new):
-            window = ids[:, -ctx:]
-            if editor is not None:
-                off = max(0, ids.shape[1] - ctx)
-                editor.from_position = max(0, plen - off)
-            logits = model(window).logits[:, -1] / temperature
-            probs = F.softmax(logits, dim=-1)
-            sp, si = torch.sort(probs, descending=True, dim=-1)
-            keep = (sp.cumsum(-1) - sp) <= top_p
-            sp = sp * keep
-            sp = sp / sp.sum(-1, keepdim=True)
-            nxt = si.gather(-1, torch.multinomial(sp, 1, generator=rng))
-            ids = torch.cat([ids, nxt], dim=1)
-    finally:
-        if handle is not None:
-            handle.remove()
-    return ids
 
 
 @torch.no_grad()
