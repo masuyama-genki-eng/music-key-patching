@@ -140,7 +140,19 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     adapter = get_adapter(args.adapter)
     checkpoint = args.model or adapter.default_checkpoint
-    ref_checkpoint = args.ref_model or adapter.reference_checkpoint
+    if args.corpus == "pop909":
+        # the reference is a property of the CORPUS: one checkpoint, one adapter,
+        # serving every generated model on it (docs/CROSS_CORPUS_FREEZE.md §4)
+        gr = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())["guard_reference"]
+        ref_adapter = get_adapter(gr["adapter"])
+        ref_checkpoint = args.ref_model or gr["checkpoint"]
+    else:
+        ref_adapter = adapter
+        ref_checkpoint = args.ref_model or adapter.reference_checkpoint
+    if ref_checkpoint is None:
+        raise SystemExit("no guard reference: this adapter declares none of its own "
+                         "(it is corpus-owned) and neither --ref-model nor the "
+                         "corpus config supplied one")
     short = checkpoint.split("/")[-1]
     outdir = REPO / ("results/mwild_sweep_pop909" if args.corpus == "pop909"
                      else "results/mwild_sweep") / short
@@ -305,15 +317,36 @@ def main() -> None:
     log.info("stage 2: layer L%d (chosen on the DISJOINT stage-1 prompts), "
              "delta_ppl=%.4f nats, guard reference %s", layer, delta, ref_checkpoint)
 
-    ref = adapter.load(ref_checkpoint, device)
+    ref = ref_adapter.load(ref_checkpoint, device)
 
     def nll_of(rows: list[dict]) -> np.ndarray:
-        """Continuation NLL under the REFERENCE model (different weights: not circular)."""
+        """Continuation NLL under the REFERENCE model (different weights: not
+        circular). When the reference speaks a different token scheme than the
+        generator (MMT judged by the Anticipatory reference), the continuation
+        crosses through the shared timed-note representation: decode the generated
+        rows with the GENERATOR's adapter, then re-encode prompt+continuation with
+        the REFERENCE's, and charge only the tokens past the prompt boundary."""
         v = np.empty(len(rows))
         for i, r in enumerate(rows):
             p = prompts[r["prompt"]]
-            full = torch.tensor([p["ids"] + r["cont"]], device=device)
-            v[i] = ref_nll(ref, full, len(p["ids"]), device)
+            if ref_adapter is adapter:
+                full = torch.tensor([p["ids"] + r["cont"]], device=device)
+                v[i] = ref_nll(ref, full, len(p["ids"]), device)
+            else:
+                adapter.set_piece_context(p)         # decode under the piece's tempo
+                cont_events = adapter.decode_events(r["cont"])
+                ref_adapter.set_piece_context(p)
+                ref_prompt, _ = ref_adapter.encode_events(p["events"])
+                ref_full, _ = ref_adapter.encode_events(p["events"] + cont_events)
+                if len(ref_full) <= len(ref_prompt):
+                    # every continuation event fell outside what the reference can
+                    # encode (e.g. past its 100 s ceiling): unscoreable, and an
+                    # unscoreable continuation FAILS the guard rather than
+                    # sneaking past it
+                    v[i] = float("inf")
+                    continue
+                full = torch.tensor([ref_full], device=device)
+                v[i] = ref_nll(ref, full, len(ref_prompt), device)
         return v
 
     # Clean twins first. Every edit is judged against the clean run of the SAME prompt

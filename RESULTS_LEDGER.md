@@ -1062,3 +1062,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_pop909/music-small-800k/mwild_probe.json`
 - note: public model trained on REAL music (Apache-2.0); probe F1=0.6703 (L9) vs best C3 0.5115; corrected margin 0.1321 CI[0.0720,0.2014]; beats_surface=True
 
+## 2026-08-22T08:34:04+09:00 — M-WILD guard freeze (music-small-800k)
+- git: `e077f591549f05c80338135531e2de9c34404325`
+- config_hash: `30a75fa4810b104f32817eddf99dcfa37e281309013400252045f0be8e9b163e`
+- seeds: n/a
+- artifacts: `results/mwild_sweep_pop909/music-small-800k/delta_ppl.json`
+- note: delta_ppl=1.1185 nats frozen from 103 natural modulations in real chorales, judged by stanford-crfm/music-large-800k; BEFORE any edit result is reported
+
