@@ -985,3 +985,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/pop909/label_gate.json`
 - note: 1063 segments: exact 0.768, near 0.885, chance 0.042 -> PASS
 
+## 2026-08-22T00:19:15+09:00 — POP909-CL key-label gate
+- git: `ce7d3d422c2d77bdaa5e4b815dc40d68fdb94ef6+DIRTY`
+- config_hash: `7c74438bf10912c200d8108b4dab6408f8b80c0936e988408b6902caf67aaa01`
+- seeds: []
+- artifacts: `results/pop909/label_gate.json`
+- note: 1063 segments: exact 0.768, near 0.958, chance 0.042 -> PASS
+

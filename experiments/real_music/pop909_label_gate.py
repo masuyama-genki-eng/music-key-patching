@@ -47,7 +47,12 @@ def relation(est: int, lab: int) -> str:
     et, em, lt, lm = est % 12, est // 12, lab % 12, lab // 12
     if em == lm and (et - lt) % 12 in (5, 7):
         return "fifth"
-    if em != lm and (et - lt) % 12 == (3 if lm == 0 else 9):
+    # relative pairs: the minor tonic sits 9 semitones above its relative major
+    # (A minor for C major), so est-lt is +9 when the LABEL is major and +3 when it
+    # is minor. The first committed version had these two swapped, which pushed every
+    # relative confusion into "other" and UNDERSTATED the near rate (gate still
+    # passed); caught by checking the breakdown against KS's known confusion pattern.
+    if em != lm and (et - lt) % 12 == (9 if lm == 0 else 3):
         return "relative"                    # A minor <-> C major
     if em != lm and et == lt:
         return "parallel"                    # C minor <-> C major

@@ -151,3 +151,18 @@ def test_parser_agrees_with_the_audit_on_song_003():
     assert m["n_tempo_events"] <= 1
     first = min(t for t, _, _ in m["notes"])
     assert first == 1440                               # beat 4 pickup (shift log)
+
+
+# ---------------------------------------------------- label-gate classifier
+def test_relation_classifier_textbook_cases():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "gate", Path(__file__).resolve().parents[1] /
+        "experiments/real_music/pop909_label_gate.py")
+    g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+    C, G, F, Am, Cm, Em = 0, 7, 5, 21, 12, 16
+    assert g.relation(C, C) == "exact"
+    assert g.relation(G, C) == "fifth" and g.relation(F, C) == "fifth"
+    assert g.relation(Am, C) == "relative" and g.relation(C, Am) == "relative"
+    assert g.relation(Cm, C) == "parallel"
+    assert g.relation(Em, C) == "other"           # mediant minor is neither
