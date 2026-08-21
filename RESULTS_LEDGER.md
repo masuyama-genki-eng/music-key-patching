@@ -978,3 +978,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild/music-small-800k/balanced/probe_weights.npz`, `results/mwild/music-small-800k/balanced/class_means.npz`, `results/mwild/music-small-800k/balanced/balanced_report.json`
 - note: 12-key transposed corpus (3600 chorales); balanced 993/class; L8 probe F1 0.6609; all 24 mu nonzero
 
+## 2026-08-22T00:18:12+09:00 — POP909-CL key-label gate
+- git: `d05740d17038edd5c7fdb10143d362d932b2b64e`
+- config_hash: `7c74438bf10912c200d8108b4dab6408f8b80c0936e988408b6902caf67aaa01`
+- seeds: []
+- artifacts: `results/pop909/label_gate.json`
+- note: 1063 segments: exact 0.768, near 0.885, chance 0.042 -> PASS
+
