@@ -30,7 +30,7 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - git: `2bb9537abf426c28959106e43fc63173eca0b6cd+DIRTY`
 - config_hash: `d474d70268a174162fbc0e4586415c53b0ae92db80c7c498a2e2bd5b30d823be`
 - seeds: [0]
-- artifacts: `/tmp/claude-1000/-home-masuyama-genki-ICASSP-/ad51ddb6-1268-462c-95d8-067ce4617938/scratchpad/models_smoke/R-Aug_s0/final.pt`, `/tmp/claude-1000/-home-masuyama-genki-ICASSP-/ad51ddb6-1268-462c-95d8-067ce4617938/scratchpad/models_smoke/R-Aug_s0/metrics.json`
+- artifacts: `<scratchpad>/models_smoke/R-Aug_s0/final.pt`, `<scratchpad>/models_smoke/R-Aug_s0/metrics.json`
 - note: final val: loss 1.3215, ppl 3.749, top1 0.6281 (784897 tokens)
 
 ## 2026-07-11T21:22:55+09:00 — NOTE re previous entry
@@ -44,35 +44,35 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - git: `4fc0f2663b816709f56159c510e2c67b4a8c7f77`
 - config_hash: `198dfd2d48e806ba4a2abff811019e2e5e366ad99bdc6e9f3713aeaf8c7b8779`
 - seeds: [0]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-NoAug_s0/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-NoAug_s0/metrics.json`
+- artifacts: `results/models/R-NoAug_s0/final.pt`, `results/models/R-NoAug_s0/metrics.json`
 - note: final val: loss 0.2898, ppl 1.336, top1 0.8808 (784897 tokens)
 
 ## 2026-07-11T22:17:38+09:00 — P2 train R-NoAug_s1
 - git: `4fc0f2663b816709f56159c510e2c67b4a8c7f77+DIRTY`
 - config_hash: `2852b63bd1d07d47f1bc6d1aa01dfe03a597e1116e15daaa233b38adc628017d`
 - seeds: [1]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-NoAug_s1/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-NoAug_s1/metrics.json`
+- artifacts: `results/models/R-NoAug_s1/final.pt`, `results/models/R-NoAug_s1/metrics.json`
 - note: final val: loss 0.2900, ppl 1.336, top1 0.8804 (784897 tokens)
 
 ## 2026-07-11T22:44:22+09:00 — P2 train R-Aug_s0
 - git: `4fc0f2663b816709f56159c510e2c67b4a8c7f77+DIRTY`
 - config_hash: `e7c6e8571b9c7bd4b8c6d9668796c931f76eddef4493912a45fd294a9edcf1ea`
 - seeds: [0]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-Aug_s0/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-Aug_s0/metrics.json`
+- artifacts: `results/models/R-Aug_s0/final.pt`, `results/models/R-Aug_s0/metrics.json`
 - note: final val: loss 0.2978, ppl 1.347, top1 0.8784 (784897 tokens)
 
 ## 2026-07-11T23:11:06+09:00 — P2 train R-Aug_s1
 - git: `4fc0f2663b816709f56159c510e2c67b4a8c7f77+DIRTY`
 - config_hash: `33a8ec3c5ae915bf31b10c1946c065ab2f9fc3b31037b2f4880e278f0c3ddb8d`
 - seeds: [1]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-Aug_s1/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-Aug_s1/metrics.json`
+- artifacts: `results/models/R-Aug_s1/final.pt`, `results/models/R-Aug_s1/metrics.json`
 - note: final val: loss 0.2981, ppl 1.347, top1 0.8786 (784897 tokens)
 
 ## 2026-07-11T23:37:52+09:00 — P2 train M-REF_s100
 - git: `4fc0f2663b816709f56159c510e2c67b4a8c7f77+DIRTY`
 - config_hash: `6c1936c5c1e33abcffa9d82514c7789e3cb28992f15893257609eba9bc648f72`
 - seeds: [100]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/M-REF_s100/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/M-REF_s100/metrics.json`
+- artifacts: `results/models/M-REF_s100/final.pt`, `results/models/M-REF_s100/metrics.json`
 - note: final val: loss 0.2990, ppl 1.349, top1 0.8783 (782482 tokens)
 
 ## 2026-07-12T00:58:55+09:00 — P2 quality gate (SPEC §2.1)
@@ -177,35 +177,35 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd`
 - config_hash: `7fa4293cef8e0753d04b74e40515bb41cefabff10c8efa450dd257717938007b`
 - seeds: [2]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-NoAug_s2/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-NoAug_s2/metrics.json`
+- artifacts: `results/models/R-NoAug_s2/final.pt`, `results/models/R-NoAug_s2/metrics.json`
 - note: final val: loss 0.2898, ppl 1.336, top1 0.8806 (784897 tokens)
 
 ## 2026-07-12T18:54:10+09:00 — P2 train R-Aug_s2
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd+DIRTY`
 - config_hash: `f76dd35a177c58eb60d0bbdd9eb02de8b7734ae76c262a0056cf76fd6815e0b6`
 - seeds: [2]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-Aug_s2/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/R-Aug_s2/metrics.json`
+- artifacts: `results/models/R-Aug_s2/final.pt`, `results/models/R-Aug_s2/metrics.json`
 - note: final val: loss 0.2977, ppl 1.347, top1 0.8789 (784897 tokens)
 
 ## 2026-07-12T18:58:03+09:00 — P2 train size-L2d128_s0
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd+DIRTY`
 - config_hash: `74a506ec9db489c7d8bcc34d4d4d72f3e5a8549d323f6da748493db1645a043c`
 - seeds: [0]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L2d128_s0/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L2d128_s0/metrics.json`
+- artifacts: `results/models/size-L2d128_s0/final.pt`, `results/models/size-L2d128_s0/metrics.json`
 - note: final val: loss 0.3516, ppl 1.421, top1 0.8708 (784897 tokens)
 
 ## 2026-07-12T19:01:55+09:00 — P2 train size-L2d128_s1
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd+DIRTY`
 - config_hash: `4a94ae79cbcd0a9d9204ee48b038fc72b35e12607839282320fadfd74ed73192`
 - seeds: [1]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L2d128_s1/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L2d128_s1/metrics.json`
+- artifacts: `results/models/size-L2d128_s1/final.pt`, `results/models/size-L2d128_s1/metrics.json`
 - note: final val: loss 0.3614, ppl 1.435, top1 0.8681 (784897 tokens)
 
 ## 2026-07-12T19:14:58+09:00 — P2 train size-L4d256_s0
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd+DIRTY`
 - config_hash: `14bee6d7b83aec616b3201c921dc48974e3411efa57363b6cef5f46f6b481e2c`
 - seeds: [0]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L4d256_s0/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L4d256_s0/metrics.json`
+- artifacts: `results/models/size-L4d256_s0/final.pt`, `results/models/size-L4d256_s0/metrics.json`
 - note: final val: loss 0.3050, ppl 1.357, top1 0.8777 (784897 tokens)
 
 ## 2026-07-12T19:17:58+09:00 — P3 Phase A probing R-Aug_s2
@@ -226,7 +226,7 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd+DIRTY`
 - config_hash: `80c246b27f4153f7547410f9d1db9838dcf57e6505ed2d1d8dd978c8757cc455`
 - seeds: [1]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L4d256_s1/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L4d256_s1/metrics.json`
+- artifacts: `results/models/size-L4d256_s1/final.pt`, `results/models/size-L4d256_s1/metrics.json`
 - note: final val: loss 0.3057, ppl 1.358, top1 0.8779 (784897 tokens)
 
 ## 2026-07-12T19:48:39+09:00 — P3 Phase A probing R-NoAug_s2
@@ -254,7 +254,7 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - git: `a8f4148f0fa9b0375732d22e98d234ffb98fa5cd+DIRTY`
 - config_hash: `988abdd6a5d79facd9d6401395a13fe8c1101db814bf53c0802e66fa12a065c7`
 - seeds: [0]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s0/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s0/metrics.json`
+- artifacts: `results/models/size-L12d768_s0/final.pt`, `results/models/size-L12d768_s0/metrics.json`
 - note: final val: loss 0.2985, ppl 1.348, top1 0.8783 (784897 tokens)
 
 ## 2026-07-12T23:35:27+09:00 — P5 figures
@@ -296,7 +296,7 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - git: `a4d276fae2b80a9836e7a89338e2941a62082f0c`
 - config_hash: `6432d9e8cf1bc14c7c0699a019357dfbd4de658179f5d931915a72000be72073`
 - seeds: [1]
-- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s1/final.pt`, `/home/masuyama-genki/ICASSP③/tonal-world-model/results/models/size-L12d768_s1/metrics.json`
+- artifacts: `results/models/size-L12d768_s1/final.pt`, `results/models/size-L12d768_s1/metrics.json`
 - note: final val: loss 0.2966, ppl 1.345, top1 0.8791 (784897 tokens)
 
 ## 2026-07-13T08:19:30+09:00 — P4 sweep R-Aug_s1

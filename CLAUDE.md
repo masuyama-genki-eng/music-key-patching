@@ -26,35 +26,57 @@ never silently deviate.
 
 ```
 tonal-world-model/
+├── README.md                 # what the study asks, the headline numbers, how to run it
 ├── CLAUDE.md / CHANGELOG.md / RESULTS_LEDGER.md
-├── docs/{KNOWLEDGE.md, SPEC.md}
-├── configs/{data_syn.yaml, tokenizer.yaml, train.yaml, probe.yaml, intervene.yaml, gen.yaml}
-├── src/
-│   ├── datagen/
-│   │   ├── grammar.py        # functional-harmony state machine (T→S→D→T, substitutions)
-│   │   ├── modulation.py     # pivot / direct / sequential; per-token key labels
-│   │   ├── voicing.py        # SATB ranges, simple voice-leading constraints, melody layer
-│   │   └── render.py         # events → token sequence + aligned key-label sequence
+├── docs/
+│   ├── SPEC.md               # the frozen protocol (pre-registration)
+│   ├── KNOWLEDGE.md          # background and related work
+│   ├── FILE_MAP.md           # old 00_-29_ paths -> current paths (provenance bridge)
+│   ├── CONFIRMATORY_FREEZE.md  # the final test's design, frozen before it ran
+│   └── internal/             # working notes; exclude when publishing
+├── configs/                  # data_syn, tokenizer, train, train_sizes, probe,
+│                             # intervene, gen — every seed and threshold
+├── src/                      # library only; no experiment logic
 │   ├── tokenizer/vocab.py    # BAR/POS/PITCH(absolute)/DUR only — NO key/chord tokens
+│   ├── datagen/
+│   │   ├── generator.py      # functional-harmony corpus, per-token key labels
+│   │   └── dreal.py          # real-chorale (**kern) reader + corpus layout constants
 │   ├── model/{gpt.py, train.py}   # GPT-2 style L8 H8 d512; regimes R-NoAug / R-Aug
-│   ├── probing/{probes.py, controls.py, ambiguity.py, equivariance.py}
-│   │                          # linear+MLP probes; C1 shuffle, C2 untrained, C3 input
-│   │                          # baselines (PC-histogram LR + Krumhansl-Schmuckler);
-│   │                          # Procrustes R_k, cyclicity error
+│   ├── probing/
+│   │   ├── probes.py         # linear + MLP probes, sequence-level splits
+│   │   ├── controls.py       # C1 shuffle/control-task, C2 untrained, C3 input baselines
+│   │   ├── extract.py        # residual-stream capture at sampled positions
+│   │   ├── equivariance.py   # Procrustes R_k, cyclicity error
+│   │   └── public_model.py   # the same probe on a public model, via an adapter
 │   ├── intervene/
 │   │   ├── subspaces.py      # V-PROBE, V-MEAN, V-DAS (interchange-trained, rank sweep)
 │   │   ├── edit.py           # sustained/one-shot subspace replacement via hooks
-│   │   ├── controls.py       # K1 rank/norm-matched random, K2 sham, K3 layer-shuffled
-│   │   └── sweep.py          # targets × prompts × layers, paired clean twins
+│   │   ├── token_masks.py    # token-type masks + masked sampling (experiment H)
+│   │   ├── sweep.py          # targets × prompts × layers, paired clean twins, K1-K4
+│   │   └── public_model_edit.py   # the same edit by forward hook, via an adapter
+│   ├── publicmodels/         # one adapter per public checkpoint family
+│   │   ├── base.py           # the contract: token scheme + layer access
+│   │   ├── anticipatory.py   # Anticipatory Music Transformer (stanford-crfm/music-*)
+│   │   ├── corpus.py         # chorale -> timed events, shared by all adapters
+│   │   └── registry.py       # name -> adapter; adding a model means one entry
 │   ├── eval/
 │   │   ├── keyest.py         # Krumhansl-Schmuckler estimator (also used by C3)
-│   │   ├── metrics.py        # TKR, IKR_target/src, specificity matrix, fifths-distance curve
-│   │   └── guard.py          # M-REF perplexity budget (frozen pre-intervention), grammar stats
-│   ├── analysis/{stats.py, figures.py}   # Wilcoxon+Holm, rank-biserial, BCa bootstrap
-│   └── utils/{ledger.py, hashing.py, seeding.py}
-├── scripts/00_gen_data.py … 08_report.py   # one per SPEC stage, idempotent, resumable
-├── tests/                    # vocab leak test, grammar label-alignment test, sham-edit
-│                             # bit-identity test, KS estimator sanity on synthetic scales
+│   │   ├── metrics.py        # TKR, IKR_target/src, specificity matrix, fifths distance
+│   │   └── guard.py          # M-REF perplexity budget (frozen pre-intervention)
+│   ├── analysis/{stats.py, figures.py, palette.py}  # Wilcoxon+Holm, BCa bootstrap
+│   └── utils/{ledger.py, hashing.py, seeding.py, notes.py}
+├── experiments/              # one directory per experiment; see experiments/README.md
+│   ├── data_and_models/      # corpus, training, quality gate, parameter counts
+│   ├── probing/              # probe, equivariance, window-matched baseline (exp D)
+│   ├── editing/              # freeze guard, sweep, verdicts, control audits
+│   ├── confirmatory/         # the frozen held-out test, next-pitch test, K4 ceiling
+│   ├── persistence/          # exp G and the token-splice control (exp G2)
+│   ├── token_types/          # exp H and its follow-ups
+│   ├── scaling/ real_music/ public_models/
+│   ├── figures/              # paper figures and MIDI demos, from artifacts only
+│   └── runners/              # multi-model drivers
+├── tests/                    # vocab leak, label alignment, sham-edit bit identity,
+│                             # KS estimator sanity, public-model adapter contract
 └── results/                  # parquet + json + audio/midi samples; git-ignored
 ```
 
@@ -77,6 +99,10 @@ tonal-world-model/
   appendix variants, specificity matrix, fifths-distance curve.
 - **P6 Report pack**: ICASSP-oriented figure set + results summary markdown mapping
   every figure to H1–H5. Apply writing norms from KNOWLEDGE §7.
+
+Scripts are grouped by experiment under `experiments/`, not by SPEC stage number;
+`docs/FILE_MAP.md` maps the old `00_`–`29_` paths that older ledger entries and the
+confirmatory freeze still name.
 - **P7 (post-ICASSP) Phase C**: persistence, metric-position state, M-WILD, D-REAL.
 
 ## Engineering conventions
@@ -87,6 +113,8 @@ tonal-world-model/
   stride 2 + refinement around peak, and ledger the decision (SPEC §8).
 - D-REAL datasets: check licenses at implementation time; record verdicts in ledger;
   degrade gracefully to Bach chorales if others are unusable.
+- A new public model is a new adapter in `src/publicmodels/` plus one registry
+  entry — never a change to the shared probing or editing code.
 - Ask before adding heavy dependencies. Core: torch, numpy, pandas, scipy, music21
   (for D-REAL/key sanity only — the KS estimator in eval/ is our own, unit-tested).
 

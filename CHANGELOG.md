@@ -1226,3 +1226,42 @@ GPU 復旧 → K2 ゲート 100/100 通過 → 5アーム × 短調12標的 × 1
 §5.2 に Minor keys 段落 + 長調 held-out 上限 0.648・55% を追加(以前の
 著者指摘「0.355 が高いか低いか判断できない」への対応) / §5.4 に token-type
 再現1文 / Limitations の「短調未実行」を削除し実行済みの記述へ。
+
+## 2026-08-13 — Repository reorganization; ledger paths normalized (no protocol change)
+
+Recorded here despite being a refactor, because one part of it touched an
+append-only file and because older entries in that file name scripts by paths that
+no longer exist.
+
+**Scripts regrouped and renamed.** The `00_`–`29_` prefixes recorded the order the
+scripts were written in, which had drifted from the order they run in and from the
+experiment letters used in the paper. Each script now sits in a directory named for
+its experiment, under `experiments/`. `docs/FILE_MAP.md` carries the old → new table
+and is the bridge for reading this ledger and `docs/CONFIRMATORY_FREEZE.md`, neither
+of which was rewritten. `git log --follow` recovers each file's history.
+
+Result paths were deliberately left alone: artifacts under `results/mwild*`,
+`results/selective/` and the rest were produced by ledgered runs, and renaming them
+would orphan the entries that point at them.
+
+**RESULTS_LEDGER.md paths normalized.** 26 artifact paths were absolute
+(`/home/<user>/…/tonal-world-model/results/…`) and 2 pointed into a scratchpad
+directory. They are now repo-relative (`results/…`) and `<scratchpad>/…`. This is the
+one edit made to an append-only file, authorized by the author on 2026-08-13 to
+prepare the repository for release. **No datetime, git hash, config hash, seed,
+number, or note text was altered** — only the prefix of a path, whose repo-relative
+remainder is what identifies the artifact.
+
+**No protocol change.** No threshold, decision rule, seed, or metric definition was
+touched, and no result was recomputed. Equivalence was verified rather than assumed
+where code moved: the token-mask code is byte-identical to the original; the public
+model's encoder agrees with the pre-refactor implementation on 500 random event lists
+and both decoders on 500 random token streams, with all 11 vocabulary constants
+identical. Gates: pytest 51/51 (42 pre-existing plus 9 new adapter-contract tests),
+and all 30 entry points import and parse their arguments.
+
+**Public models behind an adapter.** Probing and editing a public checkpoint had the
+Anticipatory Music Transformer's token scheme and GPT-2's block access hardwired into
+shared code. `src/publicmodels/` now isolates both, so the two additional public
+models planned next are one adapter each. `--adapter` defaults to the previous
+behaviour, so published runs reproduce unchanged.
