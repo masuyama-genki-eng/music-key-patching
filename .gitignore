@@ -23,3 +23,8 @@ data/
 
 # built paper (regenerate with latexmk; needs the ICASSP author kit)
 paper/*.pdf
+
+# ICASSP author-kit files: freely distributed to authors, not redistributed here.
+# Fetch from the ICASSP author kit (or any ICASSP LaTeX template) into paper/.
+paper/spconf.sty
+paper/IEEEbib.bst
