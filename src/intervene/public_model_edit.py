@@ -1,8 +1,10 @@
-"""Subspace editing and generation for a PUBLIC HuggingFace GPT-2 model (M-WILD).
+"""Subspace editing and generation for a PUBLIC pre-trained model (SPEC §2.3).
 
 Same edit as our own models (SPEC §4.2), h <- h - P_V h + P_V mu_target, but applied
-to `transformers` blocks by forward hook rather than through our TonalGPT `editors`
-argument. K2 still holds: the sham edit must reproduce the clean generation exactly.
+by forward hook on the block the adapter names, rather than through our TonalGPT
+`editors` argument. K2 still holds: the sham edit must reproduce the clean
+generation exactly. Which module to hook and how long the context is come from the
+PublicModelAdapter, so no part of this file is specific to one public model.
 
 Generation is plain autoregressive sampling over the model's own vocabulary; we do NOT
 constrain it to well-formed (time, duration, note) triples, because forcing structure
@@ -16,14 +18,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.probing.mwild import (DUR_OFFSET, MAX_PITCH, NOTE_OFFSET, REST,
-                               TIME_OFFSET, TIME_RESOLUTION)
+from src.publicmodels.base import PublicModelAdapter
 
-log = logging.getLogger("mwild_edit")
+log = logging.getLogger("public_model_edit")
 
 
-class HFSubspaceEditor:
-    """Forward hook on a GPT-2 block: replaces the key component of the residual
+class HookSubspaceEditor:
+    """Forward hook on a transformer block: replaces the key component of the residual
     stream from `from_position` onward. mode='sham' returns x untouched after doing
     the projection, because (x - c) + c is not bit-exact in floating point (the same
     reasoning as our own editor; see CHANGELOG 2026-07-11)."""
@@ -67,18 +68,19 @@ def random_matched(V: np.ndarray, seed: int) -> np.ndarray:
 
 
 @torch.no_grad()
-def generate_edited(model, prompt_ids: torch.Tensor, n_new: int, layer: int | None,
-                    editor: HFSubspaceEditor | None, temperature: float, top_p: float,
+def generate_edited(adapter: PublicModelAdapter, model, prompt_ids: torch.Tensor,
+                    n_new: int, layer: int | None,
+                    editor: HookSubspaceEditor | None, temperature: float, top_p: float,
                     rng: torch.Generator) -> torch.Tensor:
     """Autoregressive sampling with the edit live at `layer`. The edit is sustained
     from the end of the prompt onward; because the context can slide past ctx, the
     hook's from_position is recomputed each step in window coordinates."""
-    ctx = model.config.n_positions
+    ctx = adapter.context_length(model)
     ids = prompt_ids
     plen = ids.shape[1]
     handle = None
     if editor is not None:
-        handle = model.transformer.h[layer].register_forward_hook(editor)
+        handle = adapter.block(model, layer).register_forward_hook(editor)
     try:
         for _ in range(n_new):
             window = ids[:, -ctx:]
@@ -97,32 +99,6 @@ def generate_edited(model, prompt_ids: torch.Tensor, n_new: int, layer: int | No
         if handle is not None:
             handle.remove()
     return ids
-
-
-def continuation_pitches(ids: list[int]) -> list[int]:
-    """Pitches of whatever NOTE tokens the model emitted (invalid tokens ignored)."""
-    out = []
-    for t in ids:
-        if NOTE_OFFSET <= t < REST:
-            out.append((t - NOTE_OFFSET) % MAX_PITCH)
-    return out
-
-
-def continuation_events(ids: list[int]) -> list[tuple[float, float, int]]:
-    """Best-effort (time, dur, pitch) recovery for the reference-model perplexity:
-    only well-formed triples are kept, so the guard scores real music, not debris."""
-    ev, i = [], 0
-    while i + 2 < len(ids):
-        t, d, n = ids[i], ids[i + 1], ids[i + 2]
-        if (TIME_OFFSET <= t < DUR_OFFSET and DUR_OFFSET <= d < NOTE_OFFSET
-                and NOTE_OFFSET <= n < REST):
-            ev.append(((t - TIME_OFFSET) / TIME_RESOLUTION,
-                       (d - DUR_OFFSET) / TIME_RESOLUTION,
-                       (n - NOTE_OFFSET) % MAX_PITCH))
-            i += 3
-        else:
-            i += 1
-    return ev
 
 
 @torch.no_grad()
