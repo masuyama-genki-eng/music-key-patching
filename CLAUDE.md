@@ -114,7 +114,11 @@ confirmatory freeze still name.
 - D-REAL datasets: check licenses at implementation time; record verdicts in ledger;
   degrade gracefully to Bach chorales if others are unusable.
 - A new public model is a new adapter in `src/publicmodels/` plus one registry
-  entry — never a change to the shared probing or editing code.
+  entry. Shared probing/editing code must stay free of MODEL-SPECIFIC logic;
+  evolving the adapter CONTRACT itself (a new hook every adapter gets, moving a
+  scheme-specific step behind the interface) is allowed when the change is a
+  no-op for existing adapters and equivalence is proven, not assumed (precedent:
+  set_piece_context and adapter.generate, 2026-08-22, token-identity verified).
 - Ask before adding heavy dependencies. Core: torch, numpy, pandas, scipy, music21
   (for D-REAL/key sanity only — the KS estimator in eval/ is our own, unit-tested).
 

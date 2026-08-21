@@ -29,8 +29,16 @@ class PublicModelAdapter(ABC):
     #: checkpoint probed by default
     default_checkpoint: str = ""
     #: a DIFFERENT checkpoint used as the quality guard's reference model, so the
-    #: guard is not scored by the model being edited
-    reference_checkpoint: str = ""
+    #: guard is not scored by the model being edited. None means the reference is
+    #: not a property of this model at all but of the corpus (the corpus config
+    #: names it), and resolution must come from there or fail loudly.
+    reference_checkpoint: str | None = ""
+
+    def artifact_name(self, checkpoint: str) -> str:
+        """The name that keys this checkpoint's artifacts under results/. The
+        default suits hub ids; adapters whose checkpoints are local directories
+        override it, because basenames there need not be unique."""
+        return checkpoint.split("/")[-1]
 
     # ------------------------------------------------------------ loading
     @abstractmethod

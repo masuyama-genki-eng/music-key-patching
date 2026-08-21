@@ -36,6 +36,7 @@ announces each piece via `set_piece_context`, and this adapter reads the tempo
 there; encoding without a piece context is an error, never a silent 120-bpm guess.
 """
 from __future__ import annotations
+import copy
 import json
 import logging
 from pathlib import Path
@@ -61,19 +62,36 @@ class MMTAdapter(PublicModelAdapter):
 
     name = "mmt"
     default_checkpoint = "data/mmt-checkpoints/mmt/lmd/ape"
-    # guard reference for the pop corpus, per docs/CROSS_CORPUS_FREEZE.md §4: one
-    # reference per corpus, reached through the timed-note bridge, never edited
-    reference_checkpoint = "stanford-crfm/music-large-800k"
+    # None ON PURPOSE: the quality-guard reference is a property of the CORPUS
+    # (docs/CROSS_CORPUS_FREEZE.md §4 — one reference serves every generated model
+    # on that corpus), and it is an ANTICIPATORY checkpoint, which this adapter
+    # could not even load. The corpus config names it; a run that reaches for an
+    # adapter-level default here must fail loudly instead.
+    reference_checkpoint = None
 
     def __init__(self) -> None:
         self.seconds_per_beat: float | None = None
+        self._max_beat: int = R.MAX_BEAT          # tightened to the checkpoint's at load()
+
+    def artifact_name(self, checkpoint: str) -> str:
+        """lmd/ape, lmd_full/ape and sod/ape all end in 'ape'; keying artifacts by
+        basename would let a sweep silently load another model's probe weights
+        (found by the 2026-08-22 review). Use the dataset + variant instead."""
+        root = Path(checkpoint)
+        args = json.loads((root / "train-args.json").read_text())
+        return f"mmt-{args['dataset']}-{root.name}"
 
     # ------------------------------------------------------------ loading
     def load(self, checkpoint: str, device: str):
         root = Path(checkpoint)
         args = json.loads((root / "train-args.json").read_text())
+        # MusicTransformerWrapper mutates encoding["n_tokens"][beat] IN PLACE to
+        # max_beat+1, and get_encoding() returns the shared module-level lists —
+        # without a deep copy, loading one checkpoint would silently rewrite the
+        # encoding for the whole process (found by the 2026-08-22 review)
         model = MusicXTransformer(
-            dim=args["dim"], encoding=R.get_encoding(), depth=args["layers"],
+            dim=args["dim"], encoding=copy.deepcopy(R.get_encoding()),
+            depth=args["layers"],
             heads=args["heads"], max_seq_len=args["max_seq_len"],
             max_beat=args["max_beat"],
             rotary_pos_emb=args.get("rel_pos_emb", False),
@@ -83,6 +101,10 @@ class MMTAdapter(PublicModelAdapter):
                            map_location=device, weights_only=False)
         model.load_state_dict(state)                # strict: shape drift is an error
         model._mmt_args = args
+        # encode_events must reject beats the CHECKPOINT cannot embed (257 rows for
+        # max_beat=256), not merely the encoding's constant 1024 — beat codes in
+        # 258..1025 would pass the old guard and crash the embedding lookup
+        self._max_beat = int(args["max_beat"])
         return model.to(device).eval()
 
     def check_vocab(self, model) -> None:
@@ -140,13 +162,30 @@ class MMTAdapter(PublicModelAdapter):
                                "every event")
         spb = self.seconds_per_beat
         res = R.RESOLUTION
-        notes = []
+        notes, n_trimmed = [], 0
         for onset_s, dur_s, pitch in events:
             steps = round(onset_s / spb * res)       # 12 positions per beat
             beat, position = divmod(steps, res)
+            if beat >= self._max_beat:
+                # events arrive onset-sorted, so everything past the checkpoint's
+                # beat range is a SUFFIX: truncating here keeps the caller's
+                # event<->position pairing aligned for the prefix (the same
+                # semantics as the pipeline's ctx truncation), and the count is
+                # recorded rather than the pieces silently shrinking
+                n_trimmed += 1
+                continue
             duration = max(1, round(dur_s / spb * res))
             notes.append((beat, position, pitch, duration, 0))   # program 0: piano
-        notes.sort()
+        self.last_n_trimmed = n_trimmed
+        if not notes:
+            raise RuntimeError(
+                f"every event lies past the checkpoint's beat range "
+                f"({self._max_beat} beats): nothing to encode")
+        # sort by grid position ONLY: sorting whole tuples would reorder notes
+        # that quantize to the same step by pitch, silently mispairing
+        # note_positions with the caller's per-event labels. Python's sort is
+        # stable, so ties keep the caller's event order.
+        notes.sort(key=lambda nt: (nt[0], nt[1]))
         codes = R.encode_notes(notes, R.get_encoding())
         # encode_notes closes the sequence with an end-of-song row. A prompt that
         # ends with end-of-song is a FINISHED song — the model then (correctly)
@@ -217,7 +256,13 @@ class MMTAdapter(PublicModelAdapter):
         ids = prompt_ids
         plen = ids.shape[1]
         note_rows = ids[0, :, DIM["type"]] == NOTE_TYPE
-        cur_beat = int(ids[0, note_rows, DIM["beat"]].max()) if note_rows.any() else 0
+        # rows store beat CODES (value + 1, code 0 = none); the monotonic mask below
+        # works in VALUES. The first version initialised this with the code and so
+        # forbade the first generated note from sharing the prompt's final beat —
+        # an off-by-one splice gap at exactly the position being judged (review,
+        # 2026-08-22)
+        cur_beat = (int(ids[0, note_rows, DIM["beat"]].max()) - 1
+                    if note_rows.any() else 0)
         cur_type = int(ids[0, -1, DIM["type"]])
 
         def draw(logit_row: torch.Tensor) -> int:
@@ -255,8 +300,14 @@ class MMTAdapter(PublicModelAdapter):
                     lf = logits[DIM[name]].clone()
                     lf[0] = -torch.inf
                     if name == "beat":
-                        lf[:cur_beat + 1] = -torch.inf   # beat codes: beat b -> b+1;
-                        v = draw(lf)                     # forbid moving before cur
+                        # allow beat >= cur_beat: mask codes 0..cur_beat, i.e. the
+                        # none code and every beat value below the current one
+                        lf[:cur_beat + 1] = -torch.inf
+                        if torch.isinf(lf).all():
+                            # the prompt sits at the last representable beat: the
+                            # song cannot continue — stop instead of sampling NaN
+                            return ids
+                        v = draw(lf)
                         cur_beat = max(cur_beat, v - 1)
                     else:
                         v = draw(lf)
@@ -293,8 +344,9 @@ class MMTAdapter(PublicModelAdapter):
             codes, npos = self.encode_events(events)
             real.append(nll(codes))
             bad = [list(r) for r in codes]
+            n_pitch = R.get_encoding()["n_tokens"][DIM["pitch"]]
             for i in npos:
-                if bad[i][DIM["pitch"]] < R.get_encoding()["n_tokens"][DIM["pitch"]] - 1:
+                if bad[i][DIM["pitch"]] < n_pitch - 1:
                     bad[i][DIM["pitch"]] += 1        # every pitch off by one slot
             shift.append(nll([tuple(r) for r in bad]))
             ev = list(events)

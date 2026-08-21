@@ -49,9 +49,23 @@ MAJOR_TARGETS = list(range(12))
 
 
 def build_prompts(adapter, chorales: list[dict], n: int,
-                  frac: float = 0.5) -> list[dict]:
+                  frac: float = 0.5, max_tokens: int | None = None) -> list[dict]:
     """Key-stable prefixes: take a chorale's opening while its analysed key is still
-    the one it started in, up to `frac` of its events."""
+    the one it started in, up to `frac` of its events.
+
+    Two caps, both found necessary the day POP909 arrived (2026-08-22; Bach
+    chorales are short enough that neither ever binds on them):
+      max_tokens   -- the encoded prompt must leave room for the continuation
+                      inside the model's OWN context, or the sustained edit's
+                      start position begins outside the sliding window and the
+                      edit silently never fires; it must also fit the guard's
+                      reference model, which scores prompt+continuation unwindowed.
+      max_prompt_seconds (adapter attribute) -- absolute-time schemes cannot
+                      encode arrivals past a hard ceiling (100 s for the
+                      Anticipatory vocabulary), so the prompt must end early
+                      enough that the continuation's timestamps stay encodable.
+    """
+    max_seconds = getattr(adapter, "max_prompt_seconds", None)
     out = []
     for ch in chorales:
         adapter.set_piece_context(ch)
@@ -63,11 +77,20 @@ def build_prompts(adapter, chorales: list[dict], n: int,
                 break
             stable = i
         cut = min(stable, int(len(events) * frac))
+        if max_seconds is not None:
+            while cut > 0 and events[cut - 1][0] > max_seconds:
+                cut -= 1
         if cut < 24:
             continue
         ids, _ = adapter.encode_events(events[:cut])
+        while max_tokens is not None and len(ids) > max_tokens and cut >= 24:
+            cut = min(cut - 1, int(cut * 0.9))
+            ids, _ = adapter.encode_events(events[:cut])
+        if cut < 24:
+            continue
         out.append({"ids": ids, "src_key": int(k0), "name": ch["name"],
-                    "n_events": cut})
+                    "n_events": cut, "events": events[:cut],
+                    "tempo_us": ch.get("tempo_us")})
         if len(out) == n:
             break
     return out
@@ -136,13 +159,15 @@ def main() -> None:
         chorales, _ = load_pop909_part(
             REPO / pc["corpus"]["root"], part, pc["split"]["seed"],
             tuple(pc["split"]["frac"]), pc["corpus"]["min_labeled_events"])
-        prompts = build_prompts(adapter, chorales, n1 if args.stage == 1 else n2)
+        prompts = build_prompts(adapter, chorales, n1 if args.stage == 1 else n2,
+                                max_tokens=adapter.context_length(model) - args.n_new)
     else:
         chorales, _ = load_corpus_local(Path(args.scores) / "kern",
                                         Path(args.analyses) / ANALYSES_SUBDIR)
         # DISJOINT prompt sets: the layer is chosen on stage-1 chorales and judged on
         # stage-2 chorales it has never been selected against.
-        all_prompts = build_prompts(adapter, chorales, n1 + n2)
+        all_prompts = build_prompts(adapter, chorales, n1 + n2,
+                                    max_tokens=adapter.context_length(model) - args.n_new)
         prompts = all_prompts[:n1] if args.stage == 1 else all_prompts[n1:n1 + n2]
     log.info("stage %d: %d prompts (%d layers, rank %d)", args.stage, len(prompts),
              n_layers, args.rank)

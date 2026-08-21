@@ -9,3 +9,6 @@ pytest
 matplotlib   # P5 figures (approved 2026-07-12)
 # music21   # deferred (user decision 2026-07-12): D-REAL implemented via direct
 #            MusicXML/RomanText parsing; revisit if that proves insufficient
+x-transformers==0.25.9   # MMT vendored model classes; the version MMT's own
+                         # environment.yml pins (cross-model instruction, 2026-08-22)
+einops                   # required by x-transformers

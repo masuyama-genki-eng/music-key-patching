@@ -30,9 +30,12 @@ def test_registry_returns_an_adapter(name):
     a = get_adapter(name)
     assert isinstance(a, PublicModelAdapter)
     assert a.name == name
-    assert a.default_checkpoint and a.reference_checkpoint
-    assert a.default_checkpoint != a.reference_checkpoint, \
-        "the guard's reference must be a different checkpoint from the edited model"
+    assert a.default_checkpoint
+    # the guard reference is either a DIFFERENT checkpoint, or None — meaning it is
+    # a property of the corpus (docs/CROSS_CORPUS_FREEZE.md §4) and lives in the
+    # corpus config, never defaulting to anything on the model axis
+    if a.reference_checkpoint is not None:
+        assert a.default_checkpoint != a.reference_checkpoint
 
 
 def test_unknown_adapter_is_refused():
@@ -85,10 +88,26 @@ def test_every_emitted_id_is_in_range(name):
             assert all(0 <= v < nf for v, nf in zip(row, n))
 
 
-def test_out_of_range_events_are_dropped_not_clipped():
+def test_unencodable_events_never_desync_silently():
+    """The 2026-08-22 contract, replacing drop-on-sight (which shifted
+    note_positions against per-event labels — live on POP909, 277 pieces):
+    durations are CLAMPED into the encodable range, times past the 100 s ceiling
+    are counted suffix-drops, and anything that would desync mid-stream raises."""
     a = get_adapter("anticipatory")
-    bad = [(-1.0, 0.5, 60), (0.0, 0.0, 61), (0.0, 0.5, 200), (0.0, 0.5, 60)]
-    assert a.decode_pitches(a.encode_events(bad)[0]) == [60]
+    # zero duration: clamped to one 10 ms bin, KEPT — the note count must not shrink
+    ids, npos = a.encode_events([(0.0, 0.0, 61), (0.5, 0.5, 60)])
+    assert a.decode_pitches(ids) == [61, 60]
+    # a >=10 s duration: clamped to the largest encodable bin, KEPT
+    ids, _ = a.encode_events([(0.0, 32.0, 55)])
+    assert a.decode_pitches(ids) == [55]
+    # times past the ceiling: suffix-dropped and counted
+    ids, npos = a.encode_events([(0.0, 0.5, 60), (150.0, 0.5, 62)])
+    assert a.decode_pitches(ids) == [60]
+    # desync-shaped inputs are errors, not skips
+    with pytest.raises(ValueError):
+        a.encode_events([(-1.0, 0.5, 60)])
+    with pytest.raises(ValueError):
+        a.encode_events([(0.0, 0.5, 200)])
 
 
 def test_vocab_shortfall_is_refused_padding_accepted():

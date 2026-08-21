@@ -71,17 +71,38 @@ def encode_events(events: list[tuple[float, float, int]],
     event). Events must be sorted by onset; the model reads absolute arrival times."""
     tokens = [AUTOREGRESS]
     note_positions = []
+    n_trimmed = 0
     for onset, dur, pitch in events:
         t = int(round(onset * TIME_RESOLUTION))
         d = int(round(dur * TIME_RESOLUTION))
-        if not (0 <= t < MAX_TIME) or not (0 < d < MAX_DUR):
+        if t < 0:
+            raise ValueError(f"negative onset {onset}s — a front-trim would desync "
+                             "event labels just like a mid-stream drop")
+        if t >= MAX_TIME:
+            # arrival times past the vocabulary's 100 s are unencodable. Events
+            # arrive onset-sorted, so these are a SUFFIX and dropping them keeps
+            # the caller's event<->position pairing aligned; the count is exposed
+            # instead of the piece silently shrinking. (Bach chorales never
+            # reached 100 s; POP909 songs routinely do — found 2026-08-22.)
+            n_trimmed += 1
             continue
+        # durations are CLAMPED, never dropped: a mid-stream drop would shift
+        # note_positions against the caller's per-event labels — the silent
+        # mispairing the 2026-08-22 review found live on POP909, whose
+        # performance MIDI holds sub-5 ms ornaments in 277 pieces. The floor is
+        # one 10 ms bin; the ceiling is the largest encodable duration. Bach
+        # durations (>= 250 ms, < 10 s) are untouched by either bound, so every
+        # ledgered run is unaffected.
+        d = min(max(d, 1), MAX_DUR - 1)
         if not (0 <= pitch < MAX_PITCH):
-            continue
+            raise ValueError(f"MIDI pitch {pitch} out of range — dropping it "
+                             "mid-stream would desync event labels")
         tokens.append(TIME_OFFSET + t)
         tokens.append(DUR_OFFSET + d)
         note_positions.append(len(tokens))
         tokens.append(NOTE_OFFSET + MAX_PITCH * instrument + pitch)
+    if n_trimmed and note_positions and events[len(note_positions) - 1][0] > events[-1 - n_trimmed][0]:
+        raise AssertionError("time-trimmed events were not a suffix")
     return tokens, note_positions
 
 
@@ -180,6 +201,9 @@ class AnticipatoryAdapter(PublicModelAdapter):
 
     name = "anticipatory"
     default_checkpoint = "stanford-crfm/music-small-800k"
+    #: prompts must end early enough that the ~80-note continuation still has
+    #: encodable arrival times below the vocabulary's hard 100 s ceiling
+    max_prompt_seconds = 60.0
     reference_checkpoint = "stanford-crfm/music-medium-800k"
 
     # ------------------------------------------------------------ loading
