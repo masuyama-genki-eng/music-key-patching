@@ -81,6 +81,10 @@ def main() -> None:
                    help="guard reference checkpoint; default = the adapter's. "
                         "MUST be the one the frozen guard was measured with.")
     ap.add_argument("--stage", type=int, choices=[1, 2], default=1)
+    ap.add_argument("--layers", default=None,
+                    help="stage 1 only: comma-separated layer subset to scan, e.g. "
+                         "0,2,4 (SPEC §8 strided fallback). Default: every layer. A "
+                         "later run may add layers; the scan file keeps the union.")
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--n-prompts-stage1", type=int, default=20)
@@ -180,8 +184,22 @@ def main() -> None:
 
     # ---------------- stage 1: which layer, if any, moves the key?
     if args.stage == 1:
+        scan_path = outdir / "stage1_layer_scan.json"
+        todo = ([int(x) for x in args.layers.split(",")] if args.layers
+                else list(range(n_layers)))
+        bad = [li for li in todo if not 0 <= li < n_layers]
+        if bad:
+            raise SystemExit(f"--layers out of range for a {n_layers}-layer model: {bad}")
+        # a refinement pass adds layers to an existing scan instead of replacing it,
+        # so the search stage's record stays complete
         prof = []
-        for li in range(n_layers):
+        if scan_path.exists():
+            prof = json.loads(scan_path.read_text())["profile"]
+            done = {r["layer"] for r in prof}
+            todo = [li for li in todo if li not in done]
+            log.info("extending an existing scan: %d layers already done, %d to go",
+                     len(done), len(todo))
+        for li in todo:
             rows = [r for t in MAJOR_TARGETS for r in run(li, t, "edit")]
             k1r = [r for t in MAJOR_TARGETS for r in run(li, t, "edit", k1=True)]
             tkr = float(np.mean([bool(r["tkr"]) for r in rows]))
@@ -192,13 +210,16 @@ def main() -> None:
                          "ikr_target": ikr_t, "ikr_src": ikr_s})
             log.info("L%-2d  TKR edit %.3f  K1 %.3f | IKR target %.3f src %.3f",
                      li, tkr, tkr_k1, ikr_t, ikr_s)
+        prof.sort(key=lambda r: r["layer"])
         best = max(prof, key=lambda r: r["tkr_edit"] - r["tkr_k1"])
         out = {"stage": 1, "model": checkpoint, "n_prompts": len(prompts),
                "profile": prof, "best_layer": best["layer"],
+               "layers_scanned": [r["layer"] for r in prof],
+               "all_layers": n_layers,
                "note": "layer selected on stage-1 prompts; stage 2 evaluates on a "
                        "DISJOINT prompt set"}
-        (outdir / "stage1_layer_scan.json").write_text(json.dumps(out, indent=2))
-        snapshot(outdir / "stage1_layer_scan.json", vars(args), seeds=[args.seed])
+        scan_path.write_text(json.dumps(out, indent=2))
+        snapshot(scan_path, vars(args), seeds=[args.seed])
         log.info("stage 1: best layer L%d (edit %.3f vs K1 %.3f)", best["layer"],
                  best["tkr_edit"], best["tkr_k1"])
         if not args.no_ledger:
