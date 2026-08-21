@@ -41,7 +41,8 @@ src/                      the library — no experiment logic
 
 experiments/              one directory per experiment (see experiments/README.md)
 tests/                    the gates: vocabulary leak, label alignment, sham identity,
-                          key-estimator sanity, adapter contract
+                          key-estimator sanity, adapter contract, and a scope check
+                          over every script (no name read unbound or after `del`)
 configs/                  every seed and threshold; no magic constants in src/
 paper/                    the manuscript
 ```
@@ -52,7 +53,7 @@ paper/                    the manuscript
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest tests/ -q          # 51 tests, the gates named above
+.venv/bin/python -m pytest tests/ -q          # 191 tests, the gates named above
 
 .venv/bin/python experiments/data_and_models/generate_corpus.py
 .venv/bin/python experiments/data_and_models/train_models.py

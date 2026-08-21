@@ -47,7 +47,8 @@ log = logging.getLogger("public_sweep")
 MAJOR_TARGETS = list(range(12))
 
 
-def build_prompts(chorales: list[dict], n: int, frac: float = 0.5) -> list[dict]:
+def build_prompts(adapter, chorales: list[dict], n: int,
+                  frac: float = 0.5) -> list[dict]:
     """Key-stable prefixes: take a chorale's opening while its analysed key is still
     the one it started in, up to `frac` of its events."""
     out = []
@@ -62,7 +63,7 @@ def build_prompts(chorales: list[dict], n: int, frac: float = 0.5) -> list[dict]
         cut = min(stable, int(len(events) * frac))
         if cut < 24:
             continue
-        ids, _ = encode_events(events[:cut])
+        ids, _ = adapter.encode_events(events[:cut])
         out.append({"ids": ids, "src_key": int(k0), "name": ch["name"],
                     "n_events": cut})
         if len(out) == n:
@@ -76,7 +77,9 @@ def main() -> None:
                    help="checkpoint; default = the adapter's own")
     ap.add_argument("--adapter", default="anticipatory",
                    help="public-model adapter (src/publicmodels/registry.py)")
-    ap.add_argument("--ref-model", default="stanford-crfm/music-medium-800k")
+    ap.add_argument("--ref-model", default=None,
+                   help="guard reference checkpoint; default = the adapter's. "
+                        "MUST be the one the frozen guard was measured with.")
     ap.add_argument("--stage", type=int, choices=[1, 2], default=1)
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
@@ -101,20 +104,22 @@ def main() -> None:
 
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    short = args.model.split("/")[-1]
+    adapter = get_adapter(args.adapter)
+    checkpoint = args.model or adapter.default_checkpoint
+    ref_checkpoint = args.ref_model or adapter.reference_checkpoint
+    short = checkpoint.split("/")[-1]
     outdir = REPO / "results/mwild_sweep" / short
     outdir.mkdir(parents=True, exist_ok=True)
     gen_kw = dict(temperature=args.temperature, top_p=args.top_p)
 
-    adapter = get_adapter(args.adapter)
-    model = adapter.load(args.model or adapter.default_checkpoint, device)
+    model = adapter.load(checkpoint, device)
     n_layers = adapter.n_layers(model)
     chorales, _ = load_corpus_local(Path(args.scores) / "kern",
                                     Path(args.analyses) / ANALYSES_SUBDIR)
     # DISJOINT prompt sets: the layer is chosen on stage-1 chorales and judged on
     # stage-2 chorales it has never been selected against.
     n1, n2 = args.n_prompts_stage1, args.n_prompts_stage2
-    all_prompts = build_prompts(chorales, n1 + n2)
+    all_prompts = build_prompts(adapter, chorales, n1 + n2)
     prompts = all_prompts[:n1] if args.stage == 1 else all_prompts[n1:n1 + n2]
     log.info("stage %d: %d prompts (%d layers, rank %d)", args.stage, len(prompts),
              n_layers, args.rank)
@@ -188,7 +193,7 @@ def main() -> None:
             log.info("L%-2d  TKR edit %.3f  K1 %.3f | IKR target %.3f src %.3f",
                      li, tkr, tkr_k1, ikr_t, ikr_s)
         best = max(prof, key=lambda r: r["tkr_edit"] - r["tkr_k1"])
-        out = {"stage": 1, "model": args.model, "n_prompts": len(prompts),
+        out = {"stage": 1, "model": checkpoint, "n_prompts": len(prompts),
                "profile": prof, "best_layer": best["layer"],
                "note": "layer selected on stage-1 prompts; stage 2 evaluates on a "
                        "DISJOINT prompt set"}
@@ -212,11 +217,20 @@ def main() -> None:
     if not guard_path.exists():
         raise SystemExit("frozen guard missing — run experiments/public_models/public_quality_guard.py first "
                          "(the budget must be fixed before any edit is scored)")
-    delta = json.loads(guard_path.read_text())["delta_ppl"]
+    guard = json.loads(guard_path.read_text())
+    delta = guard["delta_ppl"]
+    frozen_ref = guard.get("reference_model")
+    if frozen_ref and frozen_ref != ref_checkpoint:
+        raise SystemExit(
+            f"guard reference mismatch: the budget was frozen against {frozen_ref} but "
+            f"this run would score continuations under {ref_checkpoint}. A budget in "
+            "one model's nats does not transfer to another's, so the guarded success "
+            "rate would be meaningless. Re-freeze the guard, or pass "
+            f"--ref-model {frozen_ref}.")
     log.info("stage 2: layer L%d (chosen on the DISJOINT stage-1 prompts), "
-             "delta_ppl=%.4f nats", layer, delta)
+             "delta_ppl=%.4f nats, guard reference %s", layer, delta, ref_checkpoint)
 
-    ref = adapter.load(args.ref_model or adapter.reference_checkpoint, device)
+    ref = adapter.load(ref_checkpoint, device)
 
     def nll_of(rows: list[dict]) -> np.ndarray:
         """Continuation NLL under the REFERENCE model (different weights: not circular)."""
@@ -274,8 +288,8 @@ def main() -> None:
     n_sig = sum(r["sig"] for r in per_target)
 
     res = {
-        "stage": 2, "model": args.model, "layer": layer, "delta_ppl": delta,
-        "n_prompts": len(prompts), "guard_reference": args.ref_model,
+        "stage": 2, "model": checkpoint, "layer": layer, "delta_ppl": delta,
+        "n_prompts": len(prompts), "guard_reference": ref_checkpoint,
         "tkr_edit_guarded": float(np.mean([r["success"] for r in df_e])),
         "tkr_k1_guarded": float(np.mean([r["success"] for r in df_k])),
         "tkr_edit_raw": float(np.mean([bool(r["tkr"]) for r in df_e])),
@@ -305,7 +319,7 @@ def main() -> None:
                           f"{res['tkr_edit_guarded']:.3f} vs K1 "
                           f"{res['tkr_k1_guarded']:.3f} on {len(prompts)} held-out "
                           f"prompts; DR-H3 supported={res['DR_H3_supported']} "
-                          f"({res['n_sig_targets']}/12); guard ref {args.ref_model}")
+                          f"({res['n_sig_targets']}/12); guard ref {ref_checkpoint}")
 
 
 if __name__ == "__main__":

@@ -1257,8 +1257,31 @@ touched, and no result was recomputed. Equivalence was verified rather than assu
 where code moved: the token-mask code is byte-identical to the original; the public
 model's encoder agrees with the pre-refactor implementation on 500 random event lists
 and both decoders on 500 random token streams, with all 11 vocabulary constants
-identical. Gates: pytest 51/51 (42 pre-existing plus 9 new adapter-contract tests),
-and all 30 entry points import and parse their arguments.
+identical.
+
+**Correction, same day — the first gate was too weak.** The reorganization was first
+committed behind "pytest 51/51 and all 30 entry points import and parse their
+arguments". That gate is real but stops at argparse, and a review found four defects
+living inside `main()` of the public-model scripts, where nothing in the test suite
+reaches: a missing `get_adapter` import, a variable deleted along with the call that
+produced it, a function narrowed out of an import list while a caller still used it,
+and `args.model.split()` running before the `--model`-less default was resolved. A
+fifth was latent: `--ref-model` kept a hardwired default, so with a second adapter the
+quality budget could be frozen under one reference model and the sweep scored under
+another, silently invalidating every guarded success rate. All are fixed; the sweep now
+refuses to run when the guard artifact names a different reference model than the run
+would use. Two new checks close the class of mistake rather than the instances:
+`tests/test_no_undefined_names.py` fails on any name an experiment script or library
+module reads without binding, and on any name read after `del` (the second was written
+after fixing the first defect introduced exactly that bug in the artifact's `arch`
+record). The suite is now 191 tests, and `public_probe.py` was run far enough on the
+real checkpoint to pass its encoding gate and begin extraction.
+
+While running it, one pre-existing documentation error surfaced and was corrected:
+`VOCAB_SIZE` was annotated "55030 — matches config.json" and `check_vocab`'s docstring
+described accepting 55030 against a layout of 55028. The layout sums to 55028 and
+music-small-800k declares 55028; the two agree exactly. The check's behaviour was
+always correct — only its account of the numbers was wrong.
 
 **Public models behind an adapter.** Probing and editing a public checkpoint had the
 Anticipatory Music Transformer's token scheme and GPT-2's block access hardwired into

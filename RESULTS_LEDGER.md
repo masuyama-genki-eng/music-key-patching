@@ -957,3 +957,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/confirmatory/R-Aug_s0_minor/parts/k4_ceiling.parquet`, `results/confirmatory/R-Aug_s0_minor/k4_ceiling.json`
 - note: K4 raw=0.8773 (non-identity); edit/K4=0.5637
 
+## 2026-08-21T19:12:05+09:00 — Experiment I: balanced re-estimation (music-small-800k)
+- git: `ac5a37c1028ede6fb3d7f977bd42e814bd44a441+DIRTY`
+- config_hash: `99ad84174fb9de1d0119c84a7c8d05d6159c1ba3a02f846cadc4e2b992821354`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/balanced/probe_weights.npz`, `results/mwild/music-small-800k/balanced/class_means.npz`, `results/mwild/music-small-800k/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 993/class; L4 probe F1 0.2648; all 24 mu nonzero
+
+## 2026-08-21T19:13:03+09:00 — M-WILD probe music-small-800k
+- git: `ac5a37c1028ede6fb3d7f977bd42e814bd44a441+DIRTY`
+- config_hash: `1f31882b5a2746f2aacb9f958e3259d0583a2a279320b31d70a17bf685e7c07d`
+- seeds: [0]
+- artifacts: `results/mwild/music-small-800k/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6902 (L10) vs best C3 0.4537; corrected margin 0.1956 CI[0.1315,0.2596]; beats_surface=True
+

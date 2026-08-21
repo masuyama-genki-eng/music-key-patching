@@ -109,5 +109,11 @@ it; the default reproduces the published runs.
 
 ### `runners/`
 
-Convenience drivers that loop the scripts above over several models. They take model
-names as arguments and default to the full set.
+Convenience drivers that loop the scripts above over several models.
+
+| runner | arguments |
+|---|---|
+| `run_phase_a.sh` | model names; defaults to the six main models |
+| `run_size_probing.sh` | model names; defaults to the six size-sweep models |
+| `run_size_sweeps.sh` | none — the model/layer pairs of the size sweep are fixed inside |
+| `run_85m_layer_sweep.sh` | none — sweeps every layer of our own 85M model to find its causal peak, which the probe peak does not predict |

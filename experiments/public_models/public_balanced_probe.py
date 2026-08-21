@@ -73,7 +73,9 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    short = args.model.split("/")[-1]
+    adapter = get_adapter(args.adapter)
+    checkpoint = args.model or adapter.default_checkpoint
+    short = checkpoint.split("/")[-1]
     outdir = REPO / "results/mwild" / short / "balanced"
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -92,8 +94,6 @@ def main() -> None:
             orig_id.append(si)
     log.info("estimation corpus: %d transposed chorales", len(corpus))
 
-    adapter = get_adapter(args.adapter)
-    checkpoint = args.model or adapter.default_checkpoint
     model = adapter.load(checkpoint, device)
     adapter.check_vocab(model)
     data = extract_activations(adapter, model, corpus, device,
@@ -149,7 +149,7 @@ def main() -> None:
     np.savez_compressed(outdir / "class_means.npz", **{f"layer_{li}": means})
     report = {
         "experiment": "I (balanced re-estimation; user letter H)",
-        "model": args.model, "layer": li,
+        "model": checkpoint, "layer": li,
         "counts_after_transposition": counts, "n_per_class_balanced": int(n_bal),
         "n_transposed_chorales": len(corpus),
         "balanced_probe_f1": f1_bal,

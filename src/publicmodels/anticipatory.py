@@ -59,7 +59,7 @@ SPECIAL_OFFSET = ANOTE_OFFSET + MAX_NOTE
 SEPARATOR = SPECIAL_OFFSET
 AUTOREGRESS = SPECIAL_OFFSET + 1
 ANTICIPATE = SPECIAL_OFFSET + 2
-VOCAB_SIZE = ANTICIPATE + 1                                # 55030 — matches config.json
+VOCAB_SIZE = ANTICIPATE + 1                                # 55028 — matches config.json
 
 DEFAULT_INSTRUMENT = 52                   # GM 52 = choir aahs (SATB chorales)
 
@@ -113,12 +113,13 @@ def continuation_events(ids: list[int]) -> list[tuple[float, float, int]]:
 def check_vocab(model_vocab_size: int) -> None:
     """Every token id we emit must exist in the checkpoint's embedding table.
 
-    The checkpoint declares 55030 while the published layout sums to 55028: GPT-2
-    configs are routinely padded past the true vocabulary. Padding is harmless (the
-    extra rows are simply never indexed); a SHORTFALL would mean our offsets are
-    wrong. We accept the former, reject the latter — and, because equal sizes are not
-    proof of equal offsets, validate the encoding empirically with
-    `encoding_is_sane()` before trusting any activation.
+    For music-small-800k the reconstructed layout and the checkpoint agree exactly
+    (both 55028, verified 2026-08-13). Padding above the layout is tolerated, because
+    GPT-2 configs are routinely padded past the true vocabulary and the extra rows are
+    simply never indexed; a SHORTFALL is refused, because our ids would then index
+    outside the embedding table. Equal sizes are not proof of equal offsets, so
+    `encoding_is_sane()` validates the encoding empirically before any activation is
+    trusted.
     """
     if model_vocab_size < VOCAB_SIZE:
         raise RuntimeError(
@@ -186,7 +187,7 @@ class AnticipatoryAdapter(PublicModelAdapter):
         return AutoModelForCausalLM.from_pretrained(checkpoint).to(device).eval()
 
     def check_vocab(self, model) -> None:
-        check_vocab(model.config.vocab_size)
+        check_vocab(self.vocab_size(model))
 
     # ------------------------------------------------------- architecture
     def n_layers(self, model) -> int:
@@ -197,6 +198,9 @@ class AnticipatoryAdapter(PublicModelAdapter):
 
     def context_length(self, model) -> int:
         return int(model.config.n_positions)
+
+    def vocab_size(self, model) -> int:
+        return int(model.config.vocab_size)
 
     def block(self, model, layer: int):
         return model.transformer.h[layer]

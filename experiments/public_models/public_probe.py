@@ -31,6 +31,7 @@ import yaml
 from src.analysis.stats import bca_ci
 from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
 from src.probing import controls as C
+from src.publicmodels import get_adapter
 from src.probing.public_model import (extract_activations,
                                pc_hists)
 from src.probing.probes import (ProbeConfig, confusion, macro_f1_from_conf,
@@ -67,7 +68,9 @@ def main() -> None:
     seed = int(pcfg["seed"])
     windows = list(pcfg["controls"]["c3_windows"])
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    short = args.model.split("/")[-1]
+    adapter = get_adapter(args.adapter)
+    checkpoint = args.model or adapter.default_checkpoint
+    short = checkpoint.split("/")[-1]
     # probe_at MUST be in the path: the two conventions are different measurements, and
     # a shared path silently overwrites one with the other (this bit us once already in
     # the D-REAL probe — CHANGELOG 2026-07-15). predict_pitch keeps the original,
@@ -77,13 +80,14 @@ def main() -> None:
         outdir = outdir / args.probe_at
     outdir.mkdir(parents=True, exist_ok=True)
 
-    log.info("loading %s", args.model)
-    adapter = get_adapter(args.adapter)
-    checkpoint = args.model or adapter.default_checkpoint
+    log.info("loading %s", checkpoint)
     model = adapter.load(checkpoint, device)
     adapter.check_vocab(model)                 # refuse to probe a mis-encoded input
+    # recorded here because the model is freed below, before the artifact is written
+    arch = {"n_layer": adapter.n_layers(model), "d": adapter.d_model(model),
+            "vocab": adapter.vocab_size(model)}
     log.info("%s: %d layers, d=%d, vocab %d (leak-free: time/dur/note only)",
-             short, cfg.n_layer, cfg.n_embd, cfg.vocab_size)
+             short, arch["n_layer"], arch["d"], arch["vocab"])
 
     chorales, match_stats = load_corpus_local(
         Path(args.scores) / "kern", Path(args.analyses) / ANALYSES_SUBDIR)
@@ -158,8 +162,8 @@ def main() -> None:
     c1_floor = macro_f1_from_conf(confusion(y_test, c1b[best]["y_pred_test"], 24))
 
     result = {
-        "model": args.model,
-        "arch": {"n_layer": cfg.n_layer, "d": cfg.n_embd, "vocab": cfg.vocab_size},
+        "model": checkpoint,
+        "arch": arch,
         "encoding_gate": sanity,
         "probe_at": args.probe_at,
         "corpus": {"n_chorales": data["n_chorales"], "n_positions": int(len(y)),

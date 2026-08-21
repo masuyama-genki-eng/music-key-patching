@@ -52,6 +52,9 @@ class PublicModelAdapter(ABC):
     def context_length(self, model) -> int: ...
 
     @abstractmethod
+    def vocab_size(self, model) -> int: ...
+
+    @abstractmethod
     def block(self, model, layer: int):
         """The module whose output is the residual stream after `layer`."""
 
