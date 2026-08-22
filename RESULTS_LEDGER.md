@@ -1076,3 +1076,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `data/mmt-checkpoints/INVENTORY.json`
 - note: 18 checkpoint file(s) and 18 train-args files, sha256-pinned; architectures and hashes in the INVENTORY artifact (the ledger does not duplicate derivable state)
 
+## 2026-08-22T14:37:14+09:00 — M-WILD intervention stage 1 (music-small-800k)
+- git: `1b53b13425edb979f2f20ca8d4b88dd970ac7dd9+DIRTY`
+- config_hash: `af10595a52795640d573fce78e309d5e224dc922b7f00033e8db23160ba5f165`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/music-small-800k/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L10 TKR 0.121 vs K1 0.050
+
+## 2026-08-22T16:12:28+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `9a80e98a92f2dbe0c48b718c5d546208a70aabe7+DIRTY`
+- config_hash: `6e3ddf45afef434848e39b62a5b7c1ae4d7410db440ff2ff5b2c5e71a310b2b3`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/music-small-800k/stage2_eval.json`
+- note: L10 chosen on disjoint prompts; guarded TKR 0.135 vs K1 0.057 on 60 held-out prompts; DR-H3 supported=False (1/12); guard ref stanford-crfm/music-large-800k
+

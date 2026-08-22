@@ -75,7 +75,7 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     adapter = get_adapter(args.adapter)
     checkpoint = args.model or adapter.default_checkpoint
-    short = checkpoint.split("/")[-1]
+    short = adapter.artifact_name(checkpoint)
     outdir = REPO / "results/mwild" / short / "balanced"
     outdir.mkdir(parents=True, exist_ok=True)
 

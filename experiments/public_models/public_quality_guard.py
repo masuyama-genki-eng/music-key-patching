@@ -71,7 +71,7 @@ def main() -> None:
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     adapter = get_adapter(args.adapter)
     target_checkpoint = args.target_model or adapter.default_checkpoint
-    short = target_checkpoint.split("/")[-1]
+    short = adapter.artifact_name(target_checkpoint)
 
     tree = "results/mwild_sweep_pop909" if args.corpus == "pop909" \
         else "results/mwild_sweep"

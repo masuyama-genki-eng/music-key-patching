@@ -153,7 +153,7 @@ def main() -> None:
         raise SystemExit("no guard reference: this adapter declares none of its own "
                          "(it is corpus-owned) and neither --ref-model nor the "
                          "corpus config supplied one")
-    short = checkpoint.split("/")[-1]
+    short = adapter.artifact_name(checkpoint)
     outdir = REPO / ("results/mwild_sweep_pop909" if args.corpus == "pop909"
                      else "results/mwild_sweep") / short
     outdir.mkdir(parents=True, exist_ok=True)

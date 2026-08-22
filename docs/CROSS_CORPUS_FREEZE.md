@@ -106,3 +106,18 @@ tokenize/score (OOD check first) are left incomplete with the reason recorded.
 
 *Appended after the search stage, before the final test: chosen layers, measured
 budget, edit densities, this file's hash at freeze time.*
+
+## Part 2 — run-time choices, recorded before each run
+
+**2026-08-22, before the MMT runs.** Continuation length is fixed in NOTES, not in
+generation steps: MMT emits one event per note where the Anticipatory scheme emits
+three tokens, so the shared default of 240 steps would give MMT continuations three
+times the music. MMT runs use `--n-new 80` (≈ the ~80 notes of the Anticipatory
+condition); the edit-density difference this cannot remove stays recorded per §5.
+
+**AMT × POP909 outcome, recorded as frozen §7 demands.** The probe cell PASSED
+(+0.132 [0.072, 0.201]). The edit cell FAILED the pre-registered bar: guarded TKR
+0.135 vs K1 0.057 at L10 on the final split, only 1/12 targets significant after
+Holm, in-key shares NOT crossing (target 0.758 vs source 0.886). Reported as a
+failure, not repackaged: on pop, this model's key is readable but the same edit
+that moves Bach continuations (0.479) moves pop continuations only weakly.

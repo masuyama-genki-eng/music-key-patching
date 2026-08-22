@@ -74,7 +74,7 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     adapter = get_adapter(args.adapter)
     checkpoint = args.model or adapter.default_checkpoint
-    short = checkpoint.split("/")[-1]
+    short = adapter.artifact_name(checkpoint)
     # probe_at MUST be in the path: the two conventions are different measurements, and
     # a shared path silently overwrites one with the other (this bit us once already in
     # the D-REAL probe — CHANGELOG 2026-07-15). predict_pitch keeps the original,
