@@ -72,7 +72,15 @@ def generate_batch(model, prompts: list[Prompt], editors_fn, gen_cfg: dict,
                    device: str, batch_size: int, seed: int) -> list[list[int]]:
     """editors_fn(prompt_len) -> editors dict | None. Prompts are grouped by equal
     length so t* is uniform within a batch; rng is seeded PER BATCH GROUP the same
-    way for every condition, so clean/edit pairs share sampling randomness."""
+    way for every condition, so clean/edit pairs share sampling randomness.
+
+    An editors_fn may declare a second parameter, (prompt_len, group), where group
+    is the list of prompt indices forming this batch, in row order. The contrastive
+    steering direction needs it: its mu_source is per ROW (each prompt's own key),
+    and a batch mixes prompt keys. Arity is resolved once, by signature — never by
+    catching TypeError, which would swallow real errors inside the function."""
+    import inspect
+    wants_group = len(inspect.signature(editors_fn).parameters) >= 2
     by_len: dict[int, list[int]] = {}
     for pi, p in enumerate(prompts):
         by_len.setdefault(len(p.ids), []).append(pi)
@@ -84,7 +92,7 @@ def generate_batch(model, prompts: list[Prompt], editors_fn, gen_cfg: dict,
             ids = torch.tensor([prompts[pi].ids for pi in group], device=device)
             rng = torch.Generator(device=device)
             rng.manual_seed(seed * 1_000_003 + plen * 1009 + b0)
-            editors = editors_fn(plen)
+            editors = editors_fn(plen, group) if wants_group else editors_fn(plen)
             seq = model.generate(ids, n_new=max_new,
                                  temperature=float(gen_cfg["temperature"]),
                                  top_p=float(gen_cfg["top_p"]),
