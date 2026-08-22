@@ -19,7 +19,7 @@
 \setlist[itemize]{nosep,leftmargin=1.0em,labelsep=0.35em,topsep=2pt}
 
 \title{Does a Music Transformer Know What Key It Is In?\\
-Causal Interventions on an Emergent Tonal Representation}
+Causal Interventions on Emergent Tonal Representations}
 
 \name{Genki Masuyama$^{\dagger}$, Keigo Sakurai$^{\dagger\dagger}$,
 Ren Togo$^{\dagger\dagger}$, Takahiro Ogawa$^{\dagger\dagger}$,
@@ -87,7 +87,7 @@ We can read the key and push the output; we cannot yet set the key.
 % 音楽モデルに調を書き込んだ研究はまだないので，我々の問いの操作的な形は未解決である．
 Overwriting an activation settles questions of this kind, and it closed the same gap in games~\cite{mcgrath2022chess}: an Othello model trained only on moves builds a board representation~\cite{li2023othello,nanda2023emergent}, and overwriting it with a fake board --- input untouched --- makes the model play the fake board's legal moves.
 Such edits, activation patching~\cite{geiger2021causal,meng2022rome}, are now a standard test elsewhere~\cite{karvonen2024chess,maze2024,iris2026}.
-In music the two nearest attempts write no key: Ma and Xia~\cite{ma2024root} overwrite chords, and V{\'e}lez V{\'a}squez et al.~\cite{velez2024exploring} remove a concept from MusicGen without adding another --- so the operational form of our question is open.
+In music the two nearest attempts write no key: Ma and Xia~\cite{ma2024root} overwrite chords --- a bar-scale attribute, where a key governs whole passages --- and V{\'e}lez V{\'a}squez et al.~\cite{velez2024exploring} remove a concept from MusicGen without adding another; the operational form of our question is open.
 
 % 活性パッチングによる介入の概要.活性のうち調を担う成分を目標とする調の成分に置き換え,その他の活性成分と入力は変更しない.
 \begin{figure}[!t]
@@ -428,7 +428,9 @@ In the primary cell (Table~\ref{tab:wild}) the probe beats the note-counting bas
 Crossing genre and tokenization, reading and using come apart in BOTH directions.
 The Anticipatory model still reads the key on pop ($+0.132$) yet its edit fails the pre-registered bar ($0.135$ against $0.057$; one key of twelve).
 MMT's probe LOSES to the note counts on the same corpus ($-0.061$ $[-0.13,-0.003]$), yet editing the same probe-derived subspace moves its music decisively: $0.360$ against $0.064$, all $12$ keys, with the in-key shares crossing ($0.961$ against $0.660$).
-Readability is therefore neither necessary nor sufficient for causal use --- the operational test is the overwrite itself.
+% 可読性は因果的使用の必要条件でも十分条件でもない．ここから出るのは「プローブでは決着しない」（十分性の主張）であり，
+% 「上書きだけが唯一の手段」ではない．上書きの固有の強みは特定の値を「設定」できることにある．
+Readability is therefore neither necessary nor sufficient for causal use: a probe cannot settle the question either way, while the overwrite settles it --- and, unlike ablating or nudging, it is the test that can \emph{set} a specific value.
 
 % 表2：公開モデル×コーパス．プローブ優位（補正後、95% CI）と編集の成功率（対ランダム）．
 \begin{table}[!t]
