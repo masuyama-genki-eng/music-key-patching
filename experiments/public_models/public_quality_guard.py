@@ -73,9 +73,15 @@ def main() -> None:
     target_checkpoint = args.target_model or adapter.default_checkpoint
     short = adapter.artifact_name(target_checkpoint)
 
-    tree = "results/mwild_sweep_pop909" if args.corpus == "pop909" \
-        else "results/mwild_sweep"
-    out = Path(args.out) if args.out else REPO / tree / short / "delta_ppl.json"
+    # the pop909 budget is a property of the CORPUS (one reference, one budget,
+    # serving every generated model — freeze §4), so it lives at the corpus level;
+    # the Bach budgets predate that design and stay keyed per target model
+    if args.out:
+        out = Path(args.out)
+    elif args.corpus == "pop909":
+        out = REPO / "results/mwild_sweep_pop909/delta_ppl.json"
+    else:
+        out = REPO / "results/mwild_sweep" / short / "delta_ppl.json"
     if out.exists():
         raise SystemExit(f"{out} exists — a frozen budget must not be recomputed after "
                          "edit results exist (SPEC §4.3). Delete by hand only if no "

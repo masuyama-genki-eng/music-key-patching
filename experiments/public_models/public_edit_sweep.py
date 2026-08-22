@@ -291,7 +291,8 @@ def main() -> None:
     # ---------------- stage 2: the chosen layer, judged on prompts it never saw
     scan = json.loads((outdir / "stage1_layer_scan.json").read_text())
     layer = int(scan["best_layer"])
-    guard_path = outdir / "delta_ppl.json"
+    guard_path = (REPO / "results/mwild_sweep_pop909/delta_ppl.json"
+                  if args.corpus == "pop909" else outdir / "delta_ppl.json")
     if not guard_path.exists():
         raise SystemExit("frozen guard missing — run experiments/public_models/public_quality_guard.py first "
                          "(the budget must be fixed before any edit is scored)")

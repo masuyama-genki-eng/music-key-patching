@@ -1111,3 +1111,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/steering/R-Aug_s0/s_bar.json`
 - note: per-layer s_bar: L0 7.77, L1 13.19, L2 20.35, L3 29.83, L4 34.63, L5 33.66, L6 32.64, L7 32.87
 
+## 2026-08-22T17:48:44+09:00 — Steering search B (R-Aug_s0)
+- git: `a6e5a16956800e7ae85108b5752ce0bc109b6ccc`
+- config_hash: `364bfe710dcf12da25c2ccfac7fe878752b8b6f1da97a27db09132315347d9ab`
+- seeds: [0]
+- artifacts: `results/steering/R-Aug_s0/search_summary.json`
+- note: 8 cells; best guarded SR 0.251 at L3 alpha=None
+
+## 2026-08-22T17:49:18+09:00 — M-WILD probe mmt-lmd-ape
+- git: `a6e5a16956800e7ae85108b5752ce0bc109b6ccc+DIRTY`
+- config_hash: `4e871f2d020f5e70092fd2ff41bf236de5c68e53b734383938d80d846ca6d963`
+- seeds: [0]
+- artifacts: `results/mwild_pop909/mmt-lmd-ape/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.4624 (L5) vs best C3 0.4947; corrected margin -0.0605 CI[-0.1300,-0.0026]; beats_surface=False
+
+## 2026-08-22T18:06:48+09:00 — M-WILD intervention stage 1 (mmt-lmd-ape)
+- git: `a6e5a16956800e7ae85108b5752ce0bc109b6ccc+DIRTY`
+- config_hash: `6795eb40a844bd88b69b51021a5bff236026cdcb675c1f79c33256bafff5d8b0`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/mmt-lmd-ape/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L5 TKR 0.446 vs K1 0.050
+
+## 2026-08-22T18:08:18+09:00 — pop909 guard budget relocated (corpus-level path)
+- git: `a6e5a16956800e7ae85108b5752ce0bc109b6ccc+DIRTY`
+- config_hash: `2a3c0609df13fb59eba62e6d626fd839f5efc3225164d958402b6e0bbe2c2605`
+- seeds: []
+- artifacts: `results/mwild_sweep_pop909/delta_ppl.json`
+- note: File moved unmodified (budget 1.1185, corpus pop909, ref large). The budget is corpus-level by design (CROSS_CORPUS_FREEZE §4); it was first written under the target-model directory by mistake, which made the MMT sweep unable to find it.
+
