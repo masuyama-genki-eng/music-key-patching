@@ -37,7 +37,16 @@ MASKS = {
 @torch.no_grad()
 def generate_masked(model, prompts, editor_fn, mask_fn, gen_cfg, device,
                     batch_size, seed):
-    """sweep.generate_batch with a per-step token-type mask on the editor."""
+    """sweep.generate_batch with a per-step token-type mask on the editor.
+
+    Like generate_batch, editor_fn may declare (prompt_len, group) to receive the
+    prompt indices of the current batch in row order — the contrastive steering
+    direction needs per-row source keys. Arity is resolved once by signature.
+    (This function was moved verbatim from the experiment-H script in commit
+    1fd0821 with a byte-identity proof; this extension post-dates that proof and
+    is covered by the K2 gates that re-run before every frozen test instead.)"""
+    import inspect
+    wants_group = len(inspect.signature(editor_fn).parameters) >= 2
     by_len: dict[int, list[int]] = {}
     for pi, p in enumerate(prompts):
         by_len.setdefault(len(p.ids), []).append(pi)
@@ -50,7 +59,7 @@ def generate_masked(model, prompts, editor_fn, mask_fn, gen_cfg, device,
             ids = torch.tensor([prompts[pi].ids for pi in group], device=device)
             rng = torch.Generator(device=device)
             rng.manual_seed(seed * 1_000_003 + plen * 1009 + b0)
-            ed = editor_fn(plen)
+            ed = editor_fn(plen, group) if wants_group else editor_fn(plen)
             for _ in range(max_new):
                 editors = None
                 if ed is not None:
