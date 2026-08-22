@@ -1090,3 +1090,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep_pop909/music-small-800k/stage2_eval.json`
 - note: L10 chosen on disjoint prompts; guarded TKR 0.135 vs K1 0.057 on 60 held-out prompts; DR-H3 supported=False (1/12); guard ref stanford-crfm/music-large-800k
 
+## 2026-08-22T16:15:52+09:00 — Steering regression gate (R-Aug_s0)
+- git: `745d46f275cfc956234c5c623660873b2e849b18`
+- config_hash: `2f6963a7958211bed40a717148554d1949303aa7a50d3d73475fb9134967b415`
+- seeds: [0]
+- artifacts: `results/steering/R-Aug_s0/regression.json`
+- note: headline {'edit': 0.38, 'k1': 0.08, 'k1_norm': 0.094}; sham FAIL; clean conts identical -> FAIL
+

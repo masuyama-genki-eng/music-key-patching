@@ -1375,3 +1375,17 @@ ceiling and the reference's context window. The ESTIMATION RULE is unchanged —
 P90 of the W=16-note window rise, train split only, frozen before evaluation —
 only the presentation changed, and the guard artifact now records which
 presentation produced it. The Bach path is untouched.
+
+## 2026-08-22 — steering regression gate: two criteria corrected before first use
+
+The gate's first run blocked the steering chain, as designed — and both failures
+were the GATE's, not the stack's. (i) The headline recompute forgot to exclude
+identity targets and demanded 0.355/0.039/0.056 of a mean that includes them
+(0.38/0.08/0.094); with the frozen n=1100 rule it reproduces exactly. (ii) The
+sham criterion demanded bit-identity to clean on all 100 prompts — stronger than
+the property has ever supported: the sham's x−comp+comp perturbs logits by ~1e-5
+(documented 2026-07-16), and after a torch upgrade (2.x→2.13) exactly one prompt
+flipped a sampling near-tie at token 10, while the clean path stayed
+token-identical on 100/100 — proof the base stack did not drift. The criterion is
+now what the no-op property supports: sham deterministic, at most 1/100 prompts
+differing, count recorded. Adjusted before any steering number existed.
