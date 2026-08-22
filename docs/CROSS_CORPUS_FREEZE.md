@@ -130,3 +130,17 @@ prompt SUFFIX that leaves the whole continuation inside the reference's window �
 deterministic, identical across the conditions being compared (clean twin, edit,
 K1 all pass through the same rule), so the guard's excess-over-clean is unaffected
 by the truncation itself.
+
+**2026-08-22, MMT × POP909 outcome.** Probe cell FAILED (margin −0.061
+[−0.13, −0.003]: the probe loses to the note counts). Edit cell PASSED decisively:
+guarded 0.360 vs K1 0.064 at L5 on the final split, 12/12 targets after Holm,
+in-key shares crossing (0.961 / 0.660). Together with AMT × POP909 (probe passed,
+edit failed), reading and using dissociate in both directions on this corpus.
+
+**2026-08-22, amendment: balanced re-estimation for AMT × POP909.** Battery parity
+with Bach (experiment I ran for both Bach checkpoints): re-estimate the subspace
+and per-key means on the key-balanced train split at the frozen layer L10, then
+re-run stage 2 once with the balanced subspace. Registered BEFORE running; expected
+effect stated in advance: Bach gained ~+30% relative — if pop gains the same, 0.135
+becomes ≈0.17, which likely still fails the per-key bar. The run happens either
+way, and its outcome is reported either way. Queued after the steering grids.

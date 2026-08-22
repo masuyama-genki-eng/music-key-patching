@@ -1139,3 +1139,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep_pop909/delta_ppl.json`
 - note: File moved unmodified (budget 1.1185, corpus pop909, ref large). The budget is corpus-level by design (CROSS_CORPUS_FREEZE §4); it was first written under the target-model directory by mistake, which made the MMT sweep unable to find it.
 
+## 2026-08-22T18:21:24+09:00 — M-WILD intervention stage 2 (mmt-lmd-ape)
+- git: `cc6655f10b66fdb2ec0fb016bb8513908d0dcfa2`
+- config_hash: `41a222ae9dc1dc061f95fbb3e2efd84c32c5337469080377b92b04beb72b120d`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/mmt-lmd-ape/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.360 vs K1 0.064 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-large-800k
+
