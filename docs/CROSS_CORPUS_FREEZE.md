@@ -121,3 +121,12 @@ condition); the edit-density difference this cannot remove stays recorded per §
 Holm, in-key shares NOT crossing (target 0.758 vs source 0.886). Reported as a
 failure, not repackaged: on pop, this model's key is readable but the same edit
 that moves Bach continuations (0.479) moves pop continuations only weakly.
+
+**2026-08-22, cross-scheme guard scoring.** When the generator's scheme is denser
+than the reference's (one MMT event re-encodes to three reference tokens), the full
+prompt can exceed the reference's context by itself. The reference judges the
+continuation; the prompt is context. Scoring therefore conditions on the longest
+prompt SUFFIX that leaves the whole continuation inside the reference's window —
+deterministic, identical across the conditions being compared (clean twin, edit,
+K1 all pass through the same rule), so the guard's excess-over-clean is unaffected
+by the truncation itself.

@@ -337,8 +337,20 @@ def main() -> None:
                 adapter.set_piece_context(p)         # decode under the piece's tempo
                 cont_events = adapter.decode_events(r["cont"])
                 ref_adapter.set_piece_context(p)
-                ref_prompt, _ = ref_adapter.encode_events(p["events"])
-                ref_full, _ = ref_adapter.encode_events(p["events"] + cont_events)
+                # The reference judges the CONTINUATION; the prompt is only its
+                # context, and a compound-scheme prompt can re-encode to several
+                # times the reference's positions (944 MMT events ~ 2,800 flat
+                # tokens vs a 1,024 window — found as a device-side assert,
+                # 2026-08-22). Use the longest prompt SUFFIX whose encoding still
+                # leaves room for the whole continuation.
+                ref_ctx = ref_adapter.context_length(ref)
+                pev = p["events"]
+                ref_full, _ = ref_adapter.encode_events(pev + cont_events)
+                while len(ref_full) > ref_ctx and pev:
+                    drop = max(1, len(pev) // 8)
+                    pev = pev[drop:]
+                    ref_full, _ = ref_adapter.encode_events(pev + cont_events)
+                ref_prompt, _ = ref_adapter.encode_events(pev) if pev else ([], None)
                 if len(ref_full) <= len(ref_prompt):
                     # every continuation event fell outside what the reference can
                     # encode (e.g. past its 100 s ceiling): unscoreable, and an
