@@ -95,8 +95,11 @@ def main() -> None:
 
     def cell(li: int, alpha: float | None) -> dict:
         V = torch.from_numpy(v_probe(pw[f"layer_{li}"], rank=24)).float().to(device)
+        # mu_targets_from_means returns {key_index: (d,) ndarray}; stack the 24
+        # class means into one (24, d) tensor so per-row source keys can index it
         mus_np = mu_targets_from_means(cm[f"layer_{li}"])
-        mus = torch.from_numpy(mus_np).float().to(device)
+        mus = torch.stack([torch.from_numpy(mus_np[k]).float()
+                           for k in range(24)]).to(device)
         rows_all = []
         for tgt in MAJOR_TARGETS:
             def ed_fn(plen, group, t=tgt, L=li, a=alpha):

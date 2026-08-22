@@ -1097,3 +1097,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/steering/R-Aug_s0/regression.json`
 - note: headline {'edit': 0.38, 'k1': 0.08, 'k1_norm': 0.094}; sham FAIL; clean conts identical -> FAIL
 
+## 2026-08-22T16:23:29+09:00 — Steering regression gate (R-Aug_s0)
+- git: `b8135a86dd5c0cf1642e5f9f5ebf6deba281419e`
+- config_hash: `2f6963a7958211bed40a717148554d1949303aa7a50d3d73475fb9134967b415`
+- seeds: [0]
+- artifacts: `results/steering/R-Aug_s0/regression.json`
+- note: headline {'edit': 0.355, 'k1': 0.039, 'k1_norm': 0.056}; sham ok; clean conts identical -> PASS
+
+## 2026-08-22T16:23:33+09:00 — Steering s_bar (R-Aug_s0)
+- git: `b8135a86dd5c0cf1642e5f9f5ebf6deba281419e+DIRTY`
+- config_hash: `43ac933e32e293cc05c325ae47fb275dce2b3696f6989d8bc221070713507e3a`
+- seeds: []
+- artifacts: `results/steering/R-Aug_s0/s_bar.json`
+- note: per-layer s_bar: L0 7.77, L1 13.19, L2 20.35, L3 29.83, L4 34.63, L5 33.66, L6 32.64, L7 32.87
+
