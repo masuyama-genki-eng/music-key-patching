@@ -76,7 +76,7 @@ It happens so naturally that it raises a question: does the model track the key 
 The evidence we have cannot answer that, because none of it makes the model follow a key that we set.
 Existing work reaches inside a music model in two ways.
 Probing trains a small classifier on the activations and recovers music-theory concepts~\cite{syntheory2024}, the key among them~\cite{castellon2021calm} --- but a probe shows only that the key is readable, and can succeed on a signal the model ignores~\cite{hewitt2019control,belinkov2022probing}.
-Steering adds a learned vector to the activations, following language models~\cite{li2023iti,zou2023repe}, and an output attribute moves~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026} --- but the added vector leaves the part of the activation carrying the current key in place, so pushing toward E major never sets the model's key to E major.
+Steering adds a learned vector to the activations, following language models~\cite{li2023iti,zou2023repe}, and an output attribute moves~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026} --- but the added vector leaves the part of the activation carrying the current key in place, so pushing toward E major competes with the key that is still written there; what that preserved component costs is something we measure (Table~\ref{tab:main}, bottom).
 We can read the key and push the output; we cannot yet set the key.
 
 % 関連研究セクションがないので，ここで研究をする意味をさらに補強するために，先行研究を入れ，問いを明確化
@@ -472,6 +472,7 @@ In the search stage the addition trails the replacement at every layer where eit
 % 条件 (ii) が測るのは，編集が基準モデルをどれだけ乱すかであって，音楽としての良さではない．聴取実験は行っていない．
 % 公開モデルで確かめたのはモデル1つだけである．
 We show that the model computes a key and uses it as it generates; we do not claim that it understands keys the way a person does.
+The dormant-pathway controls of Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} were run on our own models, not on the public ones, so the MMT edit result is a behavioral finding whose internal pathway we have not localized.
 Condition~(ii) measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test.
 % 公開モデル検証は「1モデル」から「3サイズ＋2トークン化＋2ジャンル」へ拡張中（TBD セルは実行中）．
 The public-model check now spans three checkpoint sizes of one family, two further tokenizations, and a second genre; the cells marked TBD in Table~\ref{tab:wild} were still running when this draft was built, and any that fail will be reported as failing.
