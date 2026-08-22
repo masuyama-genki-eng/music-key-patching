@@ -249,9 +249,10 @@ Everything below was fixed before its run.
 % 何と比べるか．入力に手を加えないので，出力が変わったならそれは置き換えのせいである．
 % しかし置き換えの何が効いたのかは分からない：どの方向に書いたのか，どれだけ遠くへ動かしたのか，どの位置で書いたのか．
 % 表1に各比較と，それが消す可能性を示す．
+% 中段の行は本文の3語（方向・距離・位置）に1対1対応し，第4の軸（操作：置換か加算か）を追加する．
 \noindent\textbf{Controls.}
-The input never changes, so any output change comes from the replacement---but not from which part of it: the directions, the distance, or the positions.
-Table~\ref{tab:main} lists the comparison that removes each.
+The input never changes, so any output change comes from the replacement---but not from which part of it: the \emph{directions}, the \emph{distance}, the \emph{positions}, or the \emph{operation} itself (replace against add).
+The middle rows of Table~\ref{tab:main} remove these one per row, in that order.
 
 % 主指標．実験1はプローブの優位：control補正後のプローブ得点から音符数えベースラインを引いた差（24クラスの macro-F1）であり，成功は曲単位ブートストラップ 95% CI がゼロを含まないことである．
 % 実験2は成功率（SR）である．継続が成功と数えられるのは，次の2つの条件を満たしたときである．
@@ -263,7 +264,10 @@ Table~\ref{tab:main} lists the comparison that removes each.
 For Experiment~1, the \emph{probe margin}: the control-corrected probe score minus the note-counting baseline, in macro-$F_1$ over the $24$ classes, with success a piece-level bootstrap $95\%$ CI~\cite{efron1987bca} that excludes zero.
 For Experiment~2, the \emph{success rate} (SR).
 A continuation counts as a success when it meets two conditions.
-(i)~The KS estimator (Sec.~\ref{sec:exp1}) places it in exactly the installed key; the estimator sees the pitches of bars $9$--$24$, and with fewer than $8$ pitches the counts have no stable shape and its verdict turns on chance, so those continuations count as failures.
+% (i) KS は継続全体（最大16小節・EOSで打ち切り）を1つの窓として1回だけ推定する．小節別の推定・集約はしない．
+% トークン上限 384 の下で実際に生成されるのは 4–14 小節（最終テスト実測，中央値 10）で，8音未満は一度も起きなかった．
+(i)~The KS estimator (Sec.~\ref{sec:exp1}) places it in exactly the installed key.
+The estimator runs ONCE over all pitches the model generated, from bar~$9$ up to at most bar~$24$ (the token budget yields $4$--$14$ generated bars in practice); a continuation with fewer than $8$ pitches would count as a failure outright, though none occurred in the final test.
 (ii)~The music is not broken---an edit that drives the model off distribution says nothing about its circuitry---and real key changes set the bar: the reference model's perplexity rise across $7{,}989$ natural key changes in validation has a $90$th percentile of $0.613$, and an edited continuation may cost at most that much over the unedited continuation of the same prompt.
 A continuation that fails either condition stays in the denominator as a failure.
 Chance is one key in $12$.
@@ -287,7 +291,7 @@ Per target key, a one-sided Wilcoxon signed-rank test paired by prompt (does the
 % 層や方向からシードや標本サイズまでの全選択は，この段階の最初の数値が出る前に固定し，計画からのずれはすべて報告する（計画そのものは補足資料）．
 % 副条件は安定した短調プロンプトと短調12標的で同じ一式を繰り返す；その設計も短調の実行が1つも無い時点で固定したので，通るか落ちるかしかない．
 The procedure of Section~\ref{sec:exp2} leaves choices open---layer, directions, positions---and settling them on the data that produces the reported numbers inflates them.
-We therefore ran two stages: a \emph{search stage} allowed to look ($8$ layers $\times$ $3$ direction kinds on $100$ prompts the probe had also trained on; uncorrected, so reported as a search, not a test), and a \emph{final test} of $100$ fresh prompts from a region of the test split no earlier run had seen---$1{,}100$ continuations per condition once identity targets are set aside.
+We therefore ran two stages: a \emph{search stage} allowed to look ($8$ layers $\times$ $3$ direction kinds on $100$ prompts the probe had also trained on; uncorrected, so reported as a search, not a test), and a \emph{final test} of $100$ fresh prompts from a region of the test split no earlier run had seen---for each prompt the $11$ targets other than its own key, so $100\times11 = 1{,}100$ continuations per condition.
 Every choice, from the layer down to seeds and sample size, was fixed before this stage's first number existed; departures are reported, and the supplementary gives the plan.
 A secondary condition repeats the battery with stable-minor prompts and minor targets, its design fixed before any minor run existed, so it could only pass or fail.
 
@@ -337,12 +341,12 @@ What we write & major & minor\\
 \midrule
 \textbf{The key we install}, at every position & \textbf{0.355} & \textbf{0.495}\\
 \midrule
-Random directions, the same number of them & 0.039 & 0.003\\
-\quad and the same distance moved & 0.056 & 0.026\\
-The key, \emph{added} at the same per-position norm & TBD & TBD\\
+\emph{Directions}: random, rank-matched & 0.039 & 0.003\\
+\emph{Distance}: random, rank- and norm-matched & 0.056 & 0.026\\
+\emph{Positions}: the key at pitch positions only & 0.035 & 0.000\\
+\quad at bar and note-length positions only & 0.233 & 0.212\\
+\emph{Operation}: the key added, norm-matched & TBD & TBD\\
 \quad added at the best swept strength & TBD & TBD\\
-The key, but only at pitch positions & 0.035 & 0.000\\
-The key, but only at bar and note-length positions & 0.233 & 0.212\\
 \midrule
 Transposing the prompt instead of editing & 0.648 & 0.877\\
 The key the prompt is already in & 0.650 & 0.800\\
