@@ -466,7 +466,12 @@ A direction is therefore better validated by writing to it than by reading from 
 % 加算は部分空間内の旧調成分 P_V h を保持するので（P_V h' = P_V h + δu が解析的に成り立つ）、
 % 置換との差は「旧成分を消すか残すか」だけに縮まる．結果は表1の追加行（TBD）に入る．
 We also pre-registered a direct comparison on this pipeline: the same value \emph{added} (steering) instead of installed by Eq.~\eqref{eq:edit}, matched per position to the install edit's own displacement norm, so the only remaining difference is whether the old key component $P_Vh$ is removed --- addition provably preserves it.
-In the search stage the addition trails the replacement at every layer where either works, and by $0.132$ at the replacement's peak ($0.246$ against $0.378$ at layer~$4$), with the prompt key's notes persisting exactly as the preserved $P_Vh$ predicts; the held-out test of the frozen comparison fills Table~\ref{tab:main}'s bottom rows (TBD at draft time).
+% 探索段階の全体像：同変位量では置換が全層で勝つ（ピークで 0.246 対 0.378）．
+% 強度を掃引すると，加算は 2 倍の変位・早い層（L2）でだけ 0.472 まで届き，4 倍で guard が半減，8 倍以上で全滅する．
+% つまり「加算では設定できない」ではなく「同じ摂動予算では置換が優り，加算は倍のコストで追いつき，その先は音楽が壊れる」．
+In the search stage, at MATCHED displacement the addition trails the replacement at every layer where either works ($0.246$ against $0.378$ at the replacement's peak), with the prompt key's notes persisting exactly as the preserved $P_Vh$ predicts.
+Swept over strengths, the addition catches up only by paying double --- $0.472$ at twice the install displacement, at an earlier layer --- and the arc ends where the guard does: at $4\times$ half the continuations break the quality budget, at $8\times$ and beyond nearly all do.
+Replacement is not the only way to set the key, then, but it is the cheaper one per unit of perturbation; the held-out test of the frozen comparison fills Table~\ref{tab:main}'s bottom rows (TBD at draft time).
 
 \section{Limitations}
 \label{sec:limits}
