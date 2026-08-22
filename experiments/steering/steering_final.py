@@ -9,10 +9,10 @@ committed) — hyperparameters cannot leak from this run back into themselves.
 Measures per condition (freeze §6): guarded and unguarded SR; the estimator's
 verdict breakdown; in-key note shares; per-target paired Wilcoxon against install
 (one-sided, install > steering, Holm across the 12 keys; the opposite direction,
-if observed, is reported with a two-sided p as well); prompt-level BCa CI on the
-SR difference; and the representation-level decomposition of the edited stream
-(probe posteriors on h', and P_V h' components along the source and target key
-means — addition preserves the source component analytically; here it is measured).
+if observed, is reported with a two-sided p as well); and a prompt-level BCa CI on
+the SR difference. The representation-level decomposition of the edited stream
+(probe posteriors on h', P_V h' components along the source and target means)
+lives in steering_representation.py, not here.
 """
 from __future__ import annotations
 import argparse
