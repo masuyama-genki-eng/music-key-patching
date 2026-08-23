@@ -203,3 +203,30 @@ used for the edit, its clean twin and K1, so a saturated grid degrades all three
 identically — but it bounds the effect size REMI can show, and a low REMI number
 must be read with it. The run additionally reports how many continuations reach the
 grid ceiling, computed identically for edit, clean and K1.
+
+---
+
+## Why AMT large has a probe but no edit (decided 2026-08-23, before running it)
+
+The cell was queued and then dropped, on purpose, and the reason is worth keeping
+because it is not a resource limit.
+
+`music-large-800k` is the POP909 guard reference (§4), chosen partly because it is
+edited by no experiment here, so no model grades its own output. Editing it on Bach
+would need a reference of its own, and the family has nothing larger: the scorer
+would be `music-medium-800k`, a 24-layer model judging the musicality of a 36-layer
+one, while that same 36-layer model scores the pop edits. Every other run in the
+study grades a subject with a model at least its size — small graded by medium,
+medium graded by large — and this cell cannot.
+
+The alternative was to run it and rewrite §4's rationale to the weaker claim that the
+reference is merely never edited in the experiment it scores. That claim would be
+true, and no circularity would exist in fact. It was still rejected: amending a frozen
+document's stated reason so that a new run fits it is the exact move a
+pre-registration exists to prevent, and the cell's value is small — the scale axis is
+the weakest generalization axis in the design, and the ladder's first two rungs
+(.479, .557) already carry it.
+
+So Table 2 reports the large probe (+.203, which needs no reference model) and leaves
+the edit blank, with the caption saying which kind of blank it is. The cell belongs to
+the journal version, where a larger reference can be trained or obtained.
