@@ -1146,3 +1146,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep_pop909/mmt-lmd-ape/stage2_eval.json`
 - note: L5 chosen on disjoint prompts; guarded TKR 0.360 vs K1 0.064 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-large-800k
 
+## 2026-08-23T04:06:05+09:00 — Steering search C (R-Aug_s0)
+- git: `46defbe67181b707ffd3f3866fda3fe599bd7ce7`
+- config_hash: `dd5234463083be376fc9cef94bf2786207d620adea4d7c777d8163aaa196fe37`
+- seeds: [0]
+- artifacts: `results/steering/R-Aug_s0/search_summary.json`
+- note: 56 cells; best guarded SR 0.472 at L2 alpha=2.0
+
+## 2026-08-23T13:51:18+09:00 — Steering search D (R-Aug_s0)
+- git: `3194df9bcff3ff5c4b77a75cc554cdbe5c5b0921+DIRTY`
+- config_hash: `f28f718faf60d8c83b398bdbeaf760cdc553707d043d58dfb2208ab74ad688d2`
+- seeds: [0]
+- artifacts: `results/steering/R-Aug_s0/search_summary.json`
+- note: 56 cells; best guarded SR 0.411 at L2 alpha=2.0
+

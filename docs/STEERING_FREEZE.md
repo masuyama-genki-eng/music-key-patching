@@ -226,3 +226,27 @@ recording: the chosen $\alpha$ for B, C and D; the chosen layer for each; the me
 $\bar{s}$ at each layer used; the full grid actually evaluated, including any
 extension; the edit-position count per condition; and this file's commit hash as it
 stood at freeze time.*
+
+*Part 2, appended 2026-08-23 after the search stage and before the final test.*
+
+| condition | layer | alpha | guarded SR (search prompts) |
+|---|---|---|---|
+| B (add, norm-matched) | 3 | — | 0.251 |
+| C (add, swept) | 2 | 2.0 | 0.472 |
+| D (contrastive, swept) | 2 | 2.0 | 0.411 |
+
+Chosen by the frozen rule (argmax guarded SR on the 100 search prompts). No grid
+extension was required: both swept optima are interior in alpha, the upper
+stopping rule was satisfied by outright guard collapse at alpha >= 8 on every
+layer, and the lower rule never triggered. s_bar per layer is the ledgered
+s_bar.json (L2 20.35, L3 29.83; L4 = 34.63 matches the frozen anchor exactly).
+Install's own search-stage reference points: 0.378 at its peak (L4), 0.267 at L2.
+Note, recorded before the final test: BOTH swept additions exceed install's
+search peak on search prompts (0.472, 0.411 vs 0.378) while the norm-matched
+addition trails it everywhere — the final test on held-out prompts settles all
+three comparisons, and whichever direction each lands, it is reported.
+
+The edit-position count per condition equals install's (every generated position
+from bar 9), enforced by the shared editor; displacement summaries: B carries
+install's own per-position delta(t) by construction, C and D apply
+alpha x s_bar(layer) = 40.7 per position at their chosen cells.
