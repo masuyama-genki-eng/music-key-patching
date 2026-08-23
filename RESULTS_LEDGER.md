@@ -1160,3 +1160,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/steering/R-Aug_s0/search_summary.json`
 - note: 56 cells; best guarded SR 0.411 at L2 alpha=2.0
 
+## 2026-08-23T15:43:30+09:00 — Steering FINAL test (R-Aug_s0)
+- git: `c1dd09dc5762d9fdff647bf1fc5845144fa93235`
+- config_hash: `a53540e1f9032ea84651a00934d08cea713d668257645df32eaba9f267a6b616`
+- seeds: [7]
+- artifacts: `results/steering/R-Aug_s0/final_verdict.json`
+- note: B: SR 0.245 vs install 0.355, 3/12 sig; C: SR 0.471 vs install 0.355, 0/12 sig; D: SR 0.386 vs install 0.355, 0/12 sig
+
+## 2026-08-23T17:51:39+09:00 — Steering FINAL test (R-Aug_s0_minor)
+- git: `8327b588ba763c4670d224ad0cf66886be193f69+DIRTY`
+- config_hash: `4695f954e2318a9f77f7fa0a32138daeb3d44988ffbc5308b774d25a52499125`
+- seeds: [7]
+- artifacts: `results/steering/R-Aug_s0/final_verdict_minor.json`
+- note: B: SR 0.154 vs install 0.495, 12/12 sig; C: SR 0.505 vs install 0.495, 0/12 sig; D: SR 0.435 vs install 0.495, 1/12 sig
+

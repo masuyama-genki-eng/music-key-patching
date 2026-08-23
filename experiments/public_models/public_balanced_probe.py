@@ -34,13 +34,32 @@ sys.path.insert(0, str(REPO))
 import numpy as np
 import torch
 
+import yaml
+
 from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
+from src.publicmodels.pop909 import load_pop909_part
 from src.probing.public_model import extract_activations
 from src.publicmodels import get_adapter
 from src.probing.probes import ProbeConfig, metric_report, train_probe
 from src.utils.ledger import append_entry, snapshot
 
 log = logging.getLogger("balanced")
+
+
+def transpose_piece(ch: dict, shift: int) -> dict:
+    """Pitch-shift a piece by `shift` semitones; key labels move with it.
+
+    Two schemas reach here. POP909 pieces carry timed events and one label per
+    EVENT; Bach chorales carry kern tokens and one label per TOKEN. Shifting the
+    wrong one silently produces an unshifted corpus, which would quietly defeat
+    the balancing this script exists to do, so the branch is explicit."""
+    if "events" in ch:
+        out = dict(ch)
+        out["events"] = [(t, d, p + shift) for t, d, p in ch["events"]]
+        out["event_key_labels"] = [(k + shift) % 12 + 12 * (k >= 12)
+                                   for k in ch["event_key_labels"]]
+        return out
+    return transpose_chorale(ch, shift)
 
 
 def transpose_chorale(ch: dict, shift: int) -> dict:
@@ -59,6 +78,9 @@ def main() -> None:
                    help="checkpoint; default = the adapter's own")
     ap.add_argument("--adapter", default="anticipatory",
                    help="public-model adapter (src/publicmodels/registry.py)")
+    ap.add_argument("--corpus", choices=["bach", "pop909"], default="bach",
+                   help="pop909 reads the TRAIN split via configs/pop909.yaml and "
+                        "keeps artifacts in the pop909 results tree")
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--layer", type=int, required=True,
@@ -76,26 +98,37 @@ def main() -> None:
     adapter = get_adapter(args.adapter)
     checkpoint = args.model or adapter.default_checkpoint
     short = adapter.artifact_name(checkpoint)
-    outdir = REPO / "results/mwild" / short / "balanced"
+    outdir = REPO / ("results/mwild_pop909" if args.corpus == "pop909"
+                     else "results/mwild") / short / "balanced"
     outdir.mkdir(parents=True, exist_ok=True)
 
-    chorales, _ = load_corpus_local(Path(args.scores) / "kern",
-                                    Path(args.analyses) / ANALYSES_SUBDIR)
-    log.info("%d chorales; building 12-key transposed estimation corpus", len(chorales))
-    # shifts -5..+6 cover all 12 pitch classes while keeping SATB ranges safe
+    if args.corpus == "pop909":
+        pc = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())
+        chorales, _ = load_pop909_part(
+            REPO / pc["corpus"]["root"], "train", pc["split"]["seed"],
+            tuple(pc["split"]["frac"]), pc["corpus"]["min_labeled_events"])
+    else:
+        chorales, _ = load_corpus_local(Path(args.scores) / "kern",
+                                        Path(args.analyses) / ANALYSES_SUBDIR)
+    log.info("%d pieces; building 12-key transposed estimation corpus", len(chorales))
+    # shifts -5..+6 cover all 12 pitch classes while keeping ranges safe
     corpus, orig_id = [], []
     for si, ch in enumerate(chorales):
-        pitches = [int(t[6:]) for t in ch["tokens"] if t.startswith("PITCH_")]
+        if "events" in ch:                        # POP909: timed events
+            pitches = [p for _, _, p in ch["events"]]
+        else:                                     # Bach: kern token stream
+            pitches = [int(t[6:]) for t in ch["tokens"] if t.startswith("PITCH_")]
         lo, hi = min(pitches), max(pitches)
         for s in range(-5, 7):
             if lo + s < 0 or hi + s > 127:
                 continue
-            corpus.append(transpose_chorale(ch, s))
+            corpus.append(transpose_piece(ch, s))
             orig_id.append(si)
     log.info("estimation corpus: %d transposed chorales", len(corpus))
 
     model = adapter.load(checkpoint, device)
     adapter.check_vocab(model)
+    # extract_activations announces each piece to the adapter itself, per piece
     data = extract_activations(adapter, model, corpus, device,
                                args.per_seq, args.min_event,
                          args.seed, probe_at="predict_pitch")
