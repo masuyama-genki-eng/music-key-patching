@@ -91,8 +91,10 @@ def build_prompts(adapter, chorales: list[dict], n: int,
                 cut -= 1
         cut = min(cut, adapter.encodable_prefix_len(events))
         if cut < 24:
-            dropped.append({"name": ch["name"], "reason": "no key-stable prefix "
-                            "of 24+ events inside the checkpoint's window",
+            why = ("key-stable prefix shorter than 24 events"
+                   if min(stable, int(len(events) * frac)) < 24
+                   else "key-stable prefix falls outside the checkpoint's window")
+            dropped.append({"name": ch["name"], "reason": why,
                             "n_events": len(events)})
             continue
         ids, _ = adapter.encode_events(events[:cut])

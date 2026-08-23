@@ -94,3 +94,63 @@ Limitations section will say so.
 The dissociation between the layer that reads best and the layer that acts, which the
 small model shows (10 reads, 8 acts), is an observation. We will report whatever the
 new checkpoints show, but we make no prediction and run no test on it.
+
+---
+
+## Note-token layout and what an off-by-one would mean (checked 2026-08-23)
+
+A reviewer's question worth writing down: the Anticipatory vocabulary fuses pitch
+and instrument into ONE code, so "a uniform offset is only a transposition" is a
+claim about the field ORDER, not a general fact. If the code were pitch-major, an
+off-by-one would move the INSTRUMENT and the claim would be false.
+
+It is instrument-major. `note = NOTE_OFFSET + 128*instrument + pitch`, so pitch has
+stride 1. This is not inferred from our own code: the reference implementation masks
+one instrument's block as `logits[NOTE_OFFSET+instr*MAX_PITCH : NOTE_OFFSET+(instr+1)
+*MAX_PITCH]` (`anticipation/sample.py:71`), which is only meaningful if 128
+consecutive codes are one instrument's pitches.
+
+So a uniform +1 is a semitone transposition — with exactly one exception, pitch 127,
+where +1 wraps into the next instrument's pitch 0. Measured over every corpus used:
+
+| corpus | notes | pitch range | notes at 127 |
+|---|---|---|---|
+| POP909 train | 1,320,892 | 24–106 | 0 |
+| POP909 search | 283,193 | 24–102 | 0 |
+| POP909 final | 277,267 | 26–106 | 0 |
+| Bach chorales | 300 pieces / 57,008 | 36–81 | 0 |
+
+1.94M notes, no pitch 127, and the encoder raises above 127 in any case. The claim
+holds for this study; it is stated with its condition rather than as a general one.
+
+## Sampler conformance: how our sampling differs from the reference (2026-08-23)
+
+Reading that layout surfaced a second question. The reference sampler does not draw
+from the whole vocabulary: `safe_logits` masks the two token families that do not
+belong in the current slot (the stream is strict triples) and forbids the control and
+special families outright. Our adapter draws one token from all 55,028 codes and lets
+the model respect its own grammar — deliberately, so that no hand-written grammar can
+flatter the edit — but "harmless" was an assumption until measured.
+
+`experiments/public_models/sampler_conformance.py`, unedited continuations, 12 prompts
+× 240 tokens per corpus:
+
+| corpus | slot violations | forbidden families | off-instrument notes | instruments seen |
+|---|---|---|---|---|
+| Bach | 2.40% | 2.40% | **0 / 916** | {52} |
+| POP909 | 0.00% | 0.00% | **0 / 960** | {52} |
+
+Three things follow. First, the two rates are equal, so every violation IS a
+control/special token — the model never puts a time, duration or note code in the
+wrong slot. Second, they are concentrated, not spread: 11 of 12 Bach prompts emit 0
+or 3, and `chor024` alone emits 66, which shortens that prompt's continuation from
+~80 notes to 58 (the decoder ignores those codes). Third, and this is what the
+instrument question was really about, not one generated note in 1,876 left the
+prompt's instrument block, so the decoder's `% MAX_PITCH` — which reads pitch and
+ignores instrument — never mistook another instrument's note for the prompt's.
+
+The sampler is NOT changed to match. Adding the mask now would alter the generation
+that every ledgered public-model number was measured with, and the numbers are not
+biased by its absence: the same sampler serves the edit, its clean twin and K1. What
+it can do is shorten an occasional continuation, which caps the effect size — so it
+is reported as a bound, in the supplementary, rather than tuned away.

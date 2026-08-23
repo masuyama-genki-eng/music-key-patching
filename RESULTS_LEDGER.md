@@ -1181,3 +1181,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_pop909/music-small-800k/balanced/probe_weights.npz`, `results/mwild_pop909/music-small-800k/balanced/class_means.npz`, `results/mwild_pop909/music-small-800k/balanced/balanced_report.json`
 - note: 12-key transposed corpus (7596 chorales); balanced 1500/class; L10 probe F1 0.6947; all 24 mu nonzero
 
+## 2026-08-23T19:59:51+09:00 — M-WILD probe remi-lmd-remi
+- git: `62b212720e41ad66d2835d61f06353710aabe5bb`
+- config_hash: `8a553114f9b46304a548740cad61daead11d70a2a6816061a52661469008f07d`
+- seeds: [0]
+- artifacts: `results/mwild_pop909/remi-lmd-remi/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.5483 (L5) vs best C3 0.5076; corrected margin -0.0220 CI[-0.0965,0.0363]; beats_surface=False
+
+## 2026-08-23T20:19:34+09:00 — Sampler conformance (music-small-800k, bach)
+- git: `62b212720e41ad66d2835d61f06353710aabe5bb+DIRTY`
+- config_hash: `d41c1d2421946a7dce5f5cf3aac529b91dd8b04b8891c52774ea5d1fac923112`
+- seeds: [0]
+- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/sampler_conformance/music-small-800k/conformance_bach.json`
+- note: slot violations 0.0240; forbidden 0.0240; off-instrument notes 0.0000
+
+## 2026-08-23T20:20:54+09:00 — Sampler conformance (music-small-800k, pop909)
+- git: `62b212720e41ad66d2835d61f06353710aabe5bb+DIRTY`
+- config_hash: `66a1f1737a269edca499761b3ce30833e9032a94d3a028ba97c78d56524baee6`
+- seeds: [0]
+- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/sampler_conformance/music-small-800k/conformance_pop909.json`
+- note: slot violations 0.0000; forbidden 0.0000; off-instrument notes 0.0000
+
