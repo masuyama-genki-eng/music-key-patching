@@ -377,6 +377,3 @@ def encode_notes(notes, encoding, indexer):
 
     return np.array(codes)
 
-if __name__ == "__main__":
-    main()
-

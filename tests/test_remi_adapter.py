@@ -33,7 +33,10 @@ def test_vocabulary_is_leak_free():
     assert kinds == {"start-of-song", "end-of-song", "start-of-track",
                      "end-of-track", "beat", "position", "instrument",
                      "pitch", "duration"}
-    assert not any("chord" in k or "key" in k for k in a.ev2c)
+    # substring matching would flag instrument_harpsiCHORD, an instrument name;
+    # what matters is that no event TYPE is a chord or key symbol
+    assert not (kinds & {"chord", "key", "tonic", "mode", "scale"})
+    assert all(not k.startswith(("chord_", "key_")) for k in a.ev2c)
 
 
 def test_four_tokens_per_note_and_pitch_position():
