@@ -173,6 +173,16 @@ def encoding_is_sane(model, chorales: list[dict], device: str, n: int = 12) -> d
     correctness is carried by check_vocab, the decode round-trip tests and the
     time-scramble; this corruption's job is to destroy pitch STRUCTURE, so now it
     does.
+
+    WHAT THIS GATE DOES AND DOES NOT CATCH, measured 2026-08-23 on POP909 with
+    music-small: correct 1.648, per-note random displacement 2.517, time scramble
+    2.729 — but a UNIFORM +1 on NOTE_OFFSET scores 1.649, indistinguishable from
+    correct. The gate detects wrong field structure and a wrong time scale; it
+    cannot detect a uniform offset, because that IS a transposition and the model
+    finds transposed music equally natural. A uniform offset is caught elsewhere
+    (check_vocab's size agreement, the decode round-trip tests) and, being a
+    relabelling of an absolute-pitch vocabulary, would depress probe accuracy
+    rather than manufacture a false success.
     """
     import torch.nn.functional as F
     rng = np.random.default_rng(0)
