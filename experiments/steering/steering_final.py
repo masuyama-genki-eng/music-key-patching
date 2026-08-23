@@ -29,7 +29,6 @@ import numpy as np
 import pandas as pd
 import torch
 import yaml
-from scipy import stats as sps
 
 import confirmatory_test as confirm                     # frozen prompt rule + seed
 from src.analysis.stats import bca_ci, holm_correct, wilcoxon_rank_biserial
@@ -104,6 +103,20 @@ def main() -> None:
                            for k in range(24)]).to(device)
         cfg = {**gen_cfg, "layer": li}
 
+        # resumable: a condition whose parquet exists is scored from it rather
+        # than regenerated. Generation is deterministic under the frozen seed, so
+        # this changes nothing but the wall clock (the first attempt of this test
+        # crashed in the statistics AFTER writing condition B's rows).
+        cache = parts / f"final_{cond}.parquet"
+        if cache.exists():
+            df = pd.read_parquet(cache)
+            log.info("%s: reusing %d cached rows from %s", cond, len(df), cache.name)
+            results[cond] = summarize(df, inst, targets, cond)
+            log.info("%s: guarded SR %.3f (install %.3f)", cond,
+                     results[cond]["sr_guarded"], results[cond]["install_sr"])
+            continue
+        log.info("%s: layer %d alpha %s — clean twins then %d targets",
+                 cond, li, alpha, len(targets))
         rows_all = []
         for tgt in targets:
             def ed_fn(plen, group, t=tgt):
@@ -120,6 +133,10 @@ def main() -> None:
                  "target_key": tgt}, prompts, conts, mref, device, clean_ppl(
                      model, mref, prompts, cfg, device, args.batch_size))
             rows_all.extend(rows)
+            df_t = pd.DataFrame(rows)
+            succ = (df_t.tkr_strict.fillna(False).astype(bool)
+                    & (df_t.mref_ppl_excess <= delta))
+            log.info("  %s T%-2d  guarded %.3f", cond, tgt, float(succ.mean()))
         df = pd.DataFrame(rows_all)
         df["guard_pass"] = df.mref_ppl_excess <= delta
         df["succ"] = df.tkr_strict.fillna(False).astype(bool) & df.guard_pass
@@ -181,19 +198,14 @@ def summarize(df: pd.DataFrame, inst: pd.DataFrame, targets, cond) -> dict:
                  for r in dd.itertuples()]
         x = np.array([a for a, _ in pairs], float)
         y = np.array([b for _, b in pairs], float)
-        diff = x - y
-        nz = diff[diff != 0]
-        if len(nz) == 0:
-            recs.append({"target": tgt, "p": 1.0, "r": 0.0, "n_nonzero": 0})
-            pvals.append(1.0)
-            continue
-        res = sps.wilcoxon(x, y, alternative="greater", zero_method="wilcox")
-        r = wilcoxon_rank_biserial(x, y)
-        recs.append({"target": tgt, "p": float(res.pvalue), "r": float(r),
-                     "n_nonzero": int(len(nz)),
-                     "two_sided_p": float(sps.wilcoxon(
-                         x, y, zero_method="wilcox").pvalue)})
-        pvals.append(float(res.pvalue))
+        # the repo's own helper: paired Wilcoxon + rank-biserial r in one dict,
+        # the same function the install verdicts used
+        one = wilcoxon_rank_biserial(x, y, alternative="greater")
+        two = wilcoxon_rank_biserial(x, y, alternative="two-sided")
+        recs.append({"target": tgt, "p": one["p"], "r": one["r"],
+                     "W": one["W"], "n_nonzero": one["n_nonzero"],
+                     "two_sided_p": two["p"]})
+        pvals.append(one["p"])
     corrected = holm_correct(pvals)
     for rec, ph in zip(recs, corrected):
         rec["p_holm"] = ph
