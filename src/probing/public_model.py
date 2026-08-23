@@ -41,7 +41,20 @@ def extract_activations(adapter: PublicModelAdapter, model, chorales: list[dict]
     acts_by_layer: list[list[np.ndarray]] = None
     labels, seq_idx, pitches_hist = [], [], []
     kept = 0
+    # EXCLUSIONS, recorded rather than silent. Two things can leave a piece with too
+    # little for the probe to read: the checkpoint's time range (each scheme bounds
+    # representable time, and events past the bound are dropped as a suffix) and its
+    # context length. Both are properties of the MODEL, not of the music, so the rule
+    # is stated once here — a piece must offer more than min_event + 2 note positions
+    # inside the window the model can actually see — and every piece it removes is
+    # returned with its id and its counts.
+    excluded: list[dict] = []
     for si, ch in enumerate(chorales):
+        if adapter.n_events_in_window(model, ch) <= min_event + 2:
+            excluded.append({"name": ch["name"], "reason": "checkpoint time range",
+                             "n_in_window": adapter.n_events_in_window(model, ch),
+                             "n_events": len(ch["events"])})
+            continue
         adapter.set_piece_context(ch)
         events, ev_labels = chorale_to_events(ch)
         ids, note_pos = adapter.encode_events(events)
@@ -49,6 +62,8 @@ def extract_activations(adapter: PublicModelAdapter, model, chorales: list[dict]
             cut = max(i for i, p in enumerate(note_pos) if p < ctx)
             ids, note_pos, ev_labels = ids[:ctx], note_pos[:cut + 1], ev_labels[:cut + 1]
         if len(note_pos) <= min_event + 2:
+            excluded.append({"name": ch["name"], "reason": "context length",
+                             "n_in_window": len(note_pos), "n_events": len(ch["events"])})
             continue
         cand = np.arange(min_event, len(note_pos))
         take = np.sort(rng.choice(cand, size=min(per_seq, len(cand)), replace=False))
@@ -72,6 +87,7 @@ def extract_activations(adapter: PublicModelAdapter, model, chorales: list[dict]
         "seq_idx": np.array(seq_idx, dtype=np.int32),
         "pitch_windows": pitches_hist,
         "n_chorales": kept,
+        "excluded": excluded,
     }
 
 

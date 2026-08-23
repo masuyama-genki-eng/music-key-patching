@@ -124,6 +124,11 @@ def main() -> None:
     log.info("extracting activations from the public model")
     data = extract_activations(adapter, model, chorales, device, args.per_seq,
                                args.min_event, seed, probe_at=args.probe_at)
+    if data["excluded"]:
+        log.info("EXCLUDED %d/%d pieces (too little inside this checkpoint's window): %s",
+                 len(data["excluded"]), len(chorales),
+                 ", ".join(f"{e['name']}({e['reason']}, {e['n_in_window']}/{e['n_events']})"
+                           for e in data["excluded"]))
     data.update(pc_hists(data["pitch_windows"], windows))
     del model
     torch.cuda.empty_cache()
@@ -183,6 +188,7 @@ def main() -> None:
         "probe_at": args.probe_at,
         "corpus": {"id": args.corpus,
                    "n_chorales": data["n_chorales"], "n_positions": int(len(y)),
+                   "excluded_pieces": data["excluded"],
                    "labels": ("human-corrected key signatures (POP909-CL, MIT), "
                               "TRAIN split only" if args.corpus == "pop909" else
                               "human Roman-numeral LOCAL key (When-in-Rome, CC BY-SA)"),

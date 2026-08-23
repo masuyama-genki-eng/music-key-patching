@@ -262,6 +262,18 @@ class AnticipatoryAdapter(PublicModelAdapter):
         return list(out.hidden_states[1:])            # drop the embedding layer
 
     # ------------------------------------------------------- token scheme
+    def encodable_prefix_len(self, events) -> int:
+        n = 0
+        for onset_s, _, _ in events:
+            if onset_s >= MAX_TIME_IN_SECONDS:
+                break
+            n += 1
+        return n
+
+    def n_events_in_window(self, model, piece: dict) -> int:
+        # absolute time: the arrival vocabulary stops at MAX_TIME_IN_SECONDS
+        return sum(1 for e in piece["events"] if e[0] < MAX_TIME_IN_SECONDS)
+
     def encode_events(self, events, instrument: int = DEFAULT_INSTRUMENT):
         return encode_events(events, instrument)
 

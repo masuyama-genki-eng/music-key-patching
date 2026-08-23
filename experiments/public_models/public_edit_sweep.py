@@ -64,9 +64,18 @@ def build_prompts(adapter, chorales: list[dict], n: int,
                       encode arrivals past a hard ceiling (100 s for the
                       Anticipatory vocabulary), so the prompt must end early
                       enough that the continuation's timestamps stay encodable.
+
+    A third cap, added 2026-08-23 when the 64-beat REMI checkpoint joined: the
+    prompt must lie ENTIRELY inside the checkpoint's representable range. The
+    encoders drop events past that range silently, so without this the caller
+    records a 300-event prompt while the model receives 50 — measured on the
+    POP909 final split, one REMI prompt kept 17.9% of its events. This cap is
+    inert for the other two checkpoints (no prompt of theirs has an event outside
+    its window) and is enforced, not trusted: the encoded prompt is checked
+    against the events it claims to hold.
     """
     max_seconds = getattr(adapter, "max_prompt_seconds", None)
-    out = []
+    out, dropped = [], []
     for ch in chorales:
         adapter.set_piece_context(ch)
         events, labels = chorale_to_events(ch)
@@ -80,19 +89,32 @@ def build_prompts(adapter, chorales: list[dict], n: int,
         if max_seconds is not None:
             while cut > 0 and events[cut - 1][0] > max_seconds:
                 cut -= 1
+        cut = min(cut, adapter.encodable_prefix_len(events))
         if cut < 24:
+            dropped.append({"name": ch["name"], "reason": "no key-stable prefix "
+                            "of 24+ events inside the checkpoint's window",
+                            "n_events": len(events)})
             continue
         ids, _ = adapter.encode_events(events[:cut])
         while max_tokens is not None and len(ids) > max_tokens and cut >= 24:
             cut = min(cut - 1, int(cut * 0.9))
             ids, _ = adapter.encode_events(events[:cut])
         if cut < 24:
+            dropped.append({"name": ch["name"], "reason": "does not fit the context "
+                            "window after trimming", "n_events": len(events)})
             continue
+        # the model must receive the prompt the row claims to hold
+        assert len(adapter.decode_pitches(ids)) == cut, (
+            f"{ch['name']}: prompt says {cut} events, encodes to "
+            f"{len(adapter.decode_pitches(ids))}")
         out.append({"ids": ids, "src_key": int(k0), "name": ch["name"],
                     "n_events": cut, "events": events[:cut],
                     "tempo_us": ch.get("tempo_us")})
         if len(out) == n:
             break
+    if dropped:
+        log.info("prompt build dropped %d piece(s): %s", len(dropped),
+                 ", ".join(f"{d['name']}({d['reason']})" for d in dropped))
     return out
 
 

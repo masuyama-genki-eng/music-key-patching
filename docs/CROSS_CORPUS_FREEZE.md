@@ -144,3 +144,62 @@ re-run stage 2 once with the balanced subspace. Registered BEFORE running; expec
 effect stated in advance: Bach gained ~+30% relative — if pop gains the same, 0.135
 becomes ≈0.17, which likely still fails the per-key bar. The run happens either
 way, and its outcome is reported either way. Queued after the steering grids.
+
+---
+
+## AMENDMENT 4 — the checkpoint window (frozen 2026-08-23, before any REMI result)
+
+Adding the REMI checkpoint exposed something the first two checkpoints hid: every
+tokenization here bounds representable time, and the bounds differ by a factor of
+four. The absolute-time scheme stops at 100 s; MMT's compound scheme at its trained
+`max_beat` of 256 beats (~128 s at POP909 tempi); the REMI baseline at `max_beat`
+64 (~32 s). Past the bound the encoders drop events as a suffix, silently.
+
+**What was wrong.** `build_prompts` capped prompts by token count and, for the
+absolute-time scheme only, by seconds. Nothing capped a beat-grid prompt, so on the
+POP909 final split one REMI prompt was recorded as ~300 events while the model
+received 17.9% of them. Fixed: the prompt is trimmed to the checkpoint's
+representable prefix (`adapter.encodable_prefix_len`), and the encoded prompt is
+ASSERTED to hold exactly the events the row claims. Verified inert for the other
+two checkpoints — no prompt of theirs has an event outside its window, and their
+prompt sets are unchanged (MMT search/final prompt end-beats: median 120.5/112.3,
+max 174.5/219.0, identical before and after).
+
+**Piece exclusion, stated before the run.** A piece is excluded when it offers
+`min_event + 2` or fewer note positions inside the window the checkpoint can see.
+This is the corpus criterion already in `configs/pop909.yaml` (`min_labeled_events`
+= 32), applied to what the model actually receives rather than to the raw file. It
+removes exactly one piece, for REMI only, in the TRAIN split only:
+
+| checkpoint | window | train | search | final |
+|---|---|---|---|---|
+| anticipatory (music-small) | 100 s | 0 | 0 | 0 |
+| MMT (lmd/ape) | 256 beats | 0 | 0 | 0 |
+| REMI (lmd/remi) | 64 beats | **1** (`247`) | 0 | 0 |
+
+`247` opens with a 70.5-beat silence, so no part of it lies inside 64 beats. The
+held-out splits are untouched by this rule. Every exclusion is logged by id and
+reason and written into the probe artifact as `corpus.excluded_pieces`.
+
+**What is NOT done, and why.** REMI's window leaves less room for the continuation
+than the others do — measured over the built prompts, the fraction of the window
+still free when the prompt ends is:
+
+| checkpoint | search: median / min | final: median / min |
+|---|---|---|
+| anticipatory | 76% / 55% | 76% / 56% |
+| MMT | 52% / 32% | 56% / 14% |
+| REMI | 45% / 19% | 49% / **0.3%** |
+
+One REMI final-split prompt ends 0.2 beats from the ceiling: its continuation cannot
+advance in time. The tempting fix is a per-model headroom cap. It is rejected. A cap
+chosen now would be a REMI-specific hyperparameter, and the entire point of this
+comparison is that the protocol is held FIXED while tokenization varies — a
+per-model knob would confound the axis under test. Re-running MMT under a new rule
+is also barred: its stage 2 has already spent the final split, which is touched once.
+
+So the tight window is reported, not removed. It is not a bias — the same prompt is
+used for the edit, its clean twin and K1, so a saturated grid degrades all three
+identically — but it bounds the effect size REMI can show, and a low REMI number
+must be read with it. The run additionally reports how many continuations reach the
+grid ceiling, computed identically for edit, clean and K1.

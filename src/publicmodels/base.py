@@ -84,6 +84,33 @@ class PublicModelAdapter(ABC):
         piece; an adapter that needs context and was not given any must raise
         rather than guess."""
 
+    def n_events_in_window(self, model, piece: dict) -> int:
+        """How many of a piece's events the checkpoint's own time range can hold.
+
+        Every scheme here bounds representable time — the absolute-time one at
+        MAX_TIME seconds, the beat-grid ones at the checkpoint's trained max_beat
+        — and the encoders drop the events past that bound as a suffix. That drop
+        is usually harmless (a long song is cut short) but it can leave a piece
+        with nothing, or with too little to probe, and the pipeline must then
+        EXCLUDE the piece by a stated rule and record it, not crash or skip it in
+        silence. Reporting the count separately from encoding is what lets the
+        caller do that. Default: no bound.
+        """
+        return len(piece["events"])
+
+    def encodable_prefix_len(self, events: list[tuple[float, float, int]]) -> int:
+        """How many LEADING events of this list the checkpoint can represent.
+
+        The piece-level rule above decides whether a piece is usable at all; this
+        one bounds a PROMPT. Both exist because the encoders trim silently: hand
+        them events past the representable range and they return a short token
+        list, so a prompt can lose most of its notes while the caller still
+        believes it sent them all. Callers cap the prompt with this instead.
+        Requires set_piece_context for a scheme whose window is measured in beats.
+        Default: no bound.
+        """
+        return len(events)
+
     @abstractmethod
     def encode_events(self, events: list[tuple[float, float, int]]
                       ) -> tuple[list[int], list[int]]:
