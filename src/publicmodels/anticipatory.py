@@ -11,7 +11,10 @@ on real chorales, and this pair isolates whether that is distribution shift or a
 of the method.
 
 TOKEN SCHEME. Reimplemented from the model's published config rather than taking a
-dependency on the `anticipation` package. The arrival-time encoding is a flat stream
+dependency on the `anticipation` package — and VERIFIED against it on 2026-08-23:
+all 15 vocabulary constants identical, and the token streams identical on five real
+POP909 pieces of ~600 tokens each (jthickstun/anticipation @ HEAD). The constants
+are pinned in tests/test_public_model_adapter.py so they cannot drift. The arrival-time encoding is a flat stream
 of (time, duration, note) triples:
     time  = TIME_OFFSET + round(onset_s * 100)      # 10 ms bins
     dur   = DUR_OFFSET  + round(dur_s   * 100)

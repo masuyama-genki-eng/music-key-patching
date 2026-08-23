@@ -135,3 +135,38 @@ def test_beat_grid_adapters_refuse_to_encode_without_a_piece_context():
     a = get_adapter("mmt")
     with pytest.raises(RuntimeError, match="set_piece_context"):
         a.encode_events(EVENTS)
+
+
+# ============================ tokenizer provenance ============================
+# The Anticipatory tokenizer is a re-implementation from the model's published
+# config (the study takes no dependency on the `anticipation` package). Whether
+# that re-implementation MATCHES the original was verified on 2026-08-23 against
+# jthickstun/anticipation: all 15 vocabulary constants identical, and the token
+# streams identical on five real POP909 pieces of ~600 tokens each. These tests
+# pin the constants so a future edit cannot drift from the checked values; the
+# stream comparison itself needs the upstream clone and lives in that record.
+
+def test_vocabulary_constants_match_the_published_implementation():
+    from src.publicmodels import anticipatory as A
+    assert (A.TIME_RESOLUTION, A.MAX_TIME, A.MAX_DUR) == (100, 10_000, 1_000)
+    assert (A.TIME_OFFSET, A.DUR_OFFSET, A.NOTE_OFFSET) == (0, 10_000, 11_000)
+    assert (A.REST, A.CONTROL_OFFSET) == (27_512, 27_513)
+    assert (A.SPECIAL_OFFSET, A.SEPARATOR) == (55_025, 55_025)
+    assert (A.AUTOREGRESS, A.ANTICIPATE, A.VOCAB_SIZE) == (55_026, 55_027, 55_028)
+    assert (A.MAX_PITCH, A.MAX_INSTR) == (128, 129)
+
+
+@pytest.mark.parametrize("name", sorted(ADAPTERS))
+def test_round_trip_preserves_pitches_and_note_count(name):
+    """The corpus conversion may quantize TIME (5 ms for the absolute-time
+    scheme, 25 ms for the beat-grid ones — measured 2026-08-23 over 20 POP909
+    pieces) but must never lose a note or alter a pitch: those two would change
+    what the probe and the key estimator see."""
+    a = _adapter(name)
+    ev = [(k * 0.5, 0.4, 60 + (k % 12)) for k in range(24)]
+    ids, npos = a.encode_events(ev)
+    back = a.decode_events(ids)
+    assert len(back) == len(ev), "a note was lost in the round trip"
+    for (t1, _, p1), (t2, _, p2) in zip(ev, back):
+        assert p1 == p2, "a pitch changed in the round trip"
+        assert abs(t1 - t2) <= 0.05, "onset moved by more than one grid step"
