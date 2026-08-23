@@ -440,7 +440,7 @@ Readability is therefore neither necessary nor sufficient for causal use: a prob
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; every cell without $\dagger$ separates for all $12$ target keys after Holm correction. $\dagger$ marks pre-registered FAILURES: the AMT pop edit reaches only $1/12$ keys, and the MMT pop probe loses to the note counts (CI $[-0.13,-0.003]$). All checkpoints were trained by their authors on Lakh MIDI; none ever saw our data.}
+\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; every cell without $\dagger$ separates for all $12$ target keys after Holm correction. $\dagger$ marks pre-registered FAILURES: the AMT pop edit reaches only $1/12$ keys, and the MMT pop probe loses to the note counts (CI $[-0.13,-0.003]$). All checkpoints were trained by their authors on Lakh MIDI; none ever saw our data. A dash is a cell we did not run, and deliberately: the design varies ONE thing at a time --- model fixed while the corpus changes, corpus fixed while the tokenization changes --- and MMT and the REMI baseline were trained on pop-heavy web MIDI, so a Bach cell for them would confound tokenization with distribution shift.}
 \label{tab:wild}
 \begin{tabularx}{\columnwidth}{@{}Xllll@{}}
 \toprule
