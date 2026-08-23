@@ -1174,3 +1174,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/steering/R-Aug_s0/final_verdict_minor.json`
 - note: B: SR 0.154 vs install 0.495, 12/12 sig; C: SR 0.505 vs install 0.495, 0/12 sig; D: SR 0.435 vs install 0.495, 1/12 sig
 
+## 2026-08-23T18:31:23+09:00 — Experiment I: balanced re-estimation (music-small-800k)
+- git: `db551fb0d052b99ca7fede909493c7cb2994be8b+DIRTY`
+- config_hash: `0000833d47a7758b3988d2fff50d3ac53fcee225c51e3e886365719e43da4895`
+- seeds: [0]
+- artifacts: `results/mwild_pop909/music-small-800k/balanced/probe_weights.npz`, `results/mwild_pop909/music-small-800k/balanced/class_means.npz`, `results/mwild_pop909/music-small-800k/balanced/balanced_report.json`
+- note: 12-key transposed corpus (7596 chorales); balanced 1500/class; L10 probe F1 0.6947; all 24 mu nonzero
+
