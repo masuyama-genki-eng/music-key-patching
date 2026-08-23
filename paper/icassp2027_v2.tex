@@ -240,7 +240,7 @@ No model therefore grades its own output.
 % どのモデルでも，プローブは符号化上「次の音高を選ぶ」位置で読む；音の後で読む場合は補足資料で報告する．
 To check that our conclusions hold for real music, we also study public models that we did not train (Table~\ref{tab:wild}).
 The main one is the Anticipatory Music Transformer~\cite{thickstun2023anticipatory}, trained by its authors on Lakh MIDI~\cite{raffel2016lakh}, MetaMIDI~\cite{ens2021metamidi}, and FMA~\cite{defferrard2017fma}, in three sizes; we add two further public checkpoints trained on Lakh MIDI with different tokenizations, the compound-token Multitrack Music Transformer (MMT)~\cite{dong2023mmt} and its authors' REMI-representation baseline.
-We evaluate on two corpora: $300$ Bach chorales with human key labels from the Roman-numeral analyses of When in Rome~\cite{gotham2023wir}, and $905$ pop songs with human-corrected key labels (POP909-CL~\cite{pop909cl2026}); the supplementary gives editions, splits, and a gate that checks the labels against the notes.
+We evaluate on two corpora: $300$ Bach chorales with human key labels from the Roman-numeral analyses of When in Rome~\cite{gotham2023wir}, and $905$ pop songs with human-corrected key labels (POP909-CL~\cite{pop909cl2026}); the supplementary gives editions, splits, a gate that checks the labels against the notes, and one that checks each model's re-implemented tokenizer against the model itself (it detects wrong field structure and a wrong time scale; a uniform pitch offset, being a transposition, is caught instead by vocabulary agreement and decode round-trips).
 In every model the probe reads at the position where the encoding says the next pitch is chosen; reading after the note instead is reported in the supplementary.
 
 \subsection{What Counts as Success}
