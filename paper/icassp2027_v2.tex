@@ -77,7 +77,9 @@ The evidence we have cannot answer that, because none of it makes the model foll
 Existing work reaches inside a music model in two ways.
 Probing trains a small classifier on the activations and recovers music-theory concepts~\cite{syntheory2024}, the key among them~\cite{castellon2021calm} --- but a probe shows only that the key is readable, and can succeed on a signal the model ignores~\cite{hewitt2019control,belinkov2022probing}.
 Steering adds a learned vector to the activations, following language models~\cite{li2023iti,zou2023repe}, and an output attribute moves~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026} --- but the added vector leaves the part of the activation carrying the current key in place, so pushing toward E major competes with the key that is still written there; what that preserved component costs is something we measure (Table~\ref{tab:main}, bottom).
-We can read the key and push the output; we cannot yet set the key.
+% 「設定できない」は held-out の C 条件（加算・2倍変位で 0.471 > install 0.355）と矛盾するので使えない．
+% 実際の空白は「同じ摂動予算のもとで，旧調成分を消すことに独立の価値があるか」が測られていないこと．
+We can read the key and push the output, but no one has asked what it costs to \emph{replace} what is written there rather than add to it.
 
 % 関連研究セクションがないので，ここで研究をする意味をさらに補強するために，先行研究を入れ，問いを明確化
 % 活性を上書きすればこの種の問いは決着するが，音楽モデルで調を上書きした研究はまだない．
@@ -345,8 +347,9 @@ What we write & major & minor\\
 \emph{Distance}: random, rank- and norm-matched & 0.056 & 0.026\\
 \emph{Positions}: the key at pitch positions only & 0.035 & 0.000\\
 \quad at bar and note-length positions only & 0.233 & 0.212\\
-\emph{Operation}: the key added, norm-matched & TBD & TBD\\
-\quad added at the best swept strength & TBD & TBD\\
+\emph{Operation}: the key added, norm-matched & 0.245 & TBD\\
+\quad added at twice the displacement & 0.471 & TBD\\
+\quad added as a difference of means & 0.386 & TBD\\
 \midrule
 Transposing the prompt instead of editing & 0.648 & 0.877\\
 The key the prompt is already in & 0.650 & 0.800\\
@@ -466,12 +469,16 @@ A direction is therefore better validated by writing to it than by reading from 
 % 加算は部分空間内の旧調成分 P_V h を保持するので（P_V h' = P_V h + δu が解析的に成り立つ）、
 % 置換との差は「旧成分を消すか残すか」だけに縮まる．結果は表1の追加行（TBD）に入る．
 We also pre-registered a direct comparison on this pipeline: the same value \emph{added} (steering) instead of installed by Eq.~\eqref{eq:edit}, matched per position to the install edit's own displacement norm, so the only remaining difference is whether the old key component $P_Vh$ is removed --- addition provably preserves it.
-% 探索段階の全体像：同変位量では置換が全層で勝つ（ピークで 0.246 対 0.378）．
-% 強度を掃引すると，加算は 2 倍の変位・早い層（L2）でだけ 0.472 まで届き，4 倍で guard が半減，8 倍以上で全滅する．
-% つまり「加算では設定できない」ではなく「同じ摂動予算では置換が優り，加算は倍のコストで追いつき，その先は音楽が壊れる」．
-In the search stage, at MATCHED displacement the addition trails the replacement at every layer where either works ($0.246$ against $0.378$ at the replacement's peak), with the prompt key's notes persisting exactly as the preserved $P_Vh$ predicts.
-Swept over strengths, the addition catches up only by paying double --- $0.472$ at twice the install displacement, at an earlier layer --- and the arc ends where the guard does: at $4\times$ half the continuations break the quality budget, at $8\times$ and beyond nearly all do.
-Replacement is not the only way to set the key, then, but it is the cheaper one per unit of perturbation; the held-out test of the frozen comparison fills Table~\ref{tab:main}'s bottom rows (TBD at draft time).
+% held-out の確定結果（表1下段）：
+%  同変位量の加算 0.245 対 置換 0.355（差 +0.111、CI [+0.078,+0.145]、12標的中3で個別有意）→ 事前登録の向きで支持．
+%  2倍変位の加算 0.471 → 事前登録と逆向き（CI [-0.154,-0.078]）．そのまま報告する．
+%  内訳が機序を示す：同変位量の加算では継続の 28.8% がプロンプトの調に留まる（置換 6%台）．差分平均方向では 0.6%．
+%  つまり「加算では設定できない」ではなく「摂動あたりの効率で置換が優り，旧成分の除去が効いている」．
+We ran that comparison on the held-out prompts, paired by prompt against the install rows (Table~\ref{tab:main}, bottom).
+At matched displacement the replacement wins, by $0.111$ ($95\%$ CI $[0.078,0.145]$; three of twelve keys individually significant after correction), and the estimator says why: $28.8\%$ of the addition's continuations stay in the PROMPT's key, which is the preserved $P_Vh$ showing up in the notes.
+Allowed twice that displacement, however, the addition overtakes the replacement ($0.471$ against $0.355$) --- the opposite of our pre-registered direction, reported as it fell --- and it pays for the extra push at $4\times$, where half the continuations break the quality budget, and at $8\times$, where nearly all do.
+The difference-of-means direction leaves the prompt key almost nowhere ($0.6\%$ of continuations, in-key share $0.438$), which is the removal of the old component happening implicitly rather than by subtraction.
+So addition can set a key; what replacement buys is efficiency per unit of perturbation, and what the whole comparison isolates is that removing what is already written is doing part of the work.
 
 \section{Limitations}
 \label{sec:limits}
