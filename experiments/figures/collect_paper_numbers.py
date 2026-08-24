@@ -268,6 +268,12 @@ def main() -> None:
                 "margin_layers_0_1": [f"{min(shallow):.2f}", f"{max(shallow):.2f}"],
                 "margin_layers_2_up": [f"{min(deep):.2f}", f"{max(deep):.2f}"],
             }
+    # the balanced-minus-direct gain on the pop cell, quoted in the supplement
+    bal_v = load("results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json")
+    dir_v = load("results/mwild_sweep_pop909/music-small-800k/stage2_eval.json")
+    if bal_v and dir_v:
+        out["pop_balancing_gain"] = r3(bal_v["tkr_edit_guarded"] - dir_v["tkr_edit_guarded"])
+
     # the KS estimator's independent validation and its own ceiling
     xv = load("results/ks_cross_validation/ks_xval.json")
     if xv:
@@ -395,9 +401,14 @@ def main() -> None:
         out["confirmatory_extras"] = extra
 
     (REPO / "results/paper_numbers.json").write_text(json.dumps(out, indent=2))
-    tex = REPO / "paper/icassp2027_v2.tex"
-    if "--check-tex" in sys.argv and tex.exists():
-        check_tex(out, tex)
+    if "--check-tex" in sys.argv:
+        total = 0
+        for rel in ("paper/icassp2027_v2.tex", "paper/icassp2027_v2_supp.tex"):
+            tex = REPO / rel
+            if tex.exists():
+                print(f"\n### {rel}")
+                total += check_tex(out, tex)
+        print(f"\n### untraceable across both documents: {total}")
     print(json.dumps(out, indent=2))
     missing = [k for k, v in out.items()
                if isinstance(v, dict) and v.get("status") == "MISSING"]

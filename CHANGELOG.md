@@ -1510,3 +1510,34 @@ against 0.418 at its own 58 notes) of what the measurement can show. REMI's numb
 the one its shorter continuations were suspected of flattering, turns out to nearly
 saturate its own ceiling. Both facts are now in the manuscript: the ceiling where the
 estimator is defined, and the cross-corpus caveat in the limitations.
+
+## 2026-08-24 (4) — the manuscript, completed
+
+The main tex was finished and the supplementary it had been promising for weeks was
+written.
+
+**Main paper.** Every placeholder is gone except one, deliberately: the repository URL
+is now a single `\repourl` macro at the top of the file, flagged in a comment as the
+only thing to fill before submission, and the Conclusion picks it up. Five working
+comments that contradicted the current text were brought in line — the AMT pop cell is
+no longer described as a failure, the steering comparison is no longer "running", and
+the two "TBD" notes are gone (the file now contains none). No undefined reference, no
+undefined citation, no LaTeX error in either document.
+
+**Supplementary** (`icassp2027_v2_supp.tex`, 3 pages). The main text referred to it four
+times and it did not exist. It now carries exactly what was promised — editions,
+splits, window settings, the label gate, the tokenizer gate with what it does and does
+not catch, and the plan — plus the material that was crowding the main text: the seed
+replication table, the quality gate and both quality budgets, the estimator's
+validation against music21 and its per-length ceiling, the install-against-steering
+breakdown, the continuation-length analysis, and the two cells we did not run with the
+reasons.
+
+**Length.** Content went 4.18 -> 4.87 pages over the day as results landed, and is now
+4.27 after seven compression passes that removed words, not claims, and moved two
+blocks into the supplementary. Final layout narrowing is the author's.
+
+**One more misrounding, caught by our own tool.** The supplement quoted the balancing
+gain as $+0.077$; it is $0.2125 - 0.1347 = 0.0778$, i.e. $+0.078$. Corrected in the
+supplement and in CROSS_CORPUS_FREEZE. The `--check-tex` report now covers BOTH
+documents and is down to one entry each: a top-$p$ of $0.95$, which is configuration.

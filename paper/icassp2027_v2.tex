@@ -31,6 +31,11 @@ $^{\dagger\dagger}$Faculty of Information Science and Technology, Hokkaido Unive
 E-mail: \{masuyama, sakurai, togo, ogawa, mhaseyama\}@lmd.ist.hokudai.ac.jp
 }
 
+% ==== FILL BEFORE SUBMISSION: the only placeholder left in this file ====
+% The repository is private until acceptance; put its public URL here and the
+% Conclusion picks it up. Nothing else in the document needs editing by hand.
+\newcommand{\repourl}{https://github.com/ANONYMOUS/tonal-world-model}
+
 \begin{document}
 \ninept
 \maketitle
@@ -151,7 +156,7 @@ The probe distinguishes all $24$; the edits install the $12$ major keys in the p
 % ・未訓練のネットワーク：構造だけで得点が出るかもしれないので，同じプローブを未訓練のモデルにも走らせる．
 The activation is computed from the notes, so the key is in there in some form by default; the question is whether a linear probe can read it.
 We train one~\cite{alain2017probes,belinkov2022probing} to predict $\kappa(t)$ from $h_\ell(t)$, splitting train and test by piece.
-A probe score alone says nothing, so we compare it against a baseline that reads the key from the notes: at each position we look back over the preceding tokens, count how many times each of the twelve pitch classes (C, C$\sharp$, \dots, B) occurs among the pitch tokens in the window, and predict the key from those twelve counts, by logistic regression and by Krumhansl--Schmuckler (KS) matching~\cite{krumhansl1990,temperley1999ks}, the standard method for estimating key from pitch-class counts.
+A probe score alone says nothing, so we compare it against a baseline that reads the key from the notes: at each position, count how often each of the twelve pitch classes occurs among the pitch tokens in a backward window, then predict the key from those counts by logistic regression and by Krumhansl--Schmuckler (KS) matching~\cite{krumhansl1990,temperley1999ks}, the standard method for key from pitch-class counts. Window sizes are in the supplementary.
 To answer the objection that a note counter might win with more history, we also ran the counter with wider windows, and we call the strongest of all these baselines the note-counting baseline; the supplementary gives the window settings.
 If the probe beats it, the model has added something to what the notes already give.
 Two further routes could produce a probe score even when nothing about the key is being computed, so we measure what each contributes and subtract it.
@@ -240,7 +245,7 @@ No model therefore grades its own output.
 % どのモデルでも，プローブは符号化上「次の音高を選ぶ」位置で読む；音の後で読む場合は補足資料で報告する．
 To check that our conclusions hold for real music, we also study public models that we did not train (Table~\ref{tab:wild}).
 The main one is the Anticipatory Music Transformer~\cite{thickstun2023anticipatory}, trained by its authors on Lakh MIDI~\cite{raffel2016lakh}, MetaMIDI~\cite{ens2021metamidi}, and FMA~\cite{defferrard2017fma}, in three sizes; we add two further public checkpoints trained on Lakh MIDI with different tokenizations, the compound-token Multitrack Music Transformer (MMT)~\cite{dong2023mmt} and its authors' REMI-representation baseline.
-We evaluate on two corpora: $300$ Bach chorales with human key labels from the Roman-numeral analyses of When in Rome~\cite{gotham2023wir}, and $905$ pop songs with human-corrected key labels (POP909-CL~\cite{pop909cl2026}); the supplementary gives editions, splits, a gate that checks the labels against the notes, and one that checks each model's re-implemented tokenizer against the model itself (it detects wrong field structure and a wrong time scale; a uniform offset is a transposition in these vocabularies -- verified, not assumed: the note codes are instrument-major, so an off-by-one moves pitch, and it could reach the instrument field only at pitch $127$, which never occurs in the $1.94$M notes used here -- and is caught instead by vocabulary agreement and decode round-trips).
+We evaluate on two corpora: $300$ Bach chorales with human key labels from the Roman-numeral analyses of When in Rome~\cite{gotham2023wir}, and $905$ pop songs with human-corrected key labels (POP909-CL~\cite{pop909cl2026}); the supplementary gives editions, splits, a gate that checks the labels against the notes, and one that checks each model's re-implemented tokenizer against the model itself, with what each gate does and does not catch.
 In every model the probe reads at the position where the encoding says the next pitch is chosen; reading after the note instead is reported in the supplementary.
 
 \subsection{What Counts as Success}
@@ -258,7 +263,11 @@ The middle rows of Table~\ref{tab:main} remove these one per row, in that order.
 
 % 主指標．実験1はプローブの優位：control補正後のプローブ得点から音符数えベースラインを引いた差（24クラスの macro-F1）であり，成功は曲単位ブートストラップ 95% CI がゼロを含まないことである．
 % 実験2は成功率（SR）である．継続が成功と数えられるのは，次の2つの条件を満たしたときである．
-% (i) KS 推定器（II-A 節）が，書き込んだ調とちょうど一致すると判定する．推定器は第9–24小節の音高を見る；音が数個ではピッチクラスの出方が定まらず判定が偶然で決まるので，8音未満の継続は失敗と数える．
+% (i) KS 推定器（II-A 節）が，書き込んだ調とちょうど一致すると判定する．推定器は第9小節から最大
+%  第24小節までの音高を見る（トークン予算では実際に生成されるのは4–14小節）；音が数個では
+%  ピッチクラスの出方が定まらず判定が偶然で決まるので，8音未満の継続は失敗と数える．
+%  推定器自身の上限も測った：人手注釈の鍵を80音から復元できるのは Bach 0.853／pop 0.540．
+%  これは絶対値の上限であって，対照も同じ推定器を通るので margin には効かない．
 % (ii) 音楽が壊れていない．調が変わっても壊れていては意味がなく，またモデルを分布外へ飛ばす編集はその回路について何も語らないからである．上限は本物の転調が決める：検証データの自然な転調 7,989 件について，転調前 24 トークンから後 24 トークンへの基準モデルのパープレキシティの上昇を測り，その 90 パーセンタイルが 0.613 であった．編集した継続は，同じプロンプトの編集なしの継続に対し，これ以上パープレキシティを上げてはならない．
 % どちらかの条件を満たさない継続は，分母に残して失敗と数える．当てずっぽうは 1/12 である．
 % 公開モデルでは条件 (ii) の上限をコラールで測り直し，基準には別の公開チェックポイントを使う．
@@ -269,7 +278,7 @@ A continuation counts as a success when it meets two conditions.
 % (i) KS は継続全体（最大16小節・EOSで打ち切り）を1つの窓として1回だけ推定する．小節別の推定・集約はしない．
 % トークン上限 384 の下で実際に生成されるのは 4–14 小節（最終テスト実測，中央値 10）で，8音未満は一度も起きなかった．
 (i)~The KS estimator (Sec.~\ref{sec:exp1}) places it in exactly the installed key.
-The estimator runs ONCE over all pitches the model generated, from bar~$9$ up to at most bar~$24$ (the token budget yields $4$--$14$ generated bars in practice); a continuation with fewer than $8$ pitches would count as a failure outright, though none occurred in the final test. How well it can possibly do is measured, not assumed: on real music whose key a human annotated, it recovers that key from the number of notes our continuations contain $0.853$ of the time on chorales and $0.540$ of the time on pop (and its output agrees with an independent implementation of the same algorithm on $800$ of $800$ segments). Those values cap any ABSOLUTE rate below; they do not touch the edit-minus-control margin, since the control is estimated the same way.
+The estimator runs ONCE over all generated pitches, from bar~$9$ to at most bar~$24$ ($4$--$14$ bars in practice); a continuation under $8$ pitches counts as a failure, though none occurred. Its reach is measured, not assumed: it recovers a human-annotated key from our continuation lengths $0.853$ of the time on chorales and $0.540$ on pop, and matches an independent implementation on $800$ of $800$ segments. Those cap the absolute rates below, not the margins.
 (ii)~The music is not broken---an edit that drives the model off distribution says nothing about its circuitry---and real key changes set the bar: the reference model's perplexity rise across $7{,}989$ natural key changes in validation has a $90$th percentile of $0.613$, and an edited continuation may cost at most that much over the unedited continuation of the same prompt.
 A continuation that fails either condition stays in the denominator as a failure.
 Chance is one key in $12$.
@@ -424,14 +433,16 @@ Pitch-only edits pass condition~(ii) more often ($98\%$ against $84\%$) only bec
 \label{sec:wild}
 % 主セル（AMT×バッハ）：プローブ優位 +0.196、編集はランダムの 7.9 倍．サイズ軸（2倍・6倍）では何も変わらない．
 % ジャンル軸とトークン化軸では読み取りと使用が「二重に」解離する：
-%  AMT×pop：読める（+0.132）が編集は事前登録基準で不成立（0.135 対 0.057、1/12）．
+%  AMT×pop：読める（+0.132）．編集は直接推定では不成立に見えたが（0.135 対 0.057、1/12）、
+%  事前登録済みの釣り合わせ再推定で 0.212 対 0.056、9/12、DR-H3 支持となった（2026-08-24）．
+%  登録時の予測は「約0.17でなお不成立」であり、外れた。表2はこちらを載せる．
 %  MMT×pop：プローブは音符数えに負ける（−0.060）のに、同じ部分空間の編集が 12/12 で成立（0.360 対 0.064、IKR 交差 0.961/0.660）．
 % すなわち可読性は因果的使用の必要条件でも十分条件でもない．
 % 十字形の設計を本文で先に一文で述べる（表を見る前に読者が空欄の意味を理解できるように）．
 The grid is a cross, not a product: we fix the model and change the corpus, then fix the corpus and change the tokenization, because a Bach cell for the pop-trained checkpoints would confound tokenization with distribution shift.
 % 開示：Bach の平均は転調で釣り合わせた再推定から作る（自然コーパスに F#maj と D#min が1曲も無く、直接推定ではその2つが零ベクトルになるため）．事前登録済みの手順．
-The targets $\mu_\kappa$ are estimated on a key-balanced sample, built by transposing each piece through all twelve keys and splitting by original piece so transpositions never straddle --- pre-registered for every cell, so a corpus key prior cannot masquerade as a representation, and on Bach forced: the $300$ chorales contain no F$\sharp$ major and no D$\sharp$ minor, so a direct estimate leaves those targets as zero vectors and F$\sharp$ major then scores exactly $0$ ($11/12$ keys, edit $0.365$ not $0.479$).
-In the primary cell (Table~\ref{tab:wild}) the probe beats the note-counting baselines by $+0.196$ $[0.132,0.260]$ and the edit reaches $7.9\times$ the random baseline, with $99.7\%$ of continuations meeting condition~(ii) and the notes crossing over ($0.890$ against $0.753$); doubling or sextupling the model changes none of it (margins $+0.196/+0.213/+0.203$, all CIs overlapping; the $24$-layer edit at $0.557$), and the acting layer sits above the best-reading layer in every case.
+The targets $\mu_\kappa$ are estimated on a key-balanced sample (pre-registered, so a corpus key prior cannot masquerade as a representation), which on Bach is forced rather than cosmetic: the $300$ chorales contain no F$\sharp$ major and no D$\sharp$ minor, so a direct estimate leaves those targets as zero vectors and F$\sharp$ major scores exactly $0$ (edit $0.365$, $11/12$, not $0.479$).
+In the primary cell (Table~\ref{tab:wild}) the probe beats the note counts by $+0.196$ $[0.132,0.260]$ and the edit reaches $7.9\times$ its random baseline, with $99.7\%$ of continuations meeting condition~(ii) and the notes crossing ($0.890$ against $0.753$); doubling or sextupling the model changes none of it (margins $+0.196/+0.213/+0.203$, CIs overlapping; the $24$-layer edit at $0.557$), and the acting layer sits above the best-reading layer throughout.
 Crossing genre and tokenization, reading stops predicting using.
 On pop all three edits work, but not in the order their probes suggest: the Anticipatory model reads the key best there ($+0.132$, the only margin beating the note counts) and edits WORST ($0.212$ against $0.056$, nine keys of twelve).
 MMT's probe LOSES to the note counts on the same corpus ($-0.060$ $[-0.130,-0.003]$) and the REMI baseline's only ties them ($-0.022$), yet editing the same probe-derived subspace moves both decisively: $0.360$ and $0.393$ against $0.064$ and $0.061$, all twelve keys each, in-key shares crossing ($0.961$ against $0.660$ and $0.681$).
@@ -444,7 +455,7 @@ Readability is therefore neither necessary nor sufficient for causal use: a prob
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; cells without a marker separate all $12$ target keys after Holm correction. $\dagger$ = pre-registered failure: MMT's pop probe loses to the note counts (CI $[-0.130,-0.003]$). $\ddagger$ = a near miss, not a failure: REMI's probe ties the note counts (CI $[-0.10,+0.04]$ contains zero), and AMT's pop edit separates $9$ of $12$ keys with the three misses all at $p_{\text{Holm}}\,0.051$--$0.052$. Pop cells carry the estimation condition each was registered with: AMT balanced, MMT and REMI direct. All checkpoints were trained by their authors on Lakh MIDI; none saw our data. Most dashes are deliberate --- the design varies one thing at a time, and a Bach cell for MMT or REMI would confound tokenization with distribution shift. AMT large's edit is the exception: the guard needs a reference other than the edited model, no checkpoint in the family is larger, and large is itself the reference scoring the pop edits, so that edit waits for a larger reference while its probe, needing none, is reported.}
+\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; cells without a marker separate all $12$ target keys after Holm correction. $\dagger$ = pre-registered failure (MMT's pop probe loses, CI $[-0.130,-0.003]$); $\ddagger$ = near miss, not failure (REMI's probe ties, CI $[-0.10,+0.04]$ spans zero; AMT's pop edit separates $9/12$, the misses at $p_{\text{Holm}}\,0.051$--$0.052$). Pop cells carry the estimation condition each was registered with: AMT balanced, MMT and REMI direct. All checkpoints were trained by their authors on Lakh MIDI; none saw our data. Dashes are deliberate --- one thing varies at a time, and a Bach cell for the pop-trained checkpoints would confound tokenization with distribution shift --- except AMT large's edit, which needs a guard reference larger than the edited model where none exists (large itself scores the pop edits), so only its probe, needing no reference, is reported.}
 \label{tab:wild}
 \begin{tabularx}{\columnwidth}{@{}Xllll@{}}
 \toprule
@@ -470,20 +481,12 @@ REMI repr. & --- & --- & $-.022^{\ddagger}$ & $.393$ vs $.061$\\
 The reading/acting split (Sec.~\ref{sec:h5}) bears on how steering directions are chosen: music steering~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026} selects them by how well an attribute decodes, and our pitch-position condition shows that criterion picking a site the model does not use --- the gap language models also report~\cite{wu2025axbench,arad2025selecting}.
 A direction is therefore better validated by writing to it than by reading from it, and we expect the same gap for other attributes recovered from music activations.
 % 公開3本で順序が反転する：表層を超える唯一のモデルが，編集の効かない唯一のモデル．
-The three public checkpoints put that split on a second axis: on one corpus the only probe that beats the note counts (AMT, $+.132$) belongs to the WEAKEST edit ($.212$, $9/12$ keys), while the two that do not ($-.060$, $-.022$) reach $.360$ and $.393$ with all twelve separating, so readability fails to rank causal strength even where it holds. Three checkpoints are no trend and their tokenizations differ too, so we claim no law --- only that the inversion recurs across models as it does across layers and positions.
-% 追加：同一パイプライン上での install 対 steering の直接比較（事前登録済み・実行中）。
+The three public checkpoints put that split on a second axis: on one corpus the only probe beating the note counts (AMT, $+.132$) belongs to the WEAKEST edit ($.212$, $9/12$), while the two that do not ($-.060$, $-.022$) reach $.360$ and $.393$ with all twelve separating --- readability fails to rank causal strength even where it holds. Three checkpoints are no trend, and their tokenizations differ too, so we claim no law, only that the inversion recurs across models as across layers.
+% 追加：同一パイプライン上での install 対 steering の直接比較（事前登録済み・完了）。
 % 加算は部分空間内の旧調成分 P_V h を保持するので（P_V h' = P_V h + δu が解析的に成り立つ）、
-% 置換との差は「旧成分を消すか残すか」だけに縮まる．結果は表1の追加行（TBD）に入る．
-We also pre-registered a direct comparison on this pipeline: the same value \emph{added} (steering) instead of installed by Eq.~\eqref{eq:edit}, matched per position to the install edit's own displacement norm, so the only remaining difference is whether the old key component $P_Vh$ is removed --- addition provably preserves it.
-% held-out の確定結果（表1下段）：
-%  同変位量の加算 0.245 対 置換 0.355（差 +0.111、CI [+0.078,+0.145]、12標的中3で個別有意）→ 事前登録の向きで支持．
-%  2倍変位の加算 0.471 → 事前登録と逆向き（CI [-0.154,-0.078]）．そのまま報告する．
-%  内訳が機序を示す：同変位量の加算では継続の 28.8% がプロンプトの調に留まる（置換 6%台）．差分平均方向では 0.6%．
-%  つまり「加算では設定できない」ではなく「摂動あたりの効率で置換が優り，旧成分の除去が効いている」．
-We ran that comparison on the held-out prompts, paired by prompt against the install rows (Table~\ref{tab:main}, bottom).
-At matched displacement the replacement wins, by $0.111$ ($95\%$ CI $[0.078,0.145]$; three of twelve keys individually significant after correction), and the estimator says why: $28.8\%$ of the addition's continuations stay in the PROMPT's key, which is the preserved $P_Vh$ showing up in the notes.
-Allowed twice that displacement, however, the addition overtakes the replacement ($0.471$ against $0.355$) --- the opposite of our pre-registered direction, reported as it fell --- and it pays for the extra push at $4\times$, where half the continuations break the quality budget, and at $8\times$, where nearly all do.
-The difference-of-means direction leaves the prompt key almost nowhere ($0.6\%$ of continuations, in-key share $0.438$), which is the removal of the old component happening implicitly rather than by subtraction.
+% 置換との差は「旧成分を消すか残すか」だけに縮まる．結果は表1の下段（B/C/D）に入っている．
+We pre-registered a direct comparison on this pipeline: the same value \emph{added} (steering) instead of installed by Eq.~\eqref{eq:edit}, matched per position to the install edit's own displacement, so the only difference left is whether the old component $P_Vh$ is removed --- addition provably keeps it (Table~\ref{tab:main}, bottom; held-out, paired by prompt).
+At matched displacement replacement wins by $0.111$ ($95\%$ CI $[0.078,0.145]$), and the notes say why: $28.8\%$ of the addition's continuations stay in the PROMPT's key --- the preserved $P_Vh$, visible. Given twice the displacement the addition overtakes it ($0.471$ against $0.355$), against our pre-registered direction and reported as it fell; the supplementary gives the cost in quality and the contrastive variant.
 So addition can set a key; what replacement buys is efficiency per unit of perturbation, and what the whole comparison isolates is that removing what is already written is doing part of the work.
 
 \section{Limitations}
@@ -494,8 +497,9 @@ So addition can set a key; what replacement buys is efficiency per unit of pertu
 We show that the model computes a key and uses it as it generates; we do not claim that it understands keys the way a person does.
 The dormant-pathway controls of Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} were run on our own models, not on the public ones, so the MMT edit result is a behavioral finding whose internal pathway we have not localized.
 Condition~(ii) measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test.
-% 公開モデル検証は「1モデル」から「3サイズ＋2トークン化＋2ジャンル」へ拡張中（TBD セルは実行中）．
-The public-model check spans three checkpoint sizes, two further tokenizations and a second genre; one cell failed (MMT's pop probe) and is reported as such. One pre-registered re-estimation landed against its own recorded prediction: balancing the pop targets was predicted to lift AMT's edit to $\approx0.17$ and leave it failing, and it reached $0.212$ with $9/12$ keys, so the earlier reading of that cell as a failure does not stand. Because that re-estimation was registered only for AMT, the MMT and REMI pop cells keep their direct estimates; re-estimating them after seeing AMT gain, on a spent split, would be choosing an analysis by its effect. The asymmetry is conservative for the one claim that uses it --- AMT had the benefit and is still the weakest of the three. Rates should not be compared ACROSS corpora: the estimator itself recovers a human-annotated key from $80$ notes $0.853$ of the time on chorales but only $0.540$ of the time on pop, so a chorale cell and a pop cell are read against different ceilings. Within a corpus, and for every edit-minus-control margin, the comparison is unaffected. REMI is the case where this matters most: its flat encoding spends $4.4$ tokens per note, so at the shared step budget it generates $58$ notes against the others' $80$, and at $58$ notes the ceiling is $0.418$ --- its $0.393$ nearly saturates what the measurement can show, and its own rows agree that the shortfall depresses rather than flatters it (margin $+0.134$ below $40$ notes against $+0.375$ at $55$--$58$).
+% 公開モデル検証は「1モデル」から「3サイズ＋2トークン化＋2ジャンル」へ拡張し，全セル完了．
+%  不成立は MMT の pop プローブ1件のみ．AMT large の編集のみ未実行（より大きな参照モデルが必要）．
+One public-model cell failed (MMT's pop probe), and one pre-registered re-estimation landed against its recorded prediction: balancing the pop targets was predicted to lift AMT's edit to $\approx0.17$ and leave it failing, and it reached $0.212$ with $9/12$. It was registered for AMT only, so MMT and REMI keep direct estimates --- conservatively, since AMT had the benefit and is still weakest. Rates do not compare ACROSS corpora: the estimator recovers a human-annotated key from $80$ notes $0.853$ of the time on chorales against $0.540$ on pop, so the two columns have different ceilings; margins and within-corpus comparisons are unaffected. It matters most for REMI, which spends $4.4$ tokens per note and so generates $58$: its ceiling is $0.418$, which $0.393$ nearly saturates. The supplementary gives the per-length curve.
 % [SUPPL] 公開モデルでは層を探索段階で選んだままで，新規プロンプトでの確認は行っていない。
 
 \section{Conclusion}
@@ -503,7 +507,7 @@ The public-model check spans three checkpoint sizes, two further tokenizations a
 % 読めることは，使っていることの証拠にはならない．
 % テストベッドとコード，そしてデモを公開する．
 In the sense our test can reach, a music Transformer does know what key it is in: it computes a key, holds it in a form we can replace, and consults it as it generates---while being readable, alone, is not evidence of being used.
-We release the testbed, code, and demos: \url{https://github.com/<user>/<repo>}.
+We release the testbed, code, and demos: \url{\repourl}.
 
 \bibliographystyle{IEEEbib}
 \bibliography{refs}

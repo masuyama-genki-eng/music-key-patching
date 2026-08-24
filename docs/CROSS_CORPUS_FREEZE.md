@@ -327,7 +327,7 @@ pitch-position condition.
 **Estimation conditions now differ across the pop cells, and this is not equalised.**
 AMT × pop is reported balanced, because that run was registered. MMT and REMI are
 reported direct, because a balanced run was never registered for them, and running one
-NOW — after seeing that balancing lifted AMT by +0.077 — would be choosing an analysis
+NOW — after seeing that balancing lifted AMT by +0.078 — would be choosing an analysis
 by its effect on a number, on a split that is already spent. The direction makes this
 safe for the one claim that depends on it: balancing raised AMT and AMT is still the
 weakest of the three, so the ordering is not an artefact of AMT being handicapped. If

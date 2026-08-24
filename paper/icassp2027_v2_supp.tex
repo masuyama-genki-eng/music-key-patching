@@ -1,0 +1,260 @@
+% Supplementary material for "Does a Music Transformer Know What Key It Is In?"
+% Every number here is recomputed from an artifact by
+% experiments/figures/collect_paper_numbers.py; none is transcribed by hand.
+\documentclass{article}
+\usepackage{spconf,amsmath}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amssymb,booktabs,array,tabularx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\title{Supplementary material\\
+Does a Music Transformer Know What Key It Is In?\\
+Causal Interventions on Emergent Tonal Representations}
+\name{}
+\address{}
+
+\begin{document}
+\maketitle
+\vspace{-2.5em}
+
+Section numbers refer to the main paper. Every value below is recomputed from a logged
+artifact; the script that does it reports any figure in either document that it cannot
+trace, and its report is empty apart from a sampling hyperparameter.
+
+\section{Corpora, editions and splits}
+
+\textbf{D-SYN} (Sec.~2.3): $200{,}000$ training, $10{,}000$ validation and $10{,}000$
+test pieces from a functional-harmony generator, plus a separate $200{,}000/10{,}000$
+pair for the reference model. The four sets share no piece: hashing every token
+sequence gives zero overlap between train and test, train and reference-train, and
+test and either reference set, so the reference model's ``data the other models never
+see'' is disjoint by content and not merely by filename.
+
+\textbf{Bach chorales.} $300$ chorales in \texttt{**kern}, keys from the
+Roman-numeral analyses of \emph{When in Rome}. A chorale is matched to its analysis by
+number, never by order.
+
+\textbf{POP909-CL.} $909$ files, $905$ load. Four are excluded by a rule fixed before
+evaluation, with reasons recorded: two carry no key-signature event at all, and two are
+listed by the release as having misaligned downbeats and algorithmic rather than expert
+labels. $127$ pieces change key. Pieces split $0.7/0.15/0.15$ into train (probe,
+per-key means, guard budget), search (layer and hyperparameter choices) and final
+(touched once); a piece lands wholly in one part.
+
+\textbf{Piece exclusions from a model's window.} Each tokenization bounds
+representable time, and a piece is excluded when fewer than $34$ note positions fall
+inside that bound. This removes exactly one piece (\texttt{247}, which opens with a
+$70.5$-beat silence), for the REMI checkpoint only, in the train split only. The
+held-out splits lose nothing.
+
+\section{Probes, baselines and window settings}
+
+Multinomial logistic probe per layer, trained with AdamW; a two-layer MLP as a
+secondary probe. Splits are by SEQUENCE, so no position of a piece appears in two
+parts. The note-counting baselines (C3) look back over windows of $8$, $16$, $32$ and
+$64$ pitch tokens and predict the key from the twelve pitch-class counts, by logistic
+regression and by Krumhansl--Schmuckler. The control task (C1b) permutes the key
+labels per sequence, giving the floor that is subtracted.
+
+At layer $4$ the probe reaches macro-$F_1$ $0.927$ against $0.790$ for the best
+baseline; the control floor is $0.032$, leaving $+0.105$ $[0.091,0.114]$. An untrained
+network of the same shape reaches $0.243$. The raw probe score is flat across layers
+$2$--$6$ ($0.920$--$0.929$).
+
+\textbf{Experiment D: a stronger baseline.} The pre-registered baseline peaked at the
+edge of its window sweep, so it was extended. The strongest note counter
+(\texttt{lr\_W16cat512}, $F_1$ $0.824$, against the pre-registered \texttt{lr\_W64}'s
+$0.790$) still loses: margin $+0.071$ $[0.056,0.081]$.
+
+\textbf{Seed replication.} All six main models support the probe result
+independently, every confidence interval excluding zero:
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+model & best margin & layer & CI\\
+\midrule
+R-Aug\_s0   & $+0.105$ & $4$ & $[0.091,0.114]$\\
+R-Aug\_s1   & $+0.103$ & $2$ & $[0.089,0.113]$\\
+R-Aug\_s2   & $+0.100$ & $3$ & $[0.086,0.110]$\\
+R-NoAug\_s0 & $+0.100$ & $5$ & $[0.087,0.110]$\\
+R-NoAug\_s1 & $+0.096$ & $2$ & $[0.083,0.106]$\\
+R-NoAug\_s2 & $+0.102$ & $2$ & $[0.088,0.112]$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Quality gate and quality budget}
+
+\textbf{Gate} (before any intervention work): validation next-token top-$1$ must reach
+$1.5\times$ the constant-predictor rate of $0.434$, and the in-key share of
+unconditional generation must stay within $3$ standard deviations of the validation
+mean. All $13$ finished checkpoints pass; the six main models measure
+$0.878$--$0.881$.
+
+\textbf{Budget} $\delta_{\text{PPL}}$, frozen before any edit is scored, as the
+$90$th percentile of the reference model's perplexity rise across natural key changes:
+$0.613$ over $7{,}989$ events on D-SYN. The public-model budgets are per corpus, since
+a budget in one model's nats does not transfer: $0.849$ on Bach over $1{,}180$ events
+(reference \texttt{music-medium-800k}) and $1.119$ on POP909 over $103$ events
+(reference \texttt{music-large-800k}). A run whose frozen budget names a different
+reference model is a hard error, not a warning.
+
+\section{Two gates on the data, and what each cannot catch}
+
+\textbf{Labels against notes.} Before any activation was read, the POP909 labels were
+checked by estimating the key of every labelled segment of $\geq16$ notes and
+comparing: thresholds \emph{exact} $\geq0.40$ and \emph{near} $\geq0.75$ were committed
+first. Result over $1{,}060$ segments: exact $0.769$, near $0.958$; chance for exact is
+$1/24=0.042$.
+
+\textbf{Tokenizer against the model.} Each public model's token scheme is
+re-implemented from its published configuration, so before probing we check that the
+model finds correctly encoded music cheaper than corrupted music. The gate detects a
+wrong field structure and a wrong time scale. It does NOT detect a uniform offset on
+the note field, because in these vocabularies that is a transposition: the note codes
+are instrument-major (verified against the reference implementation, which masks one
+instrument as $128$ consecutive codes), so an off-by-one moves pitch and could reach
+the instrument field only at pitch $127$, which never occurs in the $1.94$M notes used
+here. That case is covered instead by two direct checks: all $15$ vocabulary constants
+match the official implementation and the token streams agree on five real pieces of
+$\approx600$ tokens; and the corpus conversion round-trips with every pitch and every
+note preserved, onsets moving by at most one grid step ($5$\,ms absolute-time,
+$25$\,ms beat-grid).
+
+\textbf{Sampling.} The reference sampler masks the token families that do not belong in
+the current slot and forbids control and special codes; ours draws from the whole
+vocabulary, deliberately, so that no hand-written grammar can flatter the edit.
+Measured on unedited continuations: not one generated note of $1{,}876$ left the
+prompt's instrument block, and slot violations are $2.40\%$ on Bach and $0\%$ on pop,
+all of them control or special codes, concentrated in one prompt of twelve.
+
+\section{The key estimator: validated, and bounded}
+
+Our Krumhansl--Schmuckler implementation was checked against \texttt{music21}. The
+Krumhansl--Kessler profiles are identical in both modes, and given the same pitch
+content with uniform note lengths --- so that duration weighting and unweighted counts
+coincide --- the two implementations return the SAME key on $800$ of $800$ real
+segments, with no disagreement of any relation.
+
+The same run measures how often the estimator recovers a key a human annotated, which
+caps every absolute rate we report:
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+notes & $8$ & $16$ & $32$ & $58$ & $80$ & $160$\\
+\midrule
+chorales & $0.398$ & $0.593$ & $0.740$ & $0.830$ & $0.853$ & ---\\
+pop      & $0.243$ & $0.327$ & $0.380$ & $0.418$ & $0.540$ & $0.598$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The caps differ by corpus, so a chorale cell and a pop cell of Table~2 are read against
+different ceilings. They do not touch any edit-minus-control margin, because the
+control is estimated the same way.
+
+\section{Search stage, final test, and the plan}
+
+Layers and hyperparameters were chosen on a search stage that was allowed to look; the
+numbers reported come from a final test on prompts no choice was ever made against.
+For the public models: $20$ search prompts, $60$ held-out prompts, $12$ major targets,
+$240$ new tokens, rank $24$, temperature $1.0$, top-$p$ $0.95$, seed $0$. MMT uses
+$80$ steps instead of $240$, declared in advance, because its compound scheme emits one
+position per note where the flat scheme emits three tokens.
+
+Before any edit runs, a sham edit that projects out the subspace and re-inserts the
+same component must reproduce the clean continuation token for token; it is computed
+as a real edit rather than short-circuited, so a detached hook or a drifted position
+makes it fail.
+
+\textbf{Per-layer separation} (search stage, our model): the edit beats its control by
+$0.030$ and $0.044$ at layers $0$ and $1$, then $0.193$, $0.258$, $0.303$, $0.259$,
+$0.232$ and $0.228$ at layers $2$--$7$. The key is readable at layers $0$--$1$, where
+writing to it barely works.
+
+\textbf{Estimation condition.} Per-key targets come from a key-balanced sample, built
+by transposing each piece through all twelve keys and splitting by original piece so
+transpositions never straddle. On Bach this is forced: no F$\sharp$ major and no
+D$\sharp$ minor occur, so a direct estimate leaves those two targets as zero vectors
+and the F$\sharp$ major cell scores exactly $0$ --- edit $0.365$ with $11/12$ keys
+separating for the $12$-layer model, and $0.439$ with $11/12$ for the $24$-layer one,
+against $0.479$ and $0.557$ balanced.
+
+\textbf{A prediction that failed.} The balanced re-estimation for AMT $\times$ pop was
+registered with its expected effect written down: ``$0.135$ becomes $\approx0.17$,
+which likely still fails the per-key bar. The run happens either way, and its outcome
+is reported either way.'' It reached $0.212$ with $9/12$ keys separating (the three
+misses at $p_{\text{Holm}}$ $0.051$--$0.052$) and the in-key shares crossing. The
+prediction was wrong, and the cell is no longer read as a failure.
+
+\section{Install against steering, in full}
+
+The pre-registered comparison replaces Eq.~(1)'s installation with an ADDITION of the
+same value, so the only difference left is whether the old component $P_Vh$ is removed;
+addition provably keeps it. Held-out prompts, paired by prompt against the install rows.
+
+At matched displacement, replacement wins by $0.111$ ($95\%$ CI $[0.078,0.145]$, three
+of twelve keys individually significant after correction), and the notes show the
+mechanism: $28.8\%$ of the addition's continuations stay in the PROMPT's key, against
+$11.5\%$ for the doubled addition and $0.6\%$ for the contrastive direction. Given
+twice the displacement the addition overtakes replacement ($0.471$ against $0.355$),
+which is the opposite of the pre-registered direction and is reported as it fell; it
+pays for the extra push at $4\times$, where half the continuations break the quality
+budget, and at $8\times$, where nearly all do. The difference-of-means direction leaves
+the prompt key almost nowhere ($0.6\%$ of continuations, in-key share $0.438$), which
+is the removal of the old component happening implicitly rather than by subtraction. In
+minor keys the matched addition is far weaker still ($0.154$ against install's $0.495$,
+all twelve keys significant).
+
+So addition CAN set a key; what replacement buys is efficiency per unit of
+perturbation, and what the comparison isolates is that removing what is already written
+does part of the work.
+
+\section{Continuation length across tokenizations}
+
+Continuation length is fixed in notes, not steps. Measured over the held-out edit rows,
+the median is $80$ notes for the Anticipatory model and $80$ for MMT, but $58$ for the
+REMI baseline: its flat encoding spends $4.40$ tokens per note and no note-matched step
+count was declared for it when it was re-admitted, so it ran at the shared default.
+
+The shortfall depresses rather than flatters its number. Shortness is not caused by the
+edit --- the control condition has MORE short rows ($13.3\%$ against $10.0\%$ below
+$55$ notes) --- and by margin:
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+notes & edit & control & margin & $n$ (edit/ctrl)\\
+\midrule
+$0$--$39$  & $0.184$ & $0.049$ & $+0.134$ & $49/61$\\
+$40$--$54$ & $0.348$ & $0.029$ & $+0.319$ & $23/35$\\
+$55$--$58$ & $0.437$ & $0.063$ & $+0.375$ & $487/589$\\
+$59$--$60$ & $0.329$ & $0.086$ & $+0.243$ & $161/35$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This does not license the claim that REMI would score higher at $80$ notes: the longest
+observed bin has the lower margin of the two large ones with a badly unbalanced control
+count, and $80$ notes lies outside the observed range. $24$ of $1{,}440$ rows produced
+an empty continuation, counted as failures in both conditions.
+
+\section{What we did not run, and why}
+
+AMT large's Bach edit is absent for a reason of measurement. The guard needs a
+reference model that is not the one being edited; no checkpoint in that family is
+larger, and large is itself the reference that scores the pop edits, so the run would
+grade a $36$-layer model with a $24$-layer one while that same model grades others.
+Every other run here grades a subject with a model at least its size. Its probe margin
+is reported because probing needs no reference model.
+
+The balanced re-estimation was registered for AMT $\times$ pop only. Running it for MMT
+and REMI after seeing AMT gain $+0.078$, on a split already spent, would be choosing an
+analysis by its effect on a number; their cells keep the direct estimate, which is the
+conservative direction for the one claim that uses them.
+
+\end{document}
