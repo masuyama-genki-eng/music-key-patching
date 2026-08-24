@@ -98,3 +98,95 @@ def test_triads_are_diatonic():
             k = Key(tonic, mode)
             for d in range(1, 8):
                 assert set(triad_pcs(k, d)) <= set(k.scale)
+
+
+# ===================== the success criterion, pinned =========================
+# A 2026-08-24 review mutated the confirmatory scorer to drop the guard term --
+# which would have raised the reported headline from 0.355 to 0.410 -- and all 294
+# tests passed. These pin the semantics the reported numbers depend on.
+
+def test_guarded_success_requires_both_conditions():
+    from src.eval.guard import guarded_success
+    assert guarded_success(True, 0.1, 0.6) is True
+    assert guarded_success(True, 1.0, 0.6) is False, "over budget must not count"
+    assert guarded_success(False, 0.1, 0.6) is False, "wrong key must not count"
+
+
+def test_guarded_success_treats_unmeasurable_as_failure():
+    from src.eval.guard import guarded_success
+    import numpy as np
+    assert guarded_success(None, 0.1, 0.6) is False, "no key estimate is a failure"
+    assert guarded_success(True, float("nan"), 0.6) is False, \
+        "an uncomputable guard is a failure, not a pass"
+    assert guarded_success(True, np.nan, 0.6) is False
+
+
+def test_guarded_success_budget_is_inclusive():
+    from src.eval.guard import guarded_success
+    assert guarded_success(True, 0.6, 0.6) is True, "SPEC 4.3 says <= delta"
+    assert guarded_success(True, 0.6000001, 0.6) is False
+
+
+def test_guarded_success_vectorises_without_dropping_rows():
+    from src.eval.guard import guarded_success
+    import numpy as np
+    hit = np.array([True, True, True, False, None], dtype=object)
+    exc = np.array([0.1, 5.0, np.nan, 0.1, 0.1])
+    got = guarded_success(hit, exc, 0.6)
+    assert list(got) == [True, False, False, False, False]
+    assert len(got) == 5, "rows are never dropped from the denominator"
+
+
+# ============ token id <-> MIDI pitch, pinned (unprotected until 2026-08-24) ==
+# The 2026-08-24 review mutated `pitches.append(i + 1)` to `pitches.append(i)` in
+# the scorer -- a silent semitone shift of every key estimate -- and all 294 tests
+# passed. The mapping is a vocabulary fact, so it can be pinned exactly.
+
+def test_pitch_token_maps_to_the_midi_number_in_its_name():
+    from src.tokenizer.vocab import VOCAB
+    for midi in (21, 60, 108):
+        assert VOCAB[f"PITCH_{midi}"] + 1 == midi, \
+            "the scorer's id+1 convention no longer matches the vocabulary"
+
+
+def test_scorer_decodes_pitch_tokens_to_the_named_midi_numbers():
+    from src.intervene.sweep import pitches_and_bars
+    from src.tokenizer.vocab import VOCAB
+    want = [21, 60, 108]
+    ids = [VOCAB[f"PITCH_{p}"] for p in want]
+    got, _ = pitches_and_bars(ids)
+    assert got == want, f"pitch decode drifted: {got} != {want}"
+
+
+def test_scorer_ignores_non_pitch_tokens_and_counts_bars():
+    from src.intervene.sweep import pitches_and_bars
+    from src.tokenizer.vocab import VOCAB
+    ids = [VOCAB["BAR"], VOCAB["PITCH_60"], VOCAB["POS_1"], VOCAB["BAR"],
+           VOCAB["PITCH_62"]]
+    got, bars = pitches_and_bars(ids)
+    assert got == [60, 62] and bars == 2
+
+
+def test_figure_peak_layers_match_the_data_when_artifacts_exist():
+    """The emergence figure caches one peak layer per model. A cached analysis choice
+    is indistinguishable from a cherry-picked one once the data moves, so it must be
+    checked. Verified 2026-08-24: all eight probing dirs agree with the cache."""
+    import json
+    from pathlib import Path
+    from src.analysis.figures import SIZE_PEAK_LAYER, peak_layer_from_data
+    root = Path(__file__).resolve().parents[1] / "results/probing"
+    if not root.exists():
+        return                                   # artifacts are not in the repo
+    checked = 0
+    for model_dir in sorted(root.iterdir()):
+        key = model_dir.name.rsplit("_s", 1)[0] if model_dir.name.startswith("size-") \
+            else model_dir.name
+        cached = SIZE_PEAK_LAYER.get(key) or SIZE_PEAK_LAYER.get(model_dir.name)
+        if cached is None:
+            continue
+        got = peak_layer_from_data(root, model_dir.name)
+        if got is None:
+            continue
+        assert got == cached, f"{model_dir.name}: cached L{cached}, data argmax L{got}"
+        checked += 1
+    assert checked >= 4, f"expected to check several models, checked {checked}"

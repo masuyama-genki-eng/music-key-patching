@@ -34,6 +34,7 @@ import yaml
 
 from src.analysis.stats import holm_correct, wilcoxon_rank_biserial
 from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
+from src.eval.guard import guarded_success
 from src.eval.keyest import estimate_key, in_key_ratio
 from src.intervene.public_model_edit import (HookSubspaceEditor,
                                              orthonormal_rows,
@@ -402,7 +403,7 @@ def main() -> None:
                 r["cond"] = cond
                 r["nll_excess"] = float(n - clean_nll[r["prompt"]])
                 r["guard_pass"] = bool(r["nll_excess"] <= delta)
-                r["success"] = bool(r["tkr"]) and r["guard_pass"]
+                r["success"] = bool(guarded_success(r["tkr"], r["nll_excess"], delta))
                 r.pop("cont", None)               # not needed past this point
             out_rows.extend(rows)
             log.info("  %-4s T%-2d  TKR %.3f  guard %3.0f%%  guarded %.3f", cond, tgt,

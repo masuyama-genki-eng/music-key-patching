@@ -19,6 +19,8 @@ sys.path.insert(0, str(REPO))
 
 import pandas as pd
 
+from src.eval.guard import guarded_success
+
 
 def load(rel: str):
     p = REPO / rel
@@ -94,7 +96,8 @@ def main() -> None:
         row = {}
         for cond in sorted(d.cond.unique()):
             c = d[d.cond == cond]
-            succ = (c.est_key == c.target_key) & (c.mref_ppl_excess <= guard["delta_ppl"])
+            succ = guarded_success(c.est_key == c.target_key, c.mref_ppl_excess,
+                                   guard["delta_ppl"])
             row[cond] = r3(float(succ.mean()))
             row[f"{cond}_unguarded"] = r3(float((c.est_key == c.target_key).mean()))
         row["n"] = int(len(d[d.cond == "edit"]))
@@ -249,7 +252,7 @@ def main() -> None:
             e = d[d.cond != "clean"] if "cond" in d.columns else d
             ok = (e.est_key == e.target_key)
             if "mref_ppl_excess" in e.columns:
-                ok = ok & (e.mref_ppl_excess <= g["delta_ppl"])
+                ok = guarded_success(ok, e.mref_ppl_excess, g["delta_ppl"])
             hits[(m.group(1), int(m.group(2)))].extend(ok.tolist())
         marg = {}
         for L in range(8):
@@ -374,7 +377,8 @@ def main() -> None:
         extra["ikr_target_edit"] = r3(float(e.ikr_target.mean()))
         extra["ikr_src_edit"] = r3(float(e.ikr_src.mean()))
         if len(ident):
-            ok = (ident.est_key == ident.target_key) & (ident.mref_ppl_excess <= g["delta_ppl"])
+            ok = guarded_success(ident.est_key == ident.target_key,
+                                 ident.mref_ppl_excess, g["delta_ppl"])
             extra["identity_target_sr"] = r3(float(ok.mean()))
     if extra:
         out["confirmatory_extras"] = extra

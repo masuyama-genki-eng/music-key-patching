@@ -51,13 +51,22 @@ def continuation_key(pitches: list[int]) -> int | None:
 
 
 def tkr(est_keys: list[int | None], target: int) -> dict:
+    """Target-key rate. An unestimable key counts as a FAILURE, not a dropped row.
+
+    Until 2026-08-24 this divided by the number of ESTIMABLE rows, which inflates
+    the rate whenever a continuation is too short to estimate. Every live scorer
+    already counted those as failures (`fillna(False)`), so no reported number came
+    through here -- the function had no callers at all -- but the wrong convention
+    sitting in the metrics module was one import away from being used. See
+    src.eval.guard.guarded_success for the same rule on guarded rates."""
+    if not est_keys:
+        return {"strict": 0.0, "tolerant": 0.0, "n_valid": 0, "n": 0}
     valid = [k for k in est_keys if k is not None]
-    if not valid:
-        return {"strict": 0.0, "tolerant": 0.0, "n_valid": 0}
     return {
-        "strict": float(np.mean([k == target for k in valid])),
-        "tolerant": float(np.mean([closely_related(k, target) for k in valid])),
-        "n_valid": len(valid),
+        "strict": float(np.mean([k == target for k in est_keys])),
+        "tolerant": float(np.mean([k is not None and closely_related(k, target)
+                                   for k in est_keys])),
+        "n_valid": len(valid), "n": len(est_keys),
     }
 
 

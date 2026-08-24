@@ -505,8 +505,37 @@ SIZE_MODELS = [                       # (label, params_M, probing-dir prefixes)
 ]
 
 
+# Hand-transcribed peak layers. VERIFIED 2026-08-24 against the argmax of each
+# model's own DR-H1 margin (all eight probing dirs agree exactly), so these are a
+# cache of the data and not a choice made over it -- but they are still a cache, so
+# peak_layer_from_data() below is the authority when the artifacts are present.
 SIZE_PEAK_LAYER = {"size-L2d128": 1, "size-L4d256": 2, "R-Aug_s0": 4, "R-Aug_s1": 2,
                    "size-L12d768": 3}
+
+
+def peak_layer_from_data(probing_root: Path, model: str) -> int | None:
+    """argmax of the pre-registered DR-H1 margin for one model, or None if unrun.
+
+    The figure used only the hardcoded table until 2026-08-24. A hardcoded analysis
+    choice is indistinguishable from a cherry-picked one once the data moves, so the
+    table is now checked against this and a disagreement is a hard error."""
+    import json
+    f = probing_root / model / "verdict_DR-H1.json"
+    if not f.exists():
+        return None
+    v = json.loads(f.read_text())
+    return int(max(v["layers"], key=lambda r: r["stat"])["layer"])
+
+
+def peak_layer(probing_root: Path, model: str, key: str) -> int | None:
+    """The peak layer to plot: from the data when available, else the cached table."""
+    got = peak_layer_from_data(probing_root, model)
+    cached = SIZE_PEAK_LAYER.get(key)
+    if got is not None and cached is not None and got != cached:
+        raise AssertionError(
+            f"{model}: cached peak layer L{cached} disagrees with the data's argmax "
+            f"L{got}. Update SIZE_PEAK_LAYER deliberately, never plot the stale one.")
+    return got if got is not None else cached
 
 
 def fig_emergence(probing_root: Path, models_root: Path, sweep_root: Path,

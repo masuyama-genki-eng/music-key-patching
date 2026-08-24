@@ -29,6 +29,7 @@ import torch
 import yaml
 
 from src.analysis.stats import bca_ci, holm_correct, wilcoxon_rank_biserial
+from src.eval.guard import guarded_success
 from src.intervene import sweep as SW
 from src.intervene.edit import SubspaceEditor
 from src.intervene.sweep import Prompt
@@ -169,7 +170,7 @@ def main() -> None:
             all_rows.extend(rows)
     df = pd.DataFrame(all_rows)
     df["guard_pass"] = df["mref_ppl_excess"] <= delta
-    df["succ"] = df["tkr_strict"].fillna(False).astype(bool) & df["guard_pass"]
+    df["succ"] = guarded_success(df["tkr_strict"], df["mref_ppl_excess"], delta)
     df["identity"] = df["target_key"] == df["src_key"]
     df.to_parquet(outdir / "parts" / f"confirmatory_L{args.layer}.parquet")
 

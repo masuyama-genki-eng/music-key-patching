@@ -24,6 +24,7 @@ import pandas as pd
 import torch
 import yaml
 
+from src.eval.guard import guarded_success
 from src.intervene import sweep as SW
 from src.intervene.subspaces import mu_targets_from_means, v_probe
 from src.probing.extract import load_model
@@ -58,7 +59,7 @@ def main() -> None:
         # identity targets are excluded, as in the frozen verdict (n = 1100): the
         # first version forgot this and "failed" against 0.38/0.08/0.094
         d = df[(df.cond == cond) & (df.src_key != df.target_key)]
-        succ = (d.est_key == d.target_key) & (d.mref_ppl_excess <= guard)
+        succ = guarded_success(d.est_key == d.target_key, d.mref_ppl_excess, guard)
         got[cond] = round(float(succ.mean()), 3)
     out["headline"] = got
     ok1 = got == EXPECT

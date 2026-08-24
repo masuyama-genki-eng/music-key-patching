@@ -24,6 +24,38 @@ log = logging.getLogger("guard")
 PAD = VOCAB["PAD"]
 
 
+def guarded_success(key_hit, ppl_excess, delta_ppl):
+    """The study's success criterion, in one place: the continuation must land in the
+    target key AND stay inside the quality budget.
+
+    Written as a function because the expression was duplicated across a dozen
+    scripts, and a code review on 2026-08-24 showed the duplication was unprotected:
+    deleting the guard term from the confirmatory scorer (which would raise the
+    reported headline from 0.355 to 0.410) passed all 294 tests. The semantics pinned
+    here, all three of which matter:
+
+    * A missing key estimate is a FAILURE, never a dropped row. Too few notes to
+      estimate a key means the edit did not produce music in the target key; removing
+      such rows from the denominator would inflate every rate.
+    * A missing or NaN excess is a FAILURE. It arises when the guard cannot be
+      computed (an empty continuation), and treating "not measurable" as "passed"
+      would let the least musical outputs through.
+    * The budget is inclusive: excess EQUAL to delta passes, matching the frozen
+      rule "<= delta_ppl" in SPEC 4.3.
+
+    Accepts scalars or numpy/pandas arrays; returns the same shape as bool.
+    """
+    import numpy as _np
+    import pandas as _pd
+
+    hit = _pd.Series(key_hit) if _np.ndim(key_hit) else _pd.Series([key_hit])
+    exc = _pd.Series(ppl_excess) if _np.ndim(ppl_excess) else _pd.Series([ppl_excess])
+    hit = hit.fillna(False).astype(bool)
+    ok = exc.astype(float).le(float(delta_ppl))       # NaN <= x is False
+    out = (hit.to_numpy() & ok.to_numpy())
+    return out if _np.ndim(key_hit) else bool(out[0])
+
+
 @torch.no_grad()
 def _nll_pass(model, ids: torch.Tensor, device: str) -> torch.Tensor:
     x, y = ids[:, :-1], ids[:, 1:]

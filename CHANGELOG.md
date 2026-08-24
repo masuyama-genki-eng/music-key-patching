@@ -1422,3 +1422,55 @@ training, yet the manuscript says all six pass. Re-running over every finished
 checkpoint into `results/quality_gate_all/` -- a NEW directory, since the 2026-08
 artifact is ledgered. Its frozen thresholds reproduce exactly (top-1 $\geq 0.6505$
 from a constant-predictor rate of $0.4337$; generated IKR $\geq 0.6078$).
+
+## 2026-08-24 (2) — code review for fabrication and error
+
+Audited by looking for fabrication-shaped code first, then by MUTATION: break
+something on purpose and see whether the suite notices. Mutation is the only test of
+a test suite, and it found the real problem.
+
+**No fabrication.** Every multi-decimal literal in `src/` and `experiments/` is a
+docstring record, a plot annotation, a config value, a regression-gate anchor
+compared against a ledgered number, or a parameter count. The four parameter counts
+in the emergence figure were checked against `results/models/param_counts.json`
+(494080 -> 0.494M, 3354112 -> 3.354M, 25609216 -> 25.61M, 85639680 -> 85.64M): all
+correct. The five cached peak layers were checked against the argmax of each model's
+own DR-H1 margin: all eight probing directories agree exactly, so the cache is a
+cache and not a choice made over the data.
+
+**Verified sound.** No bare `except`. Every PASS/FAIL gate has a real condition and
+exits non-zero. `assert list(e["prompt_idx"]) == list(k["prompt_idx"])` makes the
+paired Wilcoxon genuinely paired in both the confirmatory and public paths. Identity
+targets are excluded from the primary statistics (`~df["identity"]`), giving the
+1,100 = 100 x 11 the paper states. The guard reference mismatch is a hard exit, not a
+fallback. `from_position` is re-set by the generation loop every step to the prompt
+length in window coordinates, so the paper's "no prompt position" is true and the
+sliding window is handled. The token-id -> MIDI mapping (`id + 1`) matches the
+vocabulary exactly (PITCH_21 = 20). Probe and confirmatory splits are disjoint by
+construction (probe `n_seqs`=6000 takes rows 0-5999; the holdout starts at 6000), and
+`split_by_sequence` puts each sequence wholly in one part, so no position leaks
+within a piece. M-REF's data is disjoint by CONTENT, not just by filename: 200,000
+train and 200,000 ref_train sequences with zero overlap, and test x ref_* zero too.
+
+**The real finding: the suite protected the library and not the criteria.** Two
+mutations that change reported numbers passed all 294 tests.
+
+1. `pitches.append(i + 1)` -> `pitches.append(i)` in the scorer: a silent semitone
+   shift of every key estimate. Not caught.
+2. Deleting the guard term from the confirmatory success criterion, which would raise
+   the reported headline from 0.355 to 0.410. Not caught.
+
+The criterion was duplicated across a dozen sites, so there was nothing to protect.
+It now lives in `src.eval.guard.guarded_success`, pinning three things that matter: a
+missing key estimate is a failure (never a dropped row), an uncomputable guard is a
+failure (never a pass), and the budget is inclusive per SPEC 4.3. The four
+reported-number paths call it. The refactor is PROVEN behaviour-preserving, not
+assumed: `paper_numbers.json` is byte-identical before and after, and the regression
+gate recomputes the frozen headline through the new code as 0.355 / 0.039 / 0.056.
+Re-running all three mutations now fails 2, 4 and 1 tests respectively.
+
+**One latent trap removed.** `metrics.tkr` divided by the ESTIMABLE rows, which
+inflates a rate whenever a continuation is too short to estimate. It had no callers,
+so no reported number came through it, but the wrong convention was one import away
+from being used, and a test was pinning it. Corrected to match every live scorer, and
+that test rewritten with the reason rather than silently re-baselined.
