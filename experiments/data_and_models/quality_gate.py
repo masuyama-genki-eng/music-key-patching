@@ -140,7 +140,11 @@ def main() -> None:
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     gen_cfg = yaml.safe_load(Path(args.gen_config).read_text())
+    # resolve: a relative --outdir would break the ledger's repo-relative path
+    # (found 2026-08-24, after the whole 13-model gate had already run)
     outdir = Path(args.outdir)
+    if not outdir.is_absolute():
+        outdir = REPO / outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
     ref = val_reference(Path(args.val), args.n_val_ref)

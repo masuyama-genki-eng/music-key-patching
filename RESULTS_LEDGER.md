@@ -1216,3 +1216,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep_pop909/remi-lmd-remi/stage2_eval.json`
 - note: L5 chosen on disjoint prompts; guarded TKR 0.393 vs K1 0.061 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-large-800k
 
+## 2026-08-24T12:50:21+09:00 — P2 quality gate — RE-RUN over every finished checkpoint (SPEC §2.1)
+- git: `4c304b35bc5500642d32e9610c0f4bc40bd2fb23+DIRTY`
+- config_hash: `c23fdcda551754b24a4403b60f931b5039c50a39698a8cbf8012942a713458fa`
+- seeds: [0]
+- artifacts: `results/quality_gate_all/quality_gate.json`
+- note: all_pass=True; 13 checkpoints. The 2026-08 artifact gated only 4 of the 6 main models (it ran before the seed-2 trainings finished) while the manuscript claims all six; the six now measure val top-1 0.8784-0.8808, i.e. the quoted 0.878-0.881, and all pass. Frozen thresholds reproduce exactly (top-1 >= 0.6505 from constant-predictor 0.4337; gen IKR >= 0.6078). Written to a NEW directory; the ledgered 2026-08 artifact is untouched.
+

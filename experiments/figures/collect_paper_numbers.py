@@ -262,6 +262,39 @@ def main() -> None:
                 "margin_layers_0_1": [f"{min(shallow):.2f}", f"{max(shallow):.2f}"],
                 "margin_layers_2_up": [f"{min(deep):.2f}", f"{max(deep):.2f}"],
             }
+    # the DIRECT (unbalanced) Bach cells. The manuscript quotes these to justify why
+    # the reported cells are balanced -- Bach has no F#maj and no D#min, so a direct
+    # estimate leaves those targets as zero vectors -- so they must be traceable too.
+    direct = {}
+    for m in ("music-small-800k", "music-medium-800k"):
+        v = load(f"results/mwild_sweep/{m}/stage2_eval.json")
+        if v is None:
+            direct[m] = "MISSING"
+            continue
+        zero = [r["target"] for r in v.get("per_target", []) if r.get("sig") is False]
+        direct[m] = {"sr": r3(v["tkr_edit_guarded"]), "k1": r3(v["tkr_k1_guarded"]),
+                     "n_sig": v["n_sig_targets"], "non_sig_targets": zero,
+                     "layer": v["layer"]}
+    if direct:
+        out["bach_direct_estimation"] = direct
+
+    # the seed replication the manuscript rests the probe claim on ("the other five
+    # check the probe result"). Qualitative in the text, so recorded here as the
+    # per-model numbers that make it checkable.
+    rep = {}
+    for m in [f"R-{r}_s{i}" for r in ("Aug", "NoAug") for i in range(3)]:
+        v = load(f"results/probing/{m}/verdict_DR-H1.json")
+        if v is None:
+            rep[m] = "MISSING"
+            continue
+        best = max(v["layers"], key=lambda r: r["stat"])
+        rep[m] = {"best_margin": f"{best['stat']:+.3f}", "best_layer": best["layer"],
+                  "ci": [r3(best["ci_lo"]), r3(best["ci_hi"])],
+                  "supported": any(r["excludes_zero"] and r["stat"] > 0
+                                   for r in v["layers"])}
+    if rep:
+        out["probe_seed_replication"] = rep
+
     # experiment D: the note counter given wider windows and the probe's own capacity
     ext = load("results/probing/R-Aug_s0/c3_window_ext.json")
     if ext:

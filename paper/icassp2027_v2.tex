@@ -429,6 +429,8 @@ Pitch-only edits pass condition~(ii) more often ($98\%$ against $84\%$) only bec
 % すなわち可読性は因果的使用の必要条件でも十分条件でもない．
 % 十字形の設計を本文で先に一文で述べる（表を見る前に読者が空欄の意味を理解できるように）．
 The grid is a cross, not a product: we fix the model and change the corpus, then fix the corpus and change the tokenization, because a Bach cell for the pop-trained checkpoints would confound tokenization with distribution shift.
+% 開示：Bach の平均は転調で釣り合わせた再推定から作る（自然コーパスに F#maj と D#min が1曲も無く、直接推定ではその2つが零ベクトルになるため）．事前登録済みの手順．
+The targets $\mu_\kappa$ are estimated on a key-balanced sample, built by transposing each piece through all twelve keys and splitting by original piece so transpositions never straddle --- pre-registered for every cell, so a corpus key prior cannot masquerade as a representation, and on Bach forced: the $300$ chorales contain no F$\sharp$ major and no D$\sharp$ minor, so a direct estimate leaves those targets as zero vectors and F$\sharp$ major then scores exactly $0$ ($11/12$ keys, edit $0.365$ not $0.479$).
 In the primary cell (Table~\ref{tab:wild}) the probe beats the note-counting baselines by $+0.196$ $[0.132,0.260]$ and the edit reaches $7.9\times$ the random baseline, with $99.7\%$ of continuations meeting condition~(ii) and the notes crossing over ($0.890$ against $0.753$); doubling or sextupling the model changes none of it (margins $+0.196/+0.213/+0.203$, all CIs overlapping; the $24$-layer edit at $0.557$), and the acting layer sits above the best-reading layer in every case.
 Crossing genre and tokenization, reading and using come apart in BOTH directions.
 The Anticipatory model still reads the key on pop ($+0.132$) yet its edit fails the pre-registered bar ($0.135$ against $0.057$; one key of twelve).
