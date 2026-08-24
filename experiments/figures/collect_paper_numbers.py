@@ -131,9 +131,12 @@ def main() -> None:
                                  "results/mwild_sweep/music-medium-800k/stage2_eval_balanced.json"),
         ("AMT large", "bach"): ("results/mwild/music-large-800k/mwild_probe.json", None),
         ("AMT small", "pop"): ("results/mwild_pop909/music-small-800k/mwild_probe.json",
-                               "results/mwild_sweep_pop909/music-small-800k/stage2_eval.json"),
-        ("AMT small balanced", "pop"): (None,
-                                        "results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json"),
+                               "results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json"),
+        # the DIRECT pop estimate, kept because the manuscript's limitations discuss the
+        # contrast: it read as a failure (0.135, 1/12) until the pre-registered balanced
+        # re-estimation landed at 0.212 with 9/12, against its own recorded prediction
+        ("AMT small DIRECT-estimate", "pop"): (None,
+                                        "results/mwild_sweep_pop909/music-small-800k/stage2_eval.json"),
         ("MMT", "pop"): ("results/mwild_pop909/mmt-lmd-ape/mwild_probe.json",
                          "results/mwild_sweep_pop909/mmt-lmd-ape/stage2_eval.json"),
         ("REMI", "pop"): ("results/mwild_pop909/remi-lmd-remi/mwild_probe.json",
@@ -262,6 +265,53 @@ def main() -> None:
                 "margin_layers_0_1": [f"{min(shallow):.2f}", f"{max(shallow):.2f}"],
                 "margin_layers_2_up": [f"{min(deep):.2f}", f"{max(deep):.2f}"],
             }
+    # Marginal misses in the balanced pop cell, and the continuation-length sensitivity
+    # of the REMI cell. Both are quoted in the manuscript, so both are recomputed here
+    # rather than left as one-off analyses.
+    bal = load("results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json")
+    if bal:
+        miss = [r["p_holm"] for r in bal["per_target"] if r.get("sig") is False]
+        out["pop_balanced_marginal_misses"] = {
+            "n_missed": len(miss),
+            "p_holm_range": [r3(min(miss)), r3(max(miss))] if miss else "none",
+        }
+    rem = load("results/mwild_sweep_pop909/remi-lmd-remi/stage2_eval.json")
+    if rem:
+        rows = rem["rows"]
+        bands = ((0, 40), (40, 55), (55, 59), (59, 61))
+        band_out, empty = {}, 0
+        for a, b in bands:
+            e = [r for r in rows if r["cond"] == "edit" and a <= r["n_pitches"] < b]
+            k = [r for r in rows if r["cond"] == "k1" and a <= r["n_pitches"] < b]
+            if not e or not k:
+                continue
+            se = sum(bool(r["success"]) for r in e) / len(e)
+            sk = sum(bool(r["success"]) for r in k) / len(k)
+            band_out[f"{a}-{b - 1}"] = {"edit": r3(se), "control": r3(sk),
+                                        "margin": r3(se - sk),
+                                        "n_edit": len(e), "n_control": len(k)}
+        empty = sum(1 for r in rows if r["n_pitches"] == 0)
+        ed = [r["n_pitches"] for r in rows if r["cond"] == "edit"]
+        k1 = [r["n_pitches"] for r in rows if r["cond"] == "k1"]
+        out["remi_length_sensitivity"] = {
+            "margin_by_notes": band_out,
+            "short_rows_edit": r3(sum(1 for n in ed if n < 55) / len(ed)),
+            "short_rows_control": r3(sum(1 for n in k1 if n < 55) / len(k1)),
+            "empty_continuations": empty, "n_rows": len(rows),
+        }
+    # continuation length actually generated, per cell -- the note-matching rule
+    lens = {}
+    for name, rel in (("AMT small / pop", "results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json"),
+                      ("MMT / pop", "results/mwild_sweep_pop909/mmt-lmd-ape/stage2_eval.json"),
+                      ("REMI / pop", "results/mwild_sweep_pop909/remi-lmd-remi/stage2_eval.json")):
+        v = load(rel)
+        if v:
+            ns = sorted(r["n_pitches"] for r in v["rows"] if r["cond"] == "edit")
+            lens[name] = {"median_notes": ns[len(ns) // 2],
+                          "mean_notes": r3(sum(ns) / len(ns))}
+    if lens:
+        out["continuation_notes"] = lens
+
     # the DIRECT (unbalanced) Bach cells. The manuscript quotes these to justify why
     # the reported cells are balanced -- Bach has no F#maj and no D#min, so a direct
     # estimate leaves those targets as zero vectors -- so they must be traceable too.

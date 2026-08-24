@@ -283,3 +283,52 @@ comparison of 0.360 against 0.393 must be read with the length difference attach
 
 Also recorded: 24 of 1440 rows (1.7%) produced an empty continuation, so their guard
 is uncomputable; they count as failures, identically in both conditions.
+
+---
+
+## AMENDMENT 6 — the balanced AMT × POP909 outcome: the prediction was WRONG
+
+The amendment of 2026-08-22 registered this run with its prediction on the record:
+"Bach gained ~+30% relative — if pop gains the same, 0.135 becomes ≈0.17, which
+likely still fails the per-key bar. The run happens either way, and its outcome is
+reported either way." It was queued behind the steering grids and only ran on
+2026-08-24, after every other cell was finished.
+
+**Outcome, held-out final split, L10:**
+
+| | direct | balanced |
+|---|---|---|
+| guarded SR | 0.135 | **0.212** |
+| control K1 | 0.057 | 0.056 |
+| targets significant (Holm) | 1/12 | **9/12** |
+| DR-H3 | not supported | **SUPPORTED** |
+| IKR target / source | 0.758 / 0.886 (no crossing) | **0.832 / 0.820 (crossing)** |
+
+The prediction is falsified in the direction that matters. It predicted ≈0.17 and a
+continued failure; the measurement is 0.212 and a pass, with the in-key shares now
+crossing. The three targets that miss are all marginal (p_holm 0.0508–0.0522).
+
+**What this costs the manuscript.** The claim that reading and using come apart in
+BOTH directions among the public checkpoints does not survive. Its "readable but not
+usable" half WAS this cell, and the cell now passes. So does the sentence written on
+2026-08-23 that "the only probe that beats the note counts belongs to the only edit
+that fails" — there is no longer an edit that fails on pop.
+
+**What survives, and it is not nothing.** The ORDERING is still inverted. On pop the
+one probe that beats the note-counting baselines does so by the largest margin
+(+0.132) and belongs to the WEAKEST edit (0.212, 9/12); the two probes that do not
+beat them (−0.060, −0.022) belong to the strongest edits (0.360 and 0.393, 12/12
+each). Readability still fails to predict causal strength — it just no longer flips a
+pass into a failure. And the "not sufficient" direction is unaffected, because it never
+rested on this cell: it rests on the synthetic model's layers 0–1, where the probe
+already reads the key and the edit beats its control by only 0.03–0.04, and on the
+pitch-position condition.
+
+**Estimation conditions now differ across the pop cells, and this is not equalised.**
+AMT × pop is reported balanced, because that run was registered. MMT and REMI are
+reported direct, because a balanced run was never registered for them, and running one
+NOW — after seeing that balancing lifted AMT by +0.077 — would be choosing an analysis
+by its effect on a number, on a split that is already spent. The direction makes this
+safe for the one claim that depends on it: balancing raised AMT and AMT is still the
+weakest of the three, so the ordering is not an artefact of AMT being handicapped. If
+anything MMT and REMI are the ones understated.
