@@ -230,3 +230,56 @@ the weakest generalization axis in the design, and the ladder's first two rungs
 So Table 2 reports the large probe (+.203, which needs no reference model) and leaves
 the edit blank, with the caption saying which kind of blank it is. The cell belongs to
 the journal version, where a larger reference can be trained or obtained.
+
+---
+
+## AMENDMENT 5 — REMI's continuation length, and what the existing rows say about it
+
+**The deviation.** Part 2 fixes continuation length in NOTES, not generation steps,
+and records `--n-new 80` for MMT because its compound scheme emits one position per
+note against the Anticipatory scheme's three tokens. When the REMI baseline was
+re-admitted (§6b) no equivalent value was declared, and its stage-2 run used the
+shared default of 240 steps. REMI's flat encoding costs 4.40 tokens per note, so the
+three models did not generate the same amount of music:
+
+| model | n_new | continuation notes (median / mean) |
+|---|---|---|
+| AMT small × pop | 240 | 80 / 79.7 |
+| MMT × pop | 80 (declared) | 80 / 78.6 |
+| REMI × pop | 240 (shared default) | **58 / 54.6** |
+
+Note-matching REMI would need `--n-new` ≈ 352. It was NOT re-run: the final split is
+spent, and re-running in the direction that raises a number is the move a
+pre-registration exists to prevent. The deviation is disclosed instead, and tested
+against the rows already on disk.
+
+**Is REMI's 0.393 inflated by its shorter continuations?** No — and the check does
+not depend on re-running anything, because every row records its own note count.
+
+First, shortness is not something the edit causes: the CONTROL condition has MORE
+short rows than the edit condition (13.3% against 10.0% below 55 notes), so it is a
+property of the prompt and the 64-beat window, not a symptom of a disrupted edit.
+
+Second, the statistic that matters is the MARGIN, not the edit rate, because a longer
+continuation also gives the control more chances to land on a key by accident:
+
+| continuation notes | edit | control | margin |
+|---|---|---|---|
+| 0–39 | 0.184 (n=49) | 0.049 (n=61) | +0.134 |
+| 40–54 | 0.348 (n=23) | 0.029 (n=35) | +0.319 |
+| 55–58 | 0.437 (n=487) | 0.063 (n=589) | **+0.375** |
+| 59–60 | 0.329 (n=161) | 0.086 (n=35) | +0.243 |
+
+The margin is SMALLEST where continuations are shortest, so the length shortfall
+depresses REMI's number rather than flattering it.
+
+**What this does not license.** It does not license the claim that REMI would score
+higher at 80 notes. The longest observed bin (59–60 notes, at the encoder's cap) has
+the lower margin of the two large bins and a badly unbalanced control count (n=35),
+and 80 notes is outside the observed range entirely. The defensible statement is the
+narrow one: REMI's number is not an artefact of its shorter continuations. Whether it
+would rise, plateau, or fall at matched length is untested, and the cross-tokenisation
+comparison of 0.360 against 0.393 must be read with the length difference attached.
+
+Also recorded: 24 of 1440 rows (1.7%) produced an empty continuation, so their guard
+is uncomputable; they count as failures, identically in both conditions.

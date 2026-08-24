@@ -495,7 +495,7 @@ We show that the model computes a key and uses it as it generates; we do not cla
 The dormant-pathway controls of Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} were run on our own models, not on the public ones, so the MMT edit result is a behavioral finding whose internal pathway we have not localized.
 Condition~(ii) measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test.
 % 公開モデル検証は「1モデル」から「3サイズ＋2トークン化＋2ジャンル」へ拡張中（TBD セルは実行中）．
-The public-model check spans three checkpoint sizes, two further tokenizations and a second genre; two cells failed (the AMT pop edit, the MMT pop probe) and are reported as such. REMI's $64$-beat range, the tightest of the three, leaves its continuations less room and so bounds the effect size it can show, equally for its edit, clean twin and control.
+The public-model check spans three checkpoint sizes, two further tokenizations and a second genre; two cells failed (the AMT pop edit, the MMT pop probe) and are reported as such. REMI's $64$-beat range, the tightest of the three, leaves its continuations less room, and its flat encoding spends $4.4$ tokens per note, so at the shared step budget it generates $58$ notes where the other two generate $80$; within its own rows the edit-minus-control margin is smallest where continuations are shortest ($+0.134$ below $40$ notes against $+0.375$ at $55$--$58$), so this depresses rather than flatters its number, but whether it would rise at matched length is untested.
 % [SUPPL] 公開モデルでは層を探索段階で選んだままで，新規プロンプトでの確認は行っていない。
 
 \section{Conclusion}

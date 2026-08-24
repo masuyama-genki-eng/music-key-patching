@@ -1230,3 +1230,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/steering/R-Aug_s0/regression.json`
 - note: headline {'edit': 0.355, 'k1': 0.039, 'k1_norm': 0.056}; sham ok; clean conts identical -> PASS
 
+## 2026-08-24T14:28:52+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `cae328d0ed18da01a3a2d89c0a7be1811f791596`
+- config_hash: `ca89a1f8f0742d6fe799f8dcb165decd8625b9c407d2f7c9511c01e686379ce5`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json`
+- note: L10 chosen on disjoint prompts; guarded TKR 0.212 vs K1 0.056 on 60 held-out prompts; DR-H3 supported=True (9/12); guard ref stanford-crfm/music-large-800k
+
