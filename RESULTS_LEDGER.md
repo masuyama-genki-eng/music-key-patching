@@ -1244,3 +1244,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/steering/R-Aug_s0/regression.json`
 - note: headline {'edit': 0.355, 'k1': 0.039, 'k1_norm': 0.056}; sham ok; clean conts identical -> PASS
 
+## 2026-08-24T15:36:02+09:00 — KS estimator cross-validation against music21
+- git: `a1736eb2f20640b964afcb27936ba393ec380c84+DIRTY`
+- config_hash: `4d240f7f4728a2551783684160e93e78981d8b59e4c58978ad976cd4f9cad4ae`
+- seeds: [0]
+- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/ks_cross_validation/ks_xval.json`
+- note: profiles identical; bach: agree 1.0, human ours 0.715 vs m21 0.715; pop909: agree 1.0, human ours 0.4075 vs m21 0.4075
+
+## 2026-08-24T15:37:48+09:00 — KS estimator cross-validation against music21
+- git: `a1736eb2f20640b964afcb27936ba393ec380c84+DIRTY`
+- config_hash: `4d240f7f4728a2551783684160e93e78981d8b59e4c58978ad976cd4f9cad4ae`
+- seeds: [0]
+- artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/ks_cross_validation/ks_xval.json`
+- note: profiles identical; bach: agree 1.0, human ours 0.715 vs m21 0.715; pop909: agree 1.0, human ours 0.4075 vs m21 0.4075
+

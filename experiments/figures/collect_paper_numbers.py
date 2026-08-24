@@ -268,6 +268,17 @@ def main() -> None:
                 "margin_layers_0_1": [f"{min(shallow):.2f}", f"{max(shallow):.2f}"],
                 "margin_layers_2_up": [f"{min(deep):.2f}", f"{max(deep):.2f}"],
             }
+    # the KS estimator's independent validation and its own ceiling
+    xv = load("results/ks_cross_validation/ks_xval.json")
+    if xv:
+        out["ks_cross_validation"] = {
+            "profiles_identical": xv["profiles"],
+            "agreement": {k: v["exact_agreement"] for k, v in xv["corpora"].items()},
+            "n_segments": {k: v["n_segments"] for k, v in xv["corpora"].items()},
+            "ceiling_by_notes": {k: {n: c["exact"] for n, c in v.items()}
+                                 for k, v in xv["estimator_ceiling_by_notes"].items()},
+        }
+
     # Marginal misses in the balanced pop cell, and the continuation-length sensitivity
     # of the REMI cell. Both are quoted in the manuscript, so both are recomputed here
     # rather than left as one-off analyses.

@@ -1474,3 +1474,39 @@ inflates a rate whenever a continuation is too short to estimate. It had no call
 so no reported number came through it, but the wrong convention was one import away
 from being used, and a test was pinning it. Corrected to match every live scorer, and
 that test rewritten with the reason rather than silently re-baselined.
+
+## 2026-08-24 (3) — the KS estimator, validated independently and bounded
+
+CLAUDE.md lists music21 as a dependency "for D-REAL/key sanity", and it was never
+installed, so that check had never run while every reported target-key rate depended
+on our own estimator. Installed and run (`experiments/real_music/ks_cross_validation.py`).
+
+**Validated.** Our Krumhansl-Kessler tables are identical to music21's independent
+transcription of the same 1982 source, major and minor. Given the same pitch content
+with uniform note lengths — so that music21's duration weighting and our unweighted
+counts coincide — the two implementations produce the SAME key on 800 of 800 real
+segments (400 chorale, 400 pop), with no disagreements of any relation. The arithmetic
+is not ours alone any more.
+
+**And bounded, which is the more useful half.** The same run measures how often the
+estimator recovers a key a human annotated, at the note counts our continuations
+actually contain:
+
+| notes | chorales | pop |
+|---|---|---|
+| 8 | 0.398 | 0.243 |
+| 32 | 0.740 | 0.380 |
+| 58 | 0.830 | 0.418 |
+| 80 | 0.853 | 0.540 |
+
+This caps every ABSOLUTE rate we report, and the caps differ by corpus, so a chorale
+cell and a pop cell in Table 2 are read against different ceilings — 0.853 against
+0.540 at 80 notes. It does NOT touch any edit-minus-control margin, because the
+control is estimated the same way, and it does not touch within-corpus comparisons.
+
+Read against them, the reported cells sit at 56% (Bach AMT small, 0.479/0.853), 39%
+(pop AMT small, 0.212/0.540), 67% (pop MMT, 0.360/0.540) and 94% (pop REMI, 0.393
+against 0.418 at its own 58 notes) of what the measurement can show. REMI's number,
+the one its shorter continuations were suspected of flattering, turns out to nearly
+saturate its own ceiling. Both facts are now in the manuscript: the ceiling where the
+estimator is defined, and the cross-corpus caveat in the limitations.
