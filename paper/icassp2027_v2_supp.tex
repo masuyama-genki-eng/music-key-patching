@@ -58,30 +58,42 @@ $64$ pitch tokens and predict the key from the twelve pitch-class counts, by log
 regression and by Krumhansl--Schmuckler. The control task (C1b) permutes the key
 labels per sequence, giving the floor that is subtracted.
 
-At layer $4$ the probe reaches macro-$F_1$ $0.927$ against $0.790$ for the best
-baseline; the control floor is $0.032$, leaving $+0.105$ $[0.091,0.114]$. An untrained
-network of the same shape reaches $0.243$. The raw probe score is flat across layers
-$2$--$6$ ($0.920$--$0.929$).
+The pre-registered baseline peaked at the edge of its window sweep, so it was extended
+with a wider, concatenated window, and the strongest of all of them
+(\texttt{lr\_W16cat512}, $F_1$ $0.824$, against the pre-registered
+\texttt{lr\_W64}'s $0.790$) is what the reported margin is measured against.
 
-\textbf{Experiment D: a stronger baseline.} The pre-registered baseline peaked at the
-edge of its window sweep, so it was extended. The strongest note counter
-(\texttt{lr\_W16cat512}, $F_1$ $0.824$, against the pre-registered \texttt{lr\_W64}'s
-$0.790$) still loses: margin $+0.071$ $[0.056,0.081]$.
+At layer $4$ the probe reaches macro-$F_1$ $0.927$ against that $0.824$; the control
+floor is $0.032$, leaving $+0.071$ $[0.056,0.081]$. Against the pre-registered window
+set alone the same layer gives $+0.105$ $[0.091,0.114]$, so widening the counter's
+history costs margin without overturning the result. An untrained network of the same
+shape reaches $0.243$, and the raw probe score is flat across layers $2$--$6$
+($0.920$--$0.929$) while layer $1$ reaches $0.872$ and layer $0$ only $0.637$.
+
+\textbf{The two layers nearest the input are exceptions.} Against the strongest
+baseline the margin clears zero in layers $2$--$7$ of all six models (smallest lower
+bound $+0.021$), but not at layer $0$ ($-0.231$) or layer $1$ ($+0.012$, CI
+$[-0.00006, +0.021]$). Layer $1$ fails in three of the six models
+(R-Aug\_s0, R-Aug\_s2, R-NoAug\_s1) and clears zero in the other three, so we treat
+it as unresolved rather than positive. Against the pre-registered baseline alone layer
+$1$ would clear zero in all six ($+0.044$ to $+0.062$) --- the layer-$1$ verdict is the
+one conclusion in this paper that depends on which baseline is used.
 
 \textbf{Seed replication.} All six main models support the probe result
-independently, every confidence interval excluding zero:
+independently against the strongest baseline, every confidence interval
+excluding zero (peak layers are the same under either baseline):
 
 \begin{center}\footnotesize
 \begin{tabular}{@{}lccc@{}}
 \toprule
 model & best margin & layer & CI\\
 \midrule
-R-Aug\_s0   & $+0.105$ & $4$ & $[0.091,0.114]$\\
-R-Aug\_s1   & $+0.103$ & $2$ & $[0.089,0.113]$\\
-R-Aug\_s2   & $+0.100$ & $3$ & $[0.086,0.110]$\\
-R-NoAug\_s0 & $+0.100$ & $5$ & $[0.087,0.110]$\\
-R-NoAug\_s1 & $+0.096$ & $2$ & $[0.083,0.106]$\\
-R-NoAug\_s2 & $+0.102$ & $2$ & $[0.088,0.112]$\\
+R-Aug\_s0   & $+0.071$ & $4$ & $[0.056,0.081]$\\
+R-Aug\_s1   & $+0.069$ & $2$ & $[0.054,0.080]$\\
+R-Aug\_s2   & $+0.066$ & $3$ & $[0.050,0.077]$\\
+R-NoAug\_s0 & $+0.066$ & $5$ & $[0.050,0.077]$\\
+R-NoAug\_s1 & $+0.062$ & $2$ & $[0.047,0.072]$\\
+R-NoAug\_s2 & $+0.068$ & $2$ & $[0.052,0.079]$\\
 \bottomrule
 \end{tabular}
 \end{center}

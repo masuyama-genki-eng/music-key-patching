@@ -235,6 +235,10 @@ def main() -> None:
             "corrected_margin_ci": [r3(m4["ci_lo"]), r3(m4["ci_hi"])],
             "untrained_c2_L4": r3(L["4"]["c2_untrained"]["macro_f1_24"]),
             "raw_probe_flat_L2_L6": [r3(min(flat)), r3(max(flat))],
+            # per-layer corrected margins: the manuscript quotes layer 0 as the one
+            # layer whose CI does not clear zero, so that value must be traceable too
+            "corrected_margin_per_layer": {str(r["layer"]): f"{r['stat']:+.3f}"
+                                           for r in vd["layers"]},
         }
     # per-layer edit-minus-control margins, recomputed from the sweep parts so the
     # "readable before usable" claim is not transcribed from a log line
@@ -364,6 +368,36 @@ def main() -> None:
                                    for r in v["layers"])}
     if rep:
         out["probe_seed_replication"] = rep
+
+    # basis-B (strongest baseline) per-layer margins and the layer-1 verdict, which the
+    # manuscript now reports as the one conclusion that depends on the baseline choice
+    extb = {}
+    for m in [f"R-{r}_s{i}" for r in ("Aug", "NoAug") for i in range(3)]:
+        v = load(f"results/probing/{m}/c3_window_ext.json")
+        if v is None:
+            continue
+        L = {r["layer"]: r for r in v["verdict"]["layers"]}
+        deep = [L[i] for i in range(2, 8) if i in L]
+        best = max(v["verdict"]["layers"], key=lambda r: r["stat"])
+        extb[m] = {
+            "best_margin": f"{best['stat']:+.3f}", "best_layer": best["layer"],
+            "best_ci": [r3(best["ci_lo"]), r3(best["ci_hi"])],
+            "L0": f"{L[0]['stat']:+.3f}",
+            "L1": f"{L[1]['stat']:+.3f}",
+            "L1_ci": [f"{L[1]['ci_lo']:+.5f}", r3(L[1]["ci_hi"])],
+            "L1_excludes_zero": L[1]["excludes_zero"],
+            "layers_2_7_all_exclude_zero": all(r["excludes_zero"] for r in deep),
+            "layers_2_7_min_ci_lo": r3(min(r["ci_lo"] for r in deep)),
+        }
+    if extb:
+        out["probing_basisB_per_model"] = extb
+        lo = [v["L1"] for v in extb.values() if not v["L1_excludes_zero"]]
+        out["basisB_layer1_fails_in"] = len(lo)
+    pr0 = load("results/probing/R-Aug_s0/probe_report.json")
+    if pr0:
+        out.setdefault("probing_R-Aug_s0", {})["raw_probe_L0_L1"] = [
+            r3(pr0["layers"]["0"]["probe"]["macro_f1_24"]),
+            r3(pr0["layers"]["1"]["probe"]["macro_f1_24"])]
 
     # experiment D: the note counter given wider windows and the probe's own capacity
     ext = load("results/probing/R-Aug_s0/c3_window_ext.json")
