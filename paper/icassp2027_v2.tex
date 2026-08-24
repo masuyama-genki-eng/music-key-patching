@@ -425,14 +425,14 @@ Pitch-only edits pass condition~(ii) more often ($98\%$ against $84\%$) only bec
 % 主セル（AMT×バッハ）：プローブ優位 +0.196、編集はランダムの 7.9 倍．サイズ軸（2倍・6倍）では何も変わらない．
 % ジャンル軸とトークン化軸では読み取りと使用が「二重に」解離する：
 %  AMT×pop：読める（+0.132）が編集は事前登録基準で不成立（0.135 対 0.057、1/12）．
-%  MMT×pop：プローブは音符数えに負ける（−0.061）のに、同じ部分空間の編集が 12/12 で成立（0.360 対 0.064、IKR 交差 0.961/0.660）．
+%  MMT×pop：プローブは音符数えに負ける（−0.060）のに、同じ部分空間の編集が 12/12 で成立（0.360 対 0.064、IKR 交差 0.961/0.660）．
 % すなわち可読性は因果的使用の必要条件でも十分条件でもない．
 % 十字形の設計を本文で先に一文で述べる（表を見る前に読者が空欄の意味を理解できるように）．
 The grid is a cross, not a product: we fix the model and change the corpus, then fix the corpus and change the tokenization, because a Bach cell for the pop-trained checkpoints would confound tokenization with distribution shift.
 In the primary cell (Table~\ref{tab:wild}) the probe beats the note-counting baselines by $+0.196$ $[0.132,0.260]$ and the edit reaches $7.9\times$ the random baseline, with $99.7\%$ of continuations meeting condition~(ii) and the notes crossing over ($0.890$ against $0.753$); doubling or sextupling the model changes none of it (margins $+0.196/+0.213/+0.203$, all CIs overlapping; the $24$-layer edit at $0.557$), and the acting layer sits above the best-reading layer in every case.
 Crossing genre and tokenization, reading and using come apart in BOTH directions.
 The Anticipatory model still reads the key on pop ($+0.132$) yet its edit fails the pre-registered bar ($0.135$ against $0.057$; one key of twelve).
-MMT's probe LOSES to the note counts on the same corpus ($-0.061$ $[-0.13,-0.003]$), yet editing the same probe-derived subspace moves its music decisively: $0.360$ against $0.064$, all $12$ keys, with the in-key shares crossing ($0.961$ against $0.660$).
+MMT's probe LOSES to the note counts on the same corpus ($-0.060$ $[-0.130,-0.003]$), yet editing the same probe-derived subspace moves its music decisively: $0.360$ against $0.064$, all $12$ keys, with the in-key shares crossing ($0.961$ against $0.660$).
 % 可読性は因果的使用の必要条件でも十分条件でもない．ここから出るのは「プローブでは決着しない」（十分性の主張）であり，
 % 「上書きだけが唯一の手段」ではない．上書きの固有の強みは特定の値を「設定」できることにある．
 Readability is therefore neither necessary nor sufficient for causal use: a probe cannot settle the question either way, while the overwrite settles it --- and, unlike ablating or nudging, it is the test that can \emph{set} a specific value.
@@ -442,7 +442,7 @@ Readability is therefore neither necessary nor sufficient for causal use: a prob
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; cells without a marker separate all $12$ target keys after Holm correction. $\dagger$ = pre-registered failure (AMT's pop edit reaches $1/12$ keys; MMT's pop probe loses to the note counts, CI $[-0.13,-0.003]$); $\ddagger$ = weaker, a tie, not a loss (REMI's probe CI $[-0.10,+0.04]$ contains zero). All checkpoints were trained by their authors on Lakh MIDI; none saw our data. Most dashes are deliberate --- the design varies one thing at a time, and a Bach cell for MMT or REMI would confound tokenization with distribution shift. AMT large's edit is the exception: the guard needs a reference other than the edited model, no checkpoint in the family is larger, and large is itself the reference scoring the pop edits, so that edit waits for a larger reference while its probe, needing none, is reported.}
+\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; cells without a marker separate all $12$ target keys after Holm correction. $\dagger$ = pre-registered failure (AMT's pop edit reaches $1/12$ keys; MMT's pop probe loses to the note counts, CI $[-0.130,-0.003]$); $\ddagger$ = weaker, a tie, not a loss (REMI's probe CI $[-0.10,+0.04]$ contains zero). All checkpoints were trained by their authors on Lakh MIDI; none saw our data. Most dashes are deliberate --- the design varies one thing at a time, and a Bach cell for MMT or REMI would confound tokenization with distribution shift. AMT large's edit is the exception: the guard needs a reference other than the edited model, no checkpoint in the family is larger, and large is itself the reference scoring the pop edits, so that edit waits for a larger reference while its probe, needing none, is reported.}
 \label{tab:wild}
 \begin{tabularx}{\columnwidth}{@{}Xllll@{}}
 \toprule
@@ -453,7 +453,7 @@ Model & probe & edit & probe & edit\\
 AMT small (12L) & $+.196$ & $.479$ vs $.061$ & $+.132$ & $.135$ vs $.057^{\dagger}$\\
 AMT medium (24L) & $+.213$ & $.557$ vs $.057$ & --- & ---\\
 AMT large (36L) & $+.203$ & --- & --- & ---\\
-MMT (compound) & --- & --- & $-.061^{\dagger}$ & $.360$ vs $.064$\\
+MMT (compound) & --- & --- & $-.060^{\dagger}$ & $.360$ vs $.064$\\
 REMI repr. & --- & --- & $-.022^{\ddagger}$ & $.393$ vs $.061$\\
 \bottomrule
 \end{tabularx}
@@ -468,7 +468,7 @@ REMI repr. & --- & --- & $-.022^{\ddagger}$ & $.393$ vs $.061$\\
 The reading/acting split (Sec.~\ref{sec:h5}) bears on how steering directions are chosen: music steering~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026} selects them by how well an attribute decodes, and our pitch-position condition shows that criterion picking a site the model does not use --- the gap language models also report~\cite{wu2025axbench,arad2025selecting}.
 A direction is therefore better validated by writing to it than by reading from it, and we expect the same gap for other attributes recovered from music activations.
 % 公開3本で順序が反転する：表層を超える唯一のモデルが，編集の効かない唯一のモデル．
-The three public checkpoints put that split on a second axis: on one corpus the only probe that beats the note counts (AMT, $+.132$) belongs to the only edit that fails ($.135$, $1/12$ keys), while the two that do not ($-.061$, $-.022$) reach $.360$ and $.393$ with all twelve keys separating. Three checkpoints are no trend and their tokenizations differ too, so we claim no law --- only that the inversion recurs across models as it does across layers and positions.
+The three public checkpoints put that split on a second axis: on one corpus the only probe that beats the note counts (AMT, $+.132$) belongs to the only edit that fails ($.135$, $1/12$ keys), while the two that do not ($-.060$, $-.022$) reach $.360$ and $.393$ with all twelve keys separating. Three checkpoints are no trend and their tokenizations differ too, so we claim no law --- only that the inversion recurs across models as it does across layers and positions.
 % 追加：同一パイプライン上での install 対 steering の直接比較（事前登録済み・実行中）。
 % 加算は部分空間内の旧調成分 P_V h を保持するので（P_V h' = P_V h + δu が解析的に成り立つ）、
 % 置換との差は「旧成分を消すか残すか」だけに縮まる．結果は表1の追加行（TBD）に入る．

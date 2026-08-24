@@ -1389,3 +1389,36 @@ flipped a sampling near-tie at token 10, while the clean path stayed
 token-identical on 100/100 — proof the base stack did not drift. The criterion is
 now what the no-op property supports: sham deterministic, at most 1/100 prompts
 differing, count recorded. Adjusted before any steering number existed.
+
+## 2026-08-24 — a misrounding, and the coverage gap that let it through
+
+`collect_paper_numbers.py` exists because this project has already propagated a
+misrounding once. It had a second one: MMT's probe margin is $-0.06048$, which is
+$-0.060$ to three places, and the manuscript printed $-.061$ in three places (table,
+result sentence, discussion) plus a working comment. Corrected, and its CI is now
+printed at matching precision ($[-0.130,-0.003]$, was $[-0.13,-0.003]$).
+
+The reason it survived is worth recording: the collector claimed to recompute "every
+number the manuscript quotes" and in fact reached 50 of the 68 decimals the .tex
+writes in math mode. The 18 it missed were the MAIN experiment's -- probe $F_1$, the
+control floor, the untrained network, the transposition ceiling, the identity install,
+the next-pitch log ratio, the layer-wise margins, the quality gate, experiment D. So
+the half that was covered was checked and the half that mattered most was not.
+
+Fixed on both sides. The collector now covers all of it, recomputing the per-layer
+edit-minus-K1 margins from the sweep parquet parts rather than reading a log line, and
+`--check-tex` reports every math-mode decimal in the manuscript that cannot be traced
+to a recomputed value. That report is now down to one entry: a top-$p$ of $0.95$,
+which is configuration, not measurement.
+
+Everything else was verified against its artifact and was correct, including two
+numbers that looked wrong until the aggregation was checked: the next-pitch log ratio
+is $0.695$ pooled over rows, not $0.694$ as a mean of per-target means, and the
+artifact stores the pooled form the manuscript uses.
+
+Also found while checking: the quality-gate artifact is stale. It gated four of the
+six main models plus M-REF, because it ran before the seed-2 models finished
+training, yet the manuscript says all six pass. Re-running over every finished
+checkpoint into `results/quality_gate_all/` -- a NEW directory, since the 2026-08
+artifact is ledgered. Its frozen thresholds reproduce exactly (top-1 $\geq 0.6505$
+from a constant-predictor rate of $0.4337$; generated IKR $\geq 0.6078$).

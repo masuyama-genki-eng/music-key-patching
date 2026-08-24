@@ -29,6 +29,56 @@ def r3(x) -> str:
     return "MISSING" if x is None else f"{x:.3f}"
 
 
+def check_tex(numbers: dict, tex_path: Path) -> int:
+    """Every decimal the manuscript writes in math mode must be traceable to a value
+    this script recomputed. Reports the ones that are not, and returns how many.
+
+    This is the guard that was missing: the .tex is written by hand, so a value can
+    be transcribed one digit off (it happened -- a probe margin of -0.0605 printed as
+    -.061) or can survive an artifact being regenerated. Comparing strings after
+    rounding catches both, without needing the .tex to be machine-generated.
+
+    Numbers that are configuration rather than measurement (a top-$p$ of 0.95) will
+    show up here; that is the intended cost of the check being blind to intent.
+    """
+    import re
+    vals: set[str] = set()
+
+    def walk(o):
+        if isinstance(o, dict):
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+        else:
+            t = str(o)
+            vals.add(t)
+            vals.add(t.lstrip("+-").lstrip("0"))
+            try:
+                f = abs(float(t))
+            except ValueError:
+                return
+            for d in (2, 3, 4):
+                vals.add(f"{f:.{d}f}")
+                vals.add(f"{f:.{d}f}".lstrip("0"))
+
+    walk(numbers)
+    body = "\n".join(l for l in tex_path.read_text().split("\n")
+                      if not l.lstrip().startswith("%"))
+    untraced = []
+    for m in re.finditer(r"\$([-+]?)(0?\.\d{2,4})\$", body):
+        n = m.group(2)
+        cands = {n, n.lstrip("."), n.lstrip("0"), f"0{n}" if n.startswith(".") else n}
+        if not (cands & vals):
+            line = body[:m.start()].count("\n") + 1
+            untraced.append((n, line))
+    print(f"\n--- tex trace: {len(untraced)} decimal(s) not traceable to an artifact")
+    for n, line in untraced:
+        print(f"    {n}  (line {line} of the comment-stripped body)")
+    return len(untraced)
+
+
 def main() -> None:
     out: dict[str, dict] = {}
 
@@ -139,7 +189,117 @@ def main() -> None:
                 "n_modulations": g["n_modulation_events"],
                 "reference": g["reference_model"]}
 
+    # ---------------- the synthetic-model results the manuscript quotes
+    # Added 2026-08-24: this script claimed to cover "every number" but reached only
+    # 50 of the 68 decimals the .tex writes in math mode -- and the 18 it missed were
+    # the main experiment's own. One misrounding had already slipped through in the
+    # covered half (MMT's probe margin printed as -.061 for a measured -0.0605), so
+    # the uncovered half was not safe by luck.
+    qg = load("results/quality_gate_all/quality_gate.json") or load(
+        "results/quality_gate/quality_gate.json")
+    if qg:
+        MAIN = [f"R-{r}_s{i}" for r in ("Aug", "NoAug") for i in range(3)]
+        got = {k: v["val_top1"] for k, v in qg["models"].items() if k in MAIN}
+        out["quality_gate"] = {
+            "n_main_models_gated": len(got),
+            "main_models_gated": sorted(got),
+            "main_models_missing": sorted(set(MAIN) - set(got)),
+            "val_top1_range": [r3(min(got.values())), r3(max(got.values()))] if got else "MISSING",
+            "constant_predictor_rate": r3(qg["thresholds"]["constant_predictor_rate"]),
+            "all_pass": qg["all_pass"],
+        }
+    g = load("results/guard/delta_ppl.json")
+    if g:
+        out["guard_synthetic"] = {"delta_ppl": r3(g["delta_ppl"]),
+                                  "n_modulations": g["n_modulation_events"],
+                                  "percentile": g["percentile"]}
+    pr = load("results/probing/R-Aug_s0/probe_report.json")
+    vd = load("results/probing/R-Aug_s0/verdict_DR-H1.json")
+    if pr and vd:
+        L = pr["layers"]
+        raw = {int(k): L[k]["probe"]["macro_f1_24"] for k in L}
+        flat = [raw[i] for i in range(2, 7)]
+        best_c3 = vd["best_c3"]
+        m4 = next(r for r in vd["layers"] if r["layer"] == 4)
+        out["probing_R-Aug_s0"] = {
+            "probe_f1_L4": r3(raw[4]),
+            "best_c3": best_c3, "best_c3_f1": r3(pr["c3"][best_c3]["macro_f1_24"]),
+            "control_floor_L4": r3(L["4"]["c1b_on_true_labels"]["macro_f1_24"]),
+            "corrected_margin_L4": f"{m4['stat']:+.3f}",
+            "corrected_margin_ci": [r3(m4["ci_lo"]), r3(m4["ci_hi"])],
+            "untrained_c2_L4": r3(L["4"]["c2_untrained"]["macro_f1_24"]),
+            "raw_probe_flat_L2_L6": [r3(min(flat)), r3(max(flat))],
+        }
+    # per-layer edit-minus-control margins, recomputed from the sweep parts so the
+    # "readable before usable" claim is not transcribed from a log line
+    sv = load("results/sweep/R-Aug_s0/verdict_DR-H3_H5.json")
+    parts = sorted((REPO / "results/sweep/R-Aug_s0/parts").glob("*.parquet")) \
+        if (REPO / "results/sweep/R-Aug_s0/parts").exists() else []
+    if sv and parts and g:
+        import re as _re, collections as _c
+        hits = _c.defaultdict(list)
+        for f in parts:
+            m = _re.match(r"(v_probe|k1_r24)_L(\d+)_T\d+\.parquet$", f.name)
+            if not m:
+                continue
+            d = pd.read_parquet(f)
+            e = d[d.cond != "clean"] if "cond" in d.columns else d
+            ok = (e.est_key == e.target_key)
+            if "mref_ppl_excess" in e.columns:
+                ok = ok & (e.mref_ppl_excess <= g["delta_ppl"])
+            hits[(m.group(1), int(m.group(2)))].extend(ok.tolist())
+        marg = {}
+        for L in range(8):
+            a, b = hits.get(("v_probe", L)), hits.get(("k1_r24", L))
+            if a and b:
+                marg[L] = sum(a) / len(a) - sum(b) / len(b)
+        if marg:
+            shallow = [marg[L] for L in (0, 1) if L in marg]
+            deep = [v for L, v in marg.items() if L >= 2]
+            out["sweep_R-Aug_s0"] = {
+                "best_layer": sv["best_layer"], "best_method": sv["best_method"],
+                "margin_per_layer": {str(L): r3(v) for L, v in sorted(marg.items())},
+                "margin_layers_0_1": [f"{min(shallow):.2f}", f"{max(shallow):.2f}"],
+                "margin_layers_2_up": [f"{min(deep):.2f}", f"{max(deep):.2f}"],
+            }
+    # experiment D: the note counter given wider windows and the probe's own capacity
+    ext = load("results/probing/R-Aug_s0/c3_window_ext.json")
+    if ext:
+        m4 = next(r for r in ext["verdict"]["layers"] if r["layer"] == 4)
+        out["probing_extD_R-Aug_s0"] = {
+            "strongest_c3": ext["best_c3"]["name"],
+            "strongest_c3_f1": r3(ext["best_c3"]["macro_f1_24"]),
+            "preregistered_best_c3": ext["best_c3"]["preregistered_best"],
+            "margin_L4": f"{m4['stat']:+.3f}",
+            "margin_ci": [r3(m4["ci_lo"]), r3(m4["ci_hi"])],
+        }
+    k4 = load("results/confirmatory/R-Aug_s0/k4_ceiling.json")
+    npj = load("results/confirmatory/R-Aug_s0/next_pitch.json")
+    conf = REPO / "results/confirmatory/R-Aug_s0/parts/confirmatory_L4.parquet"
+    extra = {}
+    if k4:
+        extra["transposition_ceiling"] = r3(k4["k4_raw_tkr_nonidentity"])
+        extra["edit_over_ceiling"] = r3(k4["edit_over_k4"])
+    if npj and "pooled" in npj:
+        extra["next_pitch_logratio_edit"] = r3(npj["pooled"]["mean_D_edit"])
+        extra["next_pitch_logratio_k1"] = r3(npj["pooled"]["mean_D_k1"])
+        extra["next_pitch_n_sig"] = npj["n_sig_holm"]
+    if conf.exists() and g:
+        df = pd.read_parquet(conf)
+        e = df[(df.src_key != df.target_key) & (df.cond == "edit")]
+        ident = df[(df.src_key == df.target_key) & (df.cond == "edit")]
+        extra["ikr_target_edit"] = r3(float(e.ikr_target.mean()))
+        extra["ikr_src_edit"] = r3(float(e.ikr_src.mean()))
+        if len(ident):
+            ok = (ident.est_key == ident.target_key) & (ident.mref_ppl_excess <= g["delta_ppl"])
+            extra["identity_target_sr"] = r3(float(ok.mean()))
+    if extra:
+        out["confirmatory_extras"] = extra
+
     (REPO / "results/paper_numbers.json").write_text(json.dumps(out, indent=2))
+    tex = REPO / "paper/icassp2027_v2.tex"
+    if "--check-tex" in sys.argv and tex.exists():
+        check_tex(out, tex)
     print(json.dumps(out, indent=2))
     missing = [k for k, v in out.items()
                if isinstance(v, dict) and v.get("status") == "MISSING"]
