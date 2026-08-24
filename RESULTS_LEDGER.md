@@ -1223,3 +1223,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/quality_gate_all/quality_gate.json`
 - note: all_pass=True; 13 checkpoints. The 2026-08 artifact gated only 4 of the 6 main models (it ran before the seed-2 trainings finished) while the manuscript claims all six; the six now measure val top-1 0.8784-0.8808, i.e. the quoted 0.878-0.881, and all pass. Frozen thresholds reproduce exactly (top-1 >= 0.6505 from constant-predictor 0.4337; gen IKR >= 0.6078). Written to a NEW directory; the ledgered 2026-08 artifact is untouched.
 
+## 2026-08-24T12:52:27+09:00 — Steering regression gate (R-Aug_s0)
+- git: `eeb297bc70a534067a7d680a7945e474a3858ac5`
+- config_hash: `2f6963a7958211bed40a717148554d1949303aa7a50d3d73475fb9134967b415`
+- seeds: [0]
+- artifacts: `results/steering/R-Aug_s0/regression.json`
+- note: headline {'edit': 0.355, 'k1': 0.039, 'k1_norm': 0.056}; sham ok; clean conts identical -> PASS
+
