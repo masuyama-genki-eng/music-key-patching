@@ -442,7 +442,7 @@ Readability is therefore neither necessary nor sufficient for causal use: a prob
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; every cell without $\dagger$ separates for all $12$ target keys after Holm correction. $\dagger$ marks pre-registered FAILURES: the AMT pop edit reaches only $1/12$ keys, and the MMT pop probe loses to the note counts (CI $[-0.13,-0.003]$). All checkpoints were trained by their authors on Lakh MIDI; none ever saw our data. Dashes are cells we did not run. Most are deliberate: the design varies ONE thing at a time --- model fixed while the corpus changes, corpus fixed while the tokenization changes --- and MMT and the REMI baseline were trained on pop-heavy web MIDI, so a Bach cell for them would confound tokenization with distribution shift. One is not. AMT large's edit is missing for a reason of measurement, not design: the guard needs a reference model that is not the one being edited, every other checkpoint in the family is smaller, and large is itself the reference that scores the pop edits, so we would be grading a $36$-layer model with a $24$-layer one while it grades others. Its probe margin is reported because probing needs no reference; the edit waits for a larger reference model.}
+\caption{Public models. Probe margin: control-corrected macro-$F_1$ over the best note-counting baseline. Edit: guarded success rate against the rank-matched random write; cells without a marker separate all $12$ target keys after Holm correction. $\dagger$ = pre-registered failure (AMT's pop edit reaches $1/12$ keys; MMT's pop probe loses to the note counts, CI $[-0.13,-0.003]$); $\ddagger$ = weaker, a tie, not a loss (REMI's probe CI $[-0.10,+0.04]$ contains zero). All checkpoints were trained by their authors on Lakh MIDI; none saw our data. Most dashes are deliberate --- the design varies one thing at a time, and a Bach cell for MMT or REMI would confound tokenization with distribution shift. AMT large's edit is the exception: the guard needs a reference other than the edited model, no checkpoint in the family is larger, and large is itself the reference scoring the pop edits, so that edit waits for a larger reference while its probe, needing none, is reported.}
 \label{tab:wild}
 \begin{tabularx}{\columnwidth}{@{}Xllll@{}}
 \toprule
@@ -454,7 +454,7 @@ AMT small (12L) & $+.196$ & $.479$ vs $.061$ & $+.132$ & $.135$ vs $.057^{\dagge
 AMT medium (24L) & $+.213$ & $.557$ vs $.057$ & --- & ---\\
 AMT large (36L) & $+.203$ & --- & --- & ---\\
 MMT (compound) & --- & --- & $-.061^{\dagger}$ & $.360$ vs $.064$\\
-REMI repr. & --- & --- & TBD & TBD\\
+REMI repr. & --- & --- & $-.022^{\ddagger}$ & $.393$ vs $.061$\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -467,6 +467,8 @@ REMI repr. & --- & --- & TBD & TBD\\
 % したがって方向は，読むよりも書くことで検証したほうがよい．
 The reading/acting split (Sec.~\ref{sec:h5}) bears on how steering directions are chosen: music steering~\cite{smitin2024,facchiano2025patching,singh2026discovering,musicrfm2026} selects them by how well an attribute decodes, and our pitch-position condition shows that criterion picking a site the model does not use --- the gap language models also report~\cite{wu2025axbench,arad2025selecting}.
 A direction is therefore better validated by writing to it than by reading from it, and we expect the same gap for other attributes recovered from music activations.
+% 公開3本で順序が反転する：表層を超える唯一のモデルが，編集の効かない唯一のモデル．
+The three public checkpoints put that split on a second axis: on one corpus the only probe that beats the note counts (AMT, $+.132$) belongs to the only edit that fails ($.135$, $1/12$ keys), while the two that do not ($-.061$, $-.022$) reach $.360$ and $.393$ with all twelve keys separating. Three checkpoints are no trend and their tokenizations differ too, so we claim no law --- only that the inversion recurs across models as it does across layers and positions.
 % 追加：同一パイプライン上での install 対 steering の直接比較（事前登録済み・実行中）。
 % 加算は部分空間内の旧調成分 P_V h を保持するので（P_V h' = P_V h + δu が解析的に成り立つ）、
 % 置換との差は「旧成分を消すか残すか」だけに縮まる．結果は表1の追加行（TBD）に入る．
@@ -491,7 +493,7 @@ We show that the model computes a key and uses it as it generates; we do not cla
 The dormant-pathway controls of Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} were run on our own models, not on the public ones, so the MMT edit result is a behavioral finding whose internal pathway we have not localized.
 Condition~(ii) measures how far an edit disturbs a reference model, not musical quality itself, and we ran no listening test.
 % 公開モデル検証は「1モデル」から「3サイズ＋2トークン化＋2ジャンル」へ拡張中（TBD セルは実行中）．
-The public-model check now spans three checkpoint sizes of one family, two further tokenizations, and a second genre; the cells marked TBD in Table~\ref{tab:wild} were still running when this draft was built, and any that fail will be reported as failing.
+The public-model check spans three checkpoint sizes, two further tokenizations and a second genre; two cells failed (the AMT pop edit, the MMT pop probe) and are reported as such. REMI's $64$-beat range, the tightest of the three, leaves its continuations less room and so bounds the effect size it can show, equally for its edit, clean twin and control.
 % [SUPPL] 公開モデルでは層を探索段階で選んだままで，新規プロンプトでの確認は行っていない。
 
 \section{Conclusion}

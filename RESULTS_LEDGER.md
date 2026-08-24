@@ -1202,3 +1202,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/sampler_conformance/music-small-800k/conformance_pop909.json`
 - note: slot violations 0.0000; forbidden 0.0000; off-instrument notes 0.0000
 
+## 2026-08-23T20:47:39+09:00 — M-WILD intervention stage 1 (remi-lmd-remi)
+- git: `f6d17103a88bbbdc85699cc50465bc1248e91032`
+- config_hash: `3555e7544edef5798072ebf329e2214e3c9a87a8e6eef95f192ed0953c8e33ff`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/remi-lmd-remi/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L5 TKR 0.388 vs K1 0.067
+
+## 2026-08-23T21:11:53+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `f6d17103a88bbbdc85699cc50465bc1248e91032+DIRTY`
+- config_hash: `5166a0436d55cd9ae7c44feafdbf4c38c273dc39a8da3c8e1dbcafc0f8df1d0f`
+- seeds: [0]
+- artifacts: `results/mwild_sweep_pop909/remi-lmd-remi/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.393 vs K1 0.061 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-large-800k
+
