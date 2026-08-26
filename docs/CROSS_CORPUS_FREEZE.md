@@ -332,3 +332,53 @@ by its effect on a number, on a split that is already spent. The direction makes
 safe for the one claim that depends on it: balancing raised AMT and AMT is still the
 weakest of the three, so the ordering is not an artefact of AMT being handicapped. If
 anything MMT and REMI are the ones understated.
+
+---
+
+## AMENDMENT 7 — the Bach cells for MMT and REMI (frozen 2026-08-24, before running)
+
+**Why they were empty, accurately.** Two reasons, neither of which is the one the
+manuscript gave. First, §7 scheduled Step 1 (AMT × pop) and Step 2 (MMT × pop) and
+never scheduled a Bach cell for the pop-trained checkpoints. Second, the chorale
+scores carry no tempo — they hold `beat_16ths` and `onsets`, not `tempo_us` — so the
+two beat-grid adapters raise `KeyError` on them, while the absolute-time adapter does
+not because a tempo is already imposed for it (`seconds_per_16th = 0.25`).
+
+The manuscript's stated reason — that such a cell would confound tokenization with
+distribution shift — is true of comparing them with AMT on Bach and FALSE of comparing
+MMT with REMI there, since those two share training data and architecture and the
+shift would fall on both equally. The reason was broader than the fact. These cells are
+therefore run rather than explained.
+
+**The tempo, and why it costs nothing.** The chorales are presented to the beat-grid
+schemes at the SAME tempo the absolute-time scheme already imposes: a sixteenth at
+0.25 s, i.e. a quarter at 1.0 s, `tempo_us = 1000000`. The grid divides a beat into
+twelve, so a sixteenth is exactly three steps and the representation is lossless —
+measured over 40 chorales, every pitch preserved, every note preserved, onset error
+0.0 ms. This is a presentation choice, identical across the three tokenizations, not a
+per-model knob.
+
+**Windows.** MMT's 256-beat range holds all 300 chorales entire; REMI's 64-beat range
+holds 298 of 300 entire and every prompt (prompts are at most half a piece), so the
+continuation has room in both. AMENDMENT 4's piece-exclusion rule still applies and
+its exclusions will be recorded.
+
+**Everything else is the protocol already used for every other cell**, unchanged: the
+probe with its control task and the same C3 window set (so these margins are on the
+same footing as the other public-model margins, not the strengthened baseline of
+§4.1); 20 stage-1 prompts to choose the layer; 60 disjoint stage-2 prompts judged
+once; 12 major targets; Holm across them; rank-24 subspace; the Bach guard budget
+already frozen (δ 0.8489 nats, reference `music-medium-800k`, which is a subject in
+no cell here, so nothing grades its own output); and the balanced re-estimation that
+PUBLIC_MODELS_FREEZE §5 makes part of the battery — required on Bach, where F♯ major
+and D♯ minor do not occur at all.
+
+**Prediction, recorded before the run.** Their pop cells gave edits of 0.360 (MMT)
+and 0.393 (REMI) with probes that do not beat the note counts. Bach lets the estimator
+recover a known key far more often (0.853 against 0.540 at 80 notes), which should
+raise absolute rates, while Bach is out of distribution for two LMD-trained models,
+which should lower them. Concretely: **both probe margins will again fail to beat the
+note-counting baseline (CI including or below zero), and both guarded edits will reach
+at least 0.30 with at least 8 of 12 keys separating.** If the probes beat the baseline
+on Bach, the reading/acting inversion is corpus-specific and the discussion must say
+so. The run happens either way and its outcome is reported either way.
