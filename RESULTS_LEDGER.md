@@ -1356,3 +1356,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
 - note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
 
+## 2026-08-28T17:46:05+09:00 — DEMO piano-roll figure
+- git: `b755448e8bfcda19b43b78f4ba64df539c530aca+DIRTY`
+- config_hash: `ed22ea11e3e2ff76c1f6a50a7728c251ebd24bf9e6d6d7fc49991e44afb11f88`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
+- note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
+## 2026-08-28T17:58:39+09:00 — DEMO piano-roll figure
+- git: `b755448e8bfcda19b43b78f4ba64df539c530aca+DIRTY`
+- config_hash: `ed22ea11e3e2ff76c1f6a50a7728c251ebd24bf9e6d6d7fc49991e44afb11f88`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
+- note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
