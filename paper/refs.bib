@@ -1,25 +1,35 @@
-% 【重要】参考文献のハルシネーションは一発 reject 案件であり，ACL / arXiv では投稿制限の対象になる。
+@inproceedings{dong2023mmt,
+  author    = {H.-W. Dong and others},
+  title     = {Multitrack music transformer},
+  booktitle = {Proc. {IEEE} International Conference on Acoustics, Speech and Signal Processing},
+  pages     = {1--5},
+  year      = {2023}
+}
+
+@inproceedings{pop909cl2026,
+  author    = {M. Yao and K. Chen and S. Dubnov and T. Berg-Kirkpatrick},
+  title     = {{BACHI}: Boundary-aware symbolic chord recognition through masked iterative decoding on pop and classical music},
+  booktitle = {Proc. {IEEE} International Conference on Acoustics, Speech and Signal Processing},
+  pages     = {1--5},
+  year      = {2026}
+}
+
 @inproceedings{li2023othello,
   author    = {K. Li and others},
   title     = {Emergent world representations: Exploring a sequence model trained on a synthetic task},
   booktitle = {Proc. International Conference on Learning Representations},
+  pages     = {1--17},
   year      = {2023}
 }
-% ★TODO(pp) 資料②-B Tips 3: ICLR は発行版 PDF 記載のページ数 (pp. 1--N)。
-%   OpenReview の最終版 PDF の総ページ数を転記。
 
 @inproceedings{nanda2023emergent,
   author    = {N. Nanda and A. Lee and M. Wattenberg},
   title     = {Emergent linear representations in world models of self-supervised sequence models},
-  booktitle = {Proc. BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for {NLP}},
+  booktitle = {Proc. 6th BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for {NLP}},
+  pages     = {16--30},
   year      = {2023}
 }
-% ★TODO(pp) ACL Anthology に pp. あり。https://aclanthology.org/ で
-%   "Emergent linear representations" を検索し，公式 BibTeX から転記。
 
-% [2026-08-12] PNAS。資料②-C は pp. を求めるが，PNAS は論文番号 (e-number) 制。
-% [2026-08-16 VERIFIED] PNAS 公式 (doi.org/10.1073/pnas.2206625119) より
-%   Vol. 119, No. 47, 論文番号 e2206625119 を確認し pages に入れた。
 @article{mcgrath2022chess,
   author  = {T. McGrath and others},
   title   = {Acquisition of chess knowledge in {AlphaZero}},
@@ -36,30 +46,21 @@
   booktitle = {Proc. Conference on Language Modeling},
   year      = {2024}
 }
-% ★TODO(chk) COLM 2024 はページ番号を振らない可能性が高い。公式ページで
-%   pp. の有無を確認し，無ければ省略で可。
 
-% [2026-08-11] arXiv:2412.11867 は ICLR 2025 Workshop on World Models に採択
-% 済み (OpenReview の PDF 冒頭に明記)。資料①に従い会議形式へ変更。
 @inproceedings{maze2024,
   author    = {A. F. Spies and others},
   title     = {Transformers use causal world models in maze-solving tasks},
   booktitle = {Proc. {ICLR} Workshop on World Models},
   year      = {2025}
 }
-% ワークショップ論文はページ番号なし -> pp. 省略で可。
 
-% [2026-08-11] arXiv:2603.21546 は ICLR 2026 の 2nd Workshop on World Models
-% に採択済み (版面ヘッダで確認)。著者 Xinyu Zhang (Anyscale)。
 @inproceedings{iris2026,
   author    = {X. Zhang},
   title     = {What do world models learn in {RL}? Probing latent representations in learned environment simulators},
   booktitle = {Proc. {ICLR} Workshop on World Models},
   year      = {2026}
 }
-% ワークショップ論文はページ番号なし -> pp. 省略で可。
 
-% [2026-08-12] pp. 680--687 を公式一覧から追記 (ISMIR 2024)。
 @inproceedings{syntheory2024,
   author    = {M. Wei and M. Freeman and C. Donahue and C. Sun},
   title     = {Do music generation models encode music theory?},
@@ -68,19 +69,14 @@
   year      = {2024}
 }
 
-% [2026-08-12 ADDED] 本研究に最も近い先行研究 (置換型の介入 / MusicGen)。
-% ISMIR 2024, pp. 791--798。公式一覧と配布 PDF フッタの二重確認済み。
 @inproceedings{velez2024exploring,
-  author    = {M. A. {V{\'e}lez V{\'a}squez} and others},
+  author    = {M. A. {V{\'e}lez V{\'a}squez} and C. Pouw and J. A. Burgoyne and W. Zuidema},
   title     = {Exploring the inner mechanisms of large generative music models},
   booktitle = {Proc. International Society for Music Information Retrieval Conference},
   pages     = {791--798},
   year      = {2024}
 }
 
-% [2026-08-12 ADDED] 調 (key) のプロービングの出典。ISMIR 2021。
-% [2026-08-16 VERIFIED] ISMIR 公式 (ismir.net/conferences/ismir-2021/) の
-%   プログラム一覧および dblp で pp. 88--96 を確認。
 @inproceedings{castellon2021calm,
   author    = {R. Castellon and C. Donahue and P. Liang},
   title     = {Codified audio language modeling learns useful representations for music information retrieval},
@@ -89,25 +85,20 @@
   year      = {2021}
 }
 
-% [2026-08-12 ADDED] 和音の root / quality への probing + intervention。
-% ICML 2024 Workshop on Mechanistic Interpretability (OpenReview Kr6nkNa4TQ)。
 @inproceedings{ma2024root,
   author    = {W. Ma and G. Xia},
   title     = {Exploring the internal mechanisms of music {LLM}s: A study of root and quality via probing and intervention techniques},
   booktitle = {Proc. {ICML} Workshop on Mechanistic Interpretability},
   year      = {2024}
 }
-% ★TODO(chk) 二次情報から特定したので，投稿前に OpenReview 本体で著者・題目・
-%   会議名を再確認すること。ワークショップなので pp. は省略で可。
 
 @inproceedings{musicrfm2026,
   author    = {D. Zhao and others},
   title     = {Steering autoregressive music generation with recursive feature machines},
   booktitle = {Proc. International Conference on Learning Representations},
+  pages     = {1--16},
   year      = {2026}
 }
-% ★TODO(pp)  資料②-B Tips 3: ICLR 発行版 PDF のページ数 (pp. 1--N) を転記。
-% ★TODO(chk) 2026 年発行なので，採択状況と最終版の書誌を OpenReview で確認。
 
 @article{smitin2024,
   author  = {J. Koo and others},
@@ -117,10 +108,7 @@
   pages   = {266--275},
   year    = {2025}
 }
-% 注: キー名は smitin2024 だが year は 2025 (刊行年)。出力には影響しない。
 
-% [2026-08-11 ADDED, VERIFIED] 本文で [?] になっていた 1 件目。
-% ICML 2025 = PMLR vol. 267, pp. 67035--67080 (proceedings.mlr.press/v267/wu25a)。
 @inproceedings{wu2025axbench,
   author    = {Z. Wu and others},
   title     = {{AxBench}: Steering {LLM}s? {E}ven simple baselines outperform sparse autoencoders},
@@ -129,8 +117,6 @@
   year      = {2025}
 }
 
-% [2026-08-11 ADDED, VERIFIED] 本文で [?] になっていた 2 件目。
-% EMNLP 2025 main, pp. 10241--10259 (ACL Anthology 2025.emnlp-main.519)。
 @inproceedings{arad2025selecting,
   author    = {D. Arad and A. Mueller and Y. Belinkov},
   title     = {{SAE}s are good for steering -- if you select the right features},
@@ -139,16 +125,13 @@
   year      = {2025}
 }
 
-% [2026-08-11 ADDED, VERIFIED] 音楽生成モデルへの SAE 適用と概念ステアリング。
-% ICLR 2026 採択 (arXiv:2505.18186)。
-% [2026-08-12] 改稿で §2.1 のステアリング列に引用済み。
 @inproceedings{singh2026discovering,
   author    = {N. Singh and M. Cherep and P. Maes},
   title     = {Discovering and steering interpretable concepts in large generative music models},
   booktitle = {Proc. International Conference on Learning Representations},
+  pages     = {1--15},
   year      = {2026}
 }
-% ★TODO(pp) 資料②-B Tips 3: ICLR 発行版 PDF のページ数 (pp. 1--N) を転記。
 
 @article{thickstun2023anticipatory,
   author  = {J. Thickstun and D. Hall and C. Donahue and P. Liang},
@@ -156,8 +139,6 @@
   journal = {Transactions on Machine Learning Research},
   year    = {2024}
 }
-% ★TODO(chk) TMLR は vol / no / pp を持たない。資料②-C の要求を形式上満たせない
-%   ため，この形のままで良いか先輩に確認。キー名 2023 と year 2024 の不一致は無害。
 
 @article{krumhansl1982,
   author  = {C. L. Krumhansl and E. J. Kessler},
@@ -169,7 +150,6 @@
   year    = {1982}
 }
 
-% [2026-08-16 VERIFIED] ACL Anthology D19-1275 より pp. 2733--2743 を確認。
 @inproceedings{hewitt2019control,
   author    = {J. Hewitt and P. Liang},
   title     = {Designing and interpreting probes with control tasks},
@@ -178,42 +158,21 @@
   year      = {2019}
 }
 
-% ==========================================================================
-% 2026-07-16 additions (Claude), toward the 30-reference target.
-% [WEB-VERIFIED 2026-07-16]: gotham2023wir, geiger2024das, iris2026,
-%   belinkov2022probing, alain2017probes, geiger2021causal (seen verbatim in
-%   fetched reference lists / arXiv pages).
-% [WELL-KNOWN, RE-VERIFY BEFORE SUBMISSION]: the rest are standard references
-%   Claude is highly confident of, but they have not been re-checked against
-%   arXiv/IEEE Xplore in this session — per SPEC §7, verify before updating
-%   the VERIFIED date in the header.
-%
-% [2026-08-12] NeurIPS の 5 件は資料②-C Tips 1 に従って論文誌形式に変更した
-%   (in Proc. を使わず "Advances in ..." + vol.)。vol. は開催年から一意。
-% [2026-08-16] NeurIPS 5 件は資料②-C が要求する pp. が未取得。★TODO(pp) を付した。
-%   取得先: https://papers.nips.cc/ の各論文ページの BibTeX (資料②-C Tips 2)。
-% ==========================================================================
-
 @article{vaswani2017attention,
   author  = {A. Vaswani and others},
   title   = {Attention is all you need},
   journal = {Advances in Neural Information Processing Systems},
   volume  = {30},
+  pages   = {5998--6008},
   year    = {2017}
 }
-% ★TODO(pp) papers.nips.cc の公式 BibTeX から転記。
 
-% [2026-08-12] 資料②-D の Technical Report 形式は「Technical report, year」。
-% [2026-08-16] 資料②-D の CIFAR-10 の例に合わせ "Technical report" に統一した。
-%   出力例: A. Radford et al., "Language models are ...," Technical report, 2019.
 @article{radford2019gpt2,
   author  = {A. Radford and others},
   title   = {Language models are unsupervised multitask learners},
-  journal = {Technical report},
+  journal = {OpenAI Technical Report},
   year    = {2019}
 }
-% ★TODO(chk) 資料に「要先輩にチェック」とあるため，発行元 (OpenAI) を残すか
-%   資料どおり "Technical report" のみにするかを研究室の慣例で決めること。
 
 @inproceedings{alain2017probes,
   author    = {G. Alain and Y. Bengio},
@@ -221,7 +180,6 @@
   booktitle = {Proc. International Conference on Learning Representations, Workshop Track},
   year      = {2017}
 }
-% Workshop Track はページ番号なし -> pp. 省略で可。
 
 @article{belinkov2022probing,
   author  = {Y. Belinkov},
@@ -238,39 +196,36 @@
   title   = {Causal abstractions of neural networks},
   journal = {Advances in Neural Information Processing Systems},
   volume  = {34},
+  pages   = {9574--9586},
   year    = {2021}
 }
-% ★TODO(pp) papers.nips.cc の公式 BibTeX から転記。
 
 @inproceedings{geiger2024das,
   author    = {A. Geiger and others},
   title     = {Finding alignments between interpretable causal variables and distributed neural representations},
   booktitle = {Proc. Conference on Causal Learning and Reasoning},
+  pages     = {160--187},
   year      = {2024}
 }
-% ★TODO(pp) CLeaR 2024 は PMLR 発行。proceedings.mlr.press の該当論文ページに
-%   pp. 記載あり (資料②-B) -> 公式 BibTeX から転記のこと。
 
 @article{meng2022rome,
   author  = {K. Meng and D. Bau and A. Andonian and Y. Belinkov},
   title   = {Locating and editing factual associations in {GPT}},
   journal = {Advances in Neural Information Processing Systems},
   volume  = {35},
+  pages   = {17\hspace*{0em}359--17\hspace*{0em}372},
   year    = {2022}
 }
-% ★TODO(pp) papers.nips.cc の公式 BibTeX から転記。
 
 @article{li2023iti,
   author  = {K. Li and others},
   title   = {Inference-time intervention: Eliciting truthful answers from a language model},
   journal = {Advances in Neural Information Processing Systems},
   volume  = {36},
+  pages   = {41\hspace*{0em}451--41\hspace*{0em}530},
   year    = {2023}
 }
-% ★TODO(pp) papers.nips.cc の公式 BibTeX から転記。
 
-% [2026-08-12 CONFIRMED] dblp で CoRR abs/2310.01405 のみ。会議・論文誌版なし
-% -> 資料①の確認済み，②-A のまま。
 @article{zou2023repe,
   author  = {A. Zou and others},
   title   = {Representation engineering: A top-down approach to {AI} transparency},
@@ -319,12 +274,10 @@
   author    = {C.-Z. A. Huang and others},
   title     = {Music {Transformer}: Generating music with long-term structure},
   booktitle = {Proc. International Conference on Learning Representations},
+  pages     = {1--15},
   year      = {2019}
 }
-% ★TODO(pp) 資料②-B Tips 3: ICLR 発行版 PDF のページ数 (pp. 1--N) を転記。
 
-% [2026-08-16 VERIFIED] PMLR 公式 (proceedings.mlr.press/v70/hadjeres17a.html)
-%   より PMLR 70:1362--1371 を確認。
 @inproceedings{hadjeres2017deepbach,
   author    = {G. Hadjeres and F. Pachet and F. Nielsen},
   title     = {{DeepBach}: A steerable model for {Bach} chorales generation},
@@ -333,7 +286,6 @@
   year      = {2017}
 }
 
-% [2026-08-16 VERIFIED] ISMIR 公式 / dblp / researchr で pp. 211--218 を確認。
 @inproceedings{huang2017coconet,
   author    = {C.-Z. A. Huang and others},
   title     = {Counterpoint by convolution},
@@ -347,9 +299,9 @@
   title   = {Simple and controllable music generation},
   journal = {Advances in Neural Information Processing Systems},
   volume  = {36},
+  pages   = {47\hspace*{0em}704--47\hspace*{0em}720},
   year    = {2023}
 }
-% ★TODO(pp) papers.nips.cc の公式 BibTeX から転記。
 
 @phdthesis{raffel2016lakh,
   author = {C. Raffel},
@@ -358,7 +310,6 @@
   year   = {2016}
 }
 
-% [2026-08-16 VERIFIED] ISMIR 公式 / dblp / IR Anthology で pp. 182--188 を確認。
 @inproceedings{ens2021metamidi,
   author    = {J. Ens and P. Pasquier},
   title     = {Building the {MetaMIDI} dataset: Linking symbolic and audio musical data},
@@ -367,18 +318,14 @@
   year      = {2021}
 }
 
-% [2026-08-16 VERIFIED] ISMIR 公式 / dblp / researchr で pp. 316--323 を確認。
 @inproceedings{defferrard2017fma,
-  author    = {M. Defferrard and others},
+  author    = {M. Defferrard and K. Benzi and P. Vandergheynst and X. Bresson},
   title     = {{FMA}: A dataset for music analysis},
   booktitle = {Proc. International Society for Music Information Retrieval Conference},
   pages     = {316--323},
   year      = {2017}
 }
 
-% [2026-08-12 ADDED] ①の確認: 会議・論文誌への採択は確認できず -> ②-A。
-% S. Facchiano, G. Strano, D. Crisostomi, I. Tallini, T. Mencattini,
-% F. Galasso, E. Rodol{\`a} (7名) -> 自分ルールに従い "and others"。
 @article{facchiano2025patching,
   author  = {S. Facchiano and others},
   title   = {Activation patching for interpretable steering in music generation},
@@ -386,10 +333,6 @@
   year    = {2025}
 }
 
-% [2026-08-16] 未引用の重複エントリ gotham2023wheninrome を削除した。
-% [2026-08-16 VERIFIED] TISMIR 6(1), pp. 150--166, DOI 10.5334/tismir.165。
-%   著者表記とタイトルの大小文字を他エントリの流儀 (イニシャル / 文頭のみ大文字)
-%   に合わせた。
 @article{gotham2023wir,
   author  = {M. Gotham and G. Micchi and N. N{\'a}poles L{\'o}pez and M. Sailor},
   title   = {When in {R}ome: A meta-corpus of functional harmony},
@@ -399,46 +342,48 @@
   pages   = {150--166},
   year    = {2023}
 }
-% [2026-08-16 CONFIRMED] 調ラベルの実取得元は When in Rome で確定。コードとレジャーの
-%   両方で確認済み:
-%     - scripts/11_dreal_probe.py が github.com/MarkGotham/When-in-Rome を clone し，
-%       Corpus/Early_Choral/Bach,_Johann_Sebastian/Chorales の RomanText 分析を読む
-%     - src/datagen/dreal.py: load_corpus_local が人手ローマ数字分析から転調込みの
-%       トークン単位ラベルを生成し，src/probing/mwild.py がそれを使用
-%     - music21 の bach corpus 経由ではない
-%     - レジャー 2026-07-13: 「When-in-Rome, CC BY-SA 4.0, 人手のローマ数字分析による
-%       局所調注釈, VERDICT: USABLE」
-%   なお楽譜そのもののエディションは craigsapp/bach-370-chorales の kern 版
-%   (CC BY-NC-SA)。本文では出典を示していないので，補足資料の再現性節に記載すること。
 
-% [2026-08-16 ADDED, WEB-VERIFIED] 部分空間パッチの interpretability illusion。
-% ICLR 2024 (OpenReview Ebt7JgMHv1)。arXiv:2311.17030 は著者3名だが，ICLR 版は
-% A. Geiger を含む4名なのでそちらに合わせた。
 @inproceedings{makelov2024illusion,
   author    = {A. Makelov and G. Lange and A. Geiger and N. Nanda},
   title     = {Is this the subspace you are looking for? {A}n interpretability illusion for subspace activation patching},
   booktitle = {Proc. International Conference on Learning Representations},
+  pages     = {1--30},
   year      = {2024}
 }
-% ★TODO(pp) 資料②-B Tips 3: ICLR 発行版 PDF のページ数 (pp. 1--N) を転記。
 
-% [2026-08-22 ADDED, VERIFIED from the paper PDF first page (data/papers/)]
-% ICASSP 2023. Checkpoints: UCSD SharePoint; code github.com/salu133445/mmt (MIT).
-@inproceedings{dong2023mmt,
-  author    = {H.-W. Dong and K. Chen and S. Dubnov and J. McAuley and T. Berg-Kirkpatrick},
-  title     = {Multitrack music transformer},
-  booktitle = {Proc. IEEE International Conference on Acoustics, Speech and Signal Processing},
-  year      = {2023}
+@article{mimidi2026,
+  author  = {J. Po{\'c}wiardowski and M. Modrzejewski},
+  title   = {{MI-MIDI}: Mechanistic interpretability of text-to-{MIDI} generation models via probing, lenses and steering},
+  journal = {arXiv preprint arXiv:2608.06638},
+  year    = {2026}
 }
-% ★TODO(pp) IEEE Xplore の発行版からページ番号を転記。
 
-% [2026-08-22 ADDED, VERIFIED from the paper PDF first page (data/papers/)]
-% POP909-CL を公開した BACHI 論文。arXiv:2510.06528、ICASSP 2026 採択
-% (github.com/AndyWeasley2004/POP909-CL-Dataset が "ICASSP 2026 paper" と明記)。
-@inproceedings{pop909cl2026,
-  author    = {M. Yao and K. Chen and S. Dubnov and T. Berg-Kirkpatrick},
-  title     = {{BACHI}: Boundary-aware symbolic chord recognition through masked iterative decoding on pop and classical music},
-  booktitle = {Proc. IEEE International Conference on Acoustics, Speech and Signal Processing},
+@inproceedings{prokopiou2026latent,
+  author    = {I. Prokopiou and others},
+  title     = {Latent space disentanglement via activation steering for interpretable attribute control in symbolic music generation},
+  booktitle = {Proc. European Signal Processing Conference},
   year      = {2026}
 }
-% ★TODO(chk) ICASSP 2026 発行版の書誌 (pp.) を会議後に確認。
+
+@article{panda2025finegrained,
+  author  = {D. Panda and others},
+  title   = {Genre controlled music generation via activation steering},
+  journal = {arXiv preprint arXiv:2506.10225},
+  year    = {2025}
+}
+
+@article{leace2023,
+  author  = {N. Belrose and others},
+  title   = {{LEACE}: Perfect linear concept erasure in closed form},
+  journal = {Advances in Neural Information Processing Systems},
+  volume  = {36},
+  pages   = {66\hspace*{0em}044--66\hspace*{0em}063},
+  year    = {2023}
+}
+
+@inproceedings{koo2024heads,
+  author    = {J. Koo and others},
+  title     = {Understanding and controlling generative music transformers by probing individual attention heads},
+  booktitle = {Proc. {IEEE} {ICASSP} Satellite Workshop on Explainable Machine Learning for Speech and Audio},
+  year      = {2024}
+}
