@@ -2,7 +2,8 @@
 % Every number here is recomputed from an artifact by
 % experiments/figures/collect_paper_numbers.py; none is transcribed by hand.
 \documentclass{article}
-\usepackage{spconf,amsmath}
+\usepackage{spconf,amsmath,graphicx}
+\graphicspath{{../results/figures/supp/}}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{amssymb,booktabs,array,tabularx}
@@ -23,7 +24,7 @@ Section numbers refer to the main paper. Every value below is recomputed from a 
 artifact; the script that does it reports any figure in either document that it cannot
 trace, and its report is empty apart from a sampling hyperparameter.
 
-\section{Corpora, editions and splits}
+\section{Corpora, editions and splits \normalfont\textit{(main Sec.~3.1)}}
 
 \textbf{D-SYN} (Sec.~2.3): $200{,}000$ training, $10{,}000$ validation and $10{,}000$
 test pieces from a functional-harmony generator, plus a separate $200{,}000/10{,}000$
@@ -31,6 +32,31 @@ pair for the reference model. The four sets share no piece: hashing every token
 sequence gives zero overlap between train and test, train and reference-train, and
 test and either reference set, so the reference model's ``data the other models never
 see'' is disjoint by content and not merely by filename.
+
+\textbf{Vocabulary and piece length.} The $124$ token types are $88$ absolute MIDI
+pitches ($21$--$108$), $16$ beat positions, $16$ note lengths, one bar mark, and the
+three structural tokens \texttt{PAD}, \texttt{BOS} and \texttt{EOS}. There is no key
+and no chord symbol, and no token whose identity depends on a key. A piece runs
+$12$--$22$ bars, median $17$, which is $278$--$508$ tokens, median $393$.
+
+\textbf{Where transposition is and is not used.} Three different things could be
+called transposition here, and only the last changes what a model sees at training
+time.
+\begin{itemize}
+\item \emph{Training augmentation (D-SYN only).} The R-Aug regime draws one uniform
+transposition per sequence in token-id space at each step; R-NoAug draws none. The
+corpus on disk is identical for both, so the six models differ in seed and in this
+augmentation, not in data.
+\item \emph{Estimating the targets.} The per-key means come from a key-balanced
+sample. On Bach that sample is built by transposing each chorale through all twelve
+tonics, because the $300$ chorales contain no F$\sharp$ major and no D$\sharp$ minor
+at all and a direct mean would leave those two targets as zero vectors. The split is
+by ORIGINAL chorale, so a piece's transpositions never straddle train and test.
+\item \emph{The transposition reference.} Transposing the prompt itself is a
+behavioural upper anchor, not a training or estimation step (Table~1).
+\end{itemize}
+No public checkpoint is fine-tuned, retrained, or augmented: we only read and edit
+their activations.
 
 \textbf{Bach chorales.} $300$ chorales in \texttt{**kern}, keys from the
 Roman-numeral analyses of \emph{When in Rome}. A chorale is matched to its analysis by
@@ -49,7 +75,7 @@ inside that bound. This removes exactly one piece (\texttt{247}, which opens wit
 $70.5$-beat silence), for the REMI checkpoint only, in the train split only. The
 held-out splits lose nothing.
 
-\section{Probes, baselines and window settings}
+\section{Probes, baselines and window settings \normalfont\textit{(main Secs.~2.1, 4.1)}}
 
 Multinomial logistic probe per layer, trained with AdamW; a two-layer MLP as a
 secondary probe. Splits are by SEQUENCE, so no position of a piece appears in two
@@ -98,7 +124,34 @@ R-NoAug\_s2 & $+0.068$ & $2$ & $[0.052,0.079]$\\
 \end{tabular}
 \end{center}
 
-\section{Quality gate and quality budget}
+\textbf{The public checkpoints use the same construction.} $V$ is built from the
+probe weights of that checkpoint at the chosen layer, orthonormalized the same way, and
+the edit is the same subspace replacement applied by a forward hook on the
+corresponding block. Nothing about the operation is model-specific: what each adapter
+supplies is the token scheme and where the residual stream lives, not how the edit
+works. Rank is $24$ throughout.
+
+\begin{table}[!t]
+\centering\footnotesize
+\caption{Every checkpoint we probe or edit \normalfont\textit{(main Sec.~3.2)}.
+Edited cells use the same subspace construction and the same replacement.}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrl@{}}
+\toprule
+model & scheme & layers & width & role\\
+\midrule
+ours (R-Aug/R-NoAug) & flat & $8$ & $512$ & probe, edit\\
+ours (reference) & flat & $8$ & $512$ & disturbance only\\
+AMT small & flat & $12$ & $768$ & probe, edit\\
+AMT medium & flat & $24$ & $1024$ & probe, edit, reference\\
+AMT large & flat & $36$ & $1280$ & probe, reference\\
+MMT & compound & $6$ & $512$ & probe, edit\\
+REMI & flat & $6$ & $512$ & probe, edit\\
+\bottomrule
+\end{tabular*}
+\label{tab:models}
+\end{table}
+
+\section{Quality gate and quality budget \normalfont\textit{(main Secs.~3.2, 3.3)}}
 
 \textbf{Gate} (before any intervention work): validation next-token top-$1$ must reach
 $1.5\times$ the constant-predictor rate of $0.434$, and the in-key share of
@@ -114,7 +167,7 @@ a budget in one model's nats does not transfer: $0.849$ on Bach over $1{,}180$ e
 (reference \texttt{music-large-800k}). A run whose frozen budget names a different
 reference model is a hard error, not a warning.
 
-\section{Two gates on the data, and what each cannot catch}
+\section{Two gates on the data \normalfont\textit{(main Secs.~3.1, 3.2)}}
 
 \textbf{Labels against notes.} Before any activation was read, the POP909 labels were
 checked by estimating the key of every labelled segment of $\geq16$ notes and
@@ -143,7 +196,7 @@ Measured on unedited continuations: not one generated note of $1{,}876$ left the
 prompt's instrument block, and slot violations are $2.40\%$ on Bach and $0\%$ on pop,
 all of them control or special codes, concentrated in one prompt of twelve.
 
-\section{The key estimator: validated, and bounded}
+\section{The key estimator: validated, and bounded \normalfont\textit{(main Sec.~3.3)}}
 
 Our Krumhansl--Schmuckler implementation was checked against \texttt{music21}. The
 Krumhansl--Kessler profiles are identical in both modes, and given the same pitch
@@ -169,7 +222,17 @@ The caps differ by corpus, so a chorale cell and a pop cell of Table~2 are read 
 different ceilings. They do not touch any edit-minus-control margin, because the
 control is estimated the same way.
 
-\section{Search stage, final test, and the plan}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.86\columnwidth]{supp_ceiling.pdf}
+\caption{\textbf{S2} \textit{(main Sec.~3.3)}. How often the key estimator recovers a
+key a human annotated, against the number of notes it is given. This caps every
+absolute success rate we report, and the cap differs by corpus, which is why rates are
+compared within a corpus and not across.}
+\label{fig:supp-ceiling}
+\end{figure}
+
+\section{Search stage and final test \normalfont\textit{(main Sec.~3.3)}}
 
 Layers and hyperparameters were chosen on a search stage that was allowed to look; the
 numbers reported come from a final test on prompts no choice was ever made against.
@@ -203,7 +266,7 @@ is reported either way.'' It reached $0.212$ with $9/12$ keys separating (the th
 misses at $p_{\text{Holm}}$ $0.051$--$0.052$) and the in-key shares crossing. The
 prediction was wrong, and the cell is no longer read as a failure.
 
-\section{Install against steering, in full}
+\section{Install against steering, in full \normalfont\textit{(main Sec.~4.6)}}
 
 The pre-specified comparison replaces Eq.~(1)'s installation with an ADDITION of the
 same value, so the only difference left is whether the old component $P_Vh$ is removed;
@@ -226,7 +289,16 @@ So addition CAN set a key; what replacement buys is efficiency per unit of
 perturbation, and what the comparison isolates is that removing what is already written
 does part of the work.
 
-\section{Is the installed value position-appropriate?}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.86\columnwidth]{supp_layers.pdf}
+\caption{\textbf{S1} \textit{(main Sec.~4.4)}. The probe reads the key almost as well
+at layer~$1$ as anywhere deeper, while the edit's margin over its control only opens
+from layer~$2$ on. Readability and usability are not the same axis.}
+\label{fig:supp-layers}
+\end{figure}
+
+\section{Is the installed value position-appropriate? \normalfont\textit{(main Sec.~4.4)}}
 
 The per-key means pool the token types --- of $144{,}000$ sampled positions, $62{,}509$
 are pitch, $69{,}134$ bar or note length --- and the edit then writes the same
@@ -247,7 +319,18 @@ This settles the value; it does not settle the subspace. $V$ comes from a probe
 trained on pooled positions too, so a position-specific $V$ remains a separate
 question we did not test.
 
-\section{Continuation length across tokenizations}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.86\columnwidth]{supp_mu.pdf}
+\caption{\textbf{S4} \textit{(main Sec.~4.4)}. The target estimated from pitch
+positions and from bar/note-length positions agrees, for every key, better than any two
+distinct keys agree with each other. The value we install is close to
+position-independent, so the null result at pitch positions is not an artefact of
+writing an alien target.}
+\label{fig:supp-mu}
+\end{figure}
+
+\section{Continuation length across tokenizations \normalfont\textit{(main Secs.~3.2, 5)}}
 
 Continuation length is fixed in notes, not steps. Measured over the held-out edit rows,
 the median is $80$ notes for the Anticipatory model and $80$ for MMT, but $58$ for the
@@ -276,7 +359,18 @@ observed bin has the lower margin of the two large ones with a badly unbalanced 
 count, and $80$ notes lies outside the observed range. $24$ of $1{,}440$ rows produced
 an empty continuation, counted as failures in both conditions.
 
-\section{What we did not run, and why}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.86\columnwidth]{supp_public.pdf}
+\caption{\textbf{S3} \textit{(main Sec.~4.5)}. One point per public cell. Reading left
+to right is the probe margin over the note counts; height is the edit's success rate.
+The two quantities do not order together: the cells left of zero, where the probe loses
+to note counting, include the two strongest edits on pop, and the highest probe margins
+sit with the weakest edit. Orange marks a cell that separates all twelve keys.}
+\label{fig:supp-public}
+\end{figure}
+
+\section{What we did not run, and why \normalfont\textit{(main Secs.~3.2, 4.5)}}
 
 AMT large's Bach edit is absent for a reason of measurement. The guard needs a
 reference model that is not the one being edited; no checkpoint in that family is
