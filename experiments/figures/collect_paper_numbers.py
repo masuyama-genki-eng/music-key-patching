@@ -17,6 +17,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
+import numpy as np
 import pandas as pd
 
 from src.eval.guard import guarded_success
@@ -376,6 +377,22 @@ def main() -> None:
                                    for r in v["layers"])}
     if rep:
         out["probe_seed_replication"] = rep
+
+    # search-stage comparison of the three direction constructions, and the scale
+    # overlap floor the note-share contrast is read against
+    sv2 = load("results/sweep/R-Aug_s0/verdict_DR-H3_H5.json")
+    if sv2:
+        best = {}
+        for r in sv2["summary"]:
+            if r["method"] not in best or r["tkr"] > best[r["method"]]["tkr"]:
+                best[r["method"]] = r
+        out["search_stage_directions"] = {
+            m: {"best_tkr": r3(v["tkr"]), "layer": v["layer"]} for m, v in best.items()}
+        out["search_stage_directions"]["chosen"] = sv2["best_method"]
+    MAJOR = {0, 2, 4, 5, 7, 9, 11}
+    ov = [len(MAJOR & {(x + t) % 12 for x in MAJOR}) / 7 for t in range(1, 12)]
+    out["major_scale_overlap"] = {"mean": r3(float(np.mean(ov))),
+                                  "min": r3(float(min(ov))), "max": r3(float(max(ov)))}
 
     # is the installed value position-appropriate? (token-type pooling objection)
     mt = load("results/token_types/mu_by_token_type_L4.json")
