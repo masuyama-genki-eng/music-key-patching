@@ -1370,3 +1370,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
 - note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
 
+## 2026-08-28T21:39:03+09:00 — mu by token type (L4)
+- git: `5178f29aa3998de7782916a49c6ca691eb81a63b+DIRTY`
+- config_hash: `8b1e6db9275e8319a49adf6d52860f252bc92ce86592c56850b8e294400c04b8`
+- seeds: [0]
+- artifacts: `results/token_types/mu_by_token_type_L4.json`
+- note: cos same-key pitch vs bar+dur mean 0.9202; norm ratio mean 1.0276
+

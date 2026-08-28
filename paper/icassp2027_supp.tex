@@ -226,6 +226,27 @@ So addition CAN set a key; what replacement buys is efficiency per unit of
 perturbation, and what the comparison isolates is that removing what is already written
 does part of the work.
 
+\section{Is the installed value position-appropriate?}
+
+The per-key means pool the token types --- of $144{,}000$ sampled positions, $62{,}509$
+are pitch, $69{,}134$ bar or note length --- and the edit then writes the same
+$P_V\mu_\kappa$ wherever the mask allows. That invites an objection to the position
+result: editing only pitch positions may do nothing because the model does not consult
+the key there, or because we wrote a value that does not belong there.
+
+Estimating $\mu_\kappa$ from each family on its own separates the two. Inside $V$,
+the two estimates of the SAME key agree to a cosine of $0.920$ on average
+($0.877$--$0.953$) and are the same size (norm ratio $1.028$, $0.936$--$1.097$). For
+scale, two DIFFERENT keys estimated from the same family agree only to $0.314$ on
+average, at most $0.808$ --- so the worst-matched key across families is still more
+aligned than any two distinct keys are within one. The value we write is therefore
+close to position-independent, and the null result at pitch positions is not an
+artefact of writing an alien target.
+
+This settles the value; it does not settle the subspace. $V$ comes from a probe
+trained on pooled positions too, so a position-specific $V$ remains a separate
+question we did not test.
+
 \section{Continuation length across tokenizations}
 
 Continuation length is fixed in notes, not steps. Measured over the held-out edit rows,

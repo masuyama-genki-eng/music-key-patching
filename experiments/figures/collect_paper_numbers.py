@@ -377,6 +377,16 @@ def main() -> None:
     if rep:
         out["probe_seed_replication"] = rep
 
+    # is the installed value position-appropriate? (token-type pooling objection)
+    mt = load("results/token_types/mu_by_token_type_L4.json")
+    if mt:
+        out["mu_by_token_type"] = {
+            "cos_same_key": mt["cos_same_key_across_families"],
+            "norm_ratio": mt["norm_ratio_pitch_over_bardur"],
+            "cos_different_keys": mt["cos_different_keys_same_family"],
+            "family_counts": mt["family_counts"],
+            "n_positions": mt["n_positions"]}
+
     # facts the reviewer round added to the text: what the control's key estimate
     # returns, the raw probe score at the layers the dissociation uses, and how many
     # positions each token-type control edits

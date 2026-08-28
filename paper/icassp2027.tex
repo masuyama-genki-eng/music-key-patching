@@ -504,7 +504,7 @@ We exclude layer~$0$ from this comparison: it is the one layer whose control-cor
 %したがって、ある位置から調を読み取れることは、その位置の調表現をモデルが生成に利用していることを意味しない。
 The same separation appears across token positions, and here the numbers come from the final test.
 Editing only pitch positions has little effect (SR $0.035$), whereas editing bar and note-length positions reaches $0.233$ and is significant for $11$ of the $12$ target keys (Table~\ref{tab:main}).
-The two sets are nearly the same size, $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places.
+The two sets are nearly the same size, $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places, and it does not follow from writing a value that suits one family and not the other: estimating $\mu_{\kappa}$ from each family separately gives targets that agree to a cosine of $0.92$ inside $V$ and match in length, while two different keys estimated the same way agree only to $0.31$.
 Thus, a representation can be readable at a site without being used there to determine the generated key.
 
 \subsection{The Read--Use Gap Holds in Public Models}
