@@ -72,7 +72,7 @@ A music Transformer holds the key it is in as a component we can replace, and it
 We train Transformers on symbolic music with no key labels and no key symbols.
 During generation we replace the key-carrying component of one layer's activation with that of a different key and leave the input unchanged.
 About one continuation in three then lands in exactly the key we install ($0.355$) against one in twenty-five for random directions ($0.039$), and minor keys move further still.
-We observe the same effect in four public checkpoints trained on real music.
+We observe the same effect in four public checkpoints trained on real music, though its strength varies across them.
 Before the model generates a single note, the replacement shifts probability mass toward the new key's scale, which rules out the model reading that key from its own notes.
 We write to the probe's own weights, yet probe accuracy does not predict whether writing to them takes effect.
 Knowing a key, within the scope of our test, means holding one we can replace and then writing in it, and by that definition a music Transformer does.
@@ -356,7 +356,7 @@ The \emph{success rate} (SR) counts a continuation as successful when two condit
 First, the KS estimator (Sec.~\ref{sec:exp1}) identifies the installed key from the continuation.
 Second, the edit remains within a pre-defined disturbance threshold measured by a separate reference model.
 We set this threshold to $0.613$, the $90$th percentile of the reference model's perplexity change at natural key changes.
-Continuations that fail either condition count as failures, and chance is $1/12$.
+Continuations that fail either condition count as failures. A uniform key estimate would give $1/12$; the controls fall below it because a continuation the edit does not move stays in the prompt's key, which the estimator returns for $0.517$ of the random-subspace rows against $0.041$ for the target key.
 For the public checkpoints, we recompute the threshold on the corresponding corpus and use a separate public checkpoint as the reference.
 %また、調推定器を使わない指標として、継続音のうち対象の音階に属する音の割合をin-key note shareとして測る。各目標調について、同じprompt上の編集とbaselineを片側Wilcoxon符号順位検定で比較し、12調に対してHolm補正を行う。
 We also report the \emph{in-key note share}, the fraction of continuation notes that belong to a given scale.
@@ -496,13 +496,15 @@ Probe performance and edit effectiveness separate across both layers and token p
 %   元の表現に戻したい場合は下行を次に置き換える:
 %   The probe already reads the key well at layers~$0$ and~$1$, where the edit
 %   exceeds the random baseline by only $0.03$ and $0.04$.
-The probe already reaches high raw accuracy at layers~$0$ and~$1$, where the edit exceeds the random baseline by only $0.03$ and $0.04$.
-From layer~$2$ onward, the edit exceeds the baseline by $0.19$--$0.30$, while probe performance remains nearly unchanged.
+At layer~$1$ the probe already reads the key well, reaching raw macro-$F_1$ $0.872$ with a margin over the note counts whose CI excludes zero, yet the edit there exceeds the random baseline by only $0.04$ (search stage).
+From layer~$2$ onward the edit exceeds the baseline by $0.19$--$0.30$ while the raw probe score barely moves, from $0.921$ to $0.927$.
+We exclude layer~$0$ from this comparison: it is the one layer whose control-corrected margin is negative, so it is not a case of a readable key.
 %同様の違いはトークン位置でも見られた。
 %音高位置だけを編集してもほとんど効果はなかった（SR 0.035）が、小節と音長の位置を編集すると0.233に達し、12個中11個の目標調で有意であった。
 %したがって、ある位置から調を読み取れることは、その位置の調表現をモデルが生成に利用していることを意味しない。
-The same separation appears across token positions.
+The same separation appears across token positions, and here the numbers come from the final test.
 Editing only pitch positions has little effect (SR $0.035$), whereas editing bar and note-length positions reaches $0.233$ and is significant for $11$ of the $12$ target keys (Table~\ref{tab:main}).
+The two sets are nearly the same size, $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places.
 Thus, a representation can be readable at a site without being used there to determine the generated key.
 
 \subsection{The Read--Use Gap Holds in Public Models}
@@ -513,8 +515,8 @@ We next test whether the two main findings extend to public checkpoints trained 
 We compare the same AMT checkpoint on Bach and pop music, and then compare AMT, MMT, and REMI on the same pop corpus (Table~\ref{tab:wild}).
 %Bachでは、AMTは調を読み取り、編集にも反応した。probe marginは+0.196であり、編集のSRは0.479に達し、12個すべての目標調で成功した。
 %より大きなAMTでも同じ傾向が得られた。
-On Bach, AMT both reads and uses the key: the probe margin is $+0.196$, and the edit reaches an SR of $0.479$ for all $12$ target keys.
-Larger AMT checkpoints show the same trend.
+On Bach, AMT both reads and uses the key: the probe margin is $+0.196$, and the edit reaches an SR of $0.479$ and outperforms the baseline for all $12$ target keys.
+The $24$-layer checkpoint behaves the same way ($+0.213$, SR $0.557$, $12/12$), and the $36$-layer one reads the key equally well ($+0.203$) but has no edit cell, because the disturbance criterion needs a reference checkpoint larger than the one being edited and none exists in that family.
 %一方Popでは、probe性能は編集効果を予測しなかった。
 %AMTは最も高いprobe margin（+0.132）を示したが、編集効果は最も弱かった（0.212、9/12調）。
 %これに対してMMTとREMIのprobeはnote-counting baselineを上回らなかったが、編集はそれぞれ0.360と0.393に達し、12個すべての目標調で成功した。
@@ -530,7 +532,7 @@ Together with Sec.~\ref{sec:h5}, this result suggests that intervention sites an
 \footnotesize
 \caption{Probe readability and edit effectiveness in public checkpoints.
 Panel (a) varies the corpus and panel (b) the tokenization.
-Keys gives the number of successful target keys, and Probe/Edit summarizes both outcomes.}
+Keys gives the number of target keys for which the edit outperforms the random baseline after correction. Probe is marked $\checkmark$ when the margin's CI excludes zero, and Edit when the replacement outperforms the baseline for all $12$ target keys; AMT on pop reaches $9$ of $12$, which is why it carries $\times$ despite a significant overall effect.}
 \label{tab:wild}
 
 \begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrcc@{}}
@@ -544,7 +546,14 @@ Pop  & $+0.132$ & $0.212$ & $9/12$  & $\checkmark/\times$\\
 
 \addlinespace[7pt]
 
-\multicolumn{5}{@{}l}{\textit{(b) Tokenization: Pop fixed}}\\[3pt]
+\multicolumn{5}{@{}l}{\textit{(b) Scale: Bach fixed}}\\[3pt]
+AMT-12L & $+0.196$ & $0.479$ & $12/12$ & $\checkmark/\checkmark$\\
+AMT-24L & $+0.213$ & $0.557$ & $12/12$ & $\checkmark/\checkmark$\\
+AMT-36L & $+0.203$ & ---     & ---     & $\checkmark/$---\\
+
+\addlinespace[7pt]
+
+\multicolumn{5}{@{}l}{\textit{(c) Tokenization: Pop fixed}}\\[3pt]
 AMT-12L & $+0.132$ & $0.212$ & $9/12$  & $\checkmark/\times$\\
 REMI    & $-0.022$ & $0.393$ & $12/12$ & $\times/\checkmark$\\
 MMT     & $-0.060$ & $0.360$ & $12/12$ & $\times/\checkmark$\\

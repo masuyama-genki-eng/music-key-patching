@@ -377,6 +377,30 @@ def main() -> None:
     if rep:
         out["probe_seed_replication"] = rep
 
+    # facts the reviewer round added to the text: what the control's key estimate
+    # returns, the raw probe score at the layers the dissociation uses, and how many
+    # positions each token-type control edits
+    conf = REPO / "results/confirmatory/R-Aug_s0/parts/confirmatory_L4.parquet"
+    if conf.exists():
+        df = pd.read_parquet(conf)
+        non = df[df.src_key != df.target_key]
+        k1 = non[non.cond == "k1"]
+        if len(k1):
+            out["control_key_estimate"] = {
+                "returns_prompt_key": r3(float((k1.est_key == k1.src_key).mean())),
+                "returns_target_key": r3(float((k1.est_key == k1.target_key).mean())),
+                "n": int(len(k1))}
+        rows = {}
+        for cond in sorted(non.cond.unique()):
+            c = non[non.cond == cond]
+            rows[cond] = {"ikr_target": r3(float(c.ikr_target.mean())),
+                          "ikr_src": r3(float(c.ikr_src.mean()))}
+        out["in_key_share_by_condition"] = rows
+    pr1 = load("results/probing/R-Aug_s0/probe_report.json")
+    if pr1:
+        out.setdefault("probing_R-Aug_s0", {})["raw_probe_per_layer"] = {
+            k: r3(v["probe"]["macro_f1_24"]) for k, v in pr1["layers"].items()}
+
     # basis-B (strongest baseline) per-layer margins and the layer-1 verdict, which the
     # manuscript now reports as the one conclusion that depends on the baseline choice
     extb = {}
