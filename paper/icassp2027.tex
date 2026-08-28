@@ -135,14 +135,14 @@ No one has installed a key, and no one has compared replacing one against adding
 \includegraphics[width=\columnwidth]{fig1.pdf}
 % [和訳] 図1．活性パッチングによる介入の概要．
 % [和訳] 第9小節以降，ある層の活性から調を担う成分 P_V h を除去し，
-% 目標調 κ* の値 P_V μ_κ* を書き込む（h ← h − P_V h + P_V μ_κ*）．
+% 目標調 κ* の値 P_V μ_κ* を書き込む（h' = h − P_V h + P_V μ_κ*）．
 % 残りの活性と入力は変更しない．
 % [和訳] 右：置換あり（①）では続きが書き込んだ調に従い，
 % 置換なし（②）ではプロンプトの調に留まる．
 \caption{Overview of the activation-patching intervention.
 From bar 9 onward, we remove the key-carrying component $P_V h$ of one
 layer's activation and install the value $P_V \mu_{\kappa^*}$ of a target
-key $\kappa^*$, i.e., $h \leftarrow h - P_V h + P_V \mu_{\kappa^*}$,
+key $\kappa^*$, i.e., $h' = h - P_V h + P_V \mu_{\kappa^*}$,
 leaving the remaining activation and the input unchanged.
 Right: with the replacement (\ding{172}) the continuation follows the
 installed key; without it (\ding{173}) the music stays in the prompt key.}
@@ -263,10 +263,10 @@ For Bach, we obtain them by transposing the chorales to all $12$ tonics, while M
 \item \textbf{Replace.}
 From bar~$9$ onward, we replace the selected component of the layer-$\ell$ activation before it enters the next block~\cite{geiger2021causal,meng2022rome}:
 \begin{equation}
-h \;\leftarrow\; h - P_V h + P_V\,\mu_{\kappa^{*}}.
+h' \;=\; h - P_V h + P_V\,\mu_{\kappa^{*}}.
 \label{eq:edit}
 \end{equation}
-The first two terms remove the selected component, and the third writes the target value. Writing $h'$ for the result, the activation moves by $\Delta{=}\lVert h'-h\rVert{=}\lVert P_V(\mu_{\kappa^{*}}-h)\rVert$, which we call the displacement.
+The first two terms remove the selected component, and the third writes the target value, moving the activation by $\Delta{=}\lVert h'-h\rVert{=}\lVert P_V(\mu_{\kappa^{*}}-h)\rVert$, which we call the displacement.
 All other activation components, layers, and prompt positions remain unchanged.
 
 % 5．プロンプトと標的調ごとに継続を1本生成し，第9小節以降を評価する．
