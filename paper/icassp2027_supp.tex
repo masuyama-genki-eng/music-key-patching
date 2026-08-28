@@ -58,13 +58,13 @@ $64$ pitch tokens and predict the key from the twelve pitch-class counts, by log
 regression and by Krumhansl--Schmuckler. The control task (C1b) permutes the key
 labels per sequence, giving the floor that is subtracted.
 
-The pre-registered baseline peaked at the edge of its window sweep, so it was extended
+The pre-specified baseline peaked at the edge of its window sweep, so it was extended
 with a wider, concatenated window, and the strongest of all of them
-(\texttt{lr\_W16cat512}, $F_1$ $0.824$, against the pre-registered
+(\texttt{lr\_W16cat512}, $F_1$ $0.824$, against the pre-specified
 \texttt{lr\_W64}'s $0.790$) is what the reported margin is measured against.
 
 At layer $4$ the probe reaches macro-$F_1$ $0.927$ against that $0.824$; the control
-floor is $0.032$, leaving $+0.071$ $[0.056,0.081]$. Against the pre-registered window
+floor is $0.032$, leaving $+0.071$ $[0.056,0.081]$. Against the pre-specified window
 set alone the same layer gives $+0.105$ $[0.091,0.114]$, so widening the counter's
 history costs margin without overturning the result. An untrained network of the same
 shape reaches $0.243$, and the raw probe score is flat across layers $2$--$6$
@@ -75,7 +75,7 @@ baseline the margin clears zero in layers $2$--$7$ of all six models (smallest l
 bound $+0.021$), but not at layer $0$ ($-0.231$) or layer $1$ ($+0.012$, CI
 $[-0.00006, +0.021]$). Layer $1$ fails in three of the six models
 (R-Aug\_s0, R-Aug\_s2, R-NoAug\_s1) and clears zero in the other three, so we treat
-it as unresolved rather than positive. Against the pre-registered baseline alone layer
+it as unresolved rather than positive. Against the pre-specified baseline alone layer
 $1$ would clear zero in all six ($+0.044$ to $+0.062$) --- the layer-$1$ verdict is the
 one conclusion in this paper that depends on which baseline is used.
 
@@ -197,7 +197,7 @@ separating for the $12$-layer model, and $0.439$ with $11/12$ for the $24$-layer
 against $0.479$ and $0.557$ balanced.
 
 \textbf{A prediction that failed.} The balanced re-estimation for AMT $\times$ pop was
-registered with its expected effect written down: ``$0.135$ becomes $\approx0.17$,
+specified in advance with its expected effect written down: ``$0.135$ becomes $\approx0.17$,
 which likely still fails the per-key bar. The run happens either way, and its outcome
 is reported either way.'' It reached $0.212$ with $9/12$ keys separating (the three
 misses at $p_{\text{Holm}}$ $0.051$--$0.052$) and the in-key shares crossing. The
@@ -205,7 +205,7 @@ prediction was wrong, and the cell is no longer read as a failure.
 
 \section{Install against steering, in full}
 
-The pre-registered comparison replaces Eq.~(1)'s installation with an ADDITION of the
+The pre-specified comparison replaces Eq.~(1)'s installation with an ADDITION of the
 same value, so the only difference left is whether the old component $P_Vh$ is removed;
 addition provably keeps it. Held-out prompts, paired by prompt against the install rows.
 
@@ -214,7 +214,7 @@ of twelve keys individually significant after correction), and the notes show th
 mechanism: $28.8\%$ of the addition's continuations stay in the PROMPT's key, against
 $11.5\%$ for the doubled addition and $0.6\%$ for the contrastive direction. Given
 twice the displacement the addition overtakes replacement ($0.471$ against $0.355$),
-which is the opposite of the pre-registered direction and is reported as it fell; it
+which is the opposite of the pre-specified direction and is reported as it fell; it
 pays for the extra push at $4\times$, where half the continuations break the quality
 budget, and at $8\times$, where nearly all do. The difference-of-means direction leaves
 the prompt key almost nowhere ($0.6\%$ of continuations, in-key share $0.438$), which
@@ -264,7 +264,7 @@ grade a $36$-layer model with a $24$-layer one while that same model grades othe
 Every other run here grades a subject with a model at least its size. Its probe margin
 is reported because probing needs no reference model.
 
-The balanced re-estimation was registered for AMT $\times$ pop only. Running it for MMT
+The balanced re-estimation was specified for AMT $\times$ pop only. Running it for MMT
 and REMI after seeing AMT gain $+0.078$, on a split already spent, would be choosing an
 analysis by its effect on a number; their cells keep the direct estimate, which is the
 conservative direction for the one claim that uses them.
