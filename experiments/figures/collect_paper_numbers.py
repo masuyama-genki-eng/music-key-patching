@@ -445,7 +445,7 @@ def main() -> None:
     (REPO / "results/paper_numbers.json").write_text(json.dumps(out, indent=2))
     if "--check-tex" in sys.argv:
         total = 0
-        for rel in ("paper/icassp2027_v2.tex", "paper/icassp2027_v2_supp.tex"):
+        for rel in ("paper/icassp2027.tex", "paper/icassp2027_supp.tex"):
             tex = REPO / rel
             if tex.exists():
                 print(f"\n### {rel}")
