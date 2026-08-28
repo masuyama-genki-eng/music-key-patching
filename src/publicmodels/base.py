@@ -96,7 +96,8 @@ class PublicModelAdapter(ABC):
         silence. Reporting the count separately from encoding is what lets the
         caller do that. Default: no bound.
         """
-        return len(piece["events"])
+        from src.publicmodels.corpus import events_of
+        return len(events_of(piece))
 
     def encodable_prefix_len(self, events: list[tuple[float, float, int]]) -> int:
         """How many LEADING events of this list the checkpoint can represent.

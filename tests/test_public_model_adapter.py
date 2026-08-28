@@ -170,3 +170,53 @@ def test_round_trip_preserves_pitches_and_note_count(name):
     for (t1, _, p1), (t2, _, p2) in zip(ev, back):
         assert p1 == p2, "a pitch changed in the round trip"
         assert abs(t1 - t2) <= 0.05, "onset moved by more than one grid step"
+
+
+# ============ the chorale presentation tempo, shared by all three schemes ======
+# The chorale scores carry no tempo. The absolute-time scheme has always been given
+# one; the beat-grid schemes raised KeyError on Bach until 2026-08-24, which is why
+# those table cells were empty. The tempo is now derived in one place from the same
+# seconds_per_16th, so the three tokenizations present the same music identically.
+
+def test_a_piece_with_its_own_tempo_keeps_it():
+    from src.publicmodels.corpus import presentation_tempo_us
+    assert presentation_tempo_us({"tempo_us": 500_000}) == 500_000
+
+
+def test_a_chorale_is_presented_at_the_imposed_tempo():
+    from src.publicmodels.corpus import presentation_tempo_us
+    # a quarter is four sixteenths; 0.25 s per sixteenth is a quarter of 1.0 s
+    assert presentation_tempo_us({"onsets": [0, 4]}) == 1_000_000
+    assert presentation_tempo_us({"onsets": [0]}, seconds_per_16th=0.125) == 500_000
+
+
+@pytest.mark.parametrize("name", ["mmt", "remi"])
+def test_beat_grid_adapters_place_a_sixteenth_on_an_exact_grid_step(name):
+    """A beat splits into twelve, so a sixteenth is exactly three steps: the chorales
+    quantize losslessly. If this ever fails, the Bach cells acquire a quantization
+    error the pop cells do not have, and the two are no longer comparable."""
+    a = _adapter(name)
+    a.set_piece_context({"onsets": [0]})               # chorale: imposed tempo
+    res = a.enc["resolution"] if hasattr(a, "enc") else 12
+    sixteenth_s = 0.25
+    steps = sixteenth_s / a.seconds_per_beat * res
+    assert steps == int(steps), f"a sixteenth is {steps} grid steps, not an integer"
+
+
+@pytest.mark.parametrize("name", ["mmt", "remi"])
+def test_window_counter_accepts_a_chorale(name):
+    """n_events_in_window read piece["tempo_us"] directly and so raised KeyError on a
+    chorale even after set_piece_context had been fixed --- the probe crashed on the
+    second call, not the first. Both paths now go through the same helper."""
+    a = _adapter(name)
+    piece = {"onsets": [0], "events": [(0.0, 0.5, 60), (1.0, 0.5, 62)]}
+    assert a.n_events_in_window(None, piece) == 2
+
+
+def test_a_none_valued_tempo_is_treated_as_absent():
+    """build_prompts carries the field forward with ch.get(...), so a chorale reaches
+    the adapters with `tempo_us` present and None. Testing the key alone raised
+    int(None) at stage 2, after stage 1 had passed."""
+    from src.publicmodels.corpus import presentation_tempo_us
+    assert presentation_tempo_us({"tempo_us": None, "onsets": [0]}) == 1_000_000
+    assert presentation_tempo_us({"tempo_us": 500_000}) == 500_000

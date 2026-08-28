@@ -52,6 +52,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--adapter", default="anticipatory",
                    help="public-model adapter (src/publicmodels/registry.py)")
+    ap.add_argument("--ref-adapter", default=None,
+                    help="adapter for the REFERENCE checkpoint when it uses a "
+                         "different token scheme; default = the subject's")
     ap.add_argument("--ref-model", default=None,
                    help="guard reference checkpoint; default = the adapter's")
     ap.add_argument("--target-model", default=None,
@@ -90,8 +93,12 @@ def main() -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     ref_checkpoint = args.ref_model or adapter.reference_checkpoint
-    ref = adapter.load(ref_checkpoint, device)
-    ref_ctx = adapter.context_length(ref)
+    # A reference in a DIFFERENT token scheme has to be loaded by its own adapter:
+    # the beat-grid checkpoints on Bach are scored by an absolute-time reference.
+    # Defaults to the subject's adapter, so every earlier run is unaffected.
+    ref_adapter = get_adapter(args.ref_adapter) if args.ref_adapter else adapter
+    ref = ref_adapter.load(ref_checkpoint, device)
+    ref_ctx = ref_adapter.context_length(ref)   # the reference's own window
     if args.corpus == "pop909":
         # budget from the TRAIN split's natural key changes, per the freeze: the
         # search and final pieces must not shape the bar they will be judged by
@@ -111,8 +118,13 @@ def main() -> None:
     def window_rises(events, labels):
         """The frozen estimation rule: at each label change with a full W-note
         window either side, the mean NLL of the W note tokens after minus the W
-        before, from one forward pass. Returns the rises found in this sequence."""
-        ids, note_pos = adapter.encode_events(events)
+        before, from one forward pass. Returns the rises found in this sequence.
+
+        Encoded in the REFERENCE's scheme, because the reference is what scores
+        it and the budget is a property of that model on this corpus, not of the
+        subject -- which is why one budget serves every generated model on a
+        corpus. Identical to the old behaviour when the two adapters coincide."""
+        ids, note_pos = ref_adapter.encode_events(events)
         if len(ids) > ref_ctx:
             keep = max(i for i, q in enumerate(note_pos) if q < ref_ctx)
             ids, note_pos, labels = (ids[:ref_ctx],
@@ -133,7 +145,7 @@ def main() -> None:
         return out
 
     for ch in chorales:
-        adapter.set_piece_context(ch)
+        ref_adapter.set_piece_context(ch)
         events, labels = chorale_to_events(ch)
         if args.corpus == "pop909":
             # Pop modulations concentrate LATE in songs (the final-chorus shift:

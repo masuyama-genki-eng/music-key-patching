@@ -37,7 +37,7 @@ import torch
 import torch.nn.functional as F
 
 from src.publicmodels.base import PublicModelAdapter
-from src.publicmodels.corpus import chorale_to_events
+from src.publicmodels.corpus import chorale_to_events, events_of
 
 log = logging.getLogger("anticipatory")
 
@@ -272,7 +272,7 @@ class AnticipatoryAdapter(PublicModelAdapter):
 
     def n_events_in_window(self, model, piece: dict) -> int:
         # absolute time: the arrival vocabulary stops at MAX_TIME_IN_SECONDS
-        return sum(1 for e in piece["events"] if e[0] < MAX_TIME_IN_SECONDS)
+        return sum(1 for e in events_of(piece) if e[0] < MAX_TIME_IN_SECONDS)
 
     def encode_events(self, events, instrument: int = DEFAULT_INSTRUMENT):
         return encode_events(events, instrument)

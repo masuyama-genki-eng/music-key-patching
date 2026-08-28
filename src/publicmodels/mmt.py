@@ -44,7 +44,8 @@ from pathlib import Path
 import torch
 
 from src.publicmodels.base import PublicModelAdapter
-from src.publicmodels.corpus import chorale_to_events
+from src.publicmodels.corpus import (chorale_to_events, events_of,
+                                     presentation_tempo_us)
 from src.publicmodels.mmt_vendor import representation_min as R
 from src.publicmodels.mmt_vendor.music_x_transformers import MusicXTransformer
 
@@ -151,8 +152,9 @@ class MMTAdapter(PublicModelAdapter):
 
     # ------------------------------------------------------- token scheme
     def set_piece_context(self, piece: dict) -> None:
-        # one tempo per POP909-CL file, enforced by the reader; a quarter is a beat
-        self.seconds_per_beat = piece["tempo_us"] / 1e6
+        # one tempo per POP909-CL file, enforced by the reader; a chorale carries
+        # none and is presented at the tempo corpus.py already imposes on it
+        self.seconds_per_beat = presentation_tempo_us(piece) / 1e6
 
     def encodable_prefix_len(self, events) -> int:
         if self.seconds_per_beat is None:
@@ -165,8 +167,8 @@ class MMTAdapter(PublicModelAdapter):
         return n
 
     def n_events_in_window(self, model, piece: dict) -> int:
-        spb = piece["tempo_us"] / 1e6
-        return sum(1 for e in piece["events"] if e[0] / spb < self._max_beat)
+        spb = presentation_tempo_us(piece) / 1e6
+        return sum(1 for e in events_of(piece) if e[0] / spb < self._max_beat)
 
     def encode_events(self, events: list[tuple[float, float, int]]
                       ) -> tuple[list[tuple[int, ...]], list[int]]:

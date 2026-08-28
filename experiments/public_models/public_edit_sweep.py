@@ -127,6 +127,9 @@ def main() -> None:
                    help="checkpoint; default = the adapter's own")
     ap.add_argument("--adapter", default="anticipatory",
                    help="public-model adapter (src/publicmodels/registry.py)")
+    ap.add_argument("--ref-adapter", default=None,
+                    help="adapter for the REFERENCE checkpoint when it uses a "
+                         "different token scheme; default = the subject's")
     ap.add_argument("--ref-model", default=None,
                    help="guard reference checkpoint; default = the adapter's. "
                         "MUST be the one the frozen guard was measured with.")
@@ -172,7 +175,10 @@ def main() -> None:
         ref_adapter = get_adapter(gr["adapter"])
         ref_checkpoint = args.ref_model or gr["checkpoint"]
     else:
-        ref_adapter = adapter
+        # Bach has no corpus config; a reference in a different token scheme is named
+        # explicitly. Defaults to the subject's adapter, so every earlier Bach run is
+        # byte-for-byte unaffected.
+        ref_adapter = get_adapter(args.ref_adapter) if args.ref_adapter else adapter
         ref_checkpoint = args.ref_model or adapter.reference_checkpoint
     if ref_checkpoint is None:
         raise SystemExit("no guard reference: this adapter declares none of its own "

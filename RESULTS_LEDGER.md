@@ -1258,3 +1258,101 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `/home/masuyama-genki/ICASSP③/tonal-world-model/results/ks_cross_validation/ks_xval.json`
 - note: profiles identical; bach: agree 1.0, human ours 0.715 vs m21 0.715; pop909: agree 1.0, human ours 0.4075 vs m21 0.4075
 
+## 2026-08-27T02:16:55+09:00 — M-WILD probe mmt-lmd-ape
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `a29ac47e927c79f166014fc34dc5387de9c9b05d6e03820ade78fd18f9cdce14`
+- seeds: [0]
+- artifacts: `results/mwild/mmt-lmd-ape/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6072 (L5) vs best C3 0.4537; corrected margin 0.1065 CI[0.0381,0.1649]; beats_surface=True
+
+## 2026-08-27T02:17:12+09:00 — M-WILD probe remi-lmd-remi
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `b531ad6e08b3b3ad020a4624ae012cf8bd26a875969cb30a22eeb6e5819cd314`
+- seeds: [0]
+- artifacts: `results/mwild/remi-lmd-remi/mwild_probe.json`
+- note: public model trained on REAL music (Apache-2.0); probe F1=0.6596 (L5) vs best C3 0.4537; corrected margin 0.1533 CI[0.0878,0.2253]; beats_surface=True
+
+## 2026-08-27T02:25:50+09:00 — M-WILD guard freeze (mmt-lmd-ape)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `aa1c58259111a5577cf1e31d88a161f029a6de16d784a9b031d807ce2503a46b`
+- seeds: n/a
+- artifacts: `results/mwild_sweep/mmt-lmd-ape/delta_ppl.json`
+- note: delta_ppl=0.8489 nats frozen from 1180 natural modulations in real chorales, judged by stanford-crfm/music-medium-800k; BEFORE any edit result is reported
+
+## 2026-08-27T02:26:02+09:00 — M-WILD guard freeze (remi-lmd-remi)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `0e142f2dd3fd4034c1fa1a60d1ef7855309fd620b6fce4f16d34f8162a41fce8`
+- seeds: n/a
+- artifacts: `results/mwild_sweep/remi-lmd-remi/delta_ppl.json`
+- note: delta_ppl=0.8489 nats frozen from 1180 natural modulations in real chorales, judged by stanford-crfm/music-medium-800k; BEFORE any edit result is reported
+
+## 2026-08-27T03:00:35+09:00 — M-WILD intervention stage 1 (mmt-lmd-ape)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `e63ec38f86e6d527fcbe85ecda81d01bc13b297ffa5124f6859f8bfe88af4f64`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/mmt-lmd-ape/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L5 TKR 0.525 vs K1 0.079
+
+## 2026-08-27T03:25:59+09:00 — M-WILD intervention stage 1 (remi-lmd-remi)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `bec57665b1878a10ec6ef01c20eb5729600de5621359c868bd89dc88f6af71e2`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/remi-lmd-remi/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L5 TKR 0.450 vs K1 0.087
+
+## 2026-08-27T15:41:41+09:00 — M-WILD intervention stage 2 (mmt-lmd-ape)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `b21a27822eabc8cea4afba2b261bddf44b9206437f7ff24c74c0878d1b7e9c8e`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/mmt-lmd-ape/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.471 vs K1 0.093 on 60 held-out prompts; DR-H3 supported=True (10/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-27T15:54:33+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `60b2a67ab2e54ae005e5a1e084cd9476c7d273eeacd6700d04b032919a4ffd9c`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/remi-lmd-remi/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.421 vs K1 0.079 on 60 held-out prompts; DR-H3 supported=True (10/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-27T15:55:19+09:00 — Experiment I: balanced re-estimation (mmt-lmd-ape)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `e2c9922c2dd4475ee75fe1790cfe73f398bef78ba54a807ff3155e2677a530cc`
+- seeds: [0]
+- artifacts: `results/mwild/mmt-lmd-ape/balanced/probe_weights.npz`, `results/mwild/mmt-lmd-ape/balanced/class_means.npz`, `results/mwild/mmt-lmd-ape/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 993/class; L5 probe F1 0.6022; all 24 mu nonzero
+
+## 2026-08-27T16:12:35+09:00 — M-WILD intervention stage 2 (mmt-lmd-ape)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `63207fa00d290d4391e74f0d444466754478ca82bbe938f586c006c31037591a`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/mmt-lmd-ape/stage2_eval_balanced.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.701 vs K1 0.081 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-27T16:12:51+09:00 — Experiment I: balanced re-estimation (remi-lmd-remi)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `78450b1e98477c53586abe0a2fd716478572e2acd298de61bca5e483f0166606`
+- seeds: [0]
+- artifacts: `results/mwild/remi-lmd-remi/balanced/probe_weights.npz`, `results/mwild/remi-lmd-remi/balanced/class_means.npz`, `results/mwild/remi-lmd-remi/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 989/class; L5 probe F1 0.6567; all 24 mu nonzero
+
+## 2026-08-27T16:26:21+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `9bf1e6b4c2d745d335509b8de9fe86cbe92b75eaa6387d62392b5b9c550e3c47`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/remi-lmd-remi/stage2_eval_balanced.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.610 vs K1 0.069 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-28T17:33:58+09:00 — DEMO piano-roll figure
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `bc17fe85560ceca1facaa8d469b6dae2a2c2b42a1191e731b45370dad9201836`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
+- note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
+## 2026-08-28T17:35:13+09:00 — DEMO piano-roll figure
+- git: `9d365081062d802f0924759ecdf3dc8dbfdb8745+DIRTY`
+- config_hash: `bc17fe85560ceca1facaa8d469b6dae2a2c2b42a1191e731b45370dad9201836`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
+- note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+

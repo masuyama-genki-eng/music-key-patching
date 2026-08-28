@@ -38,7 +38,8 @@ from pathlib import Path
 import torch
 
 from src.publicmodels.base import PublicModelAdapter
-from src.publicmodels.corpus import chorale_to_events
+from src.publicmodels.corpus import (chorale_to_events, events_of,
+                                     presentation_tempo_us)
 from src.publicmodels.mmt_vendor import representation_remi_min as R
 
 log = logging.getLogger("remi")
@@ -129,7 +130,7 @@ class RemiAdapter(PublicModelAdapter):
 
     # ------------------------------------------------------- token scheme
     def set_piece_context(self, piece: dict) -> None:
-        self.seconds_per_beat = piece["tempo_us"] / 1e6
+        self.seconds_per_beat = presentation_tempo_us(piece) / 1e6
 
     def encodable_prefix_len(self, events) -> int:
         if self.seconds_per_beat is None:
@@ -145,8 +146,8 @@ class RemiAdapter(PublicModelAdapter):
         # 64 beats: this checkpoint's trained max_beat, the tightest window of the
         # three schemes (~32 s at POP909's tempi, vs MMT's 256 beats and the
         # absolute-time scheme's 100 s)
-        spb = piece["tempo_us"] / 1e6
-        return sum(1 for e in piece["events"] if e[0] / spb < self._max_beat)
+        spb = presentation_tempo_us(piece) / 1e6
+        return sum(1 for e in events_of(piece) if e[0] / spb < self._max_beat)
 
     def encode_events(self, events: list[tuple[float, float, int]]
                       ) -> tuple[list[int], list[int]]:
