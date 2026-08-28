@@ -1377,3 +1377,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/token_types/mu_by_token_type_L4.json`
 - note: cos same-key pitch vs bar+dur mean 0.9202; norm ratio mean 1.0276
 
+## 2026-08-28T23:58:45+09:00 — M-WILD guard freeze (music-large-800k)
+- git: `485a5892c89bcc0905e38cb998a043d8997ffbb7+DIRTY`
+- config_hash: `a050ced7c41494dd6c250aaa558d840df75101a956157e8e9d69bf604453ad92`
+- seeds: n/a
+- artifacts: `results/mwild_sweep/music-large-800k/delta_ppl.json`
+- note: delta_ppl=0.8489 nats frozen from 1180 natural modulations in real chorales, judged by stanford-crfm/music-medium-800k; BEFORE any edit result is reported
+

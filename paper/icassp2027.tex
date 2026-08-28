@@ -509,7 +509,7 @@ Thus, a representation can be readable at a site without being used there to det
 %次に、2つの主要な結果が実音楽で学習された公開チェックポイントでも成り立つかを調べる。
 %同じAMTをBachとPopで比較し、さらに同じPopコーパス上でAMT、MMT、REMIを比較する。
 We next test whether the two main findings extend to public checkpoints trained on real music.
-We compare the same AMT checkpoint on Bach and pop music, then AMT sizes on Bach, and then AMT, MMT, and REMI on the same pop corpus (Table~\ref{tab:wild}).
+We compare the same AMT checkpoint on Bach and pop music, then AMT sizes on Bach, and then AMT, MMT, and REMI on each corpus in turn (Table~\ref{tab:wild}).
 %Bachでは、AMTは調を読み取り、編集にも反応した。probe marginは+0.196であり、編集のSRは0.479に達し、12個すべての目標調で成功した。
 %より大きなAMTでも同じ傾向が得られた。
 On Bach, AMT both reads and uses the key: the probe margin is $+0.196$, and the edit reaches an SR of $0.479$ and outperforms the baseline for all $12$ target keys.
@@ -521,14 +521,17 @@ The $24$-layer checkpoint behaves the same way ($+0.213$, SR $0.557$, $12/12$), 
 On pop music, however, probe performance does not predict edit effectiveness.
 AMT has the highest probe margin ($+0.132$) but the weakest edit ($0.212$, $9/12$ keys).
 In contrast, MMT and REMI do not outperform the note-counting baseline in probing ($-0.060$ and $-0.022$), yet their edits reach $0.360$ and $0.393$ and succeed for all $12$ target keys.
+%Bach では同じ2モデルのプローブが表層を超える（+0.107 / +0.153）ので、
+%『読めない』側はコーパス依存であり、編集は6セルすべてで効く。
 Thus, high probe performance does not imply a strong effect when the same representation is edited.
+The probe verdict is also corpus-dependent: on Bach the same two models do beat the note counts ($+0.107$ and $+0.153$) and edit better still ($0.701$ and $0.610$), so what flips between corpora is whether the key is readable above the note counts, while the edit works in all six cells ($0.212$--$0.701$).
 Together with Sec.~\ref{sec:h5}, this result suggests that intervention sites and directions should be validated by intervention rather than selected from probe performance alone, as also reported for language models~\cite{wu2025axbench,arad2025selecting}.
 
 \begin{table}[!t]
 \centering
 \footnotesize
 \caption{Probe readability and edit effectiveness in public checkpoints.
-Panel (a) varies the corpus, (b) the model scale, and (c) the tokenization.
+Panel (a) varies the corpus, (b) the model scale, and (c, d) the tokenization on each corpus in turn.
 Keys counts the target keys the edit wins after correction. $\checkmark$ marks a probe margin whose CI excludes zero, and an edit that wins all $12$ keys; AMT on pop wins $9$, hence $\times$ despite a significant overall effect.}
 \label{tab:wild}
 
@@ -550,10 +553,17 @@ AMT-36L & $+0.203$ & ---     & ---     & $\checkmark/$---\\
 
 \addlinespace[7pt]
 
-\multicolumn{5}{@{}l}{\textit{(c) Tokenization: Pop fixed}}\\[3pt]
+\multicolumn{5}{@{}l}{\textit{(c) Tokenization on pop}}\\[3pt]
 AMT-12L & $+0.132$ & $0.212$ & $9/12$  & $\checkmark/\times$\\
 REMI    & $-0.022$ & $0.393$ & $12/12$ & $\times/\checkmark$\\
 MMT     & $-0.060$ & $0.360$ & $12/12$ & $\times/\checkmark$\\
+
+\addlinespace[7pt]
+
+\multicolumn{5}{@{}l}{\textit{(d) Tokenization on Bach}}\\[3pt]
+AMT-12L & $+0.196$ & $0.479$ & $12/12$ & $\checkmark/\checkmark$\\
+REMI    & $+0.153$ & $0.610$ & $12/12$ & $\checkmark/\checkmark$\\
+MMT     & $+0.107$ & $0.701$ & $12/12$ & $\checkmark/\checkmark$\\
 
 \addlinespace[2pt]
 \bottomrule
@@ -592,11 +602,11 @@ Some evaluation settings differ across experiments, and the supplementary lists 
 
 \section{Conclusion}
 %本研究では、調を置換可能な形式で表現し、置換後の値を生成時に利用することを「調を知っている」と定義する。
-%この定義のもとで、評価したモデルは調情報を表現し、生成時に利用していた。
-%この結果は、自作モデルと実音楽で学習された公開チェックポイントの両方で確認された。
+%この定義のもとで、編集した各モデルは調情報を表現し、生成時に利用していた。
+%36層のチェックポイントはプローブのみで、使用は検証していないので、そう書き分ける。
 We define knowing the key as representing it in a form that can be replaced and then using the replaced value during generation.
-By this definition, the models we tested represent and use key information.
-We observe this behavior in both our models and public checkpoints trained on real music.
+By this definition, every model we edited represents and uses key information, in our own models and in public checkpoints trained on real music.
+One further checkpoint was probed but not edited, and for that one we show only that the key is readable.
 %Probe性能だけでは、モデルが符号化された調情報を生成時に利用しているかどうかを判断するには不十分である。
 %Probeは生成に影響しない表現からも調を読み取れる一方で、probe性能が低いモデルでも介入に強く反応する場合がある。
 %したがって、音楽表現を分析する研究では、probe性能だけに依存せず、実際に介入して候補方向の効果を検証する必要がある。

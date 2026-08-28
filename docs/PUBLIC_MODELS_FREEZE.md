@@ -154,3 +154,25 @@ that every ledgered public-model number was measured with, and the numbers are n
 biased by its absence: the same sampler serves the edit, its clean twin and K1. What
 it can do is shorten an occasional continuation, which caps the effect size — so it
 is reported as a bound, in the supplementary, rather than tuned away.
+
+---
+
+## AMENDMENT — the 36-layer edit cell is run (2026-08-28, before running)
+
+This cell was left empty and the manuscript explained it by saying the guard needs a
+larger checkpoint of the same family and none exists above 36 layers. That
+explanation contradicts §3 of this very document, which assigned
+`music-large-800k` the reference `music-medium-800k` before any of these runs, and
+states the requirement as "a different public checkpoint" rather than a larger one.
+The cell was therefore always runnable under the frozen design; it simply was not run.
+
+It is run now, with nothing about the design changed: reference `music-medium-800k`
+exactly as §3 assigns, the strided scan of §4 (layers 0, 3, …, 33, then the two
+neighbours of the best), 20 search prompts, 60 held-out prompts judged once, 12 major
+targets, Holm across them, rank 24, and the balanced re-estimation §5 makes part of
+the battery. Cost at the measured 9.47 s per generation: about 15 h for the strided
+stage 1, plus refinement and stage 2.
+
+No prediction is recorded because the design fixes nothing new: the two smaller
+checkpoints of the same family reached 0.479 and 0.557 under this protocol, and
+whatever this one reaches is reported as it falls.
