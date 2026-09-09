@@ -88,7 +88,8 @@ class SubspaceEditor:
                       untouched.
     """
 
-    MODES = ("replace", "sham", "add_matched", "add_fixed", "add_contrast")
+    MODES = ("replace", "replace_scaled", "sham", "add_matched", "add_fixed",
+             "add_contrast")
 
     def __init__(self, V: torch.Tensor, mu_target: torch.Tensor | None = None,
                  mode: str = "replace", from_position: int | None = None,
@@ -98,6 +99,13 @@ class SubspaceEditor:
                  mu_source: torch.Tensor | None = None,
                  alpha: float | None = None, s_bar: float | None = None):
         assert mode in self.MODES, f"unknown mode {mode!r}"
+        if mode == "replace_scaled":
+            # ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (E2): the install, weakened
+            # continuously. h + s(-P_V h + P_V mu) is the identity at s=0 and the
+            # ordinary replace at s=1, so it answers whether the effect is graded
+            # without changing what "replace" does. scale must be given explicitly;
+            # there is no default, so a caller cannot silently get s=1 here.
+            assert alpha is not None, "mode 'replace_scaled' needs alpha as the scale s"
         if mode in ("add_fixed", "add_contrast"):
             assert alpha is not None and s_bar is not None, \
                 f"mode {mode!r} needs alpha and s_bar"
@@ -156,6 +164,8 @@ class SubspaceEditor:
         else:
             target = (self.mu_t @ self.V) @ self.V.T   # (d,) target component
             delta = target[None, None, :] - comp       # what this edit would apply
+            if self.mode == "replace_scaled":
+                delta = delta * float(self.alpha)      # s = 1 reproduces "replace"
             if self.norm_ref is not None:
                 # K1-norm: rescale to the reference basis's perturbation magnitude
                 R = self.norm_ref

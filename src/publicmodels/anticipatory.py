@@ -288,6 +288,39 @@ class AnticipatoryAdapter(PublicModelAdapter):
     def decode_events(self, ids: list[int]) -> list[tuple[float, float, int]]:
         return continuation_events(ids)
 
+    def token_type_mask(self, ids, kind: str):
+        """AMT writes each event as [time, duration, note], so a position's type is
+        decided by its offset from the leading AUTOREGRESS control token."""
+        import numpy as np
+        seq = list(ids)
+        pitch = np.zeros(len(seq), dtype=bool)
+        timing = np.zeros(len(seq), dtype=bool)
+        for i, tok in enumerate(seq):
+            t = int(tok)
+            if NOTE_OFFSET <= t < NOTE_OFFSET + MAX_NOTE:
+                pitch[i] = True
+            elif t < NOTE_OFFSET:                      # time or duration block
+                timing[i] = True
+        if kind == "pitch":
+            return pitch
+        if kind == "timing":
+            return timing
+        raise ValueError(f"unknown kind {kind!r}")
+
+    def next_pitch_class_mass(self, model, ids):
+        """Flat vocabulary: soft-max the whole head, take the NOTE block and fold
+        it over instruments, since note = NOTE_OFFSET + 128*instrument + pitch."""
+        import numpy as np
+        import torch.nn.functional as F
+        logits = model(ids).logits[0, -1]
+        p = F.softmax(logits.float(), dim=-1).cpu().numpy()
+        block = p[NOTE_OFFSET: NOTE_OFFSET + MAX_NOTE]
+        note_ids = np.arange(NOTE_OFFSET, NOTE_OFFSET + MAX_NOTE)
+        pc_of_note = (note_ids - NOTE_OFFSET) % MAX_PITCH % 12
+        pc = np.zeros(12)
+        np.add.at(pc, pc_of_note, block)
+        return pc, float(block.sum())
+
     def _generate_step(self, model, window, temperature: float, top_p: float,
                        rng: torch.Generator):
         """One flat token from one softmax — the moved body of the old loop,

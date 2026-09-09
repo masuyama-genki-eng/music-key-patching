@@ -33,13 +33,21 @@ class HookSubspaceEditor:
     reasoning as our own editor; see CHANGELOG 2026-07-11)."""
 
     def __init__(self, V: torch.Tensor, mu_target: torch.Tensor | None,
-                 mode: str = "replace", from_position: int | None = None):
+                 mode: str = "replace", from_position: int | None = None,
+                 token_mask: torch.Tensor | None = None):
+        """token_mask, added by ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (C2), is
+        an optional (T,) or (B, T) boolean over the window saying which positions
+        may be written. It defaults to None and the unmasked path below is the one
+        that existed before, unchanged, so every earlier public-model run is
+        reproduced bit for bit. A mask of all-True is required to give the same
+        result as no mask at all, which the unit tests assert."""
         assert mode in ("replace", "sham")
         Q, _ = torch.linalg.qr(V)
         self.V = Q[:, : V.shape[1]]
         self.mu_t = mu_target
         self.mode = mode
         self.from_position = from_position
+        self.token_mask = token_mask
 
     def __call__(self, module, args, output):
         # GPT2Block returns (hidden_states, ...present/attn)
@@ -50,7 +58,16 @@ class HookSubspaceEditor:
         else:
             target = (self.mu_t @ self.V) @ self.V.T
             edited = h - comp + target[None, None, :]
-        if self.from_position is not None:
+        if self.token_mask is not None:
+            m = self.token_mask.to(h.device)
+            if m.dim() == 1:
+                m = m[None, :]                                  # (1, T)
+            m = m[:, : h.shape[1]]
+            if self.from_position is not None:
+                pos = torch.arange(h.shape[1], device=h.device)[None, :]
+                m = m & (pos >= self.from_position)
+            edited = torch.where(m[..., None], edited, h)
+        elif self.from_position is not None:
             out = h.clone()
             out[:, self.from_position:, :] = edited[:, self.from_position:, :]
             edited = out

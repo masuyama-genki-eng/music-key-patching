@@ -262,6 +262,25 @@ class MMTAdapter(PublicModelAdapter):
                           if note_rows.any() else 0)
         self._cur_type = int(prompt_ids[0, -1, DIM["type"]])
 
+    def next_pitch_class_mass(self, model, ids):
+        """Compound scheme: pitch has its own head, so the mass is read from that
+        field alone rather than from a slice of one vocabulary."""
+        import numpy as np
+        import torch.nn.functional as F
+        logits = [l[0, -1].float() for l in model.decoder.net(ids)]
+        p = F.softmax(logits[DIM["pitch"]], dim=-1).cpu().numpy()
+        pc = np.zeros(12)
+        total = 0.0
+        for code, midi in R.CODE_PITCH_MAP.items():
+            if midi is None:                 # non-pitch codes map to None
+                continue
+            c = int(code)
+            if c < len(p):
+                m = float(p[c])
+                pc[int(midi) % 12] += m
+                total += m
+        return pc, total
+
     def _generate_step(self, model, window, temperature: float, top_p: float,
                        rng: torch.Generator):
         """One compound event: the TYPE field is drawn first and decides which

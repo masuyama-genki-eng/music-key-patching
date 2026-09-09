@@ -1986,3 +1986,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/a_pitchclass/edit_rows_minor.parquet`, `results/reanalysis/a_pitchclass/verdict_minor.json`
 - note: pc24 SR=0.0027; pc24_rand SR=0.0036; pc12 SR=0.0027; pc12_rand SR=0.0009; res SR=0.4782; res_rand SR=0.0255; install 0.4945
 
+## 2026-09-10T00:02:30+09:00 — Re-analysis 11: pre-generation logits, remi-lmd-remi L5
+- git: `61ba8decb4bb4172fe1fd3ca5d0e10bc99abd88b+DIRTY`
+- config_hash: `c0653b9d6351856b47f984736bbe9c79a0f233a45442e9548591088ee61e35a7`
+- seeds: [0]
+- artifacts: `results/reanalysis/c1_public_next_pitch/remi/next_pitch_remi-lmd-remi_L5.json`
+- note: both the edit and a random subspace shift the first decision; the shift is not specific to the key subspace here
+
+## 2026-09-10T00:04:30+09:00 — Re-analysis 11: pre-generation logits, music-small-800k L8
+- git: `61ba8decb4bb4172fe1fd3ca5d0e10bc99abd88b+DIRTY`
+- config_hash: `2cba55c17a4f6f91c6967f319d44232b87f36ade303c59c6d4027145f48d61f0`
+- seeds: [0]
+- artifacts: `results/reanalysis/c1_public_next_pitch/amt/next_pitch_music-small-800k_L8.json`
+- note: the edit shifts the public model's FIRST decision toward the installed key, before any note is sampled: the mechanism shown on the synthetic model reaches a public checkpoint
+
+## 2026-09-10T00:04:35+09:00 — Re-analysis 11: pre-generation logits, remi-lmd-remi L5
+- git: `61ba8decb4bb4172fe1fd3ca5d0e10bc99abd88b+DIRTY`
+- config_hash: `c0653b9d6351856b47f984736bbe9c79a0f233a45442e9548591088ee61e35a7`
+- seeds: [0]
+- artifacts: `results/reanalysis/c1_public_next_pitch/remi/next_pitch_remi-lmd-remi_L5.json`
+- note: both the edit and a random subspace shift the first decision; the shift is not specific to the key subspace here
+
+## 2026-09-10T00:04:40+09:00 — Re-analysis 11: pre-generation logits, mmt-lmd-ape L5
+- git: `61ba8decb4bb4172fe1fd3ca5d0e10bc99abd88b+DIRTY`
+- config_hash: `74f7211d34b104774e3f81e2083f93c6af09c16c6f104152d31e566f0faacd5e`
+- seeds: [0]
+- artifacts: `results/reanalysis/c1_public_next_pitch/mmt/next_pitch_mmt-lmd-ape_L5.json`
+- note: both the edit and a random subspace shift the first decision; the shift is not specific to the key subspace here
+

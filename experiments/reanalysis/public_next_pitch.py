@@ -82,9 +82,10 @@ def main() -> None:
     K1 = torch.from_numpy(random_matched(V, args.seed + 31 * args.layer)).to(device)
 
     # the note-token block, folded over instruments to twelve pitch classes
-    from src.publicmodels.anticipatory import NOTE_OFFSET, MAX_NOTE, MAX_PITCH
-    note_ids = np.arange(NOTE_OFFSET, NOTE_OFFSET + MAX_NOTE)
-    pc_of_note = (note_ids - NOTE_OFFSET) % MAX_PITCH % 12
+    # 2026-09-09 (AMENDMENT 1, C1): the pitch-class folding was written inline for
+    # the flat AMT head, which crashes on REMI (model.net returns a tensor, not an
+    # HF output) and cannot express MMT's separate pitch field at all. It now lives
+    # in each adapter as next_pitch_class_mass, so this script is scheme-agnostic.
 
     def next_pc(prompt_ids: list[int], basis, tgt: int | None):
         ids = torch.tensor([prompt_ids], device=device)
@@ -98,15 +99,11 @@ def main() -> None:
         if ed is not None:
             handle = adapter.block(model, args.layer).register_forward_hook(ed)
         try:
-            logits = model(ids).logits[0, -1]
+            pc, mass = adapter.next_pitch_class_mass(model, ids)
         finally:
             if handle is not None:
                 handle.remove()
-        p = F.softmax(logits.float(), dim=-1).cpu().numpy()
-        block = p[NOTE_OFFSET: NOTE_OFFSET + MAX_NOTE]
-        pc = np.zeros(12)
-        np.add.at(pc, pc_of_note, block)
-        return pc, float(block.sum())
+        return pc, mass
 
     rows = []
     for pi, p in enumerate(prompts):
@@ -150,6 +147,26 @@ def main() -> None:
     log.info("installed vs prompt key, log mass ratio:\n%s",
              pd.DataFrame(recs).to_string(index=False))
 
+    # 2026-09-09 (AMENDMENT 1, C1): the frozen reading is a CONTRAST -- "the ratio
+    # moves under the edit and not under the random control" -- but the block above
+    # only tests each condition against no edit. On a checkpoint where the control
+    # also moves a little, that pair of tests cannot say whether the edit is doing
+    # something different, so the direct paired comparison is added here. The
+    # existing per-condition tests and verdict strings are untouched.
+    se = df[df.cond == "edit"].groupby("prompt").log_ratio.mean()
+    sk = df[df.cond == "k1"].groupby("prompt").log_ratio.mean()
+    jj = se.to_frame("a").join(sk.to_frame("b")).dropna()
+    rek = wilcoxon_rank_biserial(jj.a.to_numpy(), jj.b.to_numpy(),
+                                 alternative="greater")
+    edit_vs_k1 = {"n_prompts": int(len(jj)),
+                  "log_ratio_edit": round(float(jj.a.mean()), 4),
+                  "log_ratio_k1": round(float(jj.b.mean()), 4),
+                  "difference": round(float((jj.a - jj.b).mean()), 4),
+                  "effect_r": round(rek["r"], 3),
+                  "p": float(f"{rek['p']:.3g}")}
+    log.info("edit vs random subspace, paired: difference %+.4f (r=%.3f, p=%.3g)",
+             edit_vs_k1["difference"], edit_vs_k1["effect_r"], edit_vs_k1["p"])
+
     e = next(r for r in recs if r["cond"] == "edit")
     k = next(r for r in recs if r["cond"] == "k1")
     moved = e["p_holm"] < 0.05 and e["log_ratio"] > e["log_ratio_clean"]
@@ -172,7 +189,8 @@ def main() -> None:
     df.to_parquet(outdir / f"next_pitch_{short}_L{args.layer}.parquet")
     (outdir / f"next_pitch_{short}_L{args.layer}.json").write_text(json.dumps(
         {"model": args.model, "layer": args.layer, "n_prompts": len(prompts),
-         "means": tab.to_dict(), "tests": recs, "verdict": verdict,
+         "means": tab.to_dict(), "tests": recs, "edit_vs_k1": edit_vs_k1,
+         "verdict": verdict,
          "note": "forward pass only; the layer is the sweep's, not re-searched"},
         indent=2))
     log.info("wrote %s", outdir / f"next_pitch_{short}_L{args.layer}.json")

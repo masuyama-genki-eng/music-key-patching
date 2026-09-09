@@ -201,6 +201,35 @@ class PublicModelAdapter(ABC):
         """Per-run state reset for schemes that track constraints (MMT's monotone
         beat and type). Default: nothing."""
 
+    def token_type_mask(self, ids, kind: str):
+        """Boolean over the positions of `ids`: which ones are of `kind`.
+
+        kind is "pitch" for the positions that carry a pitch choice and "timing"
+        for the positions that carry bar, position or duration information. The
+        two must be disjoint, and their union is what the unmasked edit writes to.
+
+        Optional and defaults to refusing, so adapters written before
+        ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (C2) are unaffected. A compound
+        scheme cannot implement it, because every field is emitted at every step
+        and "a pitch position" names no position -- that refusal is a result, not
+        a gap.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement token_type_mask")
+
+    def next_pitch_class_mass(self, model, ids) -> "tuple":
+        """(pc_mass over 12 classes, total mass on pitch-bearing outcomes) for the
+        NEXT token, from one forward pass with nothing sampled.
+
+        Optional and defaults to refusing, so the three adapters that existed
+        before AMENDMENT 1 keep behaving exactly as they did. Each scheme has to
+        implement it itself because the head structure differs: the flat schemes
+        put pitch inside one vocabulary, while a compound scheme has a separate
+        pitch field. Used by the pre-generation reading of experiment C1.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement next_pitch_class_mass")
+
     @abstractmethod
     def _generate_step(self, model, window, temperature: float, top_p: float,
                        rng) -> "torch.Tensor | None":

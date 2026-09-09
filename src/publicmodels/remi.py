@@ -220,6 +220,42 @@ class RemiAdapter(PublicModelAdapter):
         return out
 
     # ---------------------------------------------------------- generation
+    def token_type_mask(self, ids, kind: str):
+        """REMI names its events, so the type of a position is the prefix of the
+        event its code decodes to."""
+        import numpy as np
+        seq = list(ids)
+        pitch = np.zeros(len(seq), dtype=bool)
+        timing = np.zeros(len(seq), dtype=bool)
+        for i, tok in enumerate(seq):
+            ev = self.c2ev.get(int(tok), "")
+            if not isinstance(ev, str):
+                continue
+            if ev.startswith("pitch_"):
+                pitch[i] = True
+            elif ev.startswith(("beat_", "position_", "duration_")):
+                timing[i] = True
+        if kind == "pitch":
+            return pitch
+        if kind == "timing":
+            return timing
+        raise ValueError(f"unknown kind {kind!r}")
+
+    def next_pitch_class_mass(self, model, ids):
+        """Flat vocabulary whose pitch tokens are named pitch_<midi>."""
+        import numpy as np
+        import torch.nn.functional as F
+        logits = model.net(ids)[0, -1].float()
+        p = F.softmax(logits, dim=-1).cpu().numpy()
+        pc = np.zeros(12)
+        total = 0.0
+        for code, ev in self.c2ev.items():
+            if isinstance(ev, str) and ev.startswith("pitch_"):
+                m = float(p[int(code)])
+                pc[int(ev.split("_")[1]) % 12] += m
+                total += m
+        return pc, total
+
     def _generate_step(self, model, window, temperature: float, top_p: float,
                        rng: torch.Generator):
         logits = model.net(window)[0, -1].float()
