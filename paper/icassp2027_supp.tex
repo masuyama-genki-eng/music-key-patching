@@ -1840,6 +1840,56 @@ separates the two keys by $0.695$ against $0.041$ for its control; here the sepa
 is $0.014$ of a log ratio. The claim this licenses is that the edit acts before
 sampling in a public model too, not that it acts as strongly.
 
+% 【日本語訳】3つのチェックポイントすべてで（追記 2026-09-10）
+% ひとつのチェックポイントはひとつのチェックポイントにすぎないので、Bach で編集した
+% 残り2つでも同じ測定を行った。設計は AMENDMENT 1 で先に凍結してある。
+% 表のとおり、編集は3つすべてで対数比を無編集より大きく動かし、REMI と MMT では
+% 符号ごと反転させる。ランダム部分空間との対応のある比較では、差は AMT で +0.012、
+% REMI で +0.596、MMT で +0.820 であり、効果量はそれぞれ 0.505、0.995、1.000 である。
+% ここで正直に述べておくことが2つある。第一に、REMI と MMT ではランダム部分空間も
+% 無編集に対してわずかに有意に動く（+0.026 と +0.075）。凍結した読み方は「編集で動き
+% 対照では動かない」という対比だったので、その対比そのものを測る対応のある比較を
+% 後から足した。既存の条件別検定と判定文は変えていない。差が20倍から30倍あるので、
+% 対照が少し動くことは編集の効果を説明しない。
+% 第二に、この測定を可能にするために2つの実装欠陥を直した。ピッチクラスへの畳み込みが
+% AMT の平坦な語彙前提で書かれており REMI では動かず、MMT の複合方式では表現できな
+% かった。畳み込みを各アダプタへ移したうえで、AMT の公表値がそのまま再現することを
+% 確認してから他の2つを走らせた。
+%
+\textbf{All three checkpoints.} One checkpoint is one checkpoint, so the same
+measurement ran on the two other models that were edited on Bach, under a design fixed
+in advance.
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & unedited & edit & random & edit $-$ random\\
+\midrule
+AMT-12L & $-0.0239$ & $-0.0096$ & $-0.0216$ & $+0.0119$ ($r$ $0.505$)\\
+REMI    & $-0.1048$ & $+0.5171$ & $-0.0784$ & $+0.5955$ ($r$ $0.995$)\\
+MMT     & $-0.6895$ & $+0.2051$ & $-0.6145$ & $+0.8197$ ($r$ $1.000$)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+In REMI and MMT the edit reverses the sign of the ratio, so the installed key's scale
+ends up carrying more mass than the prompt key's before a single note is drawn. Every
+edit-minus-random difference is paired by prompt and one-sided, with
+$p \le 1.1\times10^{-11}$ in those two and $p = 3.4\times10^{-4}$ in AMT.
+
+Two things belong beside that. In REMI and MMT the random subspace also moves the ratio
+slightly against no edit ($+0.026$ and $+0.075$, both significant), so the pre-fixed
+reading --- the ratio moves under the edit and not under the control --- had to be
+measured as the contrast it names rather than as two separate tests against no edit.
+That paired comparison was added afterwards and the earlier per-condition tests were
+left as they were. The differences are twenty to thirty times the control's movement,
+so a control that moves a little does not account for the edit. And the measurement
+needed two implementation faults repaired first, since the pitch-class folding had been
+written for AMT's flat vocabulary and could neither run on REMI nor express MMT's
+separate pitch field. It now lives in each adapter, and AMT's published numbers
+reproduce unchanged after that change, which is why the other two were run only
+afterwards.
+
 \section{What we did not run, and why \normalfont\textit{(main Secs.~3.2, 4.5)}}
 
 % 【日本語訳】走らせなかったもの、その理由（本文3.2節、4.5節）

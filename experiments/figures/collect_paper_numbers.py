@@ -787,6 +787,23 @@ def main() -> None:
                     "stat": r4(d["stat"]), "ci": [r4(d["ci_lo"]), r4(d["ci_hi"])],
                     "excludes_zero": str(d["excludes_zero"])}
 
+    # C1 (AMENDMENT 1): the pre-generation reading on every edited public checkpoint
+    for tag, short in (("amt", "music-small-800k"), ("remi", "remi-lmd-remi"),
+                       ("mmt", "mmt-lmd-ape")):
+        for lay in (5, 8):
+            c1 = load(f"results/reanalysis/c1_public_next_pitch/{tag}/"
+                      f"next_pitch_{short}_L{lay}.json")
+            if not c1:
+                continue
+            lr = c1["means"]["log_ratio"]
+            for k, v2 in lr.items():
+                re_out[f"c1_{tag}_lr_{k}"] = r4(v2)
+            ek = c1["edit_vs_k1"]
+            re_out[f"c1_{tag}_edit_minus_k1"] = r4(ek["difference"])
+            re_out[f"c1_{tag}_r"] = r3(ek["effect_r"])
+            for rec in c1["tests"]:
+                re_out[f"c1_{tag}_{rec['cond']}_r"] = r3(rec["effect_r"])
+
     if re_out:
         out["reanalysis"] = re_out
 
