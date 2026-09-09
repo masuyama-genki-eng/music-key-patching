@@ -1759,3 +1759,12 @@ serif フォント・labelsize 7.5–8 で既存図と整合、ベクター PDF�
 - キャプションから左の帯の記述を削除し、「編集効果のまわりの帯はプロンプト単位の
   ブートストラップ区間」だけを残した。
 ページ数 6、375 tests green、`--check-tex` untraceable 0。
+
+## 2026-09-09 (9) — 図2のキャプションを5文→4文に締めた
+
+反復のうちに伸びた説明を統合（点線＋白抜きマーカーの意味と帯の説明を1文に）。
+「the success rate of the target-key replacement minus that of the ...」も
+「the replacement's success rate minus the rank-matched random baseline's ...」へ短縮。
+図の要素（二軸・線種・マーカーの塗り・帯・探索段階）はすべて説明を維持したまま
+紙面で1行ぶん短くなった。著者の元案（2文）に戻す場合の手順を tex のコメントに記載。
+コロン・セミコロン不使用は維持。

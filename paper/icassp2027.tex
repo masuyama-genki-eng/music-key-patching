@@ -492,11 +492,14 @@ This result suggests that, once the edit changes the generated notes, those note
 %   マージンを左軸に置くと、そのマージンは第1層でピークの17%にとどまり編集効果の15%と
 %   ほぼ並ぶため、乖離が見えなくなる。マージン版の図は paper/fig_read_use_margin.pdf に
 %   あり、差し替えるならこの includegraphics の1行を書き換えるだけでよい。
+% キャプション [2026-09-09 締め: 5文 -> 4文]
+%   図の要素はすべて説明する必要がある（二軸・線種・マーカーの塗り・帯・段階）が、
+%   ページに余裕がないので最後の2文を1文に統合した。著者の元案（2文）に戻すなら
+%   第3文と第4文を削れば済むが、そうすると点線と白抜きマーカーが未説明になる。
 \caption{Probe readability and edit gain across layers.
 The key becomes linearly readable before replacing the corresponding representation substantially affects generation.
-Readability is the probe macro-$F_1$ and edit gain is the success rate of the target-key replacement minus that of the rank-matched random baseline at the same layer, both from the search stage.
-The probe curve is dotted with hollow markers where its control-corrected margin over the strongest note counter does not clear zero.
-The band around the edit gain is a prompt-level bootstrap interval.}
+Readability is the probe macro-$F_1$ and edit gain is the replacement's success rate minus the rank-matched random baseline's at the same layer, both from the search stage.
+The probe curve is dotted with hollow markers where its control-corrected margin over the strongest note counter does not clear zero, and the band is a prompt-level bootstrap interval on the gain.}
 \label{fig:layer_read_use}
 \end{figure}
 
