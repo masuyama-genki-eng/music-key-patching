@@ -552,6 +552,10 @@ In contrast, MMT and REMI do not outperform the note-counting baseline in probin
 %『読めない』側はコーパス依存であり、編集は6セルすべてで効く。
 Thus, high probe performance does not imply a strong effect when the same representation is edited.
 The probe verdict is also corpus-dependent: on Bach the same two models do beat the note counts ($+0.107$ and $+0.153$) and edit better still ($0.701$ and $0.610$), so what flips between corpora is whether the key is readable above the note counts, while the edit works in all six cells ($0.212$--$0.701$).
+%層をまたいだ乖離も、公開チェックポイントでは我々のモデルより強い形で現れる。
+%AMT の 12 層では編集効果は第8層で頂点になるが、probe margin の頂点は第10層であり、第0層と第11層ではマージンが高いのに編集効果は床にある。
+The layer-wise separation also appears in a public checkpoint, and in a stronger form than in our own model.
+Across AMT's $12$ layers the edit gain peaks at layer~$8$ while the probe margin peaks at layer~$10$, and at layers~$0$ and~$11$ the margin is high while the edit gain sits at the floor, so here the margin over the note counts fails to locate the layers where the edit works.
 Together with Sec.~\ref{sec:h5}, this result suggests that intervention sites and directions should be validated by intervention rather than selected from probe performance alone, as also reported for language models~\cite{wu2025axbench,arad2025selecting}.
 
 \begin{table}[!t]

@@ -2014,3 +2014,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/c1_public_next_pitch/mmt/next_pitch_mmt-lmd-ape_L5.json`
 - note: both the edit and a random subspace shift the first decision; the shift is not specific to the key subspace here
 
+## 2026-09-10T00:49:23+09:00 — EXP E2: scaled install curve, major (AMENDMENT 1)
+- git: `57ede3e107c375f3989afda73583d6164ac9f317`
+- config_hash: `c08a476c25e2788581bd26b474978bf300c7d6c5e56f232fd1b9a2fb6c9ada63`
+- seeds: [7]
+- artifacts: `results/reanalysis/e2_scaled/rows_major.parquet`, `results/reanalysis/e2_scaled/curve_major.json`
+- note: s=0.5 SR=0.0991; s=0.75 SR=0.2218; s=1 SR=0.3555; s=1.25 SR=0.4245; s=1.5 SR=0.4573
+
+## 2026-09-10T00:51:22+09:00 — C3: public-checkpoint layer gap music-small-800k (AMENDMENT 1, re-analysis)
+- git: `57ede3e107c375f3989afda73583d6164ac9f317+DIRTY`
+- config_hash: `529ef207aefeafe37402aa02b57079770b4d6a1fbfda5219315f040e5b73fc2e`
+- seeds: []
+- artifacts: `results/reanalysis/c3_layer_gap/gap_music-small-800k.json`, `results/figures/supp/supp_public_layers.pdf`
+- note: edit peaks at L8, probe at L10, margin at L10; 2 layers readable but inert
+

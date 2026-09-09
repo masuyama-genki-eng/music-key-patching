@@ -1918,6 +1918,58 @@ separate pitch field. It now lives in each adapter, and AMT's published numbers
 reproduce unchanged after that change, which is why the other two were run only
 afterwards.
 
+\section{The read--use gap across a public model's layers \normalfont\textit{(main Secs.~4.4, 4.5)}}
+\label{sec:public-layers}
+
+% 【日本語訳】公開モデルの層をまたいだ read–use gap（本文4.4節、4.5節）
+% 本文の図2は我々自身のモデルについて、生のプローブ精度が第1層で飽和するのに編集効果は
+% 第2層以降でしか上がらないことを示している。そこには弱点があり、我々はそれを隠さない。
+% 我々のモデルでは、音符数えに対する統制補正後のマージンは編集効果とほぼ並走するので、
+% 図2の乖離は生の精度についてのものであってマージンについてのものではない。
+% 公開チェックポイントでは事情が異なり、そちらのほうが強い。生成は一切していない。
+% 層別のプローブと層スキャンはどちらも既存の artifact であり、ここで同じ軸に載せただけである。
+% AMT-small の Bach では、編集効果は第8層で頂点（+0.287）になるのに、プローブもマージンも
+% 頂点は第10層である。そして両端に「読めるのに効かない」層がある。第0層はマージンが
+% +0.124 で第7層の +0.127 とほぼ同じなのに、編集効果は −0.004 で床にある。第11層は
+% マージンが +0.188 とほぼ最大なのに、編集効果は +0.029 しかない。
+% つまりここでは、統制した可読性の指標そのものが、編集が効く層を特定できていない。
+% 数値の読み方に注意が1つある。編集側は探索段階の層スキャンであり、1点あたり
+% 240 継続（20プロンプト × 12標的）しかない。図の帯は Wilson の95%区間で、第0層と
+% 第8層、第11層と第8層は明確に分離するが、隣接する層の細かい上下は読み過ぎるべきでない。
+%
+The main text's Fig.~2 shows, on our own model, that raw probe accuracy saturates by
+layer~$1$ while the edit gain only opens from layer~$2$. That figure has a weakness we
+do not hide. On our model the control-corrected margin over note counting rises roughly
+where the edit gain rises, so the separation there is about the raw score and not about
+the margin.
+
+In a public checkpoint the separation is the stronger one, and it costs no generation:
+the per-layer probe and the layer scan are both existing artefacts, put on one axis
+here.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.92\columnwidth]{supp_public_layers.pdf}
+\caption{\textbf{S9b} \textit{(main Secs.~4.4, 4.5)}. AMT small on Bach. The probe
+margin over the strongest note counter is high at layers where editing does nothing,
+at both ends of the network. The band is a Wilson interval on the edit rate, which
+rests on $240$ continuations per layer.}
+\label{fig:supp-public-layers}
+\end{figure}
+
+On AMT small over Bach the edit gain peaks at layer~$8$ at $+0.287$, while both the
+probe and its margin peak at layer~$10$. More telling are the two ends.
+At layer~$0$ the margin is $+0.124$, as high as layer~$7$'s $+0.127$, and the edit gain
+is $-0.004$, at the floor. At layer~$11$ the margin is $+0.188$, near its maximum, and
+the edit gain is $+0.029$. Here the controlled readability measure itself fails to
+locate the layers where the edit works, which is the claim in its stronger form.
+
+One caution on reading the numbers. The edit side is the search-stage layer scan, so
+each point rests on $240$ continuations, $20$ prompts at $12$ targets. The band in
+Fig.~\ref{fig:supp-public-layers} is a Wilson interval on that rate. It separates
+layer~$0$ and layer~$11$ from layer~$8$ clearly, and it does not support reading small
+differences between neighbouring layers.
+
 \section{What we did not run, and why \normalfont\textit{(main Secs.~3.2, 4.5)}}
 
 % 【日本語訳】走らせなかったもの、その理由（本文3.2節、4.5節）

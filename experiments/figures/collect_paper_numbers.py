@@ -810,6 +810,19 @@ def main() -> None:
         for rec in est_min["sr"]:
             re_out[f"est_minor_{rec['estimator']}_{rec['cond']}"] = r4(rec["sr"])
 
+    # C3 (AMENDMENT 1): the layer gap in a public checkpoint
+    c3 = load("results/reanalysis/c3_layer_gap/gap_music-small-800k.json")
+    if c3:
+        for r in c3["rows"]:
+            L = r["layer"]
+            re_out[f"c3_L{L}"] = {"probe": r3(r["probe_f1"]),
+                                  "margin": r3(r["margin"]),
+                                  "gain": r3(r["gain"])}
+        re_out["c3_best_edit_layer"] = str(c3["best_edit_layer"])
+        re_out["c3_best_probe_layer"] = str(c3["best_probe_layer"])
+        re_out["c3_best_margin_layer"] = str(c3["best_margin_layer"])
+        re_out["c3_note_counter"] = r3(c3["strongest_note_counter"]["f1"])
+
     if re_out:
         out["reanalysis"] = re_out
 
