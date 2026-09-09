@@ -194,11 +194,8 @@ def main() -> None:
         a.set_facecolor("white")
     ax.axhline(0.0, color=ZERO, lw=0.8, zorder=1)
 
-    # 帯: 青は6モデルの範囲、オレンジはプロンプト単位のブートストラップ95% CI。
-    if all_m:
-        lo = [min(c[L] for c in all_m.values()) for L in LAYERS]
-        hi = [max(c[L] for c in all_m.values()) for L in LAYERS]
-        ax.fill_between(LAYERS, lo, hi, color=BLUE, alpha=0.15, lw=0, zorder=2)
+    # 帯はオレンジのみ（プロンプト単位のブートストラップ95% CI）。
+    # 青の6モデル帯は著者指示で削除（2026-09-09）。細くて情報が乗らなかった。
     if gain_ci:
         glo = [gain_ci[L][0] for L in LAYERS]
         ghi = [gain_ci[L][1] for L in LAYERS]
@@ -220,7 +217,7 @@ def main() -> None:
         ax.plot([L], [p[L]], "^", color=BLUE, ms=5.0, zorder=4,
                 markerfacecolor=(BLUE if beats.get(L) else "white"),
                 markeredgewidth=1.0)
-    l2, = ax2.plot(LAYERS, e, "--s", color=ORANGE, lw=1.3, ms=4.0, zorder=3,
+    l2, = ax2.plot(LAYERS, e, "-s", color=ORANGE, lw=1.3, ms=4.0, zorder=3,
                    label="edit gain (right)")
 
     ax.set_xlabel("layer", fontsize=8, color=INK)
