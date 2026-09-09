@@ -32,6 +32,12 @@ def r3(x) -> str:
     return "MISSING" if x is None else f"{x:.3f}"
 
 
+def r4(x) -> str:
+    """Four decimals, for the values the documents quote at that precision."""
+    return f"{float(x):.4f}"
+
+
+
 def check_tex(numbers: dict, tex_path: Path) -> int:
     """Every decimal the manuscript writes in math mode must be traceable to a value
     this script recomputed. Reports the ones that are not, and returns how many.
@@ -133,7 +139,13 @@ def main() -> None:
                                 "results/mwild_sweep/music-small-800k/stage2_eval_balanced.json"),
         ("AMT medium", "bach"): ("results/mwild/music-medium-800k/mwild_probe.json",
                                  "results/mwild_sweep/music-medium-800k/stage2_eval_balanced.json"),
-        ("AMT large", "bach"): ("results/mwild/music-large-800k/mwild_probe.json", None),
+        # the balanced run is the reported condition everywhere; large's is still
+        # in flight, so its direct estimate is collected under its own name rather
+        # than being passed off as the balanced one
+        ("AMT large", "bach"): ("results/mwild/music-large-800k/mwild_probe.json",
+                                "results/mwild_sweep/music-large-800k/stage2_eval_balanced.json"),
+        ("AMT large DIRECT-estimate", "bach"): (None,
+                                "results/mwild_sweep/music-large-800k/stage2_eval.json"),
         ("AMT small", "pop"): ("results/mwild_pop909/music-small-800k/mwild_probe.json",
                                "results/mwild_sweep_pop909/music-small-800k/stage2_eval_balanced.json"),
         # the DIRECT pop estimate, kept because the manuscript's limitations discuss the
@@ -492,6 +504,197 @@ def main() -> None:
             extra["identity_target_sr"] = r3(float(ok.mean()))
     if extra:
         out["confirmatory_extras"] = extra
+
+    # ---- re-analysis (supplement Secs. on distance, landing, geometry, decay) ----
+    # These sections quote per-distance rates, landing shares, correlations and a
+    # decay curve. They go through the same trace as everything else, so a value
+    # edited by hand in the .tex stops matching an artifact and is reported.
+    re_out: dict = {}
+    f13 = load("results/reanalysis/a1_a3/fifths_L4.json")
+    if f13:
+        for mode, m in f13["modes"].items():
+            t = pd.DataFrame(m["sr_by_distance"])
+            fb = pd.DataFrame(m["failure_breakdown"])
+            for cond in ("edit", "k1_norm"):
+                sub = t[t.cond == cond].sort_values("d")
+                re_out[f"sr_by_d_{mode}_{cond}"] = [r3(v) for v in sub.sr]
+            g_ = fb[fb.cond == "edit"].sort_values("d")
+            re_out[f"fail_guard_only_{mode}"] = [r3(v) for v in g_.fail_guard_only]
+            re_out[f"fail_key_only_{mode}"] = [r3(v) for v in g_.fail_key_only]
+            for cond in ("edit", "k1_norm"):
+                gee = m["distance_model"][cond]["gee_logistic"]
+                re_out[f"beta_d_{mode}_{cond}"] = r3(gee["coef_d"])
+                re_out[f"beta_d_ci_{mode}_{cond}"] = [r3(x) for x in gee["ci"]]
+    land = load("results/reanalysis/a2/landing.json")
+    if land:
+        for mode, m in land["modes"].items():
+            for cond, v in m.items():
+                if isinstance(v, dict) and "landing" in v:
+                    re_out[f"landing_{mode}_{cond}"] = {
+                        k: r3(x) for k, x in v["landing"].items()}
+        maj = land["modes"]["major"]["edit"]["landing"]
+        re_out["landing_major_edit_near"] = r3(
+            maj.get("target", 0) + maj.get("fifth-adjacent", 0)
+            + maj.get("relative", 0))
+    geo = load("results/reanalysis/a6/geometry_L4.json")
+    if geo:
+        for k in ("raw_mu", "centred_mu", "projected_mu", "centred_projected_mu"):
+            b = geo[k]["blocks"]
+            re_out[f"rho_majmaj_{k}"] = r3(b["major-major"]["spearman_rho_vs_fifths"])
+            re_out[f"rho_minmin_{k}"] = r3(b["minor-minor"]["spearman_rho_vs_fifths"])
+            re_out[f"cos_fifth_{k}"] = r3(geo[k]["cos_major_dominant_mean"])
+            re_out[f"cos_tritone_{k}"] = r3(geo[k]["cos_major_tritone_mean"])
+            re_out[f"cos_relative_{k}"] = r3(geo[k]["cos_relative_mean"])
+            re_out[f"cos_parallel_{k}"] = r3(geo[k]["cos_parallel_mean"])
+        re_out["energy_inside_V"] = r3(geo["mean_energy_fraction_inside_V"])
+    dec = load("results/reanalysis/a12c/decay.json")
+    if dec:
+        c = pd.DataFrame(dec["curve"])
+        for cond in ("oneshot", "k1_oneshot", "sustained"):
+            v = c[c.cond == cond].sort_values("bar").ikr_target
+            re_out[f"decay_{cond}"] = [r3(x) for x in v]
+            re_out[f"decay_{cond}_min"] = r3(float(v.min()))
+            re_out[f"decay_{cond}_max"] = r3(float(v.max()))
+    idn = load("results/reanalysis/a12a/identity_install.json")
+    if idn:
+        for mode, m in idn["modes"].items():
+            for cond, v in m.items():
+                re_out[f"identity_{mode}_{cond}"] = r3(v["sr"])
+                re_out[f"identity_{mode}_{cond}_ci"] = [r3(x) for x in v["ci"]]
+                re_out[f"identity_{mode}_{cond}_guard"] = r3(v["guard_pass"])
+    # analyses 2 (tonic), 5 (minor), 8 (selectivity), 9 (estimators), 4e, 10a, 10b
+    for mode in ("major", "minor"):
+        tn = load(f"results/reanalysis/a2/tonic_{mode}.json")
+        if tn:
+            for metric, per_cond in tn["means"].items():
+                for cond, v in per_cond.items():
+                    re_out[f"tonic_{mode}_{metric}_{cond}"] = r3(v)
+            for rec in tn["tests"]:
+                re_out[f"tonic_test_{mode}_{rec['cond']}_{rec['metric']}"] = {
+                    "mean_cond": r3(rec["mean_cond"]),
+                    "mean_unedited": r3(rec["mean_unedited"]),
+                    "effect_r": r3(rec["effect_r"])}
+    # the edit read against a legitimate key change on the same measures
+    for mode in ("major", "minor"):
+        tn = load(f"results/reanalysis/a2/tonic_{mode}.json")
+        if not (tn and "reference" in tn["means"].get("cadence", {})):
+            continue
+        m = tn["means"]
+        for metric in ("final_bass_is_tonic", "cadence", "final_note_is_tonic",
+                       "downbeat_bass_tonic"):
+            ref, ed = m[metric]["reference"], m[metric]["edit"]
+            re_out[f"tonic_share_of_ref_{mode}_{metric}"] = r3(ed / ref)
+        cl = m["tonic_triad_share"]["clean"]
+        re_out[f"tonic_share_of_ref_{mode}_tonic_triad_share"] = r3(
+            (m["tonic_triad_share"]["edit"] - cl)
+            / (m["tonic_triad_share"]["reference"] - cl))
+    cv = load("results/reanalysis/a2/cadence_validation.json")
+    if cv:
+        re_out["cadence_recall"] = r3(cv["recall_on_true_key"])
+        re_out["cadence_fpr"] = f"{cv['false_positive_rate']:.5f}"
+        re_out["cadence_precision"] = r3(
+            cv["recall_on_true_key"]
+            / (cv["recall_on_true_key"] + cv["false_positive_rate"]))
+
+    sel = load("results/reanalysis/a8/selectivity.json")
+    if sel:
+        for rec in sel["tests"]:
+            re_out[f"sel_{rec['cond']}_{rec['metric']}"] = {
+                "mean": r3(rec["mean"]), "effect_r": r3(rec["effect_r"])}
+        for rec in sel.get("edit_vs_control", []):
+            re_out[f"sel_vs_ctrl_{rec['metric']}"] = {
+                "edit": r3(rec["mean_abs_edit"]),
+                "control": r3(rec["mean_abs_control"]),
+                "effect_r": r3(rec["effect_r"])}
+    rob = load("results/reanalysis/a9/robustness.json")
+    if rob:
+        for rec in rob["sr"]:
+            re_out[f"est_{rec['estimator']}_{rec['cond']}"] = r4(rec["sr"])
+        for rec in rob["sr"]:
+            if rec["cond"] == "edit":
+                ctrl = next(x for x in rob["sr"] if x["estimator"] == rec["estimator"]
+                            and x["cond"] == "k1_norm")
+                re_out[f"est_{rec['estimator']}_diff"] = r4(rec["sr"] - ctrl["sr"])
+        re_out["est_agreement"] = {a: {b: r3(v) for b, v in row.items()}
+                                   for a, row in rob["agreement"].items()}
+        re_out["est_unanimous_hit"] = r3(rob["edit_unanimous_hit"])
+        re_out["est_split"] = r3(rob["edit_split"])
+    mh = load("results/reanalysis/a5/minor_handling.json")
+    if mh:
+        for mode, m in mh["modes"].items():
+            re_out[f"minor_{mode}_ceiling"] = r3(m["ceiling_k4"])
+            re_out[f"minor_{mode}_edit_sr"] = r3(m["edit_sr"])
+            re_out[f"minor_{mode}_over_ceiling"] = r3(m["edit_over_ceiling"])
+            for defn, per_cond in m["in_key_share"].items():
+                for cond, v in per_cond.items():
+                    re_out[f"ikr_{mode}_{defn}_{cond}"] = r3(v)
+        re_out["minor_gap_raw"] = r3(mh["gap_raw"])
+        re_out["minor_gap_vs_ceiling"] = r3(mh["gap_against_own_ceiling"])
+    g4 = load("results/reanalysis/a4e/geometry_by_model_L4.json")
+    if g4:
+        aug = [r["rho_major_centred"] for r in g4["rows"] if r["augmented"]]
+        noa = [r["rho_major_centred"] for r in g4["rows"] if not r["augmented"]]
+        for tag, v in (("aug", aug), ("noaug", noa)):
+            re_out[f"geom_{tag}_mean"] = r3(float(np.mean(v)))
+            re_out[f"geom_{tag}_sd"] = r3(float(np.std(v, ddof=1)))
+        re_out["geom_min"] = r3(min(aug + noa))
+        re_out["geom_max"] = r3(max(aug + noa))
+    ba = load("results/reanalysis/a10a/baseline_unit.json")
+    if ba:
+        re_out["public_lr_spread"] = {k: r3(v) for k, v in
+                                      ba["evidence"]["lr_baseline_spread"].items()}
+        re_out["public_positions"] = list(
+            ba["evidence"]["corpus_and_positions"].values())[0]
+    mu = load("results/reanalysis/a10b/mu_sensitivity.json")
+    if mu:
+        for rec in mu["rows"]:
+            re_out[f"mucos_{rec['cell']}"] = {"min": r4(rec["cos_min"]),
+                                              "mean": r4(rec["cos_mean"])}
+    sr = load("results/reanalysis/a4/seed_replication.json")
+    if sr:
+        for rec in sr["rows"]:
+            re_out[f"seed_{rec['model']}"] = {
+                "edit": r4(rec["sr_edit"]), "control": r4(rec["sr_k1_norm"]),
+                "ratio": r3(rec.get("ratio", 0))}
+        re_out["seed_aug_mean"] = r4(sr["augmented_mean"])
+        re_out["seed_aug_sd"] = r4(sr["augmented_sd"])
+    gv = load("results/reanalysis/a7/seed_variance.json")
+    if gv:
+        for cond, per in gv["per_seed"].items():
+            for k, v in per.items():
+                re_out[f"gseed_{cond}_{k}"] = r4(v) if v is not None else None
+        re_out["gseed_sd_edit"] = r4(gv["sampling_sd_edit"])
+        for k, v in gv["edit_cells_by_successes_of_3"].items():
+            re_out[f"gseed_cells_{k}_of_3"] = r3(v)
+        if "edit_cells_partial" in gv:
+            re_out["gseed_cells_partial"] = r3(gv["edit_cells_partial"])
+    er = load("results/reanalysis/a12b/erase.json")
+    if er:
+        for rec in er["tests"]:
+            re_out[f"erase_{rec['cond']}"] = {
+                "mass": r4(rec["prompt_key_mass"]),
+                "mass_clean": r4(rec["prompt_key_mass_clean"]),
+                "entropy": r4(rec["entropy"]),
+                "entropy_clean": r4(rec["entropy_clean"]),
+                "effect_r": r3(rec["mass_effect_r"]),
+                "kept_argmax": r3(rec["kept_argmax"])}
+    for f in sorted((REPO / "results/reanalysis/a11").glob("*.json")) \
+            if (REPO / "results/reanalysis/a11").exists() else []:
+        d = json.loads(f.read_text())
+        for rec in d["tests"]:
+            re_out[f"a11_{rec['cond']}"] = {
+                "log_ratio": r4(rec["log_ratio"]),
+                "log_ratio_clean": r4(rec["log_ratio_clean"]),
+                "effect_r": r3(rec["effect_r"])}
+
+    lc = load("results/reanalysis/a10c/length_check.json")
+    if lc:
+        for rec in lc["cells"]:
+            re_out[f"len_{rec['cell']}"] = {"notes": r3(rec["notes_median"]),
+                                            "sr": r3(rec["sr"])}
+
+    if re_out:
+        out["reanalysis"] = re_out
 
     (REPO / "results/paper_numbers.json").write_text(json.dumps(out, indent=2))
     if "--check-tex" in sys.argv:

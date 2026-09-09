@@ -1541,3 +1541,30 @@ blocks into the supplementary. Final layout narrowing is the author's.
 gain as $+0.077$; it is $0.2125 - 0.1347 = 0.0778$, i.e. $+0.078$. Corrected in the
 supplement and in CROSS_CORPUS_FREEZE. The `--check-tex` report now covers BOTH
 documents and is down to one entry each: a top-$p$ of $0.95$, which is configuration.
+
+## 2026-09-09 — 監査パス: 8/29以降の未コミット作業(再解析一式+補足拡張)を照合してコミット
+
+対象: 8/29 コミット 8a6c355 以降に作業ツリーに残っていた約1,800行
+(experiments/reanalysis/ の12解析、補足texへ+735行、図スクリプト、台帳追記、
+docs/REANALYSIS_SUMMARY.md、tests/test_editor_arity.py)。
+
+監査結果:
+- 台帳差分は**追記のみ**(削除0行)を確認。
+- 数値トレース: collect_paper_numbers.py --check-tex で本文+補足の全数式中
+  10進数が **untraceable 0件・MISSING 0件**。
+- 独立スポット照合(生 artifact から丸め再計算): シード表
+  0.3555/0.2182/0.1927・統制≤0.0564・比5.9–10.0 (a4/seed_replication.json)、
+  短調測定問題 0.903/0.936/0.602 (a5/minor_handling.json)、ステアリングB
+  0.24454545→0.245・短調 0.15363636→0.154 (steering/final_verdict*.json)、
+  AMT-36L Bach 0.5403/0.0556→0.540/0.056 (mwild_sweep/music-large-800k/
+  stage2_eval_balanced.json)。すべて一致。
+- 弱め系3件(シード分散が事前登録基準0.03に対しSD 0.0876・本文は最良シード、
+  短調優位は測定由来、Bach長さ交絡未解決)は補足で明示開示済み。本文は
+  著者判断(2026-08-31, REANALYSIS_SUMMARY.md)により現状維持。
+- テスト 365 passed。両文書ビルド成功(spconf 実機)。
+- **未解決の規定違反(最重要)**: 本文6ページ — 技術内容がp.5の約2/3まで
+  食い込み、参考文献がp.6へ溢れる。ICASSP規定(技術4p+文献のみ1p)違反。
+  削減は内容判断のため著者へ。
+- 記録上の注意: 台帳「Table 2's empty cell filled」エントリの artifacts が
+  tex を指す(+DIRTY)。実走 artifact は mwild_sweep/music-large-800k/ 側の
+  エントリに正しく記録されている。

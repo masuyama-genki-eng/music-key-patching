@@ -121,17 +121,21 @@ def fig_mu(out: Path):
     same = [r["cos"] for r in d["per_key"]]
     diff_mean = d["cos_different_keys_same_family"]["mean"]
     diff_max = d["cos_different_keys_same_family"]["max"]
-    fig, ax = plt.subplots(figsize=(3.3, 2.0))
+    fig, ax = plt.subplots(figsize=(3.3, 2.1))
     _style(ax)
     ax.hist(same, bins=np.linspace(0.80, 1.0, 21), color=ACC, alpha=0.85,
-            edgecolor="white", lw=0.6, label="same key,\npitch vs bar/length")
-    ax.axvline(diff_max, color=MUTED, lw=1.6, ls="--")
-    ax.annotate(f"different keys:\nmax {diff_max:.2f}, mean {diff_mean:.2f}",
-                (diff_max, ax.get_ylim()[1] * 0.72), textcoords="offset points",
-                xytext=(-4, 0), ha="right", fontsize=6.6, color=INK)
+            edgecolor="white", lw=0.6,
+            label="same key, pitch vs bar/length")
+    # The dashed line is the ceiling for DIFFERENT keys. Its label used to sit on
+    # top of the line and ran off the left edge; both facts it carried now live in
+    # the legend, where nothing overlaps.
+    ax.axvline(diff_max, color=MUTED, lw=1.6, ls="--",
+               label=f"different keys: max {diff_max:.2f}, mean {diff_mean:.2f}")
     ax.set_xlabel(r"cosine inside $V$", fontsize=8.5, color=INK)
     ax.set_ylabel("keys", fontsize=8.5, color=INK)
-    ax.legend(frameon=False, fontsize=7, loc="upper left")
+    ax.set_ylim(0, max(np.histogram(same, bins=np.linspace(0.80, 1.0, 21))[0]) * 1.55)
+    ax.legend(frameon=False, fontsize=6.4, loc="upper left", handlelength=1.4,
+              borderpad=0.1, labelspacing=0.35)
     fig.savefig(out, bbox_inches="tight", dpi=300, facecolor="white")
     plt.close(fig)
     log.info("wrote %s", out.name)

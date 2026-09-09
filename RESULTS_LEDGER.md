@@ -1384,3 +1384,563 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/music-large-800k/delta_ppl.json`
 - note: delta_ppl=0.8489 nats frozen from 1180 natural modulations in real chorales, judged by stanford-crfm/music-medium-800k; BEFORE any edit result is reported
 
+## 2026-08-29T16:37:09+09:00 — M-WILD intervention stage 1 (music-large-800k)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836`
+- config_hash: `f39359e769fe344bc934abb129e017d3622c13e16f23952c90bd532e20868d20`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-large-800k/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L18 TKR 0.358 vs K1 0.075
+
+## 2026-08-30T03:02:30+09:00 — Re-analysis 1+3: success rate by circle-of-fifths distance, failure breakdown
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `42063962504aff41bef47c8a371b25a25e995c764dd22a80b739b094e03ac7fc`
+- seeds: [0]
+- artifacts: `results/reanalysis/a1_a3/fifths_L4.json`, `results/reanalysis/a1_a3/sr_by_distance_major.csv`, `results/reanalysis/a1_a3/sr_by_distance_minor.csv`, `results/reanalysis/a1_a3/failure_breakdown_major.csv`, `results/reanalysis/a1_a3/failure_breakdown_minor.csv`
+- note: re-aggregation of the ledgered confirmatory rows; no generation. edit beta_d=-0.004 CI[-0.080,+0.072] major, -0.046 CI[-0.116,+0.024] minor -> distance-independent, the pre-registered strongest branch. control k1_norm beta_d=-0.689 CI[-0.937,-0.441]. guard-only failures flat in d on major (0.050-0.080): the hypothesis that the frozen budget penalises distant installs is NOT supported. minor guard-only rises 0.115->0.170.
+
+## 2026-08-30T03:02:30+09:00 — Re-analysis 2 (matrix): where a failed install lands
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `0a1fd715a6846a107bdf19619b0f9ee86d27856f365fe7ae18a71aff457bb0a3`
+- seeds: [0]
+- artifacts: `results/reanalysis/a2/landing.json`
+- note: re-aggregation only. major edit: 0.410 target, 0.288 fifth-adjacent, 0.089 relative, 0.085 source retained. k1 reproduces the manuscript's 0.517 source retention and 0.041 target exactly.
+
+## 2026-08-30T03:02:30+09:00 — Re-analysis 6: geometry of the key subspace
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `03b675150110fb3a6e15ab3df666a7a3a2d62cd06cc1284ffb1971764c2f99f7`
+- seeds: [0]
+- artifacts: `results/reanalysis/a6/geometry_L4.json`, `results/reanalysis/a6/cos_L4.npz`
+- note: circle-of-fifths order is present in the RAW class means (major-major rho=-0.936, -0.961 centred) before any projection, so it is not a probe artefact. minor keys show essentially no fifths order (-0.063 centred, -0.216 projected). V holds 5.2% of the energy of mu.
+
+## 2026-08-30T03:02:30+09:00 — Re-analysis 12(a): identity install recovered
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `2884cc1c51915540d1693dc54ad51822dff5a2034f4c6242832fe0b25ac23183`
+- seeds: [0]
+- artifacts: `results/reanalysis/a12a/identity_install.json`
+- note: re-aggregation. edit 0.650 major / 0.800 minor, reproducing the v1 values. controls 0.510-0.850 with overlapping intervals: the row is a sanity check, not a demonstration.
+
+## 2026-08-30T03:02:30+09:00 — Re-analysis 12(c): one-shot install, bar by bar
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `3090a498c823064f76134a62740a130193a990157e854974eaafb35909269afe`
+- seeds: [0]
+- artifacts: `results/reanalysis/a12c/decay.json`, `results/reanalysis/a12c/decay_curve.csv`
+- note: re-aggregation of the search-stage persistence rows. data reach bar 14 only, not 24. one-shot 0.687-0.711 vs random one-shot 0.575-0.584, separated at every bar by paired Wilcoxon + Holm, no decay. does NOT establish a persistent internal state.
+
+## 2026-08-30T03:02:30+09:00 — Supplementary figures S5-S8 and sections for the re-analysis
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `851a2b2ca936cce40fa5f52ac755c2e622f6c0d48168ecd493ed432653f302f5`
+- seeds: [0]
+- artifacts: `results/figures/supp/supp_distance.pdf`, `results/figures/supp/supp_confusion.pdf`, `results/figures/supp/supp_geometry.pdf`, `results/figures/supp/supp_decay.pdf`, `paper/icassp2027_supp.tex`
+- note: supplement now 7 pages. collect_paper_numbers.py --check-tex extended to the re-analysis values: 0 untraceable decimals across both documents.
+
+## 2026-08-30T03:21:52+09:00 — Re-scoring dump: continuations kept (R-Aug_s0_L4)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `83afa0ed0a51032825741aa48473f61d03b22e65b70702648948f042770cc13c`
+- seeds: [7]
+- artifacts: `results/rescore/rescore_R-Aug_s0_L4.parquet`, `results/rescore/continuations_R-Aug_s0_L4.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': True, 'n_rows': 2400, 'est_key_identical': 1.0, 'success_identical': 1.0, 'sr_new': 0.3555, 'sr_old': 0.3555}
+
+## 2026-08-30T03:48:27+09:00 — M-WILD intervention stage 1 (music-large-800k)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `4a07d7f2d424eac97266ae77fb03d93e10e500807bfdac220f5878ba695db39e`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-large-800k/stage1_layer_scan.json`
+- note: layer scan on 20 held-in prompts; best L18 TKR 0.358 vs K1 0.075
+
+## 2026-08-30T03:56:15+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-30T04:00:28+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-30T04:16:26+09:00 — Re-scoring dump: final-test continuations kept (R-Aug_s0 major)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e9ccf9e306fcc9c4248a673bbdeaba61deb9b88966beee1c7ae6651d15a47328`
+- seeds: [7]
+- artifacts: `results/rescore/continuations_R-Aug_s0_L4.json`, `results/rescore/rescore_R-Aug_s0_L4.parquet`
+- note: STEP 0 item [H] settled: regeneration reproduces the ledgered run EXACTLY -- est_key identical on 1.0000 and success identical on 1.0000 of 2400 rows, SR 0.3555 vs 0.3555. 2300 continuations kept for post-hoc re-scoring.
+
+## 2026-08-30T04:16:26+09:00 — Re-analysis 8: selectivity audit of the edit
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `f4036f903513a972d399e1f1ec2f9a254478a81eef799553c94cf734a70edcd3`
+- seeds: [7]
+- artifacts: `results/reanalysis/a8/selectivity.json`, `results/reanalysis/a8/tests.csv`
+- note: edit vs unedited: only notes/bar moves (-0.595, r=-0.41, p_holm=1.2e-3); mean pitch and register width do not. matched control moves ALL three and far more (notes/bar -3.471, r=-1.00). edit's change is smaller than the control's on all three (Holm-corrected). duration JSD, rest rate and chord tones are NOT measurable: no rest/chord token, and dur=8 for every note by construction. reference arm absent (transposed-prompt continuations not stored).
+
+## 2026-08-30T04:16:26+09:00 — Re-analysis 9: key-estimator robustness
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `334ca6d7c194c684ae9d3c6d4e9c8ff3a027f4ba2e5182aedbaae42470d82ec6`
+- seeds: [7]
+- artifacts: `results/reanalysis/a9/robustness.json`, `results/reanalysis/a9/sr_by_estimator.csv`
+- note: re-scored KK reproduces the stored estimate on 1.0000 of rows (script aborts below 0.999; a first version read the raw token list and matched only 809/1200). edit beats its matched control under EVERY estimator. absolute SR is estimator-dependent: 0.355 (KK, pre-registered) to 0.568 (Bellman-Budge); the pre-registered choice is the most conservative. pairwise agreement as low as 0.545. 0.274 of edit rows are hits under all five, 0.445 under some but not all.
+
+## 2026-08-30T04:54:27+09:00 — Re-scoring dump: continuations kept (R-Aug_s0_minor_L4)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `5929f82ab827ba8226bf2d74d86afc453e88525bf57482ab699783adf55608e1`
+- seeds: [7]
+- artifacts: `results/rescore/rescore_R-Aug_s0_minor_L4.parquet`, `results/rescore/continuations_R-Aug_s0_minor_L4.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': True, 'n_rows': 2400, 'est_key_identical': 1.0, 'success_identical': 1.0, 'sr_new': 0.4945, 'sr_old': 0.4945}
+
+## 2026-08-30T07:38:58+09:00 — M-WILD intervention stage 2 (music-large-800k)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `b3531f36f48a875302e242ed3c98a5aabe96c132f398e6642af63f7a131e925a`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-large-800k/stage2_eval.json`
+- note: L18 chosen on disjoint prompts; guarded TKR 0.386 vs K1 0.056 on 60 held-out prompts; DR-H3 supported=True (11/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-30T14:35:27+09:00 — Re-scoring dump: final-test continuations kept (R-Aug_s0 minor)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `bec06e6bed1ebf2958f89f44041969bfd306752a931cded23d14d247826edc4b`
+- seeds: [7]
+- artifacts: `results/rescore/continuations_R-Aug_s0_minor_L4.json`, `results/rescore/rescore_R-Aug_s0_minor_L4.parquet`
+- note: reproduces the ledgered minor run EXACTLY: est_key and success identical on 1.0000 of 2400 rows, SR 0.4945 vs 0.4945.
+
+## 2026-08-30T14:35:27+09:00 — Re-analysis 2: tonic metrics (major and minor)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `2645b5d79851f12fb35fd50d6f3432ac0c367ad4dbed813a1c3ffbeb3a79772e`
+- seeds: [7]
+- artifacts: `results/reanalysis/a2/tonic_major.json`, `results/reanalysis/a2/tonic_minor.json`
+- note: the edit moves the TONAL CENTRE, not only the pitch collection. major: final bass on the installed tonic 0.756 (unedited 0.003, control 0.036); cadence 0.205 (0.001, 0.012); tonic-triad share 0.456 (0.227, 0.256). minor mirrors it (0.799 / 0.216 / 0.458). every metric r>=0.99 vs unedited, Holm-corrected. all 100 continuations reach EOS, so the final bass is a composed cadence, not a truncation. cadence detector is a heuristic: 30 samples written out, precision NOT yet established. reference arm absent.
+
+## 2026-08-30T14:35:27+09:00 — Re-analysis 5: the minor advantage is the estimator, not the edit
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `f8f3f57e950f3372a223ea79fe991e2e7f6cb499d049a11b6325ca1447413adf`
+- seeds: [7]
+- artifacts: `results/reanalysis/a5/minor_handling.json`
+- note: raw minor advantage +0.139 (0.495 vs 0.355). the transposition ceiling is 0.877 minor vs 0.648 major, so the estimator awards a CORRECT answer 0.229 more often in minor. read against its own mode's ceiling the edit gap is +0.015: essentially all of the minor advantage is the estimator. separately, in-key share allows minor 9 of 12 pitch classes vs 7 for major; under the generator's own harmonic minor the minor share falls 0.957 -> 0.903, BELOW major's 0.936, and the control falls 0.764 -> 0.602, exactly major's 0.602.
+
+## 2026-08-30T14:35:27+09:00 — Re-analysis 10(a): the public note-counting baseline is a common measurement
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `0b3c66181db76aa6a877f821e05fe96d8a2490072cc673a0e2d6d1434fea07d2`
+- seeds: [7]
+- artifacts: `results/reanalysis/a10a/baseline_unit.json`
+- note: no recomputation needed. the C3 window is in NOTE EVENTS for all adapters; all five models read the same 300 chorales at the same 35,890 positions; the KS baselines are BIT-IDENTICAL across models, and the fitted baselines differ by at most 0.0060 (fitting noise). answers reviewer question (1) directly.
+
+## 2026-08-30T14:40:14+09:00 — Experiment I: balanced re-estimation (music-large-800k)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `ec5a5a5a7f2f708d4219087701a41c3e34b67d8af01b93b5d202da01533f81fc`
+- seeds: [0]
+- artifacts: `results/mwild/music-large-800k/balanced/probe_weights.npz`, `results/mwild/music-large-800k/balanced/class_means.npz`, `results/mwild/music-large-800k/balanced/balanced_report.json`
+- note: 12-key transposed corpus (3600 chorales); balanced 993/class; L18 probe F1 0.6995; all 24 mu nonzero
+
+## 2026-08-30T14:47:06+09:00 — Re-analysis 4(e): the key geometry does not come from transposition augmentation
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `8e61e06c2d9f11021204149484f1db64d9cd0b33b7932b5c0b086e420ef3d7d6`
+- seeds: [0]
+- artifacts: `results/reanalysis/a4e/geometry_by_model_L4.json`
+- note: major-key circle-of-fifths rho: augmented -0.960 +/- 0.002, WITHOUT augmentation -0.963 +/- 0.003 -- indistinguishable, across all six trained models (range -0.957 to -0.966). minor keys show no ordering in any model. relative closer than parallel in all six. answers the 'the augmentation printed it there' objection.
+
+## 2026-08-30T14:47:06+09:00 — Re-analysis 10(b-i/ii): sensitivity of the edit target to how mu was estimated
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6ffb18e4e5d14347650d09aec96d523eeabc596de76e995721b18deeff3bcb7`
+- seeds: [0]
+- artifacts: `results/reanalysis/a10b/mu_sensitivity.json`
+- note: per-key cosine between the key-balanced and direct estimates: AMT small x pop min 0.9935 (INSENSITIVE -- the cell the spec asks about); MMT x bach 0.9744; REMI x bach 0.9281 (2 keys below); AMT large x bach 0.8593 (5 below). step (iii) is warranted for AMT large x bach, and that cell's balanced stage 2 is already running for a separate reason (freeze section 5), so it costs nothing extra. two bach keys are degenerate (zero mu) and are excluded, not scored as cos=1.
+
+## 2026-08-30T14:47:06+09:00 — Supplement correction: the AMT large Bach guard reference
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `acb05706e5e4191e285eb7f7f1313ea4b4f3a16612a7a52d26d6fb11bb50f70a`
+- seeds: [0]
+- artifacts: `paper/icassp2027_supp.tex`
+- note: the section claiming the run was withheld because the guard would use a SMALLER reference was wrong on both counts: PUBLIC_MODELS_FREEZE section 3 requires only a DIFFERENT public checkpoint, and had already assigned large->medium in writing before any run. delta_ppl.json confirms the frozen budget names music-medium-800k. paragraph rewritten to record the error and report the cell.
+
+## 2026-08-30T14:51:07+09:00 — Re-analysis 10(c): continuation length across the Bach cells -- a confound found
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `3e6012ff32dca03029b878ae4c0532657a60611a27df5cfac60ad8298f2728cf`
+- seeds: [0]
+- artifacts: `results/reanalysis/a10c/length_check.json`, `paper/icassp2027_supp.tex`
+- note: the specified common-length re-score CANNOT be done: the public runs stored metrics rows, not notes. what the rows show instead is a protocol gap. note-matching was declared for POP only (CROSS_CORPUS_FREEZE part 2 sets MMT to --n-new 80, reasoning that 240 steps 'would give MMT continuations three times the music'). PUBLIC_MODELS_FREEZE fixes 240 steps for every bach cell with no equivalent, so on bach MMT gets 240 notes vs AMT 80 and REMI 57 -- a factor of 4.2, the exact disparity the pop rule was written to prevent. MMT also has the highest bach edit rate (balanced 0.701). the within-cell test is UNINFORMATIVE (note count is fixed by the step budget; p90-p10 under 5 notes in all 7 cells) and an earlier draft of this analysis wrongly read its null as clearing the ordering. disclosed in the supplement as an open confound. ALSO: the supplement's new table first quoted DIRECT estimates while Table 2 reports BALANCED; corrected. AND the tex-trace check passed on 0.386 by coincidence (it matched an unrelated steering value) because the collector had AMT large's edit cell as None -- collector extended.
+
+## 2026-08-30T15:06:33+09:00 — Supplement: six re-analyses written up; a double-rounding bug found and fixed
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e005ca303463659e43c2eb9815f4db78917f7679558413922ef58509e5406586`
+- seeds: [0]
+- artifacts: `paper/icassp2027_supp.tex`, `experiments/figures/collect_paper_numbers.py`
+- note: supplement now 10 pages, tables S11 and S12 added, 0 untraceable decimals across both documents. THREE numbers were wrong before the check caught them, all from the same cause -- an analysis script stored a value rounded to 4 places and the collector rounded that again: 0.755455 was printed as 0.756, 0.305455 as 0.306, and 490/1100 = 0.445454 as 0.446. the analysis scripts now store full precision and rounding happens once, in the collector. analysis 4(f): MMT's training states a random pitch shift of -5 to +6 semitones, so MMT IS augmented; for the Anticipatory and REMI checkpoints public information did not settle it and the supplement says unknown rather than assuming common practice.
+
+## 2026-08-30T15:26:08+09:00 — Supplement completed: roadmap, layout fixes, 21 sections
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `5116e904525a442c6cdd4a19b2c84f0423a03336628de11304b8254f3b80a570`
+- seeds: [0]
+- artifacts: `paper/icassp2027_supp.tex`, `results/figures/supp/supp_mu.pdf`, `results/figures/supp/supp_decay.pdf`, `results/figures/supp/supp_distance.pdf`
+- note: added an opening roadmap table mapping eleven likely reviewer doubts to the section that takes each up and what it found, with cross-references rather than hard-coded numbers. layout: Table 1's role column overran the column and became three check-mark columns; figures 3, 5 and 8 had legends or annotations sitting on their own curves and were re-laid out; tables S11 and S12 were tightened. overfull boxes now 1 at 1.61pt (was 5). 0 untraceable decimals across both documents. NOT done and flagged to the author: the MAIN TEXT still has no reference to the supplement, and two main-text passages predate this work -- the minor explanation (now known to be the estimator, +0.139 -> +0.015 against each mode's ceiling) and the in-key definition asymmetry (9 vs 7 pitch classes).
+
+## 2026-08-30T17:10:11+09:00 — Re-scoring dump: continuations kept (R-Aug_s1_L4)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `b324787100f91beb80c44f2ff68bdb4e3a8a0331c1c373846f63b4e96eb216ef`
+- seeds: [7]
+- artifacts: `results/reanalysis/a4b/rescore_R-Aug_s1_L4.parquet`, `results/reanalysis/a4b/continuations_R-Aug_s1_L4.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': False}
+
+## 2026-08-30T17:16:17+09:00 — Supplement: the granularity of the success measure made explicit
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e4c9904f319756b524eafd9629ef878984ec9fcbc54c221598e33d734bc07576`
+- seeds: [0]
+- artifacts: `paper/icassp2027_supp.tex`
+- note: records that TKR is ONE estimate per continuation, not per token: the pitches are pooled into a single histogram (median 110 notes, truncated at EOS and 16 bars) and matched exactly in tonic and mode. states the cost, which runs against the paper -- a continuation that takes a bar or two to settle is diluted by the prompt's key, and a modulating continuation gets one label -- and points to the tonic metrics (0.755 vs 0.355 on the same continuations) and to the per-bar persistence rows where bar-level resolution is what the question needs. 0 overfull boxes, 0 untraceable decimals.
+
+## 2026-08-30T17:52:54+09:00 — Re-scoring dump: continuations kept (R-Aug_s2_L4)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `99aba5d658beda94d2cacfc48dff9166ab8c8de0131d193c9f0e00073ae9da79`
+- seeds: [7]
+- artifacts: `results/reanalysis/a4b/rescore_R-Aug_s2_L4.parquet`, `results/reanalysis/a4b/continuations_R-Aug_s2_L4.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': False}
+
+## 2026-08-30T18:35:35+09:00 — Re-scoring dump: continuations kept (R-NoAug_s0_L4)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `675dbbe59c6bd72a02f2e75aa584837db8fdb528d17a955d1bb530c0fe934b09`
+- seeds: [7]
+- artifacts: `results/reanalysis/a4b/rescore_R-NoAug_s0_L4.parquet`, `results/reanalysis/a4b/continuations_R-NoAug_s0_L4.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': False}
+
+## 2026-08-30T19:20:05+09:00 — M-WILD intervention stage 2 (music-large-800k)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `8160c8472febcdc8b499afd75fda6c0a4c5e1a815b8d2ef633077487c1dc63f1`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-large-800k/stage2_eval_balanced.json`
+- note: L18 chosen on disjoint prompts; guarded TKR 0.540 vs K1 0.056 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-08-30T23:44:54+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-30T23:49:11+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-30T23:52:49+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-30T23:54:11+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-30T23:55:19+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-08-31T03:00:03+09:00 — Re-scoring dump: continuations kept (R-Aug_s0_L4_seed11)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `b582707a0093db5d924ab688d4edd1ea81bef12570cf9cdca505e5fa1c64c972`
+- seeds: [11]
+- artifacts: `results/reanalysis/a7/rescore_R-Aug_s0_L4_seed11.parquet`, `results/reanalysis/a7/continuations_R-Aug_s0_L4_seed11.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': False, 'reason': 'sampling seed 11 differs from the frozen 7; a different sample is expected to differ'}
+
+## 2026-08-31T03:09:21+09:00 — Re-analysis 12(b): erasing the key subspace, pre-generation
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `fc79c7e8471cb8f17b278497238fc9788aeaf005fdd58557083c46036a925a7e`
+- seeds: [7]
+- artifacts: `results/reanalysis/a12b/erase.json`
+- note: removing the key subspace costs the prompt key -0.0749 of the next-pitch mass against -0.0036 for an equal-rank random removal: first evidence that the model is USING what the subspace carries, not merely that writing to it works
+
+## 2026-08-31T03:09:56+09:00 — Experiment I: AMT large x Bach, balanced stage 2 (the missing Table 2 cell)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `6051aa0be60f8e64d2dfbfa3585e0a7de35ed868915a805fe44ef63a0e4951db`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-large-800k/stage2_eval_balanced.json`, `results/mwild/music-large-800k/balanced/class_means.npz`
+- note: guarded TKR edit 0.540 vs K1 0.056 (raw 0.542), guard pass 100%, DR-H3 SUPPORTED 12/12. direct estimate was 0.386. the guard reference is music-medium per PUBLIC_MODELS_FREEZE section 3, which requires a DIFFERENT checkpoint, not a larger one; the assignment predates every run.
+
+## 2026-08-31T03:09:56+09:00 — Re-analysis 4(a)-(d): the edit across training runs -- UNFAVOURABLE
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `d52a9c25add1e4f994f9a07cd1e3626d996c5e80077bc0bea4aa983fe26eefb2`
+- seeds: [0]
+- artifacts: `results/reanalysis/a4/seed_replication.json`, `results/reanalysis/a4/by_training_run.csv`
+- note: SEED VARIANCE FAILS THE PRE-REGISTERED BAR. augmented seeds give 0.3555 / 0.2182 / 0.1927, mean 0.2555, SD 0.0876 -- the spec called for SD <= 0.03 to claim independence of the training run. the manuscript's 0.355 is the HIGHEST of three seeds. the qualitative claim survives everywhere: edit beats its matched control by 5.9x to 10.0x in all four models, control never above 0.056. AUGMENTATION OBJECTION ANSWERED: without augmentation the edit reaches 0.2627 vs 0.0445, above the augmented mean. author's decision (2026-08-31): main text stays as is.
+
+## 2026-08-31T03:09:56+09:00 — Re-analysis 12(b): erasing the key subspace before generation
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `cd1315da0fffb23f0ab37366ac7465900491597318b508b33e4fc74d47a84e83`
+- seeds: [0]
+- artifacts: `results/reanalysis/a12b/erase.json`
+- note: prompt-key mass of the next-pitch distribution: clean 0.9818, grand-mean erase 0.9085, pure removal 0.9069, equal-rank RANDOM removal 0.9782. the key removal costs 20x what the random removal costs (r=-1.000, p=3.9e-18 vs r=-0.396). but the drop is small in absolute terms -- 0.907 is still overwhelmingly in the prompt's key -- so the key is largely recoverable outside V. entropy moved the OPPOSITE way to the naive expectation (1.936 -> 1.901, slightly sharper) and the argmax key was unchanged on 0.71 of prompts.
+
+## 2026-08-31T03:22:05+09:00 — Re-scoring dump: continuations kept (R-Aug_s0_L4_seed23)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `311168c224e261e5ea0da348825c7ccb3f7b9ed8a9c28228a9adca0e967cfba5`
+- seeds: [23]
+- artifacts: `results/reanalysis/a7/rescore_R-Aug_s0_L4_seed23.parquet`, `results/reanalysis/a7/continuations_R-Aug_s0_L4_seed23.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': False, 'reason': 'sampling seed 23 differs from the frozen 7; a different sample is expected to differ'}
+
+## 2026-08-31T14:37:50+09:00 — Re-analysis 11: pre-generation logits, music-small-800k L8
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `870a022884a5a81ce15b9b35a6151366f059122f6d270fc60beb7636faedc1a7`
+- seeds: [0]
+- artifacts: `results/reanalysis/a11/next_pitch_music-small-800k_L8.json`
+- note: the edit shifts the public model's FIRST decision toward the installed key, before any note is sampled: the mechanism shown on the synthetic model reaches a public checkpoint
+
+## 2026-08-31T14:56:44+09:00 — Re-scoring dump: continuations kept (R-Aug_s0_L4_reference)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `8c110be252b8daf810e9dd50443e3d52a8f037b711721de5d555c2efbd6f4c25`
+- seeds: [7]
+- artifacts: `results/reanalysis/a_ref/rescore_R-Aug_s0_L4_reference.parquet`, `results/reanalysis/a_ref/continuations_R-Aug_s0_L4_reference.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': True, 'n_rows': 0, 'est_key_identical': nan, 'success_identical': nan, 'sr_new': None, 'sr_old': 0.3555}
+
+## 2026-08-31T14:59:21+09:00 — Re-analysis 7: generation seed variance
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `2b68016688d38a97018f05120195cc4f0cde84a98240cfe62da1baf3a393e040`
+- seeds: [7]
+- artifacts: `results/reanalysis/a7/seed_variance.json`
+- note: sampling SD 0.0119, inside the pre-registered 0.02: the reported rate is stable under resampling (0.3555 / 0.3418 / 0.3318) and the paired test holds under every seed (p_Holm < 1.6e-16). contrast with TRAINING seed SD 0.0876 -- the variance is in the training, not the draw. of 1100 cells, 0.059 succeed in all three draws, 0.314 in none, 0.627 in one or two: success is mostly a probability within a cell.
+
+## 2026-08-31T14:59:21+09:00 — Re-analysis 11: pre-generation logits on a public checkpoint
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `8d32f6f8574a75d2e9cfa8194d6ae3a6197353c4fa64a909e4f5157635a158eb`
+- seeds: [7]
+- artifacts: `results/reanalysis/a11/next_pitch_music-small-800k_L8.json`
+- note: the installed/prompt log mass ratio at the predict-pitch position moves from -0.0239 unedited to -0.0096 under the edit (r=0.494, p_Holm=0.0018); a rank-matched random subspace does not move it (r=0.004, p=0.98). the mechanism reaches a public checkpoint, so one Limitation is answered. the effect is far smaller than on our own model (0.695 vs 0.041) and is not presented as comparable.
+
+## 2026-08-31T14:59:21+09:00 — Reference arm generated: transposed prompts, for analyses 2 and 8
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `1001376bd7e82e79b95189937f86ab65cc6982653e3cfb86c3dd1a60f08559a7`
+- seeds: [7]
+- artifacts: `results/reanalysis/a_ref/continuations_R-Aug_s0_L4_reference.json`, `results/reanalysis/a2/tonic_major.json`, `results/reanalysis/a8/selectivity.json`
+- note: the third arm the spec asks for, never stored before. tonic metrics now have a ceiling: final bass on the tonic 0.977 for a real transposition vs 0.755 for the edit (0.773 of it), cadence 0.269 vs 0.205 (0.760), tonic-triad share closing 0.784 of the gap from unedited. the edit is nearer a real key change on WHERE THE MUSIC RESTS than the success rate (0.548 of its ceiling) suggests. selectivity: transposition moves mean pitch +5.648 semitones (r=1.000) and leaves density and register alone -- the opposite footprint to the edit, which moves density a little and pitch not at all.
+
+## 2026-08-31T14:59:21+09:00 — Re-analysis complete: summary and rebuttal material
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `ba23e01b48433b0226931944947b9b700ce37b753075eab9d7458bb74902df2e`
+- seeds: [7]
+- artifacts: `docs/REANALYSIS_SUMMARY.md`, `paper/icassp2027_supp.tex`
+- note: supplement 12 pages, 0 overfull boxes, 0 untraceable decimals across both documents. THREE more eyeball-rounding errors were caught by the check while writing the reference results (0.762 for 0.760, 0.782 for 0.784, 0.520 for 0.519). NOT done: the common-length re-score of the public cells (10c) needs regeneration the spec's budget does not permit for public checkpoints, and the cadence detector's precision needs a human to read the 30 saved examples.
+
+## 2026-09-02T15:18:40+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:27:31+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:29:35+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:31:55+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:38:15+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:38:42+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:39:11+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:40:52+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:46:23+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:53:34+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:54:55+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:55:56+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:56:46+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:57:30+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T15:58:11+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T16:05:46+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T16:08:25+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T16:13:41+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-02T16:31:40+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-03T20:24:36+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-05T16:55:58+09:00 — DEMO piano-roll figure
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `1fe75ec516b5bbb09af96482effb247427eb579ea750dd4af7d16b0cffd0c838`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_E_to_F_slate.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_indigo.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_teal.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_plum.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_ink.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_paper.pdf`
+- note: E major prompt, F installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
+## 2026-09-05T16:59:07+09:00 — DEMO piano-roll figure
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `f4ed316e775fc605b847d203bda8df0f19077d7f1db62d5b9ec10508444b05ba`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`
+- note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
+## 2026-09-05T16:59:13+09:00 — DEMO piano-roll figure
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `17fa4e0afd384b0b0e0b82399c5805e8fe245bd75b797720ee191f02ce34480c`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_E_to_F_slate.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_indigo.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_teal.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_plum.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_ink.pdf`, `results/figures/pianoroll/pianoroll_E_to_F_paper.pdf`
+- note: E major prompt, F installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
+## 2026-09-05T17:03:08+09:00 — DEMO piano-roll figure
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `4cac5ee5c45af1428eb95bc4d0bdaff3b1f5416f1dff434a294ae99d30d68ea0`
+- seeds: [0]
+- artifacts: `results/figures/pianoroll/pianoroll_tokens.json`, `results/figures/pianoroll/pianoroll_F_to_E_slate.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_indigo.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_teal.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_plum.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_ink.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_paper.pdf`, `results/figures/pianoroll/pianoroll_F_to_E_moss.pdf`
+- note: F major prompt, E installed at L4 from the bar-9 boundary; generated with the demo protocol, token dump beside the figures
+
+## 2026-09-05T22:37:39+09:00 — Re-scoring dump: continuations kept (R-Aug_s0_minor_L4_reference)
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `32a058ca60a8c9febf8791729f4eecd55eb99bb31212eaffc6c0850c15de4407`
+- seeds: [7]
+- artifacts: `results/reanalysis/a_ref/rescore_R-Aug_s0_minor_L4_reference.parquet`, `results/reanalysis/a_ref/continuations_R-Aug_s0_minor_L4_reference.json`
+- note: regenerated the final-test continuations and kept them; reproducibility vs ledgered run: {'compared': True, 'n_rows': 0, 'est_key_identical': nan, 'success_identical': nan, 'sr_new': None, 'sr_old': 0.4945}
+
+## 2026-09-05T22:37:54+09:00 — Table 2's empty cell filled: AMT-36L x Bach edit
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e3f4faaa1154d5172ba633063ea1da390161c77b3d1cb2c334546209ee9246d5`
+- seeds: [7]
+- artifacts: `paper/icassp2027.tex`, `paper/icassp2027_supp.tex`
+- note: the balanced run finished 2026-08-30 with guarded TKR 0.540 vs K1 0.056, 12/12 targets, guard pass 0.996, and the main text still carried '---' in that row plus the sentence 'has no edit cell, because ... none exists above 36 layers'. BOTH corrected. also corrected a second stale claim at line 355: the Bach reference is a DIFFERENT checkpoint of the same family, not a LARGER one -- PUBLIC_MODELS_FREEZE section 3 assigns large->medium and requires only that no model grade its own output. the supplement's length table now shows 0.540 and the '*balanced run not yet complete' footnote is gone.
+
+## 2026-09-05T22:37:54+09:00 — Cadence detector validated against known corpus endings
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `30a96d8d0a2811d9e89d797b0802897c5e7d68b00ede1751b791cad45e652370`
+- seeds: [7]
+- artifacts: `results/reanalysis/a2/cadence_validation.json`
+- note: the generator forces the last chord of the last bar to degree 1 function T, so every corpus piece ends on its tonic and the ground truth is known by construction. the detector fires on 0.2180 of those true endings (recall) and on 0.00322 of piece/wrong-key pairs (false positives), giving precision 0.986 at the 1-vs-23 balance the tonic table has. it UNDER-counts heavily: the reported cadence rate of 0.205 is a floor, not an estimate. this replaces the supplement's 'precision unknown' with two measured numbers; reading the thirty saved examples is still worth doing but can now only refine a bounded quantity.
+
+## 2026-09-05T22:40:55+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-05T22:41:31+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-06T23:38:15+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+
+## 2026-09-06T23:41:57+09:00 — P5 figures
+- git: `8a6c355f4a120e87bb2f714611b63fc9d9066836+DIRTY`
+- config_hash: `e6bca9900209e899883ab29729e98eb06327737d144d1ef9569becd617ffe63e`
+- seeds: n/a
+- artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
+- note: 5 figures from R-Aug_s0 artifacts (probe: all models)
+

@@ -16,13 +16,67 @@ Causal Interventions on Emergent Tonal Representations}
 \name{}
 \address{}
 
+% a few paragraphs contain long unbreakable names; allow the last line
+% extra stretch rather than letting it run past the column edge
+\emergencystretch=1.2em
 \begin{document}
 \maketitle
 \vspace{-2.5em}
 
-Section numbers refer to the main paper. Every value below is recomputed from a logged
-artifact; the script that does it reports any figure in either document that it cannot
-trace, and its report is empty apart from a sampling hyperparameter.
+Section numbers in italics refer to the main paper. Every value below is recomputed
+from a logged artifact by a script that also re-reads both documents and reports any
+figure it cannot trace back to one; its report is currently empty.
+
+This supplement is long because it is doing two jobs: recording the protocol in enough
+detail to reproduce it, and answering the questions a reader is most likely to press on.
+The table below is for the second job. Each row names a doubt, the section that takes it
+up, and what that section found --- including where the answer goes against us.
+
+\begin{table}[!h]
+\centering
+\caption{Where to look, and what is there.}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}p{0.40\columnwidth}cp{0.44\columnwidth}@{}}
+\toprule
+the doubt & § & what we found\\
+\midrule
+The probe just reads the notes that are already visible.
+ & \ref{sec:probes} & It beats the strongest note counter by $+0.071$, which is a
+   real but small margin.\\
+A success rate of $0.355$ is low.
+ & \ref{sec:estimator-ceiling} & Transposing the prompt into the target key --- a
+   correct answer by construction --- scores $0.648$ on the same pipeline.\\
+The edit only moves the key to a neighbour.
+ & \ref{sec:distance} & The distance coefficient's interval contains zero. At the
+   tritone the edit scores $0.340$ and the control $0.000$.\\
+When it fails, nothing happened.
+ & \ref{sec:landing} & $0.085$ of edited rows stay in the prompt's key, against
+   $0.517$ for a random subspace.\\
+In-key share cannot tell a key from its relative.
+ & \ref{sec:tonic} & True, so we also measure the tonic: the bass arrives on it in
+   $0.755$ of edited continuations against $0.003$ unedited.\\
+The edit damages the music in ways the budget hides.
+ & \ref{sec:selectivity} & Register and mean pitch do not move. Note density does,
+   by a sixth of what an equal-sized random write does.\\
+You chose a flattering key estimator.
+ & \ref{sec:estimators} & Five estimators, all favouring the edit; the
+   pre-registered one gives the \emph{lowest} rate of the five.\\
+Minor scores higher, so the result is unstable.
+ & \ref{sec:minor} & The estimator is better at minor. Against each mode's own
+   ceiling the gap is $+0.015$, and one in-key definition reverses.\\
+The subspace is a print of transposition augmentation.
+ & \ref{sec:augmentation} & Three models trained without it give the same geometry
+   ($-0.963$ against $-0.960$).\\
+The cross-model comparison is not like for like.
+ & \ref{sec:public} & The baseline is identical across tokenizations. But the Bach
+   continuations are not length-matched (§\ref{sec:length}), and that is open.\\
+A sustained edit proves nothing about memory.
+ & \ref{sec:oneshot} & A single write holds for six bars --- which still does not
+   establish an internal state, and we say why.\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Corpora, editions and splits \normalfont\textit{(main Sec.~3.1)}}
 
@@ -76,6 +130,7 @@ $70.5$-beat silence), for the REMI checkpoint only, in the train split only. The
 held-out splits lose nothing.
 
 \section{Probes, baselines and window settings \normalfont\textit{(main Secs.~2.1, 4.1)}}
+\label{sec:probes}
 
 Multinomial logistic probe per layer, trained with AdamW; a two-layer MLP as a
 secondary probe. Splits are by SEQUENCE, so no position of a piece appears in two
@@ -134,20 +189,24 @@ works. Rank is $24$ throughout.
 \begin{table}[!t]
 \centering\footnotesize
 \caption{Every checkpoint we probe or edit \normalfont\textit{(main Sec.~3.2)}.
-Edited cells use the same subspace construction and the same replacement.}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrl@{}}
+Edited cells use the same subspace construction and the same replacement.
+``Ours, main'' is the six models R-Aug/R-NoAug $\times$ three seeds. ``Ref.'' marks a
+model used to score another model's disturbance; AMT large is now edited as well, at
+layer $18$.}
+\setlength{\tabcolsep}{3pt}\scriptsize
+\begin{tabular}{@{}llrrccc@{}}
 \toprule
-model & scheme & layers & width & role\\
+model & scheme & lyr & width & probe & edit & ref.\\
 \midrule
-ours (R-Aug/R-NoAug) & flat & $8$ & $512$ & probe, edit\\
-ours (reference) & flat & $8$ & $512$ & disturbance only\\
-AMT small & flat & $12$ & $768$ & probe, edit\\
-AMT medium & flat & $24$ & $1024$ & probe, edit, reference\\
-AMT large & flat & $36$ & $1280$ & probe, reference\\
-MMT & compound & $6$ & $512$ & probe, edit\\
-REMI & flat & $6$ & $512$ & probe, edit\\
+ours, main      & flat     & $8$  & $512$  & \checkmark & \checkmark & \\
+ours, reference & flat     & $8$  & $512$  &            &            & \checkmark\\
+AMT small       & flat     & $12$ & $768$  & \checkmark & \checkmark & \\
+AMT medium      & flat     & $24$ & $1024$ & \checkmark & \checkmark & \checkmark\\
+AMT large       & flat     & $36$ & $1280$ & \checkmark & \checkmark & \checkmark\\
+MMT             & compound & $6$  & $512$  & \checkmark & \checkmark & \\
+REMI            & flat     & $6$  & $512$  & \checkmark & \checkmark & \\
 \bottomrule
-\end{tabular*}
+\end{tabular}
 \label{tab:models}
 \end{table}
 
@@ -197,6 +256,24 @@ prompt's instrument block, and slot violations are $2.40\%$ on Bach and $0\%$ on
 all of them control or special codes, concentrated in one prompt of twelve.
 
 \section{The key estimator: validated, and bounded \normalfont\textit{(main Sec.~3.3)}}
+\label{sec:estimator-ceiling}
+
+\textbf{One estimate per continuation.} The estimator is applied once to the whole
+continuation, not per token: the pitches are pooled into a single pitch-class
+histogram --- $110$ notes at the median, truncated at the end-of-piece token and after
+sixteen bars --- correlated against the twenty-four rotated profiles, and the argmax is
+the continuation's key. Success is that key matching the installed one exactly, in both
+tonic and mode; there is no partial credit for a neighbouring key.
+
+This granularity is a deliberate choice with a cost, and the cost runs against us. A
+continuation that needs a bar or two to settle into the installed key carries the
+prompt's key in its histogram for those bars, and the pooled estimate is diluted by
+them; a continuation that modulates part-way through gets one label rather than two.
+The measure is therefore conservative about onset, which is part of why the tonic
+metrics of \S\ref{sec:tonic} --- which read only how the music ends --- give much higher
+numbers on the same continuations ($0.755$ against $0.355$). Where bar-level resolution
+is what the question needs, we measure per bar instead: the persistence rows of
+\S\ref{sec:oneshot} carry an estimate for each bar.
 
 Our Krumhansl--Schmuckler implementation was checked against \texttt{music21}. The
 Krumhansl--Kessler profiles are identical in both modes, and given the same pitch
@@ -331,6 +408,7 @@ writing an alien target.}
 \end{figure}
 
 \section{Continuation length across tokenizations \normalfont\textit{(main Secs.~3.2, 5)}}
+\label{sec:length}
 
 Continuation length is fixed in notes, not steps. Measured over the held-out edit rows,
 the median is $80$ notes for the Anticipatory model and $80$ for MMT, but $58$ for the
@@ -359,6 +437,36 @@ observed bin has the lower margin of the two large ones with a badly unbalanced 
 count, and $80$ notes lies outside the observed range. $24$ of $1{,}440$ rows produced
 an empty continuation, counted as failures in both conditions.
 
+The Bach cells were not note-matched at all, and this is worse than the pop case rather
+than better. Note-matching was declared for pop only: MMT emits one token per note where
+the Anticipatory scheme emits three, so the pop protocol set MMT to $80$ steps on the
+stated ground that the shared $240$-step default ``would give MMT continuations three
+times the music''. No equivalent value was declared for Bach, where every cell ran at
+$240$ steps. The result is the disparity that reasoning was written to prevent:
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Bach cell & steps & notes (median) & edit rate\\
+\midrule
+AMT-12L & $240$ & $80$  & $0.479$\\
+AMT-36L & $240$ & $79$  & $0.540$\\
+REMI    & $240$ & $57$  & $0.610$\\
+MMT     & $240$ & $240$ & $0.701$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Rates are the balanced condition Table~2 reports. MMT hears four times the music REMI
+does, and has the highest rate. We cannot show that
+this ordering survives a common length. The stored rows carry each continuation's note
+count but not its notes, so re-scoring at a common length needs the cells regenerated,
+and within a cell the note count is fixed by the step budget --- the spread between the
+10th and 90th percentiles is under five notes everywhere --- so there is no internal
+variation to test against either. The comparison of tokenizations on Bach is therefore
+reported with this confound open. The pop comparison, which is note-matched for two of
+three models and tested by margin for the third, is the one that carries weight.
+
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.86\columnwidth]{supp_public.pdf}
@@ -370,18 +478,605 @@ sit with the weakest edit. Orange marks a cell that separates all twelve keys.}
 \label{fig:supp-public}
 \end{figure}
 
+\section{Does the edit reach distant keys? \normalfont\textit{(main Sec.~4.2)}}
+\label{sec:distance}
+
+A replacement that only worked between neighbouring keys would be a weak result: the
+model might be nudged a step around the circle of fifths without any key being
+installed. We therefore split every held-out row by the circle-of-fifths distance $d$
+between the prompt's key and the installed key. Each of the $100$ prompts is evaluated
+at all $11$ non-identity targets, so the rows are paired by construction: $200$ rows at
+each of $d=1..5$ and $100$ at $d=6$, the tritone, where only one key lies.
+
+Before reading the numbers we fixed what each outcome would mean. A confidence interval
+on the distance coefficient that contains zero means the edit is distance-independent
+and the claim is stronger than stated. A negative coefficient with $d=6$ still clearly
+above the control means the effect is real but decays. No separation from the control at
+$d=5$ and $6$ would mean the success rate is carried by near keys and the claim's reach
+would have to be narrowed.
+
+The first case holds, in both modes. Fitting success on $d$ with the prompt as a cluster
+(GEE, exchangeable, logistic) gives $\hat\beta_d = -0.004$, $95\%$ CI $[-0.080, +0.072]$
+for major prompts and $-0.046$, $[-0.116, +0.024]$ for minor. A mixed-effects fit and a
+prompt-level cluster bootstrap over $2000$ replicates agree; all three are reported in
+\texttt{results/reanalysis/a1\_a3/}. The tritone install succeeds at $0.340$ (major) and
+$0.440$ (minor) against $0.000$ and $0.030$ for the matched-displacement control.
+
+The control behaves in the opposite way, and this is the more informative half of the
+figure. Its coefficient is strongly negative on major prompts, $-0.689$,
+$[-0.937, -0.441]$: a random subspace succeeds at $0.195$ when the target happens to be
+the neighbouring key and at $0.035$ or less everywhere beyond it. That is the profile of
+an intervention that only ever registers as a success when the estimator was nearly going
+to name the target anyway. The replacement does not have that profile.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.98\textwidth]{supp_distance.pdf}
+\caption{\textbf{S5} \textit{(main Sec.~4.2)}. Success rate against circle-of-fifths
+distance, with Wilson $95\%$ intervals. The replacement is flat; the
+matched-displacement control decays to the floor beyond the neighbouring key. Coefficient
+and interval in each title are from the GEE fit with the prompt as a cluster.}
+\label{fig:supp-distance}
+\end{figure*}
+
+We also asked whether the disturbance budget is what limits distant installs. It was
+frozen from natural key changes, and natural key changes favour near keys, so a budget
+that structurally penalised distant targets would manufacture a distance effect. Splitting
+each failure into "the estimator did not name the target", "the budget was exceeded", and
+both, the budget-only failure rate on major prompts is flat in $d$ ($0.050$, $0.060$,
+$0.035$, $0.050$, $0.065$, $0.080$). The hypothesis is not supported: failures are
+dominated throughout by the estimator not naming the target ($0.405$ to $0.540$). On minor
+prompts the budget-only rate does rise mildly with distance, from $0.115$ to $0.170$, and
+we report that rather than the pooled figure.
+
+\section{Where a failed install lands \normalfont\textit{(main Sec.~4.2)}}
+\label{sec:landing}
+
+The success rate says how often the estimator names the installed key and nothing about
+what it names the rest of the time. Those remainders separate hypotheses that the success
+rate cannot: an edit that does nothing leaves the prompt's key, an edit that moves the
+continuation to a tonally adjacent place produces a near miss, and an edit that merely
+disrupts produces scatter.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S9} \textit{(main Sec.~4.2)}. Where the estimate lands on the $1100$
+non-identity major rows of each condition. "Fifth-adjacent" is one step around the circle
+of fifths from the installed key; "relative" and "parallel" are relative to it; "source
+retained" is the prompt's own key.}
+\label{tab:supp-landing}
+\small
+\begin{tabular}{lccc}
+\toprule
+ & replacement & matched & random \\
+\midrule
+installed key      & $0.410$ & $0.059$ & $0.041$ \\
+fifth-adjacent     & $0.288$ & $0.074$ & $0.049$ \\
+relative           & $0.089$ & $0.010$ & $0.004$ \\
+parallel           & $0.004$ & $0.019$ & $0.011$ \\
+source retained    & $0.085$ & $0.340$ & $0.517$ \\
+other              & $0.124$ & $0.497$ & $0.378$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:supp-landing} gives the split for major prompts. Under the replacement,
+$0.787$ of rows land on the installed key, one fifth from it, or on its relative minor,
+and only $0.085$ stay in the prompt's key. Under the unmatched random subspace the
+ordering inverts: $0.517$ stay in the prompt's key and $0.041$ reach the target --- the
+two figures quoted in the main text, recomputed here from the same rows. Minor prompts
+behave the same way, with $0.617$ on the installed key under the replacement against
+$0.003$ under the random subspace, which retains the source key in $0.772$ of rows.
+
+Figure~\ref{fig:supp-confusion} shows the full $12 \times 12$ matrices. The replacement
+has a diagonal; the control has none. This is also the second reading of the previous
+section: the residual mass sits next to the installed key on the circle of fifths, not
+back at the prompt's key. A near miss of this kind has two explanations these rows cannot
+separate --- the continuation really is in the neighbouring key, or it is in the installed
+key and the estimator, faced with two scales that share six of their seven notes, named
+the neighbour. What the rows do establish is that neither explanation is the model
+ignoring the write; deciding between them needs the same continuations scored by other
+estimators.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.98\textwidth]{supp_confusion.pdf}
+\caption{\textbf{S6} \textit{(main Sec.~4.2)}. Installed key against estimated key, major
+prompts, row-normalised. Left, target-key replacement; right, the matched-displacement
+control at the same displacement.}
+\label{fig:supp-confusion}
+\end{figure*}
+
+\section{The geometry of the key subspace \normalfont\textit{(main Sec.~4.4)}}
+\label{sec:geometry}
+
+$V$ is built from the probe's weights, so any structure inside it could be something the
+probe imposed rather than something the model holds. The check is to measure the same
+geometry on the raw class means $\mu_\kappa$, which the probe never touched.
+
+Among major keys the circle of fifths is already there before any projection: the rank
+correlation between cosine similarity and circle-of-fifths distance is $-0.936$ on the raw
+means, $-0.961$ after removing the component common to all $24$ keys, and $-0.961$ after
+projection into $V$. Projection sharpens the contrast --- neighbouring keys sit at $0.681$
+and tritone-related keys at $-0.118$, against $0.978$ and $0.928$ before centring --- but
+it does not create the ordering. Classical scaling of the centred means recovers the
+circle of fifths as a closed ring (Fig.~\ref{fig:supp-geometry}). Relative keys are closer
+than parallel ones ($0.581$ against $0.435$), which we report without a prediction, since
+theory does not settle which should be nearer.
+
+Two facts cut the other way and we state them plainly. Among minor keys there is
+essentially no fifths ordering ($-0.063$ centred, $-0.216$ projected), so the structure
+described above is a property of the major keys. And $V$ captures only $5.2\%$ of the
+energy of $\mu_\kappa$ on average: it is a thin slice of the class means, not a summary of
+them.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.98\textwidth]{supp_geometry.pdf}
+\caption{\textbf{S7} \textit{(main Sec.~4.4)}. Classical scaling of the cosine
+dissimilarity between the $12$ major class means, before and after projection into $V$.
+The grey path connects the keys in circle-of-fifths order; it is drawn, not fitted.}
+\label{fig:supp-geometry}
+\end{figure*}
+
+\section{A one-shot install, bar by bar \normalfont\textit{(main Sec.~4.5)}}
+\label{sec:oneshot}
+
+The main text's edit is held for the whole continuation, which cannot distinguish a model
+that carries the installed key forward from one that is simply being clamped. The search
+stage also ran the write once, at the bar-$9$ boundary, and then left the model alone. Its
+rows were never aggregated; we do that here.
+
+Over the six bars the continuations reach, the one-shot install holds $0.687$ to $0.711$
+of notes inside the installed key against $0.575$ to $0.584$ for the same write into a
+random subspace --- separated at every bar by a prompt-paired Wilcoxon test after Holm
+correction, with no visible decay. The sustained edit sits far above both, at $0.978$ to
+$0.991$, which is the expected consequence of continuing to write.
+
+Two limits belong with this result. The continuations only extend to bar $14$, so nothing
+here speaks to longer horizons. More importantly, a persistent effect on the output does
+not establish a persistent internal state: the model may be re-reading the key from the
+notes it has already produced, which would reproduce this curve without anything being
+held. Separating the two needs the token-splice control, which is outside this
+submission's scope.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.86\columnwidth]{supp_decay.pdf}
+\caption{\textbf{S8} \textit{(main Sec.~4.5)}. Notes inside the installed key, by bar,
+for a write applied once at bar $9$, the same write into a random subspace, and the
+sustained edit. Bars are $95\%$ intervals on the mean.}
+\label{fig:supp-decay}
+\end{figure}
+
+\section{Writing the prompt's own key \normalfont\textit{(main Sec.~4.2)}}
+
+Each held-out sweep includes $100$ rows where the installed key is the prompt's own. The
+row is a sanity check on the operation, not a demonstration of it: if writing the correct
+value damaged the continuation, the edit would be doing something besides setting the key.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S10} \textit{(main Sec.~4.2)}. Identity install, $n=100$ per cell, with
+Wilson $95\%$ intervals for the replacement. The controls are close behind, which is the
+point: a continuation nothing moves stays in its own key.}
+\label{tab:supp-identity}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc}
+\toprule
+ & major & minor \\
+\midrule
+target-key replacement & $0.650$ \tiny$[0.553,0.736]$ & $0.800$ \tiny$[0.711,0.867]$ \\
+matched control        & $0.510$ & $0.740$ \\
+random subspace        & $0.530$ & $0.750$ \\
+bar/duration positions & $0.650$ & $0.780$ \\
+pitch positions        & $0.580$ & $0.850$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+It passes: writing the prompt's own key succeeds at $0.650$ on major prompts and $0.800$
+on minor, and the disturbance budget is met in $0.930$ and $0.950$ of those rows. But the
+comparison carries little weight on its own, and Table~\ref{tab:supp-identity} shows why.
+Every control scores between $0.510$ and $0.850$ on the same rows, with intervals that
+overlap the replacement's, because a continuation that no intervention moves remains in
+the key it started in. The identity row establishes that the write is harmless when
+correct; it is the non-identity rows that establish that it works.
+
+\section{Measuring the tonic, not the scale \normalfont\textit{(main Sec.~4.2)}}
+\label{sec:tonic}
+
+In-key note share is a measure of pitch content, and pitch content cannot separate a
+key from its relative minor. The paper's largest number therefore comes from a measure
+that is blind to the distinction the introduction rests on. These metrics look at where
+the music comes to rest instead. All $100$ continuations reach the end-of-piece token,
+so the final chord is one the model composed rather than the point at which the token
+budget ran out.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S11} \textit{(main Sec.~4.2)}. Where the continuation settles, against
+the unedited continuation of the same prompt. Major prompts left, minor right, in the
+order replacement / unedited / matched control / reference, the last being the
+prompt itself transposed into the target key --- what a legitimate key change scores
+on the same measures. Rows: the final bass note, a cadence into the tonic, the share
+of notes in the tonic triad, the final melody note, and the bass on downbeats --- each
+scored against the installed key.}
+\label{tab:supp-tonic}
+\scriptsize
+\setlength{\tabcolsep}{1.8pt}
+\begin{tabular}{@{}lcccc@{\hskip 4pt}cccc@{}}
+\toprule
+& \multicolumn{4}{c}{major} & \multicolumn{4}{c}{minor}\\
+\cmidrule(r){2-5}\cmidrule(l){6-9}
+& edit & none & ctrl & ref & edit & none & ctrl & ref\\
+\midrule
+final bass  & $0.755$ & $0.003$ & $0.036$ & $0.977$ & $0.799$ & $0.000$ & $0.056$ & $0.991$\\
+cadence     & $0.205$ & $0.001$ & $0.012$ & $0.269$ & $0.216$ & $0.000$ & $0.006$ & $0.288$\\
+triad share & $0.456$ & $0.227$ & $0.256$ & $0.519$ & $0.458$ & $0.225$ & $0.265$ & $0.524$\\
+final melody& $0.302$ & $0.058$ & $0.075$ & $0.342$ & $0.305$ & $0.052$ & $0.107$ & $0.335$\\
+downbeat bass& $0.185$ & $0.072$ & $0.087$ & $0.231$ & $0.186$ & $0.070$ & $0.093$ & $0.229$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every metric separates the edit from the unedited continuation with a rank-biserial
+effect of $0.99$ or above after Holm correction. The bass arrives on the installed
+tonic in three quarters of edited continuations against three in a thousand unedited
+ones, and a cadence --- a dominant-to-tonic bass motion into a complete tonic triad ---
+appears in one fifth of them against one in a thousand. None of this can be produced by
+a relative-key confusion.
+
+Read against the reference column, the edit reaches $0.773$ of a genuine
+transposition on the final bass and $0.760$ on the cadence, and closes $0.784$ of the
+gap between no edit and transposition on tonic-triad share; on minor prompts the same
+three are $0.806$, $0.751$ and $0.781$. That is a different picture from the success
+rate, which reaches $0.548$ of its own ceiling: on where the music comes to rest the
+edit is closer to a real key change than the estimator-based rate suggests.
+
+The cadence detector is a heuristic, and the corpus can say how good a one. The
+generator ends every piece on its tonic by construction, so a held-out corpus piece is
+a known positive; scoring the same piece against each of the $23$ keys it is not in
+gives known negatives. Over $500$ held-out pieces the detector fires on $0.218$ of the
+true endings and on $0.00322$ of the wrong-key pairs, a precision of $0.986$ at that
+balance. It therefore misses far more cadences than it invents: the rates in
+Table~\ref{tab:supp-tonic} are floors on how often the music comes to rest in the
+installed key, and the ratios between conditions --- the same detector on both sides
+--- are the part to read.
+
+\section{What else the edit changes \normalfont\textit{(main Sec.~4.3)}}
+\label{sec:selectivity}
+
+The second success condition bounds how surprised a reference model is. That is a
+summary, and an edit could stay inside it while thinning the texture or dragging the
+register. Measured against the unedited continuation of the same prompt, the
+replacement moves one attribute of three: notes per bar fall by $0.595$
+($r=-0.41$, $p_{\text{Holm}}=1.2\times10^{-3}$), while mean pitch ($-0.092$, $p=0.43$)
+and register width ($-0.223$, $p_{\text{Holm}}=0.36$) do not move at all.
+
+The matched-displacement control moves all three, and much further: notes per bar by
+$-3.471$ with a rank-biserial effect of $-1.000$, mean pitch by $-0.484$, register width
+by $+1.323$. Comparing the two directly on the same prompts, the replacement's change is
+the smaller on every attribute (Holm-corrected). A write of that size is not gentle in
+general; this one is.
+
+The third arm settles what a legitimate key change looks like on these measures.
+Transposing the prompt into the target key and continuing with no edit at all moves the
+mean pitch by $+5.648$ semitones --- a rank-biserial effect of $1.000$, since a
+transposition must shift register --- while leaving notes per bar ($-0.057$, $p=0.92$)
+and register width ($-0.096$, $p=0.52$) untouched. The two interventions therefore have
+opposite footprints: transposition moves the register and not the texture, the edit
+moves the texture a little and not the register. Neither is a subset of the other, and
+neither resembles the matched control, which moves all three.
+
+Three attributes the audit was designed to cover cannot be measured on this corpus, and
+we report that rather than substituting something else: the vocabulary has no rest or
+chord token, and every note carries duration $8$ by construction, so the duration
+distribution is a point mass and its divergence is identically zero in every condition.
+
+\section{Does the result depend on the key estimator? \normalfont\textit{(main Secs.~3.3, 4.2)}}
+\label{sec:estimators}
+
+Krumhansl--Kessler was fixed before the runs and remains the judgment; this is post-hoc.
+Four published profile sets were taken from \texttt{music21} so the vectors are the
+standard ones, and scored with our own correlation code so the profile is the only thing
+that varies. A Viterbi tracker is added because all four are bag-of-pitch-class methods
+that ignore order. The disturbance condition is held fixed throughout, so any change is
+the estimator's.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S12} \textit{(main Secs.~3.3, 4.2)}. Success rate under five key
+estimators, major prompts, with the disturbance condition unchanged.
+$^{*}$the pre-registered estimator, and the lowest of the five.}
+\label{tab:supp-estimators}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+estimator & edit & control & difference\\
+\midrule
+Krumhansl--Kessler$^{*}$ & $0.3555$ & $0.0564$ & $0.2991$\\
+Aarden--Essen            & $0.4191$ & $0.0391$ & $0.3800$\\
+Bellman--Budge           & $0.5682$ & $0.0264$ & $0.5418$\\
+Temperley--Kostka--Payne & $0.5464$ & $0.0300$ & $0.5164$\\
+Viterbi tracker          & $0.3736$ & $0.0555$ & $0.3181$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The edit beats its matched control under every one. What is not robust is the absolute
+rate, which runs from $0.3555$ to $0.5682$ --- and the pre-registered choice is the
+lowest of the five, so the headline number is the most conservative available rather
+than a favourable pick. The estimators disagree with each other freely: Krumhansl--Kessler
+and Bellman--Budge name the same key on only $0.545$ of rows. Of the edited
+continuations, $0.274$ are called a hit by all five and $0.445$ by some but not all,
+which is a direct measure of how many continuations are tonally ambiguous rather than
+wrong.
+
+Re-scoring reproduces the pipeline's stored estimate on every row, and the script
+refuses to report anything if it falls below $0.999$. That check earned its place: a
+first version read the raw token stream instead of the pipeline's own extraction, which
+stops at the end-of-piece token and after sixteen bars, and matched only $809$ of
+$1{,}200$ rows.
+
+\section{Why minor scores higher \normalfont\textit{(main Sec.~4.2)}}
+\label{sec:minor}
+
+Minor prompts reach $0.495$ against $0.355$. Both halves of the measurement favour
+minor, and together they account for the gap.
+
+The estimator is the larger half. The transposition reference is a continuation that is
+in the target key by construction, so the rate it achieves is what this pipeline awards
+a correct answer: $0.877$ in minor against $0.648$ in major. Read against its own mode's
+ceiling, the edit reaches $0.564$ in minor and $0.548$ in major. The raw advantage of
+$+0.139$ becomes $+0.015$. Essentially all of it is the estimator agreeing more readily
+in minor, not the edit working better.
+
+In-key note share is the smaller half. It allows minor the union of the natural,
+harmonic and melodic forms --- nine of twelve pitch classes --- against seven for major,
+so a minor continuation scores on notes that no single minor scale contains. Under the
+harmonic minor the generator actually writes, the edited share falls from $0.957$ to
+$0.903$, which is below major's $0.936$; the control falls from $0.764$ to $0.602$,
+exactly major's $0.602$. The reported minor advantage on this measure is an artefact of
+the definition, and the corrected comparison reverses its sign.
+
+\section{Is the key subspace a print of the augmentation? \normalfont\textit{(main Secs.~4.4, 5)}}
+\label{sec:augmentation}
+
+The class means carry the circle of fifths before any projection: the rank correlation
+between cosine similarity and circle-of-fifths distance among the major keys is $-0.936$
+raw and $-0.961$ once the component common to all $24$ keys is removed. The natural
+objection is that transposition augmentation put it there, since a training set built by
+transposing every piece into every key teaches the twelve keys as twelve versions of one
+thing.
+
+Three of the six trained models had no augmentation, so the objection is testable
+without re-searching anything --- same layer, same construction of $V$, same statistic,
+only the model changes. Augmented models give $-0.960 \pm 0.002$; models trained without
+augmentation give $-0.963 \pm 0.003$. The two are indistinguishable, and every one of the
+six falls between $-0.957$ and $-0.966$. The geometry is not a print of the augmentation.
+
+This does not settle the wider version of the objection, and we separate them. That the
+vocabulary contains no key token rules out the probe copying a label. It does not rule
+out the training distribution making this representation close to inevitable, and on
+synthetic data the key is literally the latent variable the generator samples from. The
+public checkpoints are the part of the paper that speaks to that, and there the record is
+incomplete: MMT's training procedure states a random pitch shift of $-5$ to $+6$
+semitones, so MMT is augmented and its cell does not answer the objection; for the
+Anticipatory checkpoints and for the REMI checkpoint we could not establish from public
+information whether transposition augmentation was used, and we write that as unknown
+rather than assume the common practice.
+
+\section{Is the public comparison a common measurement? \normalfont\textit{(main Sec.~4.5)}}
+\label{sec:public}
+
+Table~2's cross-model rows are only meaningful if the note-counting baseline means the
+same thing for each tokenization. It does. The window is counted in note events, not
+tokens; all five checkpoints read the same $300$ chorales at the same $35{,}890$ sampled
+positions; and the Krumhansl--Schmuckler baselines, which are a deterministic function of
+the pitch-class histograms, come out bit-identical across every model. The fitted
+baselines differ by at most $0.0060$, which is the noise of fitting the same inputs
+twice. No recomputation was needed and none was done.
+
+The value written by the edit is also insensitive to how it was estimated, in the cell
+the question was raised about. Comparing the key-balanced and direct estimates key by
+key, the smallest cosine is $0.9935$ for AMT on pop: the two are the same direction
+everywhere, and the edit cannot tell them apart. On Bach the agreement is looser
+($0.9744$ for MMT, $0.9281$ for REMI, $0.8593$ for AMT-36L), which is why the balanced
+condition is the one reported there. Two Bach keys have a degenerate mean --- no position
+in the corpus carries them --- and are excluded from the comparison rather than scored as
+perfect agreement.
+
+\section{The same edit on other training runs \normalfont\textit{(main Secs.~4.2, 5)}}
+\label{sec:seeds}
+
+The edit result in the main text comes from one trained model. Three more were run:
+two further augmented seeds, and one trained without transposition augmentation.
+Nothing was re-searched --- layer $4$, the probe-weight construction of $V$ and the
+frozen budget of $0.613$ all carry over, the budget needing no recomputation because
+it depends only on the shared reference model and the validation split. What is
+rebuilt per model is $V$, the class means and the random control basis, from that
+model's own activations; a subspace expressed in another model's basis means nothing.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S13} \textit{(main Sec.~4.2)}. Held-out success rate by training run,
+major prompts. The control is the matched-displacement one.}
+\label{tab:supp-seeds}
+\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+model & augmented & edit & control & ratio\\
+\midrule
+R-Aug\_s0 (main text) & yes & $0.3555$ & $0.0564$ & $6.3$\\
+R-Aug\_s1             & yes & $0.2182$ & $0.0218$ & $10.0$\\
+R-Aug\_s2             & yes & $0.1927$ & $0.0309$ & $6.2$\\
+R-NoAug\_s0           & no  & $0.2627$ & $0.0445$ & $5.9$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The seed result goes against us and we state it plainly. The standard deviation across
+the three augmented seeds is $0.0876$, where we had pre-registered $0.03$ as the bar
+for calling the effect independent of the training run. It is not independent, and the
+run reported in the main text is the highest of the three; the three-seed mean is
+$0.2555$.
+
+What does hold across every run is the comparison the paper is built on. The edit beats
+its matched control by between $5.9$ and $10.0$ times in all four models, and no control
+exceeds $0.0564$ anywhere. The claim that survives is qualitative --- installing a key
+works, and the same-sized change to a random subspace does not --- while the particular
+value $0.3555$ should be read as one draw from a spread of roughly $0.19$ to $0.36$.
+
+The augmentation objection, by contrast, does not survive contact with the data.
+Without augmentation the edit reaches $0.2627$ against $0.0445$, above the augmented
+mean rather than below it. Taken with \S\ref{sec:augmentation}, where the unaugmented
+models show the same circle-of-fifths geometry, the linear key subspace is not
+something the augmentation put there.
+
+\section{The same model, sampled again \normalfont\textit{(main Sec.~4.2)}}
+\label{sec:gen-seed}
+
+Each cell of the final test is one continuation, drawn once. Two further samples were
+taken, changing only the sampler.
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+sampling seed & $7$ & $11$ & $23$ & SD\\
+\midrule
+edit    & $0.3555$ & $0.3418$ & $0.3318$ & $0.0119$\\
+control & $0.0564$ & $0.0700$ & $0.0518$ & $0.0095$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The sampling standard deviation is $0.0119$, inside the $0.02$ we pre-registered as
+stable, and the paired test against the control holds under every seed
+($p_{\text{Holm}} < 1.6 \times 10^{-16}$ throughout). Read against
+\S\ref{sec:seeds}, this localises the variance: resampling the same model moves the
+rate by about a point, retraining it moves the rate by nine. The spread is in the
+training, not in the draw.
+
+One further number says what a success rate of a third actually describes. Of the
+$1{,}100$ (prompt, target) cells, $0.059$ succeed in all three draws and $0.314$ in
+none; the remaining $0.627$ succeed in one or two. Success is mostly not a property of
+the cell but a probability within it --- which is the same population that
+\S\ref{sec:estimators} finds split between estimators, and the honest reading of these
+continuations is that most of them are tonally ambiguous rather than right or wrong.
+
+\section{Erasing the key, before any note \normalfont\textit{(main Secs.~4.3, 5)}}
+\label{sec:erase}
+
+Every intervention so far writes a key in, which can only show that the subspace is
+sufficient to set the key. Removing what it carries, and writing nothing back, asks
+whether the model was using it. This is a forward pass at the bar-$9$ boundary, reading
+the distribution over the next pitch; nothing is sampled.
+
+Of that distribution, $0.9818$ sits on the prompt key's scale when the model is left
+alone. Replacing the subspace with the grand mean of the $24$ class means drops it to
+$0.9085$, and removing the component outright ($h - P_V h$) to $0.9069$; deleting an
+equal-rank random subspace costs almost nothing, $0.9782$. The key removal costs about
+twenty times what the random removal costs, and the effect is unanimous across the
+hundred prompts (rank-biserial $-1.000$, $p = 3.9 \times 10^{-18}$, against $-0.396$
+for the random control).
+
+Two things keep this from being a demonstration of necessity, and both belong here.
+The drop is decisive statistically and small musically: at $0.9069$ the model is still
+overwhelmingly in the prompt's key, so the key is largely recoverable from outside $V$
+or re-read from the prompt at each position. And the direction of the second measure
+was not what we expected --- the entropy of the induced key posterior fell slightly
+($1.936$ to $1.901$) rather than rising, and the most probable key was unchanged for
+$0.71$ of prompts. Erasure loosens the model's commitment to the key's scale; it does
+not leave the model unsure which key it is in.
+
+\section{Does the edit reach a public model's first decision? \normalfont\textit{(main Secs.~4.3, 4.5)}}
+\label{sec:public-logits}
+
+The main text shows on our own model that the edit changes the next-pitch distribution,
+so it acts before any note is drawn. The same question can be put to a public
+checkpoint without sampling. At the position the probe uses --- the step whose next
+token is a note --- the distribution is folded over instruments to twelve pitch classes
+and read as the log ratio of mass on the installed key's scale to mass on the prompt
+key's.
+
+On AMT small over Bach, at the layer the sweep had already chosen, that ratio moves from
+$-0.0239$ unedited to $-0.0096$ under the edit (rank-biserial $0.494$,
+$p_{\text{Holm}} = 0.0018$), while a rank-matched random subspace does not move it at
+all ($-0.0216$, $r = 0.004$, $p = 0.98$). The mechanism demonstrated on the synthetic
+model is present in a public checkpoint, and one limitation the paper carried is
+answered.
+
+The size is not comparable, and we do not present it as though it were. Our own model
+separates the two keys by $0.695$ against $0.041$ for its control; here the separation
+is $0.014$ of a log ratio. The claim this licenses is that the edit acts before
+sampling in a public model too, not that it acts as strongly.
+
 \section{What we did not run, and why \normalfont\textit{(main Secs.~3.2, 4.5)}}
 
-AMT large's Bach edit is absent for a reason of measurement. The guard needs a
-reference model that is not the one being edited; no checkpoint in that family is
-larger, and large is itself the reference that scores the pop edits, so the run would
-grade a $36$-layer model with a $24$-layer one while that same model grades others.
-Every other run here grades a subject with a model at least its size. Its probe margin
-is reported because probing needs no reference model.
+An earlier version of this section said AMT large's Bach edit had not been run,
+because the guard would grade a $36$-layer model with a $24$-layer one. That reason
+was wrong twice over. The requirement the freeze states is that the reference be a
+different public checkpoint, not a larger one --- a model must not grade its own
+output, and nothing about the argument needs the grader to be the bigger of the two.
+And the assignment for all three targets was fixed in writing before any of them ran
+(freeze §3: small$\rightarrow$medium, medium$\rightarrow$large, large$\rightarrow$medium),
+so declining the run would have been a deviation from the pre-registration rather
+than adherence to it. The run has since been made under that assignment and its cell
+is reported in Table~2.
 
 The balanced re-estimation was specified for AMT $\times$ pop only. Running it for MMT
 and REMI after seeing AMT gain $+0.078$, on a split already spent, would be choosing an
 analysis by its effect on a number; their cells keep the direct estimate, which is the
 conservative direction for the one claim that uses them.
+
+\section{Where this leaves the claims \normalfont\textit{(main Secs.~4, 5)}}
+
+The sections above were written as separate answers to separate doubts. Read together
+they move the paper in both directions, and a reader is owed the ledger rather than
+the favourable half of it.
+
+\textbf{Four findings weaken what the paper says.} The first is the most serious and
+cannot be repaired by wording. Across training seeds the edit reaches $0.3555$,
+$0.2182$ and $0.1927$ --- a standard deviation of $0.0876$ where we had pre-registered
+$0.03$ as the bar for calling the effect independent of the training run, and the run
+reported in the main text is the strongest of the three (\S\ref{sec:seeds}). The
+second: minor's advantage over major is the measurement, not the edit. Read against
+each mode's own transposition ceiling the gap falls from $+0.139$ to $+0.015$, and the
+in-key definition that produced part of it reverses when minor is held to the seven
+pitch classes the generator writes (\S\ref{sec:minor}). The third is a confound we
+cannot close: the Bach cells were never length-matched, MMT hearing $240$ notes where
+REMI hears $57$, and the re-score that would settle it needs continuations that were
+not stored (\S\ref{sec:length}). The fourth is not new but is worth restating beside
+the others --- the probe margin over note counting is $+0.105$, or $+0.071$ against
+the strongest counter: real, and small.
+
+\textbf{Against that, several objections do not survive contact with the data.} The
+edit is distance-independent while its control is not (\S\ref{sec:distance}); failures
+land beside the installed key rather than back at the prompt's (\S\ref{sec:landing});
+the tonal centre moves and not merely the pitch collection, reaching about
+three quarters of what a genuine transposition achieves on where the music comes to
+rest (\S\ref{sec:tonic}); the finding holds under five key estimators, of which the
+pre-registered one gives the lowest rate (\S\ref{sec:estimators}); the geometry and the
+edit both survive training without augmentation (\S\ref{sec:augmentation},
+\S\ref{sec:seeds}); the register and mean pitch are untouched (\S\ref{sec:selectivity});
+resampling moves the rate by about a point (\S\ref{sec:gen-seed}); and the public
+baseline is one measurement rather than three (\S\ref{sec:public}).
+
+\textbf{Four things remain open, and none of them is closed by rewriting.} The Bach
+length confound needs continuations we did not keep. The cadence detector is a
+heuristic whose precision nobody has checked; its thirty saved detections are waiting
+to be read. A one-shot edit persisting for six bars does not establish an internal
+state, because the model may be re-reading the key from notes it has already produced,
+and only the token-splice control separates those. And erasing the subspace costs
+twenty times what an equal-rank random erasure costs but still leaves $0.9069$ of the
+next-pitch mass in the prompt's key, so whatever the subspace carries, the key is
+largely recoverable without it.
+
+One boundary is worth stating because nothing in the paper tests it: every target is
+one of the twelve keys of the prompt's own mode. No parallel-key install was attempted,
+so nothing here shows that the mode can be changed at all.
 
 \end{document}

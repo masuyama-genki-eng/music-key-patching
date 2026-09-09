@@ -155,15 +155,22 @@ def main() -> None:
         basis = K1 if cond in ("k1", "k1_norm") else V
         ref = Vt if cond == "k1_norm" else None
 
-        def ed_fn(plen, t=None, b=basis, r=ref):
-            e = SubspaceEditor(torch.from_numpy(b).float().to(device),
-                               mu_target=torch.from_numpy(mus[t]).float().to(device),
-                               mode="replace", norm_ref=r)
-            return e
+        def make_editor_fn(t, b=basis, r=ref):
+            # Exactly one parameter. generate_masked reads the editor's arity to
+            # decide whether to hand it the batch's prompt indices (added
+            # 2026-08-22 for contrastive steering, after this test was run), so a
+            # two-parameter lambda would receive that list in place of the target
+            # key. The runs ledgered on 2026-08-11/12 predate that change and were
+            # unaffected; this rewrite keeps the script runnable for replications.
+            def ed_fn(plen):
+                return SubspaceEditor(torch.from_numpy(b).float().to(device),
+                                      mu_target=torch.from_numpy(mus[t]).float().to(device),
+                                      mode="replace", norm_ref=r)
+            return ed_fn
 
         for tgt in targets:
             log.info("%s target %d", cond, tgt)
-            conts = gen(lambda plen, t=tgt: ed_fn(plen, t), mask_fn)
+            conts = gen(make_editor_fn(tgt), mask_fn)
             rows, _ = SW.rows_for_condition(
                 {"cond": cond, "method": "confirmatory", "layer": args.layer,
                  "target_key": tgt}, prompts, conts, mref, device, clean_ppl)

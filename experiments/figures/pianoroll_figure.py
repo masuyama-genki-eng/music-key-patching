@@ -30,6 +30,30 @@ from src.utils.ledger import append_entry, snapshot
 
 log = logging.getLogger("pianoroll")
 KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+# Japanese key names use their own letter series (ハ ニ ホ ヘ ト イ ロ for C D E F
+# G A B) with 嬰 for a sharp and 変 for a flat; the flat spelling is the usual one
+# for the three black keys that have both.
+KEY_NAMES_JA = {"C": "\u30cf", "C#": "\u5909\u30cb", "D": "\u30cb",
+                "D#": "\u5909\u30db", "E": "\u30db", "F": "\u30d8",
+                "F#": "\u5B4C\u30d8", "G": "\u30c8", "G#": "\u5909\u30a4",
+                "A": "\u30a4", "A#": "\u5909\u30ed", "B": "\u30ed"}
+
+
+def key_label(name: str, lang: str) -> str:
+    if lang != "ja":
+        return f"{name} major"
+    return KEY_NAMES_JA[name] + "\u9577\u8abf"
+
+
+def cjk_font() -> dict:
+    """Font kwargs for a Japanese label; {} if no CJK face is installed."""
+    from matplotlib import font_manager as fm
+    have = {f.name for f in fm.fontManager.ttflist}
+    for c in ("Noto Sans CJK JP", "IPAexGothic", "Noto Serif CJK JP"):
+        if c in have:
+            return {"fontfamily": c}
+    log.warning("no CJK font found; Japanese key labels will not render")
+    return {}
 
 # Palettes: (background, prompt note, continuation note, accent/divider, label)
 # (background, prompt note, continuation note, accent/divider, label, out-of-scale)
@@ -40,6 +64,9 @@ PALETTES = {
     "plum":    ("#4a2545", "#d09ac4", "#fdeef8", "#8fd694", "#1a1a1a", "#ff5c8a"),
     "ink":     ("#1f2933", "#8fa3b8", "#f0f4f8", "#e8a33d", "#1a1a1a", "#e03b3b"),
     "paper":   ("#f4f1ea", "#7d92ad", "#26384d", "#c1522e", "#1a1a1a", "#d1462f"),
+    # green: sage for the prompt, deep forest for the continuation. The boundary
+    # marker stays warm, because a green marker on green notes would vanish.
+    "moss":    ("#f1f3ee", "#9cbfa8", "#1e4a34", "#c1522e", "#1a1a1a", "#d1462f"),
 }
 
 MAJOR_SCALE = {0, 2, 4, 5, 7, 9, 11}
@@ -107,6 +134,7 @@ def generate_pair(args, device: str):
 def draw(data: dict, palette: str, out: Path, args) -> None:
     import matplotlib
     matplotlib.use("Agg")
+    import matplotlib.colors as mcolors
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle, FancyBboxPatch
 
@@ -115,8 +143,8 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
     n_prompt_bars = max(n[0] // 16 for n in prompt_notes) + 1
     split = n_prompt_bars * 16                       # start of the first generated bar
 
-    lab_src = f"{args.src} major"
-    lab_tgt = f"{args.target} major"
+    lab_src = key_label(args.src, args.lang)
+    lab_tgt = key_label(args.target, args.lang)
     rows = [("clean", data["clean"], [lab_src]),
             ("edited", data["edited"], [lab_src, lab_tgt])]
     if args.annotate == "pcbars":
@@ -142,12 +170,17 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
 
     for ax, (kind, _, labels) in zip(axes, rows):
         notes = all_notes[kind]
-        ax.add_patch(Rectangle((0, lo), end, hi - lo, facecolor=bg,
+        # the ground and the bar bands, both scaled by --bg-strength so the notes
+        # stay the darkest thing on the page
+        k = max(0.0, min(1.0, args.bg_strength))
+        rgb = mcolors.to_rgb(bg)
+        pale = tuple(1.0 - (1.0 - c) * k for c in rgb)      # blend toward white
+        ax.add_patch(Rectangle((0, lo), end, hi - lo, facecolor=pale,
                                edgecolor="none", zorder=0))
         for b in range(0, end // 16 + 1):            # alternating bar bands
             if b % 2:
                 ax.add_patch(Rectangle((b * 16, lo), 16, hi - lo, facecolor=c_cont,
-                                       alpha=0.055, edgecolor="none", zorder=1))
+                                       alpha=0.055 * k, edgecolor="none", zorder=1))
         ref = (data["target_key"] if args.relative_to == "installed"
                else data["src_key"]) % 12
         for onset, dur, pitch in notes:
@@ -216,7 +249,8 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
                                           color=c_accent, lw=1.5,
                                           transform=fig.transFigure))
             fig.text((fx0 + fx1) / 2, y_fig - 0.014, lab, ha="center", va="top",
-                     fontsize=12.5, color=c_label, fontweight="semibold")
+                     fontsize=12.5, color=c_label, fontweight="semibold",
+                     **(cjk_font() if args.lang == "ja" else {}))
     fig.savefig(out, bbox_inches="tight", dpi=300,
                 facecolor="white", transparent=False)
     plt.close(fig)
@@ -227,6 +261,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model-dir", default=str(REPO / "results/models/R-Aug_s0"))
     ap.add_argument("--layer", type=int, default=4)
+    ap.add_argument("--lang", choices=["en", "ja"], default="en",
+                    help="language of the key labels drawn on the figure")
     ap.add_argument("--src", default="F", help="prompt key (major)")
     ap.add_argument("--target", default="E", help="key installed from bar 9")
     ap.add_argument("--which", type=int, default=0,
@@ -246,6 +282,10 @@ def main() -> None:
                     help="figure height in inches; taller separates the pitches")
     ap.add_argument("--hspace", type=float, default=0.42,
                     help="gap between the two panels, in axes heights")
+    ap.add_argument("--bg-strength", type=float, default=0.45,
+                    help="0 = plain white behind the roll, 1 = the original tint. "
+                         "The bar bands are a reading aid; at full strength they "
+                         "competed with the notes they were meant to support.")
     ap.add_argument("--outdir", default=str(REPO / "results/figures/pianoroll"))
     ap.add_argument("--no-ledger", action="store_true")
     args = ap.parse_args()

@@ -352,7 +352,7 @@ First, the KS estimator (Sec.~\ref{sec:exp1}) identifies the installed key from 
 Second, the edit remains within a pre-defined disturbance threshold, in nats, measured by a reference model of the same architecture trained on a different seed and a disjoint data split, which we never probe or edit.
 We set this threshold to $0.613$, the $90$th percentile of that model's perplexity change at natural key changes.
 Continuations that fail either condition count as failures. A uniform key estimate would give $1/12$; the controls fall below it because a continuation the edit does not move stays in the prompt's key, which the estimator returns for $51.7\%$ of the random-subspace rows against $4.1\%$ for the target key.
-For the public checkpoints we recompute the threshold on the corresponding corpus: on Bach the reference is a larger checkpoint of the same family, and on pop a single checkpoint scores every model, never the one being edited.
+For the public checkpoints we recompute the threshold on the corresponding corpus: on Bach the reference is a different checkpoint of the same family --- the requirement is that no model grade its own output, not that the grader be the larger of the two --- and on pop a single checkpoint scores every model, never the one being edited.
 %また、調推定器を使わない指標として、継続音のうち対象の音階に属する音の割合をin-key note shareとして測る。各目標調について、同じprompt上の編集とbaselineを片側Wilcoxon符号順位検定で比較し、12調に対してHolm補正を行う。
 We also report the \emph{in-key note share}, the fraction of continuation notes that belong to a given scale.
 This measure does not use the key estimator. For each target key, we compare the edit and baseline on paired prompts using a one-sided Wilcoxon signed-rank test with Holm correction over the $12$ keys~\cite{holm1979}.
@@ -364,7 +364,7 @@ We use a search stage to select the intervention settings and a separate final t
 The search stage compares $8$ layers and $3$ direction types on $100$ prompts and selects the probe directions at layer~$4$ ($0.378$ against $0.346$ for the per-key means and $0.213$ for the optimized subspace, which did not win).
 Because these prompts are also used to train the probe, we use this stage only for selection and not for final evaluation.
 The final test uses $100$ new prompts that neither the probe nor any earlier run has seen.
-For each prompt, we evaluate the $11$ target keys other than its original key, giving $1{,}100$ continuations per condition.
+For each prompt, we evaluate the $11$ target keys of its own mode other than its original key, giving $1{,}100$ continuations per condition; the major and minor runs are separate, each with its own $100$ prompts and its own Holm correction over $12$ keys.
 We fix the selected settings, seeds, and sample size before the final test.
 For minor keys, we reuse the settings selected for major keys without another search stage.
 
@@ -389,10 +389,10 @@ We report the main synthetic-model results using the transposition-augmented mod
 % したがって，我々が主張するのは，これらの音符数えよりも活性から調を線形に読み取りやすいことまでである．
 % 音符から調を推定するより良い方法は存在しうる．
 The key is more linearly accessible from the model activation than from the note-counting baselines.
-At layer~$4$, the probe reaches macro-$F_1$ $0.927$, compared with $0.790$ for the strongest note-counting baseline.
+At layer~$4$ the probe reaches macro-$F_1$ $0.927$. The strongest note-counting baseline within the pre-specified window set reaches $0.790$; widening that set raises it to $0.824$ (Supp.), and both comparisons are reported below.
 % [2026-08-27 FIX / D] 0.927 - 0.790 = 0.137 なのに margin が +0.105 で,
 %   何を引いたのかが読者に伝わらなかった. 引き算の対象を明示した.
-After subtracting the control-task score from the probe, the margin over this baseline is $+0.105$ (bootstrap $95\%$ CI $[0.091,0.114]$).
+After subtracting the control-task score from the probe, the margin is $+0.105$ over the pre-specified baseline (bootstrap $95\%$ CI $[0.091,0.114]$, resampled over pieces) and $+0.071$ over the wider one.
 The margin remains positive across layers~$1$--$7$ of all six trained models and against wider-window note-counting baselines ($+0.071$, $[0.056,0.081]$).
 An untrained network reaches only $0.243$, and layer~$0$ is the only layer with a negative control-corrected margin ($-0.20$).
 We claim only that the key is more linearly accessible from the activation than from these note counts.
@@ -513,7 +513,7 @@ We compare the same AMT checkpoint on Bach and pop music, then AMT sizes on Bach
 %Bachでは、AMTは調を読み取り、編集にも反応した。probe marginは+0.196であり、編集のSRは0.479に達し、12個すべての目標調で成功した。
 %より大きなAMTでも同じ傾向が得られた。
 On Bach, AMT both reads and uses the key: the probe margin is $+0.196$, and the edit reaches an SR of $0.479$ and outperforms the baseline for all $12$ target keys.
-The $24$-layer checkpoint behaves the same way ($+0.213$, SR $0.557$, $12/12$), and the $36$-layer one reads the key equally well ($+0.203$) but has no edit cell, because on Bach we score disturbance with a larger checkpoint of the same family and none exists above $36$ layers.
+The $24$- and $36$-layer checkpoints behave the same way ($+0.213$, SR $0.557$ and $+0.203$, SR $0.540$, both $12/12$), so reading and using the key both survive a threefold increase in depth.
 %一方Popでは、probe性能は編集効果を予測しなかった。
 %AMTは最も高いprobe margin（+0.132）を示したが、編集効果は最も弱かった（0.212、9/12調）。
 %これに対してMMTとREMIのprobeはnote-counting baselineを上回らなかったが、編集はそれぞれ0.360と0.393に達し、12個すべての目標調で成功した。
@@ -549,7 +549,7 @@ Pop  & $+0.132$ & $0.212$ & $9/12$  & $\checkmark/\times$\\
 \multicolumn{5}{@{}l}{\textit{(b) Scale: Bach fixed}}\\[3pt]
 AMT-12L & $+0.196$ & $0.479$ & $12/12$ & $\checkmark/\checkmark$\\
 AMT-24L & $+0.213$ & $0.557$ & $12/12$ & $\checkmark/\checkmark$\\
-AMT-36L & $+0.203$ & ---     & ---     & $\checkmark/$---\\
+AMT-36L & $+0.203$ & $0.540$ & $12/12$ & $\checkmark/\checkmark$\\
 
 \addlinespace[7pt]
 

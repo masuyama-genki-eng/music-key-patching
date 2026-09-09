@@ -8,6 +8,7 @@ _allseeds companion is written).
 """
 from __future__ import annotations
 import json
+import logging
 from pathlib import Path
 
 import matplotlib
@@ -53,15 +54,19 @@ def _load_sweep(sweep_dir: Path, pattern: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ Fig: layers
 def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
                       out: Path) -> None:
-    """Figure 2 in the MetaOthello-reference style the authors chose
-    (2026-08-11): bold outside (a)/(b) tags, thick vivid curves with bold
-    white-haloed labels directly on them (no legend boxes), the random baseline
-    drawn as a gray filled region with a bold in-fill label, bold axis labels.
-    Kept from earlier direction: STIX serif, black box axes, butt caps, the
-    claim-bearing titles, the layer-4 guide, and the dissociation pointer."""
-    import matplotlib.patheffects as pe
-    halo = [pe.withStroke(linewidth=2.2, foreground="white")]
+    """The dissociation: the key is readable at almost every layer, yet the edit
+    only works in the middle ones.
 
+    2026-08-30, author instructions, in the order they arrived: no editorial text
+    on the panels (the claim-bearing titles and the "reads well, no effect" pointer
+    are gone, and the caption carries what they said); colour separates the claim
+    from what it is compared against, so the accent belongs to the edit alone and
+    everything it is measured against is grey; every element is named, which a
+    compact legend does without writing on the curves; and darker inks with thinner
+    strokes.
+
+    Grey and flat above, accent and peaked below: the dissociation is the shape.
+    """
     curves = {}
     for rep in sorted(probing_root.glob("*/probe_report.json")):
         r = json.loads(rep.read_text())
@@ -87,68 +92,274 @@ def fig_layer_profile(probing_root: Path, sweep_dir: Path, highlight: str,
     cm, cl, ch = curve(k1)
     peak = int(layers[int(np.argmax(em))])
 
-    # 2026-08-11 著者指示: 台紙拡大（つめつめ解消）。(3.5, 3.4) -> (3.7, 3.9)。
+    CLAIM = "#A6350A"                      # the edit, and nothing else
+    DARK, MID, BAND = "#33404F", "#6E7C8C", "#AEB7C1"
+    n_other = len(curves) - 1
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(3.7, 3.9), sharex=True,
                                    height_ratios=[1, 1.2],
                                    constrained_layout=True)
 
-    # ---- (a)
+    # ---- (a) readable everywhere: context, so grey throughout
+    first = True
     for name, c in curves.items():
-        if name != highlight:
-            ax1.plot(range(8), c, color="#9A9A9A", lw=1.0, alpha=0.8, zorder=2)
-    ax1.plot(range(8), f1, color=READ, lw=2.4, zorder=4)
-    ax1.annotate("seed 0", xy=(5.6, f1[5] + 0.012), fontsize=7.5,
-                 color=READ, ha="center", va="bottom",
-                 path_effects=halo, zorder=6)
-    ax1.annotate("5 other models", xy=(2.4, 0.80), fontsize=6.8,
-                 color="#8A8A8A", ha="left", va="top",
-                 path_effects=halo, zorder=6)
+        if name == highlight:
+            continue
+        ax1.plot(range(8), c, color=MID, lw=0.8, alpha=0.95, zorder=2,
+                 label=f"{n_other} other models" if first else None)
+        first = False
+    ax1.plot(range(8), f1, color=DARK, lw=1.4, zorder=4, label="probe, seed 0")
     ax1.set_ylabel("probe score", fontsize=8)
     ax1.set_ylim(0.35, 1.02)
     ax1.tick_params(labelsize=7.5)
-    ax1.set_title("the key is readable at almost every layer",
-                  fontsize=8, color=INK, pad=4)
+    ax1.legend(frameon=False, fontsize=6.6, loc="lower right", handlelength=1.5,
+               labelcolor=DARK, borderpad=0.1, labelspacing=0.3)
     ax1.text(-0.16, 1.03, "(a)", transform=ax1.transAxes, fontsize=11,
              fontweight="bold", color="black")
 
-    # ---- (b) baseline as a filled gray region, reference-style
-    ax2.fill_between(layers, 0, ch, color="#DCDCDC", zorder=1)
-    ax2.annotate("random baseline", xy=(3.5, 0.018), fontsize=7.2,
-                 color="#8A8A8A", ha="center", va="bottom", zorder=2)
-    ax2.fill_between(layers, el, eh, color=EDIT, alpha=0.15, lw=0, zorder=2)
-    ax2.plot(layers, em, color=EDIT, lw=2.4, zorder=4)
-    ax2.annotate("edit", xy=(6.0, em[6] + 0.014), fontsize=7.5,
-                 color=EDIT, ha="center", va="bottom",
-                 path_effects=halo, zorder=6)
-    ax2.axhline(1 / 12, color="#606060", lw=1.0, ls=":", zorder=3)
-    ax2.annotate("chance", xy=(0.985, 1 / 12), xycoords=ax2.get_yaxis_transform(),
-                 xytext=(0, 2), textcoords="offset points", color="#606060",
-                 ha="right", va="bottom", fontsize=6.8, path_effects=halo,
-                 zorder=6)
-    ax2.annotate("reads well,\nno effect",
-                 xy=(1.05, em[1] + 0.012), xytext=(0.04, 0.93),
-                 textcoords="axes fraction", fontsize=7.4,
-                 color="#404040", ha="left", va="top", linespacing=1.25,
-                 arrowprops=dict(arrowstyle="->", lw=1.1, color="#707070",
-                                 shrinkB=2, relpos=(0.4, 0.0)))
+    # ---- (b) the claim: the only accent in the figure
+    ax2.fill_between(layers, 0, ch, color=BAND, zorder=1,
+                     label="random subspace")
+    ax2.fill_between(layers, el, eh, color=CLAIM, alpha=0.16, lw=0, zorder=2)
+    ax2.plot(layers, em, color=CLAIM, lw=1.4, zorder=4, label="target-key edit")
+    ax2.axhline(1 / 12, color=DARK, lw=0.8, ls=":", zorder=3, label="chance, 1/12")
+    ax2.axvline(peak, ymin=0.09, color=DARK, lw=0.9, ls="--", alpha=0.9,
+                zorder=3, label=f"final test, layer {peak}")
+    ax1.axvline(peak, color=DARK, lw=0.9, ls="--", alpha=0.9, zorder=1)
     ax2.set_xlabel("layer", fontsize=8)
     ax2.set_ylabel("success rate", fontsize=8)
     ax2.set_ylim(0, max(eh) * 1.16)
     ax2.set_xlim(-0.45, 7.45)
     ax2.set_xticks(range(8))
     ax2.tick_params(labelsize=7.5)
-    ax2.set_title("yet the edit works only in the middle layers",
-                  fontsize=8, color=INK, pad=4)
+    h, l = ax2.get_legend_handles_labels()
+    order = [l.index(k) for k in ("target-key edit", "random subspace",
+                                  "chance, 1/12", f"final test, layer {peak}")]
+    ax2.legend([h[i] for i in order], [l[i] for i in order], frameon=False,
+               fontsize=6.6, loc="upper left", handlelength=1.5, labelcolor=DARK,
+               borderpad=0.1, labelspacing=0.3)
     ax2.text(-0.16, 1.03, "(b)", transform=ax2.transAxes, fontsize=11,
              fontweight="bold", color="black")
 
-    # ---- layer-4 guide
-    ax1.axvline(peak, color="#C41E1E", lw=1.3, ls="--", zorder=1)
-    ax2.axvline(peak, ymin=0.09, color="#C41E1E", lw=1.3, ls="--", zorder=3)
-    ax2.annotate(f"final test: layer {peak}", xy=(peak + 0.15, 0.112),
-                 va="bottom", ha="left", fontsize=6.6, color="#C41E1E",
-                 path_effects=halo, zorder=6)
+    fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
+    plt.close(fig)
 
+
+def _layer_curves(probing_root: Path, sweep_dir: Path, highlight: str):
+    """The two curves the layer figures share, read once."""
+    curves = {}
+    for rep in sorted(probing_root.glob("*/probe_report.json")):
+        r = json.loads(rep.read_text())
+        name = r["model"]
+        if not name.startswith(("R-Aug_", "R-NoAug_")):
+            continue
+        curves[name] = [r["layers"][str(li)]["probe"]["macro_f1_24"] for li in range(8)]
+    edit = _load_sweep(sweep_dir, "v_probe_L*.parquet")
+    k1 = _load_sweep(sweep_dir, "k1_r24_L*.parquet")
+    layers = sorted(edit["layer"].unique())
+
+    def curve(df):
+        mean, lo, hi = [], [], []
+        for li in layers:
+            per_prompt = (df[df["layer"] == li].groupby("prompt_idx")["succ"].mean())
+            mean.append(per_prompt.mean())
+            l, h = _boot_ci(per_prompt.values)
+            lo.append(l); hi.append(h)
+        return np.array(mean), np.array(lo), np.array(hi)
+
+    return curves, np.array(curves[highlight]), layers, curve(edit), curve(k1)
+
+
+# the two halves of the dissociation, one colour each (author instruction,
+# 2026-08-30): pink for reading, purple for using, markers on both, no text
+# beyond the axes and a compact legend. The markers are a star and a pentagon
+# rather than the usual circle and square, so the two figures stay apart at a
+# glance and survive a greyscale print; the grid is pale enough to sit behind them.
+PINK, PINK_PALE = "#B0245C", "#E3A9C1"
+PURPLE, PURPLE_PALE = "#5B3A8C", "#BFB0D8"
+GUIDE = "#33404F"
+
+
+def _cjk() -> dict:
+    """Font kwargs for a label containing Japanese (author instruction, 2026-09-02).
+
+    Appending a CJK family to font.sans-serif was not enough -- matplotlib stayed on
+    Liberation Sans and drew a tofu box -- so the family is named on the text object
+    itself. Only labels that need it get it, which leaves every Latin label in the
+    figure rendered by the project's own face. Returns {} if no CJK font is
+    installed, so the figure builds (with a tofu) rather than crashing.
+    """
+    from matplotlib import font_manager as fm
+    have = {f.name for f in fm.fontManager.ttflist}
+    for cjk in ("Noto Sans CJK JP", "IPAexGothic", "Noto Serif CJK JP"):
+        if cjk in have:
+            return {"fontfamily": cjk}
+    logging.getLogger("figures").warning(
+        "no CJK font found; a Japanese axis label will not render")
+    return {}
+
+
+def _trim(ax) -> None:
+    """Draw the left and bottom axes as ONE mitred L, stopping at the last tick.
+
+    Two separate spines cannot meet cleanly at the corner: a projecting cap makes
+    each poke past the other by half a line width, and a butt cap leaves the
+    horizontal one starting at the vertical one's centre line, so half of it still
+    shows outside (both were visible to the author at 2026-09-02, magnified). A
+    single path has a real corner join and no overhang, and its ends are placed in
+    axes-fraction coordinates so the result does not depend on dpi or on when the
+    layout is computed.
+    """
+    from matplotlib.lines import Line2D
+
+    def frac(ticks, lim):
+        # A tolerance, because a tick that IS the limit can miss an exact
+        # comparison: matplotlib generates 0.9500000000000001 for a limit of 0.95,
+        # which dropped the top tick and left its mark detached from the axis line
+        # (author, 2026-09-02).
+        span = lim[1] - lim[0]
+        if span == 0:
+            return 1.0
+        eps = abs(span) * 1e-9
+        inside = [t for t in ticks if lim[0] - eps <= t <= lim[1] + eps]
+        if not inside:
+            return 1.0
+        return min(1.0, (max(inside) - lim[0]) / span)
+
+    top = frac(ax.get_yticks(), ax.get_ylim())
+    right = frac(ax.get_xticks(), ax.get_xlim())
+    lw = ax.spines["left"].get_linewidth()
+    for side in ("left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.add_line(Line2D([0.0, 0.0, right], [top, 0.0, 0.0],
+                       transform=ax.transAxes, color="black", lw=lw,
+                       solid_joinstyle="miter", solid_capstyle="butt",
+                       clip_on=False, zorder=5))
+
+
+def _bare(ax):
+    ax.set_facecolor("white")
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color("black")
+        # matplotlib's default projecting cap extends a line by half its width past
+        # each endpoint, so at the corner the two spines each poke past the other by
+        # that much. A butt cap stops exactly on the coordinate.
+        try:
+            ax.spines[side].set_capstyle("butt")
+        except (AttributeError, ValueError):
+            pass
+    # Ticks point INWARD. Pointing out, the y tick at the axis minimum lies along
+    # the bottom axis and the x tick at the minimum lies along the left one, so each
+    # reads as the axis overshooting its corner -- which is what looked wrong at
+    # magnification (author, 2026-09-02), not the spines themselves.
+    ax.tick_params(labelcolor="black", labelsize=7.5, length=3, width=0.8,
+                   color="black", direction="in")
+    # a barely-there grey rule: enough to carry the eye across to the axis, not
+    # enough to compete with the data drawn over it
+    # A hairline at 0.25pt reads as a hard scratch once the axes went black; a
+    # slightly wider stroke at a much lower opacity settles into the paper instead
+    # of sitting on top of it (author instruction, 2026-09-02).
+    ax.grid(axis="y", color="#9AA4B0", alpha=0.18, lw=0.45)
+    ax.set_axisbelow(True)
+
+
+def fig_probe_by_layer(probing_root: Path, sweep_dir: Path, highlight: str,
+                       out: Path) -> None:
+    """Experiment 1 alone, with the baseline it has to beat.
+
+    The raw probe score sits near 0.93 at every layer above the first, which on its
+    own says the key is trivially there; the author noted (2026-09-02) that the
+    note-counting baseline was missing, and it is the whole point. What is plotted is
+    therefore the CONTROL-CORRECTED score -- the probe minus the control task, which
+    is the quantity the pre-registered rule compares -- so the vertical gap to a
+    baseline line IS the margin the paper reports. Plotting the raw score against the
+    same lines would have shown a gap of 0.137 where the margin is 0.105.
+
+    Both baselines are drawn: the one fixed before the run, and the stronger one
+    found afterwards, which is the harder test and the one the margin is quoted
+    against in Experiment D.
+    """
+    curves, _, layers, (em, _, _), _ = _layer_curves(probing_root, sweep_dir,
+                                                     highlight)
+    # control-corrected, per layer, from each model's own margin_check
+    corrected = {}
+    for rep in sorted(probing_root.glob("*/probe_report.json")):
+        r = json.loads(rep.read_text())
+        if r["model"] not in curves:
+            continue
+        # seed 0's report carries margin_check; the other five store the same two
+        # quantities under `probe` and `c1b`, so read whichever the file has rather
+        # than dropping five models from the figure
+        # the probe's OWN macro-F1, uncorrected (author instruction, 2026-09-06):
+        # this is the quantity the text quotes, 0.927 at layer 4. The consequence
+        # is that the gap to the baseline line reads 0.103 while the reported
+        # margin is 0.071 -- the control-task subtraction is no longer visible in
+        # the figure and has to be stated in the caption.
+        corrected[r["model"]] = [r["layers"][str(li)]["probe"]["macro_f1_24"]
+                                 for li in range(8)]
+    f1 = np.array(corrected[highlight])
+    ext = json.loads((probing_root / highlight / "c3_window_ext.json").read_text())
+    strong = ext["best_c3"]["macro_f1_24"]
+    peak = int(layers[int(np.argmax(em))])
+    n_other = len(corrected) - 1
+
+    fig, ax = plt.subplots(figsize=(3.4, 2.2), constrained_layout=True)
+    # only the STRONGEST note-counting baseline: beating the weaker, pre-registered
+    # one is the easier test, and drawing both invited the reader to use whichever
+    # line flattered the curve (author instruction, 2026-09-02)
+    ax.axhline(strong, color=GUIDE, lw=0.7, ls="-", alpha=0.85, zorder=2,
+               label="\u97f3\u7b26\u6570\u3048\u30d9\u30fc\u30b9\u30e9\u30a4\u30f3")
+    ax.plot(range(8), f1, color=PINK, lw=1.3, marker="*", ms=6.0, zorder=4,
+            label="\u30d7\u30ed\u30fc\u30d6")
+    ax.axvline(peak, color=GUIDE, lw=0.8, ls="--", alpha=0.5, zorder=1)
+    ax.set_xlabel("\u5c64", fontsize=8, **_cjk())
+    # NOT the probe's own macro-F1 (0.927 at layer 4) but that minus the control
+    # task (0.895), which is the quantity the pre-registered rule compares with the
+    # baseline -- so the gap to the dashed line IS the reported margin. Labelling
+    # this "macro-F1" contradicted the text, which quotes the uncorrected score.
+    ax.set_ylabel(r"macro-$F_1$", fontsize=8)
+    ax.set_ylim(0.55, 0.95)
+    ax.set_xticks(range(8))
+    h, l = ax.get_legend_handles_labels()
+    order = [l.index(k) for k in
+             ("\u30d7\u30ed\u30fc\u30d6",
+              "\u97f3\u7b26\u6570\u3048\u30d9\u30fc\u30b9\u30e9\u30a4\u30f3")]
+    prop = {"size": 6.4}
+    prop.update({"family": _cjk().get("fontfamily")} if _cjk() else {})
+    ax.legend([h[i] for i in order], [l[i] for i in order], frameon=False,
+              loc="lower right", handlelength=1.6, labelcolor="black",
+              borderpad=0.1, labelspacing=0.3, prop=prop)
+    _bare(ax)
+    _trim(ax)
+    fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
+    plt.close(fig)
+
+
+def fig_edit_by_layer(probing_root: Path, sweep_dir: Path, highlight: str,
+                      out: Path) -> None:
+    """Experiment 2 alone: the edit works only in the middle layers.
+
+    Author instructions, 2026-08-31: the curve and its interval, plus a vertical
+    guide at the layer the final test used. The random-subspace region, the chance
+    line and the legend are gone -- what each element is now belongs to the caption,
+    and dropping the baseline means the panel no longer shows how far above its
+    control the curve sits, so the caption has to carry that too.
+    """
+    _, _, layers, (em, el, eh), _ = _layer_curves(probing_root, sweep_dir, highlight)
+    fig, ax = plt.subplots(figsize=(3.4, 2.2), constrained_layout=True)
+    peak = int(layers[int(np.argmax(em))])
+    ax.fill_between(layers, el, eh, color=PURPLE, alpha=0.22, lw=0, zorder=2)
+    ax.plot(layers, em, color=PURPLE, lw=1.3, marker="p", ms=4.2, zorder=3)
+    # the layer the final test used; a guide, so grey, thin and unlabelled
+    ax.axvline(peak, color=GUIDE, lw=0.8, ls="--", alpha=0.85, zorder=1)
+    ax.set_xlabel("\u5c64", fontsize=8, **_cjk())
+    ax.set_ylabel("\u7de8\u96c6\u6210\u529f\u7387", fontsize=8, **_cjk())
+    ax.set_ylim(0, max(eh) * 1.10)
+    ax.set_xlim(-0.45, 7.45)
+    ax.set_xticks(range(8))
+    _bare(ax)
+    _trim(ax)
     fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
 

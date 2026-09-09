@@ -45,6 +45,11 @@ def main() -> None:
          lambda p: F.fig_confirmatory(REPO / "results/confirmatory" / args.model, p)),
         ("fig_layer_profile.pdf",
          lambda p: F.fig_layer_profile(probing, sweep, args.model, p)),
+        # the same dissociation as two standalone figures, one colour each
+        ("fig_probe_by_layer.pdf",
+         lambda p: F.fig_probe_by_layer(probing, sweep, args.model, p)),
+        ("fig_edit_by_layer.pdf",
+         lambda p: F.fig_edit_by_layer(probing, sweep, args.model, p)),
     ]
     supp_jobs = [
         ("fig_fifths_geometry.pdf",

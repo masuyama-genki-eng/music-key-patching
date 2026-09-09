@@ -28,3 +28,6 @@ paper/*.pdf
 # Fetch from the ICASSP author kit (or any ICASSP LaTeX template) into paper/.
 paper/spconf.sty
 paper/IEEEbib.bst
+# 再解析の実行ログと図のPNG中間物（PDFと同じく生成物; 2026-09-09）
+logs/
+paper/*.png
