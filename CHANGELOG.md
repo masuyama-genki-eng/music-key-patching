@@ -1568,3 +1568,13 @@ docs/REANALYSIS_SUMMARY.md、tests/test_editor_arity.py)。
 - 記録上の注意: 台帳「Table 2's empty cell filled」エントリの artifacts が
   tex を指す(+DIRTY)。実走 artifact は mwild_sweep/music-large-800k/ 側の
   エントリに正しく記録されている。
+
+## 2026-09-09 — 補足資料に日本語訳の塊を挿入（著者指示、英文は不変）
+
+各 \section の直後（\label があればその後）に「% 【日本語訳】…」の塊を1つずつ、
+26セクション全てへ挿入。本文 icassp2027.tex と同じ % コメント方式なので PDF には
+出ない（13ページのまま、バイト数も不変）。
+- 検証: 非コメント行を diff して**英文・LaTeX が完全一致**（1文字も変更なし）。
+- 数値: 訳文中の値は英文からの転記のみ。--check-tex は untraceable 0 を維持
+  （コメントは走査対象外だが、英文側を触っていないので当然）。
+- テスト 365 passed。挿入前の版は scratchpad に退避（supp_before.tex）。
