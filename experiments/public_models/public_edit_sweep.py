@@ -156,6 +156,10 @@ def main() -> None:
                          "(default: results/mwild/<short>)")
     ap.add_argument("--tag", default="",
                     help="suffix for stage-2 output files, e.g. _balanced")
+    ap.add_argument("--positions", action="store_true",
+                    help="AMENDMENT 1 (C2): also run the edit restricted to pitch "
+                         "positions and to timing positions. Off by default, so "
+                         "every earlier stage-2 run reproduces unchanged.")
     ap.add_argument("--temperature", type=float, default=1.0)
     ap.add_argument("--top-p", type=float, default=0.95)
     ap.add_argument("--seed", type=int, default=0)
@@ -227,7 +231,8 @@ def main() -> None:
         return (torch.from_numpy(V).float().to(device),
                 torch.from_numpy(mu).float().to(device))
 
-    def run(li: int, tgt: int | None, mode: str, k1: bool = False) -> list[dict]:
+    def run(li: int, tgt: int | None, mode: str, k1: bool = False,
+            mask_kind: str | None = None) -> list[dict]:
         V, mu = basis_and_means(li)
         if k1:
             V = torch.from_numpy(random_matched(V.cpu().numpy(),
@@ -240,7 +245,8 @@ def main() -> None:
             ed = None
             if mode != "clean":
                 ed = HookSubspaceEditor(V, mu[tgt] if tgt is not None else None,
-                                      mode="sham" if mode == "sham" else "replace")
+                                      mode="sham" if mode == "sham" else "replace",
+                                      mask_kind=mask_kind)
             out = adapter.generate(model, ids, args.n_new, li, ed, rng=rng, **gen_kw)
             cont = out[0, ids.shape[1]:].tolist()
             pitches = adapter.decode_pitches(cont)
@@ -402,9 +408,15 @@ def main() -> None:
              float(np.mean(list(clean_nll.values()))))
 
     out_rows = []
-    for cond, k1 in (("edit", False), ("k1", True)):
+    conds = [("edit", False, None), ("k1", True, None)]
+    if args.positions:
+        # C2: the same edit, restricted to one token family at a time. The
+        # unrestricted arms stay in the same run so the three share their clean
+        # twins, their sampling seeds and their guard exactly.
+        conds += [("edit_pitch", False, "pitch"), ("edit_timing", False, "timing")]
+    for cond, k1, mask_kind in conds:
         for tgt in MAJOR_TARGETS:
-            rows = run(layer, tgt, "edit", k1=k1)
+            rows = run(layer, tgt, "edit", k1=k1, mask_kind=mask_kind)
             for r, n in zip(rows, nll_of(rows)):
                 r["cond"] = cond
                 r["nll_excess"] = float(n - clean_nll[r["prompt"]])
@@ -454,6 +466,54 @@ def main() -> None:
         "DR_H3_supported": bool(n_sig >= 8),
         "rows": out_rows,
     }
+    if args.positions:
+        # each restricted arm against the SAME random control, paired by prompt,
+        # and the share of positions the mask covers (the analogue of the main
+        # text's 43% and 48% for our own model)
+        shares = {}
+        for kind in ("pitch", "timing"):
+            tot = cov = 0
+            for pr in prompts:
+                m = adapter.token_type_mask(pr["ids"], kind)
+                cov += int(sum(bool(x) for x in m))
+                tot += len(pr["ids"])
+            shares[kind] = cov / max(tot, 1)
+        res["position_shares_in_prompt"] = shares
+        res["positions"] = {}
+        for cond in ("edit_pitch", "edit_timing"):
+            df_c = [r for r in out_rows if r["cond"] == cond]
+            pv2, pt2 = [], []
+            for tgt in MAJOR_TARGETS:
+                c = sorted([r for r in df_c if r["target"] == tgt],
+                           key=lambda r: r["prompt"])
+                k = sorted([r for r in df_k if r["target"] == tgt],
+                           key=lambda r: r["prompt"])
+                assert [r["prompt"] for r in c] == [r["prompt"] for r in k]
+                t = wilcoxon_rank_biserial(
+                    np.array([r["success"] for r in c], float),
+                    np.array([r["success"] for r in k], float),
+                    alternative="greater")
+                pv2.append(t["p"])
+                pt2.append({"target": tgt,
+                            "tkr_arm": float(np.mean([r["success"] for r in c])),
+                            "tkr_k1": float(np.mean([r["success"] for r in k])), **t})
+            for rec, q in zip(pt2, holm_correct(pv2)):
+                rec["p_holm"] = q
+                rec["sig"] = bool(q < 0.05 and rec["tkr_arm"] > rec["tkr_k1"])
+            res["positions"][cond] = {
+                "guarded": float(np.mean([r["success"] for r in df_c])),
+                "raw": float(np.mean([bool(r["tkr"]) for r in df_c])),
+                "guard_pass": float(np.mean([r["guard_pass"] for r in df_c])),
+                "ikr_target": float(np.mean([r["ikr_target"] for r in df_c])),
+                "n_sig_targets": sum(r["sig"] for r in pt2),
+                "per_target": pt2}
+            log.info("C2 %-12s guarded %.3f (raw %.3f, guard %.0f%%) sig %d/12",
+                     cond, res["positions"][cond]["guarded"],
+                     res["positions"][cond]["raw"],
+                     100 * res["positions"][cond]["guard_pass"],
+                     res["positions"][cond]["n_sig_targets"])
+        log.info("C2 position shares in the prompt: %s",
+                 {k: round(v, 3) for k, v in shares.items()})
     (outdir / f"stage2_eval{args.tag}.json").write_text(json.dumps(res, indent=2, default=float))
     snapshot(outdir / f"stage2_eval{args.tag}.json", vars(args), seeds=[args.seed])
     log.info("STAGE 2 (L%d, held-out): guarded TKR edit %.3f vs K1 %.3f (raw %.3f vs "

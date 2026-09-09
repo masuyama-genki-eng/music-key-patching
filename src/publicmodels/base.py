@@ -183,6 +183,14 @@ class PublicModelAdapter(ABC):
                     if editor is not None:
                         off = max(0, ids.shape[1] - ctx)
                         editor.from_position = max(0, plen - off)
+                        # AMENDMENT 1 (C2): a position-restricted edit needs its
+                        # mask recomputed as the window slides, because which
+                        # positions carry a pitch depends on the tokens present.
+                        # No-op unless mask_kind was set.
+                        if getattr(editor, "mask_kind", None) is not None:
+                            editor.token_mask = torch.as_tensor(
+                                self.token_type_mask(window[0].tolist(),
+                                                     editor.mask_kind))
                     step = self._generate_step(model, window, temperature, top_p, rng)
                     if step is None:
                         break

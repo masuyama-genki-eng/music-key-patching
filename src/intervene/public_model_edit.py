@@ -34,7 +34,8 @@ class HookSubspaceEditor:
 
     def __init__(self, V: torch.Tensor, mu_target: torch.Tensor | None,
                  mode: str = "replace", from_position: int | None = None,
-                 token_mask: torch.Tensor | None = None):
+                 token_mask: torch.Tensor | None = None,
+                 mask_kind: str | None = None):
         """token_mask, added by ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (C2), is
         an optional (T,) or (B, T) boolean over the window saying which positions
         may be written. It defaults to None and the unmasked path below is the one
@@ -48,6 +49,11 @@ class HookSubspaceEditor:
         self.mode = mode
         self.from_position = from_position
         self.token_mask = token_mask
+        # When mask_kind is set, the generate() template refills token_mask from
+        # the CURRENT window each step by asking the adapter to classify it. Left
+        # None, nothing in the loop changes, which is what keeps every earlier
+        # public-model run reproducible.
+        self.mask_kind = mask_kind
 
     def __call__(self, module, args, output):
         # GPT2Block returns (hidden_states, ...present/attn)
