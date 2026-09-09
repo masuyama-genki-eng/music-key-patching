@@ -63,8 +63,9 @@ The edit damages the music in ways the budget hides.
  & \ref{sec:selectivity} & Register and mean pitch do not move. Note density does,
    by a sixth of what an equal-sized random write does.\\
 You chose a flattering key estimator.
- & \ref{sec:estimators} & Five estimators, all favouring the edit; the
-   pre-registered one gives the \emph{lowest} rate of the five.\\
+ & \ref{sec:estimators} & Five estimators, all favouring the edit in both modes; the
+   pre-registered one gives the \emph{lowest} rate of the five in major and the
+   second lowest in minor.\\
 Minor scores higher, so the result is unstable.
  & \ref{sec:minor} & The estimator is better at minor. Against each mode's own
    ceiling the gap is $+0.015$, and one in-key definition reverses.\\
@@ -1516,6 +1517,33 @@ and Bellman--Budge name the same key on only $0.545$ of rows. Of the edited
 continuations, $0.274$ are called a hit by all five and $0.445$ by some but not all,
 which is a direct measure of how many continuations are tonally ambiguous rather than
 wrong.
+
+% 【日本語訳】短調でも同じ再採点を行った（追記 2026-09-10）
+% 上の表は長調である。短調の継続は保存されているので、同じ5推定器で採点し直せる。
+% 結論は変わらない。編集は5つすべてで対照を上回り、率は 0.4755 から 0.6236、対照は
+% 0.0200 から 0.0264 にとどまる。
+% ただし1点、上の記述を狭める必要がある。長調では事前登録した Krumhansl–Kessler が
+% 5つの中で最も低い率を与えるが、短調ではそうではない。Viterbi の 0.4755 のほうが
+% 0.019 低く、Krumhansl–Kessler は2番目に低い。「最も保守的」と言えるのは長調に
+% ついてであり、短調では「ほぼ最も保守的」である。
+% もう1つ、この再採点は第18節の主張を裏づける。短調の長調に対する優位は推定器に
+% よって +0.051 から +0.182 まで動く（Bellman–Budge で最小、Aarden–Essen で最大）。
+% 優位自体はどの推定器でも残るが、その大きさは測定の性質であって編集の性質ではない。
+%
+\textbf{The same re-scoring in minor.} The minor continuations are stored too, so the
+five estimators can be applied to them as well. The conclusion does not change. The
+edit beats its matched control under all five, with rates from $0.4755$ to $0.6236$
+against controls between $0.0200$ and $0.0264$.
+
+One sentence above has to be narrowed, though. In major the pre-registered
+Krumhansl--Kessler gives the lowest of the five rates, and in minor it does not: the
+Viterbi tracker gives $0.4755$ against its $0.4945$, so there the pre-registered choice
+is the second most conservative rather than the most conservative.
+
+This re-scoring also supports \S\ref{sec:minor}. Minor's advantage over major runs from
+$+0.051$ under Bellman--Budge to $+0.182$ under Aarden--Essen, so while the advantage
+survives every estimator, its size is a property of the measurement rather than of the
+edit.
 
 Re-scoring reproduces the pipeline's stored estimate on every row, and the script
 refuses to report anything if it falls below $0.999$. That check earned its place: a

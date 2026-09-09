@@ -804,6 +804,12 @@ def main() -> None:
             for rec in c1["tests"]:
                 re_out[f"c1_{tag}_{rec['cond']}_r"] = r3(rec["effect_r"])
 
+    # D3 in minor (AMENDMENT 1 §8 listed it as unrun): the same five estimators
+    est_min = load("results/reanalysis/a9_minor/robustness.json")
+    if est_min:
+        for rec in est_min["sr"]:
+            re_out[f"est_minor_{rec['estimator']}_{rec['cond']}"] = r4(rec["sr"])
+
     if re_out:
         out["reanalysis"] = re_out
 
