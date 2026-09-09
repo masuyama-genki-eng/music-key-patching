@@ -1958,3 +1958,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/e_pareto/pareto.json`, `results/reanalysis/e_pareto/pareto.csv`
 - note: alpha in {0.25..16} x 8 layers re-scored for KS-only SR, thresholded SR and disturbance; install read from the same search sweep at the same layer
 
+## 2026-09-09T18:35:27+09:00 — EXP A stage 1: pitch-class regression subspaces (freeze ADDITIONAL_EXPERIMENTS_FREEZE.md)
+- git: `c68ae44012b093bec2b7ae84736e22cb4ad5c4f2+DIRTY`
+- config_hash: `081253c68e6dec7c960a6381d81847ba61e6fd17fd7706b84d299a63278f6a45`
+- seeds: [0]
+- artifacts: `results/reanalysis/a_pitchclass/subspaces.npz`, `results/reanalysis/a_pitchclass/overlap.json`
+- note: lambda=0.001; ranks {'V': 24, 'V_pc12': 11, 'V_pc24': 22, 'V_res': 24}; overlap 0.0556 vs random null 0.047
+
+## 2026-09-09T18:36:48+09:00 — EXP A stage 1: pitch-class regression subspaces (freeze ADDITIONAL_EXPERIMENTS_FREEZE.md)
+- git: `c68ae44012b093bec2b7ae84736e22cb4ad5c4f2+DIRTY`
+- config_hash: `081253c68e6dec7c960a6381d81847ba61e6fd17fd7706b84d299a63278f6a45`
+- seeds: [0]
+- artifacts: `results/reanalysis/a_pitchclass/subspaces.npz`, `results/reanalysis/a_pitchclass/overlap.json`
+- note: lambda=0.001; ranks {'V': 24, 'V_pc12': 11, 'V_pc24': 22, 'V_res': 24}; overlap 0.0556 vs random null 0.047
+
