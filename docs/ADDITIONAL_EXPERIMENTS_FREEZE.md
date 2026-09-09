@@ -246,3 +246,57 @@ Readings, fixed now:
 3. Neither restriction does anything in a public checkpoint — the position question
    is not answerable there with this budget, reported as a null result rather than
    as support.
+
+---
+
+# AMENDMENT 2 — one more position condition for REMI
+
+Committed 2026-09-10, after seeing C2's REMI result and before running the
+condition it adds. Stating the order plainly: this condition was chosen because
+a result came out null, so it is a follow-up and not a pre-registered test, and
+it is reported as one.
+
+## What happened
+
+C2 came out differently in the two checkpoints. In AMT the asymmetry reproduces
+--- pitch positions only reach $0.0597$ against a random control at $0.0639$ and
+separate on $0/12$ keys, while timing positions only reach $0.3514$, which is
+$0.962$ of the unrestricted edit, and separate on $11/12$. In REMI **neither**
+restriction does anything: pitch only $0.0694$ and timing only $0.0611$, both
+$0/12$, while the unrestricted edit reaches $0.4208$ with $10/12$. By the
+readings fixed in AMENDMENT 1 that is reading 3 for REMI, a null result rather
+than support.
+
+## Why the null has a candidate explanation
+
+REMI writes each note as an optional `beat_*`, then `position_*`,
+`instrument_piano`, `pitch_*`, `duration_*`. The two masks cover only $0.759$ of
+prompt positions ($0.237$ pitch and $0.522$ timing), and what they leave out is
+the instrument token, one per note. That token is exactly where REMI's probe
+reads the key: `probe_offset("predict_pitch")` is $-1$ from the pitch token,
+i.e. the step at which the pitch is about to be chosen. So the two restrictions
+may both be null because the position the key is used at belongs to neither.
+
+## The condition
+
+One more arm on the same run: the edit restricted to the instrument positions of
+REMI, at layer 5, Bach, the same 60 held-out prompts, 12 major targets, rank 24,
+seed 0, the same reference checkpoint and budget, scored the same way and tested
+against the same random control. Implementation is a third `kind` in
+`RemiAdapter.token_type_mask`, with the existing two left untouched and the
+disjointness test extended.
+
+## Readings, fixed now
+
+1. The instrument-only arm carries a substantial share of the unrestricted edit
+   --- the REMI null is explained: the key is used where the pitch is about to be
+   chosen, and our two families simply missed it. This makes REMI agree with AMT
+   at the level of the mechanism while differing in which token name carries it.
+2. The instrument-only arm is also null --- no single family reproduces the edit
+   in REMI, the effect needs positions of more than one kind at once, and the
+   position claim does not transfer to this tokenizer. Reported as a limit on the
+   claim, and AMENDMENT 1's reading 3 stands for REMI.
+3. It exceeds the unrestricted edit --- reported as it falls, with no attempt to
+   explain it away.
+
+In every case the AMT result is unaffected, since nothing about that run changes.

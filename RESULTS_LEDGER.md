@@ -2035,3 +2035,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/e2_scaled/rows_minor.parquet`, `results/reanalysis/e2_scaled/curve_minor.json`
 - note: s=0.5 SR=0.0636; s=0.75 SR=0.2564; s=1 SR=0.4945; s=1.25 SR=0.6182; s=1.5 SR=0.6618
 
+## 2026-09-10T02:47:44+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `a6c8be8b1cb2e5737a63192d569b3211fa9f2d84`
+- config_hash: `d355e0bdfad427539e831f548a4fb953a20fc1d4d3a6af1dfd861c366f1553f5`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/music-small-800k/stage2_eval_positions.json`
+- note: L8 chosen on disjoint prompts; guarded TKR 0.365 vs K1 0.064 on 60 held-out prompts; DR-H3 supported=True (11/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-10T03:14:45+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `a6c8be8b1cb2e5737a63192d569b3211fa9f2d84+DIRTY`
+- config_hash: `ace62b31cfe49b38a9421d8610e54c61fad202543871a7263670badb03b0f749`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/remi-lmd-remi/stage2_eval_positions.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.421 vs K1 0.079 on 60 held-out prompts; DR-H3 supported=True (10/12); guard ref stanford-crfm/music-medium-800k
+

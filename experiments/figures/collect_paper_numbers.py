@@ -843,6 +843,22 @@ def main() -> None:
         re_out[f"e2_{mode}_monotone_to_1"] = str(e2["monotone_up_to_1"])
         re_out[f"e2_{mode}_beyond_1_helps"] = str(e2["beyond_1_helps"])
 
+    # C2 (AMENDMENT 1): position-restricted edits in public checkpoints
+    for tag, ck in (("amt", "music-small-800k"), ("remi", "remi-lmd-remi")):
+        c2 = load(f"results/mwild_sweep/{ck}/stage2_eval_positions.json")
+        if not c2:
+            continue
+        re_out[f"c2_{tag}_all"] = r4(c2["tkr_edit_guarded"])
+        re_out[f"c2_{tag}_k1"] = r4(c2["tkr_k1_guarded"])
+        re_out[f"c2_{tag}_all_sig"] = str(c2["n_sig_targets"])
+        for cond, v in c2["positions"].items():
+            short = cond.replace("edit_", "")
+            re_out[f"c2_{tag}_{short}"] = {
+                "sr": r4(v["guarded"]), "raw": r4(v["raw"]),
+                "ikr": r3(v["ikr_target"]), "sig": str(v["n_sig_targets"])}
+        for kind, share in c2["position_shares_in_prompt"].items():
+            re_out[f"c2_{tag}_share_{kind}"] = r3(share)
+
     if re_out:
         out["reanalysis"] = re_out
 
