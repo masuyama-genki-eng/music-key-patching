@@ -156,6 +156,9 @@ def main() -> None:
                          "(default: results/mwild/<short>)")
     ap.add_argument("--tag", default="",
                     help="suffix for stage-2 output files, e.g. _balanced")
+    ap.add_argument("--position-kinds", default="pitch,timing",
+                    help="AMENDMENT 2: which token families to restrict to; "
+                         "'instrument' is REMI-only and was added as a follow-up")
     ap.add_argument("--positions", action="store_true",
                     help="AMENDMENT 1 (C2): also run the edit restricted to pitch "
                          "positions and to timing positions. Off by default, so "
@@ -413,7 +416,8 @@ def main() -> None:
         # C2: the same edit, restricted to one token family at a time. The
         # unrestricted arms stay in the same run so the three share their clean
         # twins, their sampling seeds and their guard exactly.
-        conds += [("edit_pitch", False, "pitch"), ("edit_timing", False, "timing")]
+        conds += [(f"edit_{k}", False, k)
+                  for k in args.position_kinds.split(",")]
     for cond, k1, mask_kind in conds:
         for tgt in MAJOR_TARGETS:
             rows = run(layer, tgt, "edit", k1=k1, mask_kind=mask_kind)
@@ -471,7 +475,7 @@ def main() -> None:
         # and the share of positions the mask covers (the analogue of the main
         # text's 43% and 48% for our own model)
         shares = {}
-        for kind in ("pitch", "timing"):
+        for kind in args.position_kinds.split(","):
             tot = cov = 0
             for pr in prompts:
                 m = adapter.token_type_mask(pr["ids"], kind)
@@ -480,7 +484,7 @@ def main() -> None:
             shares[kind] = cov / max(tot, 1)
         res["position_shares_in_prompt"] = shares
         res["positions"] = {}
-        for cond in ("edit_pitch", "edit_timing"):
+        for cond in [f"edit_{k}" for k in args.position_kinds.split(",")]:
             df_c = [r for r in out_rows if r["cond"] == cond]
             pv2, pt2 = [], []
             for tgt in MAJOR_TARGETS:

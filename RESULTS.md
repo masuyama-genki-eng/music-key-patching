@@ -85,7 +85,22 @@ B・D・E(探索段階) は保存済みの行を採点し直すだけで設計�
 
 ### C2 位置対照（公開モデル）
 
-**状態**: 実行中（AMT-small、約80分）。結果が出たらここに追記する。実装は
+**要約**: 位置の非対称は我々のトークン化に固有ではない。AMT では非対称がそのまま
+再現し、音高位置のみは 0.0597（ランダム対照 0.0639、0/12）、時刻と音長の位置のみは
+0.3514 で制限なしの編集 0.3653 の **96%** を運び 11/12 で有意。REMI では最初どちらの
+制限も無効（0.0694 と 0.0611、ともに 0/12、制限なしは 0.4208）で、凍結した読み方では
+null だった。しかし REMI の2マスクは位置の **75.9%** しか覆っておらず、抜けていたのは
+**instrument トークン**——REMI のプローブが調を読む位置そのもの——だった。そこで
+AMENDMENT 2 として「null を見た後の追加条件」と明記して事前登録し実行すると、
+**instrument 位置のみで 0.4306、制限なしの 102% を再現し 11/12 で有意**。音階内割合も
+0.881 で制限なしと同等（他の2条件は 0.58 台＝無編集水準）。3つのトークン化に共通するのは
+**音高トークンそのものでは効かない**ことであり、効く位置はいずれも次の音高が決まる
+直前の構造トークンである（我々のモデルは小節・音長、AMT は時刻・音長、REMI は楽器）。
+
+**英文（本文 §4.5 に挿入済み）**:
+> The position result reproduces in two public schemes as well, where writing at the pitch token itself is inert in both and the effect sits instead on the structural token before a pitch is chosen, the time and duration tokens in AMT and the instrument token in REMI.
+
+**参照**: 補足 §26（表 S18）。artifact `results/mwild_sweep/{music-small-800k/stage2_eval_positions.json,remi-lmd-remi/stage2_eval_positions3.json}`。実装は
 `HookSubspaceEditor` の `token_mask`／`mask_kind` と、アダプタの `token_type_mask`
 （AMT は note 対 time+duration、REMI は pitch 対 beat+position+duration、**MMT は
 複合方式なので拒否**——これ自体が結果）。単体テスト6件で、2集合の排他性・全Trueマスクが

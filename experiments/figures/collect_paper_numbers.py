@@ -844,8 +844,9 @@ def main() -> None:
         re_out[f"e2_{mode}_beyond_1_helps"] = str(e2["beyond_1_helps"])
 
     # C2 (AMENDMENT 1): position-restricted edits in public checkpoints
-    for tag, ck in (("amt", "music-small-800k"), ("remi", "remi-lmd-remi")):
-        c2 = load(f"results/mwild_sweep/{ck}/stage2_eval_positions.json")
+    for tag, ck, fn in (("amt", "music-small-800k", "stage2_eval_positions.json"),
+                        ("remi", "remi-lmd-remi", "stage2_eval_positions3.json")):
+        c2 = load(f"results/mwild_sweep/{ck}/{fn}")
         if not c2:
             continue
         re_out[f"c2_{tag}_all"] = r4(c2["tkr_edit_guarded"])
@@ -858,6 +859,12 @@ def main() -> None:
                 "ikr": r3(v["ikr_target"]), "sig": str(v["n_sig_targets"])}
         for kind, share in c2["position_shares_in_prompt"].items():
             re_out[f"c2_{tag}_share_{kind}"] = r3(share)
+        # the coverage of the two families the amendment started with: the REMI
+        # section quotes it as the reason both of them came out null
+        sh = c2["position_shares_in_prompt"]
+        if "pitch" in sh and "timing" in sh:
+            re_out[f"c2_{tag}_share_pitch_plus_timing"] = r3(sh["pitch"] + sh["timing"])
+        re_out[f"c2_{tag}_share_total"] = r3(sum(sh.values()))
 
     if re_out:
         out["reanalysis"] = re_out

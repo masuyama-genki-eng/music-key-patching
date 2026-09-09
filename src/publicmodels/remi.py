@@ -227,6 +227,7 @@ class RemiAdapter(PublicModelAdapter):
         seq = list(ids)
         pitch = np.zeros(len(seq), dtype=bool)
         timing = np.zeros(len(seq), dtype=bool)
+        instrument = np.zeros(len(seq), dtype=bool)
         for i, tok in enumerate(seq):
             ev = self.c2ev.get(int(tok), "")
             if not isinstance(ev, str):
@@ -235,10 +236,18 @@ class RemiAdapter(PublicModelAdapter):
                 pitch[i] = True
             elif ev.startswith(("beat_", "position_", "duration_")):
                 timing[i] = True
+            elif ev.startswith("instrument_"):
+                # AMENDMENT 2: the step at which the pitch is about to be chosen,
+                # which is where this scheme's probe reads the key. Neither of the
+                # other two families covers it, which is the candidate explanation
+                # for both of them coming out null.
+                instrument[i] = True
         if kind == "pitch":
             return pitch
         if kind == "timing":
             return timing
+        if kind == "instrument":
+            return instrument
         raise ValueError(f"unknown kind {kind!r}")
 
     def next_pitch_class_mass(self, model, ids):

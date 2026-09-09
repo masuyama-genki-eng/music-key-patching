@@ -2049,3 +2049,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/remi-lmd-remi/stage2_eval_positions.json`
 - note: L5 chosen on disjoint prompts; guarded TKR 0.421 vs K1 0.079 on 60 held-out prompts; DR-H3 supported=True (10/12); guard ref stanford-crfm/music-medium-800k
 
+## 2026-09-10T03:48:49+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `e504055b7e37652c9b570ebccd0070ae7064dd7e+DIRTY`
+- config_hash: `7e0e5766cc8cec185cf1f2539504a3ff432c88d15a804528fc73c633dee74eaa`
+- seeds: [0]
+- artifacts: `results/mwild_sweep/remi-lmd-remi/stage2_eval_positions3.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.421 vs K1 0.079 on 60 held-out prompts; DR-H3 supported=True (10/12); guard ref stanford-crfm/music-medium-800k
+

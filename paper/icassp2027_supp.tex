@@ -69,6 +69,10 @@ You chose a flattering key estimator.
 Minor scores higher, so the result is unstable.
  & \ref{sec:minor} & The estimator is better at minor. Against each mode's own
    ceiling the gap is $+0.015$, and one in-key definition reverses.\\
+The position result is an artefact of your tokenizer.
+ & \ref{sec:public-positions} & Two public schemes agree that the pitch token itself
+   is inert, and in each the effect sits on the structural token before a pitch is
+   chosen.\\
 The subspace is only the note counts in other coordinates.
  & \ref{sec:pitchclass} & A well-fitted pitch-class subspace ($R^2$ $0.78$) overlaps
    $V$ no more than a random one does, and writing through it is causally inert.\\
@@ -2049,6 +2053,85 @@ each point rests on $240$ continuations, $20$ prompts at $12$ targets. The band 
 Fig.~\ref{fig:supp-public-layers} is a Wilson interval on that rate. It separates
 layer~$0$ and layer~$11$ from layer~$8$ clearly, and it does not support reading small
 differences between neighbouring layers.
+
+\section{Which positions the edit needs, in public checkpoints \normalfont\textit{(main Secs.~4.4, 4.5)}}
+\label{sec:public-positions}
+
+% 【日本語訳】公開チェックポイントで編集はどの位置を必要とするか（本文4.4節、4.5節）
+% 本文は我々のモデルについて、小節と音長の位置に書けば効き、音高の位置に書いても
+% 効かないことを示している。これが別のトークン化でも成り立つかは未検証だった。
+% 設計は事前に凍結し、公開モデルのフックエディタにトークン種別のマスクを足して実行した。
+% AMT では非対称がそのまま再現する。音高位置だけに書くと 0.060 で、ランダム対照の
+% 0.064 と同水準、補正後に分離する調は 0 である。時刻と音長の位置だけに書くと 0.351 に
+% 達し、これは制限なしの編集 0.365 の 96% で、11/12 の調で分離する。
+% REMI では最初、どちらの制限も無効だった（音高のみ 0.069、タイミングのみ 0.061、
+% ともに 0/12、制限なしは 0.421）。凍結した読み方ではこれは null である。
+% ただし null には有力な説明があった。REMI は1音を position_, instrument_piano,
+% pitch_, duration_ の並びで書くので、上の2つのマスクは位置の 75.9% しか覆っておらず、
+% 抜けていたのは instrument トークン、つまり REMI のプローブが調を読む位置そのもので
+% ある（probe_offset は pitch の1つ前）。そこで instrument 位置だけの条件を追加した。
+% これは null を見た後に選んだ追加条件であり、事前登録テストではない。その旨を先に
+% 文書化してから走らせた。
+% 結果は説明を支持する。instrument 位置だけに書くと 0.431 に達し、制限なしの編集を
+% 102% 再現し、11/12 で分離する。音階内割合も 0.881 で制限なしに近く、他の2条件の
+% 0.58 台は無編集の水準である。
+% したがって3つのトークン化で共通するのは「音高トークンそのものに書いても効かない」
+% ことであり、効く位置はいずれも次の音高が決まる直前の構造トークンである。
+%
+The main text shows, on our own model, that the edit works at bar and note-length
+positions and does nothing at pitch positions. Whether that survives a different
+tokenizer was untested, and testing it needed a token mask on the public-model hook
+editor, which did not exist. The design was fixed in advance.
+
+In AMT the asymmetry reproduces. Writing only at pitch positions reaches $0.0597$
+against a random control at $0.0639$ and separates on $0/12$ keys, while writing only at
+the time and duration positions reaches $0.3514$, which is $0.962$ of the unrestricted
+edit's $0.3653$, and separates on $11/12$.
+
+In REMI both restrictions were null at first, at $0.0694$ and $0.0611$ against an
+unrestricted $0.4208$, each separating on $0/12$. That null had a candidate explanation.
+REMI writes a note as \texttt{position\_}, \texttt{instrument\_piano},
+\texttt{pitch\_}, \texttt{duration\_}, so those two masks covered only $0.759$ of
+positions and the one they left out was the instrument token --- which is exactly where
+this scheme's probe reads the key, one step before the pitch. We therefore added an
+instrument-only condition. It was chosen after seeing a null, so it is a follow-up and
+not a pre-registered test, and it was written down as such before it ran.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S18} \textit{(main Secs.~4.4, 4.5)}. The edit restricted to one token
+family, Bach, $60$ held-out prompts. ``Share'' is the fraction of prompt positions the
+family covers and ``keys'' counts the targets the arm beats the same random control on
+after correction.}
+\label{tab:supp-public-positions}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+model & family & share & SR & in-key & keys\\
+\midrule
+AMT-12L & all positions        & ---     & $0.3653$ & $0.824$ & $11/12$\\
+        & pitch only           & $0.332$ & $0.0597$ & $0.582$ & $0/12$\\
+        & time and duration    & $0.663$ & $0.3514$ & $0.825$ & $11/12$\\
+\midrule
+REMI    & all positions        & ---     & $0.4208$ & $0.881$ & $10/12$\\
+        & pitch only           & $0.237$ & $0.0694$ & $0.585$ & $0/12$\\
+        & beat, position, duration & $0.522$ & $0.0611$ & $0.579$ & $0/12$\\
+        & instrument only      & $0.237$ & $0.4306$ & $0.881$ & $11/12$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The follow-up supports the explanation. Writing only at REMI's instrument positions
+reaches $0.4306$, which is $1.023$ of the unrestricted edit, and separates on $11/12$
+keys, with an in-key share of $0.881$ against the $0.58$ of the other two restrictions,
+which is the unedited level.
+
+So what the three tokenizations share is not a token name. In all three, writing at the
+pitch token itself does nothing, and the positions that carry the effect are the
+structural tokens immediately before a pitch is chosen --- bar and note-length tokens in
+our scheme, time and duration in AMT, the instrument token in REMI. An intervention that
+worked by pushing on pitch probabilities would behave the other way around in all three.
 
 \section{What we did not run, and why \normalfont\textit{(main Secs.~3.2, 4.5)}}
 
