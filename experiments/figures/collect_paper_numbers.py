@@ -823,6 +823,26 @@ def main() -> None:
         re_out["c3_best_margin_layer"] = str(c3["best_margin_layer"])
         re_out["c3_note_counter"] = r3(c3["strongest_note_counter"]["f1"])
 
+    # E2 (AMENDMENT 1): the install weakened and strengthened continuously
+    for mode in ("major", "minor"):
+        e2 = load(f"results/reanalysis/e2_scaled/curve_{mode}.json")
+        if not e2:
+            continue
+        for k, pt in e2["points"].items():
+            re_out[f"e2_{mode}_s{k}"] = {
+                "sr": r4(pt["sr"]), "sr_unguarded": r4(pt["sr_unguarded"]),
+                "guard": r3(pt["guard_pass"]),
+                "dist_med": r3(pt["disturbance_median"]),
+                "ikr": r3(pt["ikr_target"])}
+            if "install_minus_this" in pt:
+                d = pt["install_minus_this"]
+                re_out[f"e2_{mode}_s{k}_vs_install"] = {
+                    "stat": r4(d["stat"]),
+                    "ci": [r4(d["ci_lo"]), r4(d["ci_hi"])],
+                    "excludes_zero": str(d["excludes_zero"])}
+        re_out[f"e2_{mode}_monotone_to_1"] = str(e2["monotone_up_to_1"])
+        re_out[f"e2_{mode}_beyond_1_helps"] = str(e2["beyond_1_helps"])
+
     if re_out:
         out["reanalysis"] = re_out
 

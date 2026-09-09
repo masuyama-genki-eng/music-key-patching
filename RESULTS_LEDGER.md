@@ -2028,3 +2028,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/c3_layer_gap/gap_music-small-800k.json`, `results/figures/supp/supp_public_layers.pdf`
 - note: edit peaks at L8, probe at L10, margin at L10; 2 layers readable but inert
 
+## 2026-09-10T01:32:05+09:00 — EXP E2: scaled install curve, minor (AMENDMENT 1)
+- git: `97e3b6c1c1dd2b200ce07601bf936096c0bf22a8+DIRTY`
+- config_hash: `0d58497b63dee8373320a1a4b20fce5189016c702c3e75e67c99131f6db8db98`
+- seeds: [7]
+- artifacts: `results/reanalysis/e2_scaled/rows_minor.parquet`, `results/reanalysis/e2_scaled/curve_minor.json`
+- note: s=0.5 SR=0.0636; s=0.75 SR=0.2564; s=1 SR=0.4945; s=1.25 SR=0.6182; s=1.5 SR=0.6618
+
