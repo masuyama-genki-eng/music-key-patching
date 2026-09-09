@@ -150,3 +150,99 @@ position control on public checkpoints (C2, which needs token-type masks that
 do not exist for public models), and the estimator re-scoring of the minor
 continuations (D3-minor, CPU only). If any of those runs, its design is fixed
 by an amendment to this document before it does.
+
+---
+
+# AMENDMENT 1 — experiments C1, E2 and C2
+
+Committed 2026-09-09, **before any artifact of these three exists**: at this commit
+`results/reanalysis/c1_public_next_pitch/`, `results/reanalysis/e2_scaled/` and
+`results/reanalysis/c2_public_positions/` are all absent, no scaled-replacement
+editor mode exists in the code, and no public-model edit has ever been restricted
+to a token type. Section 8 above promised this document would be amended before any
+of them ran.
+
+## C1. Does the edit reach the first decision of OTHER public checkpoints?
+
+The supplement already shows this for AMT-small on Bach, where the log ratio of mass
+on the installed key's scale to mass on the prompt key's moves from $-0.0239$ to
+$-0.0096$ ($p_{\text{Holm}}=0.0018$) while a rank-matched random subspace does not
+move it at all. One checkpoint is one checkpoint, so the same measurement runs on
+the two other Bach checkpoints that were edited.
+
+Fixed: REMI at layer 5 and MMT at layer 5, the layers their own stage-1 scans chose
+(`results/mwild_sweep/<ckpt>/stage1_layer_scan.json`); Bach chorales; the 60 held-out
+prompts of the public protocol; 12 major targets; rank 24; seed 0; conditions edit,
+rank-matched random, and unedited; one forward pass per condition with nothing
+sampled; per-target one-sided Wilcoxon paired by prompt with Holm across 12 and
+rank-biserial $r$. Runner `experiments/reanalysis/public_next_pitch.py` unchanged
+apart from its `--adapter`, `--model`, `--layer` and `--outdir` arguments.
+
+Readings, fixed now:
+1. The ratio moves under the edit and not under the random control in both
+   checkpoints — the pre-sampling mechanism is not particular to one public model.
+2. It moves in one and not the other — reported as such, with the checkpoint that
+   fails named, and the paper's claim stays at "in the checkpoints where it holds".
+3. It moves in neither — the AMT-small result stands alone and we say so, and the
+   limitation the supplement currently records is reinstated rather than removed.
+
+## E2. Is the install a graded operation or a threshold?
+
+The frozen comparison scales the ADDITION and leaves the replacement at its full
+strength, so nothing yet says whether the replacement can be weakened continuously.
+A new editor mode does that: $h \leftarrow h + s\,(-P_V h + P_V\mu_{\kappa^{*}})$,
+which is the install at $s=1$ and the identity at $s=0$.
+
+Fixed: $s \in \{0.5, 0.75, 1.25, 1.5\}$ as the new points, with $s=1$ read from the
+ledgered confirmatory rows rather than regenerated; layer 4; $V$ = probe weights
+rank 24; the final-test prompts in both modes; 12 targets; `GEN_SEED = 7`; the
+frozen budget with limit-breakers kept as failures; the same statistics as the
+primary run. The new mode is additive to `src/intervene/edit.py` and must leave
+every existing mode bit-identical, which the existing sham and arity tests check.
+
+Readings, fixed now:
+1. Success rises monotonically in $s$ up to $s=1$ — the install is graded, and its
+   effect is not an artefact of one particular magnitude.
+2. Success at $s<1$ is already at the $s=1$ level — the operation saturates early,
+   which would mean the reported magnitude is more than the effect needs, and we
+   report that.
+3. Success keeps rising past $s=1$ — overwriting harder than the class mean helps,
+   which we would report as a finding against our own choice of target.
+In every case the disturbance is reported beside the success rate, so the
+effect-versus-cost curve of \S E can be drawn for both operations on one axis.
+
+## C2. Does the position asymmetry hold in public checkpoints?
+
+Our model shows the edit working at bar and note-length positions and doing nothing
+at pitch positions. Whether that survives a different tokenizer is untested, and it
+needs code that does not exist: the public-model hook editor has no token mask.
+
+Fixed: AMT-small at layer 8 and REMI at layer 5, Bach, the 60 held-out prompts, 12
+major targets, rank 24, seed 0, each model's own frozen budget and reference
+checkpoint. Three conditions per model, of which the first is read from the ledgered
+run and not regenerated: all positions; pitch positions only; and the timing
+positions only, meaning AMT's time and duration tokens and REMI's beat, position and
+duration tokens. The share of positions each set covers is reported beside the rates,
+as the main text does for our model.
+
+MMT is excluded, and the reason is structural rather than budgetary: its compound
+scheme emits every field at every step, so "a pitch position" does not name a
+position at all. Stating that is part of the result.
+
+Implementation constraints, so this cannot quietly change anything else:
+`token_mask` is added to `HookSubspaceEditor` as an optional argument that defaults
+to None and leaves the unmasked path untouched; token-type classification enters the
+adapter contract as an optional method whose default raises, so the three existing
+adapters keep behaving exactly as they do; unit tests assert that the two position
+sets are disjoint, that their union is the set of positions the unmasked edit writes
+to, and that a mask of all-true reproduces the unmasked edit token for token.
+
+Readings, fixed now:
+1. Pitch-only is at the random floor while timing-only carries a substantial share —
+   the asymmetry is not an artefact of our tokenizer.
+2. Pitch-only works in a public checkpoint — the asymmetry is specific to our
+   vocabulary, the main text's position claim must be narrowed to it, and we will
+   narrow it.
+3. Neither restriction does anything in a public checkpoint — the position question
+   is not answerable there with this budget, reported as a null result rather than
+   as support.
