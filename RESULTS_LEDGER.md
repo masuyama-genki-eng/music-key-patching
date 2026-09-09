@@ -1944,3 +1944,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/figures/fig_framework.pdf`, `results/figures/fig_confirmatory.pdf`, `results/figures/fig_layer_profile.pdf`, `results/figures/fig_probe_by_layer.pdf`, `results/figures/fig_edit_by_layer.pdf`
 - note: 5 figures from R-Aug_s0 artifacts (probe: all models)
 
+## 2026-09-09T18:20:29+09:00 — POST-HOC additional experiment B: disturbance-threshold sensitivity (re-analysis, no generation)
+- git: `34362c3d1131fd656b019c795b20b078c8a2d7cb+DIRTY`
+- config_hash: `16a930a9d6c40947798fe4f2a7efd95f21a2f076e41aa54d9d522888470590a9`
+- seeds: []
+- artifacts: `results/reanalysis/b_threshold/threshold_sensitivity.json`, `results/reanalysis/b_threshold/sr_by_threshold.csv`
+- note: re-scored ours (5 arms x 2 modes), steering (3 conds x 2 modes) and 8 public cells at 12 grid thresholds + stored percentiles; ordering flips: 0
+

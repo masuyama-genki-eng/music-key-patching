@@ -47,6 +47,9 @@ The probe just reads the notes that are already visible.
 A success rate of $0.355$ is low.
  & \ref{sec:estimator-ceiling} & Transposing the prompt into the target key --- a
    correct answer by construction --- scores $0.648$ on the same pipeline.\\
+The disturbance budget was chosen to flatter the edit.
+ & \ref{sec:threshold} & Re-scored from $\tau=0.2$ to no limit at all, the ordering
+   of conditions never changes.\\
 The edit only moves the key to a neighbour.
  & \ref{sec:distance} & The distance coefficient's interval contains zero. At the
    tritone the edit scores $0.340$ and the control $0.000$.\\
@@ -296,6 +299,117 @@ a budget in one model's nats does not transfer: $0.849$ on Bach over $1{,}180$ e
 (reference \texttt{music-large-800k}). A run whose frozen budget names a different
 reference model is a hard error, not a warning.
 
+\section{Does the budget decide the result? \normalfont\textit{(main Secs.~3.3, 4.2, 4.6)}}
+\label{sec:threshold}
+
+% 【日本語訳】予算が結果を決めているのか（本文3.3節、4.2節、4.6節）
+% 予算 0.613 は自然な転調での上昇の90パーセンタイルであり、我々が選んだ1点である。
+% 読者には、別の選び方でも条件の順序が保たれるのかを問う権利がある。
+% ここでは何も再生成していない。どの条件にも継続ごとの行があり、推定した調と擾乱の値を
+% 持っているので、閾値 t での成功を「調が一致 かつ 擾乱 ≤ t」として厳密に採点し直せる。
+% 限度を破った継続は凍結した規則と同じく分母に残して失敗として数える。
+% 順序は一度も入れ替わらない。閾値 0.2（編集の 42.4% が限度を破る水準）から限度なしまで、
+% 長調でも短調でも、置換はどの対照も上回り続ける。条件の順序と凍結閾値での順序との
+% 順位相関は、0.2 という極端な点を除くすべての閾値で 1.000 である（そこでは対照同士の
+% 順序が僅かに入れ替わり、長調 0.900、短調 0.975 になる。置換の首位は動かない）。
+% 表は代表的な閾値での成功率を与える。
+% 音高位置のみの書き込みは、この表の中で唯一まったく動かない行である（長調 0.035、
+% 短調 0.000 で全閾値一定）。それが音楽をほとんど変えないので予算が一度も効かないからで、
+% 位置についての帰無結果は採点規則の産物ではない。
+% steering との比較も閾値に依存しない。変位を揃えた加算に対して据え付けは
+% 全閾値・両旋法で上回る（長調で 0.241 対 0.176 から 0.410 対 0.267、短調で
+% 0.318 対 0.105 から 0.617 対 0.177）。
+% ただし2倍の変位を与えた加算については向きが閾値に依存し、それは正直に述べる。
+% 長調ではこの加算が全閾値で据え付けを上回る（本文が既に述べているとおり）。短調では
+% 凍結閾値の近くで交差し、そこでは僅かに上（0.505 対 0.494）だが、限度を緩めると
+% 据え付けが追い越す（限度なしで 0.617 対 0.599）。
+% 公開チェックポイントでは予算がほとんど効いていない。編集の成功率は凍結閾値と限度なしで
+% ほぼ同じ（例: AMT-24L で 0.540 と 0.540、REMI で 0.602 と 0.629）で、唯一 MMT が
+% 目立って支払っている（0.700 と 0.832）。編集はどのセルでもランダム対照を大きく上回る。
+% パーセンタイルの表記について。7,989件の per-event の上昇は凍結時に要約へ縮約されたので、
+% artifact として存在するのは p50/p75/p90/p99 だけである。p80/p85/p95 を出すには参照
+% モデルを検証分割で再実行する必要があり、それは行っていない。上の閾値グリッドのほうが
+% 広い主張なので、そこに保存済みのパーセンタイルを重ねて示す。
+% 再採点できない条件が1つある。移調参照は擾乱の値を持たない（その無編集の双子が移調
+% されていないので guard が未定義）ので、この節の対象から外れる。これは回避ではなく報告である。
+%
+The budget $0.613$ is the $90$th percentile of a distribution, which is one choice
+among several, and a reader is entitled to ask whether the ordering of conditions
+survives another. Nothing is regenerated here: every condition already has a
+per-continuation row carrying its estimated key and its disturbance, so success at a
+threshold $t$ re-scores exactly as ``key matches AND disturbance $\le t$'', with
+limit-breakers kept in the denominator as failures exactly as the frozen rule does.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S14} \textit{(main Secs.~4.2, 4.6)}. Success rate re-scored at other
+disturbance thresholds, non-identity rows, major prompts above and minor below.
+``no limit'' scores the key estimate alone. The last column is the share of edited
+continuations over the limit at that threshold; they count as failures, they are not
+dropped. $p50$--$p99$ are percentiles of the same natural-modulation distribution the
+frozen budget came from.}
+\label{tab:supp-threshold}
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lccccc@{\hskip 5pt}c@{}}
+\toprule
+$\tau$ & install & bar/dur & pitch & matched & random & over limit\\
+\midrule
+\multicolumn{7}{@{}l}{\emph{major prompts}}\\
+$0.2$          & $0.241$ & $0.158$ & $0.033$ & $0.045$ & $0.032$ & $0.424$\\
+$p50=0.309$    & $0.275$ & $0.182$ & $0.035$ & $0.051$ & $0.036$ & $0.340$\\
+$p75=0.472$    & $0.316$ & $0.214$ & $0.035$ & $0.056$ & $0.037$ & $0.236$\\
+$p90=0.613$    & $0.355$ & $0.233$ & $0.035$ & $0.056$ & $0.039$ & $0.160$\\
+$p99=0.946$    & $0.393$ & $0.251$ & $0.035$ & $0.059$ & $0.041$ & $0.049$\\
+no limit       & $0.410$ & $0.264$ & $0.035$ & $0.059$ & $0.041$ & $0.000$\\
+\midrule
+\multicolumn{7}{@{}l}{\emph{minor prompts}}\\
+$0.2$          & $0.318$ & $0.140$ & $0.000$ & $0.017$ & $0.000$ & $0.486$\\
+$p50=0.309$    & $0.371$ & $0.162$ & $0.000$ & $0.020$ & $0.001$ & $0.406$\\
+$p75=0.472$    & $0.444$ & $0.186$ & $0.000$ & $0.024$ & $0.003$ & $0.292$\\
+$p90=0.613$    & $0.494$ & $0.212$ & $0.000$ & $0.026$ & $0.003$ & $0.208$\\
+$p99=0.946$    & $0.575$ & $0.236$ & $0.000$ & $0.030$ & $0.003$ & $0.074$\\
+no limit       & $0.617$ & $0.254$ & $0.000$ & $0.031$ & $0.003$ & $0.000$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ordering never changes. From $\tau=0.2$, where $0.424$ of edited continuations
+break the limit, out to no limit at all, the replacement beats every control in both
+modes (Table~\ref{tab:supp-threshold}). Ranking the conditions at each threshold and
+correlating that ranking with the one at the frozen budget gives a Spearman
+$\rho$ of $1.000$ at every threshold except the extreme $\tau=0.2$, where two
+controls swap and $\rho$ falls to $0.900$ in major and $0.975$ in minor; the
+replacement's position is untouched throughout.
+
+One row is flat, and it is the informative one. Writing at pitch positions only scores
+$0.035$ in major and $0.000$ in minor at every threshold, because it barely changes the
+music and so never pays the budget. The position null of Section~\ref{sec:position} is
+therefore not an artefact of the scoring rule.
+
+The comparison against steering is threshold-independent in the form the paper claims
+it. At matched displacement the install wins at every threshold in both modes: in major
+from $0.241$ against $0.176$ at $\tau=0.2$ to $0.410$ against $0.267$ with no limit, and
+in minor from $0.318$ against $0.105$ to $0.617$ against $0.177$. The comparison against
+addition at twice the displacement does depend on the threshold, and we say so: in major
+that addition is ahead of install everywhere, as the main text already reports, while in
+minor the two cross near the frozen budget --- $0.505$ against $0.494$ there --- and the
+install overtakes it once the limit is loosened ($0.617$ against $0.599$ with no limit).
+
+In the public checkpoints the budget is barely binding. The edit's rate at the frozen
+threshold and with no limit are almost the same ($0.540$ and $0.540$ for AMT-24L,
+$0.602$ and $0.629$ for REMI, $0.455$ and $0.458$ for AMT-12L); MMT is the one cell
+that visibly pays ($0.700$ against $0.832$). The edit beats its random control by a
+wide margin in every cell at every threshold.
+
+Two limits belong with this section. The $7{,}989$ per-event rises were reduced to a
+summary when the budget was frozen, so only $p50$, $p75$, $p90$ and $p99$ exist as
+artefacts; $p80$, $p85$ and $p95$ would need the reference model re-run over the
+validation split, which we did not do --- the threshold grid is the wider statement in
+any case. And one condition cannot be re-scored at all: the transposition reference
+carries no disturbance value, because its unedited twin is untransposed and the guard is
+undefined for it.
+
 \section{Two gates on the data \normalfont\textit{(main Secs.~3.1, 3.2)}}
 
 % 【日本語訳】データに対する2つのゲート（本文3.1節、3.2節）
@@ -531,6 +645,7 @@ from layer~$2$ on. Readability and usability are not the same axis.}
 \end{figure}
 
 \section{Is the installed value position-appropriate? \normalfont\textit{(main Sec.~4.4)}}
+\label{sec:position}
 
 % 【日本語訳】据え付ける値は位置に対して適切か（本文4.4節）
 % 調毎の平均はトークン種を混ぜている——サンプルした144,000位置のうち62,509が音高、

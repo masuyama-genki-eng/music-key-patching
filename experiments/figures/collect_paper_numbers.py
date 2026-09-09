@@ -693,6 +693,36 @@ def main() -> None:
             re_out[f"len_{rec['cell']}"] = {"notes": r3(rec["notes_median"]),
                                             "sr": r3(rec["sr"])}
 
+    # additional experiment B: the same conditions re-scored at other disturbance
+    # thresholds. Every rate the threshold section quotes comes from here.
+    th = load("results/reanalysis/b_threshold/threshold_sensitivity.json")
+    if th:
+        re_out["tau_frozen"] = r3(th["frozen_tau"])
+        for k, v in th["rise_distribution_available_percentiles"].items():
+            re_out[f"tau_{k}"] = r3(v)
+        for scope in ("ours", "steering"):
+            for mode, blk in th[scope].items():
+                for cond, rows in blk["by_condition"].items():
+                    tag = cond.replace(" ", "_").replace(",", "")
+                    for r in rows:
+                        lab = (r["label"].replace(" ", "_").replace("(", "")
+                               .replace(")", ""))
+                        re_out[f"thr_{scope}_{mode}_{tag}_{lab}"] = r3(r["sr"])
+                        re_out[f"thrfail_{scope}_{mode}_{tag}_{lab}"] = \
+                            r3(r["guard_fail"])
+                for lab, rho in (blk["rank_invariance_spearman"] or {}).items():
+                    if rho is not None:
+                        key = lab.replace(" ", "_").replace("(", "").replace(")", "")
+                        re_out[f"thrrho_{scope}_{mode}_{key}"] = r3(rho)
+        for cell, blk in th["public"].items():
+            tag = cell.replace("/", "_")
+            for cond, rows in blk["by_condition"].items():
+                for r in rows:
+                    lab = (r["label"].replace(" ", "_").replace("(", "")
+                           .replace(")", ""))
+                    re_out[f"thr_public_{tag}_{cond}_{lab}"] = r3(r["sr"])
+        re_out["thr_ordering_flips"] = str(len(th["ordering_flips"]))
+
     if re_out:
         out["reanalysis"] = re_out
 
