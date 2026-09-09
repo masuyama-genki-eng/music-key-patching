@@ -524,6 +524,11 @@ The same separation appears across token positions, where the numbers come from 
 Editing only pitch positions has little effect (SR $0.035$), whereas editing bar and note-length positions reaches $0.233$ and is significant for $11$ of the $12$ target keys (Table~\ref{tab:main}).
 The two sets are nearly the same size at $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places.
 The target is not mismatched to the family either, since per-family estimates of $\mu_{\kappa}$ agree to cosine $0.92$ inside $V$ against $0.31$ across keys.
+%また、編集している部分空間は音符数えの言い換えではない。
+%層4の活性から直近のピッチクラス頻度への回帰は R²=0.78 でよく当てはまるが、その部分空間を通して同じ値を書き込んでも成功率は 0.027 にとどまり、同じ次元と変位のランダム部分空間と区別できない。
+%逆にその部分空間を V から除去しても 0.360 に達し、据え付けそのものと差がない。
+The subspace we edit is also not the note counts in other coordinates.
+A regression from the same activations to the recent pitch-class frequencies fits well at $R^2$ $0.78$, yet writing the same value through the subspace it spans reaches only $0.027$ and is indistinguishable from a random subspace of the same dimension and displacement, while removing that subspace from $V$ still reaches $0.360$.
 Thus probe readability alone does not identify the layers or the positions where changing the representation affects the generated key.
 
 \subsection{The Read--Use Gap Holds in Public Models}

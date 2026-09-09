@@ -1972,3 +1972,17 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/a_pitchclass/subspaces.npz`, `results/reanalysis/a_pitchclass/overlap.json`
 - note: lambda=0.001; ranks {'V': 24, 'V_pc12': 11, 'V_pc24': 22, 'V_res': 24}; overlap 0.0556 vs random null 0.047
 
+## 2026-09-09T19:45:14+09:00 — EXP A stage 2: pitch-class subspace edits, major (freeze ADDITIONAL_EXPERIMENTS_FREEZE.md)
+- git: `54149e8e178f281c3a15025de0947fdcc0e2955f`
+- config_hash: `80f39aefbe60463b4e625a259c250c100800855da5c85c27a32497597d009b76`
+- seeds: [7]
+- artifacts: `results/reanalysis/a_pitchclass/edit_rows_major.parquet`, `results/reanalysis/a_pitchclass/verdict_major.json`
+- note: pc24 SR=0.0273; pc24_rand SR=0.0245; pc12 SR=0.0300; pc12_rand SR=0.0264; res SR=0.3600; res_rand SR=0.0582; install 0.3555
+
+## 2026-09-09T20:49:58+09:00 — EXP A stage 2: pitch-class subspace edits, minor (freeze ADDITIONAL_EXPERIMENTS_FREEZE.md)
+- git: `54149e8e178f281c3a15025de0947fdcc0e2955f+DIRTY`
+- config_hash: `17b475dcaeb3af9ad28500934c30a2beacf201d12b78e67d7ee4310db3f73651`
+- seeds: [7]
+- artifacts: `results/reanalysis/a_pitchclass/edit_rows_minor.parquet`, `results/reanalysis/a_pitchclass/verdict_minor.json`
+- note: pc24 SR=0.0027; pc24_rand SR=0.0036; pc12 SR=0.0027; pc12_rand SR=0.0009; res SR=0.4782; res_rand SR=0.0255; install 0.4945
+

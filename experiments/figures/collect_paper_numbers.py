@@ -749,6 +749,44 @@ def main() -> None:
                 re_out[f"pareto_L{L}_match_disp"] = \
                     r3(blk["steering_matching_install_sr"]["displacement"])
 
+    # additional experiment A: writing the key through a pitch-class subspace
+    ov = load("results/reanalysis/a_pitchclass/overlap.json")
+    if ov:
+        re_out["pc_lambda"] = str(ov["lambda_selection"]["chosen"])
+        for lam, sc in ov["lambda_selection"]["candidates"].items():
+            for w, v2 in sc["per_window_r2_search_prompts"].items():
+                re_out[f"pc_r2_search_l{lam}_w{w}"] = r3(v2)
+            for w, v2 in sc["per_window_r2_heldout_fit_positions"].items():
+                re_out[f"pc_r2_heldout_l{lam}_w{w}"] = r3(v2)
+        for k, v2 in ov["ranks"].items():
+            re_out[f"pc_rank_{k}"] = str(v2)
+        re_out["pc_overlap_V_pc24"] = r3(ov["overlap_V_with_V_pc24"])
+        re_out["pc_overlap_V_pc12"] = r3(ov["overlap_V_with_V_pc12"])
+        re_out["pc_overlap_null_mean"] = r3(ov["overlap_V_with_random_r24"]["mean"])
+        re_out["pc_overlap_null_sd"] = r3(ov["overlap_V_with_random_r24"]["sd"])
+        re_out["pc_angle_min"] = r3(min(ov["principal_angles_deg_V_vs_V_pc24"]))
+        re_out["pc_angle_max"] = r3(max(ov["principal_angles_deg_V_vs_V_pc24"]))
+        re_out["pc_angles_below30"] = str(ov["n_angles_below_30deg"])
+        re_out["pc_energy_inside"] = r3(ov["energy_of_V_inside_V_pc24"])
+    for mode in ("major", "minor"):
+        pv = load(f"results/reanalysis/a_pitchclass/verdict_{mode}.json")
+        if not pv:
+            continue
+        re_out[f"pc_install_{mode}"] = r4(pv["install_sr"])
+        for cond, a in pv["arms"].items():
+            re_out[f"pc_{mode}_{cond}"] = {
+                "sr": r4(a["sr"]), "sr_unguarded": r4(a["sr_unguarded"]),
+                "guard": r3(a["guard_pass"]), "ikr": r3(a["ikr_target"]),
+                "dim": str(a["subspace_dim"])}
+            if "vs_own_control" in a:
+                re_out[f"pc_{mode}_{cond}_sig"] = \
+                    str(a["vs_own_control"]["n_sig_holm"])
+            if "install_minus_arm" in a:
+                d = a["install_minus_arm"]
+                re_out[f"pc_{mode}_{cond}_vs_install"] = {
+                    "stat": r4(d["stat"]), "ci": [r4(d["ci_lo"]), r4(d["ci_hi"])],
+                    "excludes_zero": str(d["excludes_zero"])}
+
     if re_out:
         out["reanalysis"] = re_out
 

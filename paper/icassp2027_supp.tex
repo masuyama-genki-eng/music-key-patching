@@ -68,6 +68,9 @@ You chose a flattering key estimator.
 Minor scores higher, so the result is unstable.
  & \ref{sec:minor} & The estimator is better at minor. Against each mode's own
    ceiling the gap is $+0.015$, and one in-key definition reverses.\\
+The subspace is only the note counts in other coordinates.
+ & \ref{sec:pitchclass} & A well-fitted pitch-class subspace ($R^2$ $0.78$) overlaps
+   $V$ no more than a random one does, and writing through it is causally inert.\\
 The subspace is a print of transposition augmentation.
  & \ref{sec:augmentation} & Three models trained without it give the same geometry
    ($-0.963$ against $-0.960$).\\
@@ -1102,6 +1105,112 @@ essentially no fifths ordering ($-0.063$ centred, $-0.216$ projected), so the st
 described above is a property of the major keys. And $V$ captures only $5.2\%$ of the
 energy of $\mu_\kappa$ on average: it is a thin slice of the class means, not a summary of
 them.
+
+\section{Is the subspace a linear image of pitch-class frequency? \normalfont\textit{(main Secs.~4.1, 4.2, 4.4)}}
+\label{sec:pitchclass}
+
+% 【日本語訳】部分空間はピッチクラス頻度の線形像なのか（本文4.1節、4.2節、4.4節）
+% V はプローブの重みから作られ、そのプローブは活性から調を読む。すると最も鋭い反論が残る。
+% 編集している部分空間は、直近のピッチクラス頻度の線形像にすぎないのではないか、つまり
+% 本論文が「プローブが +0.071 上回る」と報告している音符数えベースラインを、別の座標で
+% 書き直したものにすぎないのではないか、という反論である。もしそうなら、因果的な結果が
+% 語っているのは「残差ストリームにピッチクラスの分布を書き込めば出てくる音高が変わる」
+% ということだけになり、本論文の主張よりはるかに弱い。
+% この節の設計と「結果の読み方」は、実行前に docs/ADDITIONAL_EXPERIMENTS_FREEZE.md に
+% 凍結した。弱める結果が出た場合の扱いも先に書いてある。
+% 対照部分空間は次のように作った。層4の活性から、直近 w トークンのピッチクラス
+% ヒストグラム（L1正規化）へのリッジ回帰を、訓練分割の 50,400 位置で当てはめる。
+% w=16 と w=512 は、論文で最強だった音符数えベースライン lr_W16cat512 が使う2つの窓
+% そのものである。λ は探索段階のプロンプト位置で {1e-3, 1e-2, 1e-1} から選び 1e-3 と
+% なった。最終テストのプロンプトは当てはめにも λ 選択にも一切使っていない。
+% 当てはまりは良い。探索プロンプト上の R² は w=16 で 0.654、w=512 で 0.781、
+% 当てはめ位置の保持分割でも 0.631 と 0.754 である。つまりこの部分空間は
+% 「ピッチクラス頻度をよく符号化した本物」であり、藁人形ではない。
+% それでも V とはほとんど重なっていない。V のエネルギーのうち V_pc24 の内側にあるのは
+% 5.6% で、ランダムな24次元部分空間の帰無 0.047 ± 0.003 からわずかに上でしかなく、
+% 22本の主角はすべて 63.55°から 89.40°の間にあり、30°を下回るものは1本も無い。
+% V から V_pc24 を射影で除去しても V は満ランク24のままである。
+% 因果テストの結果は幾何と一致し、事前に固定した3つの読み方のうち第1のものに当たった。
+% ピッチクラス部分空間へ同じ標的値を書き込んでも、長調で 0.027、短調で 0.003 しか
+% 達しない。これは同じ次元・同じ変位のランダム部分空間（0.025 と 0.004）と区別できず、
+% 補正後に分離する調は 12 のうち 0 である。11次元の全履歴版も同じである。
+% 一方、V からピッチクラス部分空間を除去した残差で書き込むと、長調 0.360、短調 0.478 に
+% 達し、据え付けそのもの（0.356 と 0.494）との差は信頼区間がゼロを含む。
+% 音符の移り方も同じ方向を指す。残差での編集は音階内割合 0.935 と 0.957 で据え付けと
+% 同等だが、ピッチクラス側は 0.55 と 0.73 で無編集の水準にとどまる。
+% したがってこの反論は成り立たない。編集が効くのは V のうちピッチクラス頻度で
+% 説明できない部分であり、説明できる部分だけを書き込んでもランダムと同じである。
+% 限界も述べておく。回帰は線形なので、ネットワークが計算しているピッチクラス履歴の
+% 非線形な関数は排除できない。また V 自体が位置を混ぜたプローブ由来なので、位置固有の
+% 部分空間は未検証のままである（第9節と同じ限界）。
+%
+$V$ comes from a probe trained on activations, which leaves the sharpest objection
+standing. The subspace we edit might be nothing more than a linear image of the recent
+pitch-class frequencies, that is, the note-counting baseline the probe beats by
+$+0.071$ rewritten in other coordinates. If that held, the causal result would say only
+that writing a pitch-class profile into the residual stream changes which pitches come
+out, which is far less than the paper claims. The design and the reading of every
+outcome, including the outcomes that would have weakened the claim, were frozen before
+this ran.
+
+\textbf{The control subspaces.} We fit ridge regressions from layer-$4$ activations to
+the L1-normalized pitch-class histogram of the last $w$ tokens over $50{,}400$ positions
+of the TRAINING split, for $w=16$ and $w=512$ --- the two windows of
+\texttt{lr\_W16cat512}, the strongest note counter in the paper. $\lambda$ was chosen
+from $\{10^{-3},10^{-2},10^{-1}\}$ on positions of the search-stage prompts and came out
+at $10^{-3}$. The final-test prompts are used for neither the fit nor that choice.
+
+The fit is good, which is what makes the control worth running. On the search prompts
+$R^2$ is $0.654$ for $w=16$ and $0.781$ for $w=512$, and on a held-out split of the
+fitting positions $0.631$ and $0.754$. This is a genuine encoding of pitch-class
+frequency rather than a straw man.
+
+\textbf{It barely overlaps $V$.} Only $5.6\%$ of $V$'s energy lies inside the
+$22$-dimensional stack of both windows, against $0.047 \pm 0.003$ for random rank-$24$
+subspaces, and all $22$ principal angles fall between $63.55^\circ$ and $89.40^\circ$
+with none below $30^\circ$. Projecting the stack out of $V$ leaves $V$ at full rank $24$.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S16} \textit{(main Sec.~4.2)}. Writing the same target value through a
+pitch-class subspace instead of through $V$, final-test prompts, non-identity rows.
+Each pitch-class arm has its own random control of the same rank, matched to that arm's
+displacement. ``Keys'' counts the target keys the arm beats its own control on after
+correction, and the last column is the paired difference from the install with its
+bootstrap interval.}
+\label{tab:supp-pitchclass}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+arm (dimension) & major & minor & keys & install $-$ arm (major)\\
+\midrule
+install ($24$)              & $0.3555$ & $0.4945$ & --- & ---\\
+pitch-class, both windows ($22$) & $0.0273$ & $0.0027$ & $0/12$ & $+0.328$ $[0.296,0.362]$\\
+\quad its random control    & $0.0245$ & $0.0036$ & --- & ---\\
+pitch-class, whole prefix ($11$) & $0.0300$ & $0.0027$ & $0/12$ & $+0.326$ $[0.293,0.359]$\\
+\quad its random control    & $0.0264$ & $0.0009$ & --- & ---\\
+$V$ with pitch-class removed ($24$) & $0.3600$ & $0.4782$ & $12/12$ & $-0.005$ $[-0.037,0.030]$\\
+\quad its random control    & $0.0582$ & $0.0255$ & --- & ---\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{And it carries none of the effect.} Table~\ref{tab:supp-pitchclass} gives the
+interventions. Writing the same $\mu_{\kappa^*}$ through the pitch-class subspace reaches
+$0.0273$ in major and $0.0027$ in minor, which is indistinguishable from a random
+subspace of the same rank and displacement and separates from it on $0$ of the $12$ keys.
+Writing through $V$ with that subspace projected out reaches $0.3600$ and $0.4782$, and
+its paired difference from the install has an interval containing zero in both modes. The
+notes agree, with in-key shares of $0.935$ and $0.957$ for the residual against $0.551$
+and $0.728$ for the pitch-class arms, the latter at the unedited level.
+
+The objection therefore fails. What the edit acts through is the part of $V$ that
+pitch-class frequency does not explain, and the part it does explain is causally inert.
+Two limits belong with that. The regression is linear, so a nonlinear function of the
+pitch-class history that the network computes is not ruled out, and $V$ itself comes from
+a probe trained on pooled positions, so a position-specific subspace remains untested as
+in \S\ref{sec:position}.
 
 \begin{figure*}[!t]
 \centering
