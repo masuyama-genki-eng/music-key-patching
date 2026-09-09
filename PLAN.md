@@ -203,11 +203,35 @@ C1（REMI/MMT の生成前シフト）と C3（層スイープ）に絞ります
 
 ---
 
+## 5b. 実施状況（2026-09-10 更新）
+
+| 実験 | 状態 | artifact | 書き足し先 |
+|---|---|---|---|
+| B 閾値感度 | **完了**（再解析、生成ゼロ） | `results/reanalysis/b_threshold/` | 補足 §4 + 表 S14 |
+| D1 mode別 in-key | 既存 | `reanalysis/a5/minor_handling.json` | 補足 §18 |
+| D2 着地・相対長調 | **完了**（短調を表に拡張） | `reanalysis/a2/landing.json` | 補足 §11 表 S9 |
+| D3 代替推定器 長調 | 既存 | `reanalysis/a9/` | 補足 §17 |
+| D3 代替推定器 短調 | **完了**（CPUのみ） | `reanalysis/a9_minor/` | 補足 §17（主張を1つ狭めた） |
+| A ピッチクラス対照 | **完了**（事前登録 c68ae44） | `reanalysis/a_pitchclass/` | 補足 §13 表 S16 + 本文 §4.4 |
+| E Pareto（探索段階） | **完了**（生成ゼロ） | `reanalysis/e_pareto/` | 補足 §7 表 S15 |
+| E2 スケール版据え付け | **実行中** | `reanalysis/e2_scaled/` | 未 |
+| C1 生成前シフト ×3 | **完了**（AMENDMENT 1） | `reanalysis/c1_public_next_pitch/` | 補足 §24 |
+| C2 位置対照（公開） | 実装完了・実行待ち | — | 未 |
+| C3 層スイープ（AMT） | 未着手（既存 artifact で可能） | `mwild_sweep/*/stage1_layer_scan.json` | 未 |
+
+実装として新規に入ったもの（いずれも既存挙動は不変、テストで固定）:
+- `SubspaceEditor` の `replace_scaled` モード（s=1 で replace とビット一致、
+  s=0 で恒等。tests/test_replace_scaled.py の4件）
+- `HookSubspaceEditor` の `token_mask` / `mask_kind`（全Trueでマスク無しと一致）
+- アダプタ契約の任意メソッド2つ: `next_pitch_class_mass`（C1）と
+  `token_type_mask`（C2、複合方式は拒否）。tests/test_public_token_masks.py の6件
+- `public_edit_sweep.py` の `--positions`（フラグ無しなら従来と同一）
+
 ## 6. ハイパーパラメータの決定過程（§0.2、決まり次第追記）
 
 | 対象 | 候補 | 決定手続き | 決定値 |
 |---|---|---|---|
-| 実験A ridge の λ | {1e-3, 1e-2, 1e-1} | **探索用100プロンプト**（test rows 0–167）で選ぶ。最終テストのプロンプト（rows 6000–）は回帰・λ選択・窓幅選択に一切使わない | 未決定 |
+| 実験A ridge の λ | {1e-3, 1e-2, 1e-1} | **探索用100プロンプト**（test rows 0–167）で選ぶ。最終テストのプロンプト（rows 6000–）は回帰・λ選択・窓幅選択に一切使わない | **1e-3**（探索プロンプト上の平均 R² 0.718 で最良。他は 0.701 と 0.643） |
 | 実験A 窓幅 w | 論文で最強だった note-counting の窓 ＋ 全履歴 | 最強窓は既に確定済み: `lr_W16cat512`（W16 と W512 の連結、F1 0.824）。したがって短窓 w=16、全履歴 w=512 を採用 | w ∈ {16, 512} |
 | 実験A V_pc の次元 | 12 / 24 | 指示書どおり両方（V_pc12 = 全履歴12行、V_pc24 = 短窓12 + 全履歴12） | 12, 24 |
-| 実験E の s グリッド | 指示書の指定どおり | 探索段階の既存 α グリッド（0.25–16）から Pareto 上の関心領域を確認して確定 | 未決定 |
+| 実験E の s グリッド | 指示書の指定どおり | 探索段階の既存 α グリッド（0.25–16）から Pareto 上の関心領域を確認して確定 | steering 側は既存の α∈{0.25..16}（探索段階）＋最終テストの3点で代替。置換のスケール版は **s∈{0.5,0.75,1.25,1.5}**（s=1 は凍結行を再利用）を AMENDMENT 1 で固定 |
