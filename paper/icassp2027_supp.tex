@@ -635,6 +635,97 @@ So addition CAN set a key; what replacement buys is efficiency per unit of
 perturbation, and what the comparison isolates is that removing what is already written
 does part of the work.
 
+% 【日本語訳】同じ効果では、どちらが安いのか（追記 2026-09-09、探索段階の再解析）
+% 上の比較は「同じ変位ならどちらが勝つか」に答えるが、「同じ効果ならどちらが音楽を
+% 乱さないか」には答えない。それには点ではなく曲線が必要で、その曲線はすでに存在する。
+% ステアリングの探索段階が各層で α ∈ {0.25,…,16} を掃いており、各セルに継続ごとの行が
+% 残っているので、α ごとに成功率と擾乱の両方を読み戻せる。以下は生成なしの再解析であり、
+% 探索段階の100プロンプト上の特性把握なので、報告済みの数値は1つも変わらない。
+% 変位は行に保存されていないが、この条件では構成上 α·s̄(層) で厳密に決まる。
+% 読み方は数値を見る前に固定した: ステアリングが据え付けの成功率に達するのに、より大きな
+% 変位を要するなら、据え付けのほうが摂動あたり効率的である。等しいか小さい変位で達するなら
+% そうではない。
+% 結果は層で分かれ、そのまま述べる。
+% 据え付けが働く第4層では、ステアリングは掃いた範囲のどの変位でも据え付けに届かない
+% （最大 0.219、α=2、対して据え付け 0.402）。押しを強めても届かず、α=4 以降は崩壊する。
+% ステアリング自身が選んだ第2層では、変位を揃えれば据え付けが勝つ（0.276 対 0.155）が、
+% 変位を 1.353 倍にするとステアリングが追いつき、2倍（α=2）では追い越す（0.497 対 0.276）。
+% 擾乱で見ると話が変わり、これは我々に不利な側面である。第2層の α=2 では、ステアリングは
+% 成功率が高いだけでなく擾乱の中央値も低い（−0.059 対 据え付けの 0.162）。参照モデルは
+% その継続を無編集より驚かないと判定している。つまり据え付けが効率的なのは、我々が
+% 制御する量（変位）あたりであって、我々が損害として測る量（擾乱）あたりとは限らない。
+% 第2層で据え付けが高くつく理由は幾何にある。そこでは活性の平均長が 49.7 しかないのに
+% 変位が 20.3、つまり活性の 41% を動かしている。第4層では 168.5 に対して 34.6 の 21% である。
+% 最後に、加算には固定点が無いことがこの表に現れている。α を上げ続けると擾乱は
+% 数千 nat（第2層の α=8 で 24,015、α=16 で 86,216）に達し、成功率は逆に崩れる。
+% 据え付けは構成上その標的を超えられないので、この崩壊が起こらない。
+%
+\textbf{At the same effect, which is cheaper?} The comparison above answers "at the
+same displacement, which wins". It does not answer "at the same effect, which disturbs
+the music less", and that needs a curve rather than a point. The curve already exists:
+the steering search stage swept $\alpha\in\{0.25,\dots,16\}$ at every layer and kept a
+per-continuation row for each cell, so success and disturbance can both be read back per
+$\alpha$ with no generation. What follows is therefore a characterisation on the $100$
+search prompts, not a headline, and it changes no reported number. The displacement is
+not stored per row but is fixed by construction at $\alpha\,\bar{s}(\ell)$.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S15} \textit{(main Sec.~4.6)}. Effect against cost for the two
+operations, search stage, major prompts. $\|\Delta\|$ is the per-position displacement;
+SR is the key estimate alone, so the budget does not enter it; the disturbance median is
+in nats and can be negative when the reference model finds the edited continuation no
+more surprising than the unedited one. Layer~$4$ is where the install operates,
+layer~$2$ is where the swept addition's own search put it.}
+\label{tab:supp-pareto}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+ & & $\|\Delta\|$ & SR & disturb. & over limit\\
+\midrule
+\multicolumn{6}{@{}l}{\emph{layer 4}\quad($\bar{s}=34.634$, mean $\|h\|=168.476$)}\\
+install        &            & $34.634$  & $0.402$ & $0.092$ & $0.139$\\
+addition & $\alpha{=}0.5$   & $17.317$  & $0.090$ & $-0.027$ & $0.093$\\
+addition & $\alpha{=}1$     & $34.634$  & $0.214$ & $-0.036$ & $0.115$\\
+addition & $\alpha{=}2$     & $69.267$  & $0.219$ & $0.122$ & $0.228$\\
+addition & $\alpha{=}4$     & $138.535$ & $0.202$ & $1.947$ & $0.708$\\
+\midrule
+\multicolumn{6}{@{}l}{\emph{layer 2}\quad($\bar{s}=20.345$, mean $\|h\|=49.733$)}\\
+install        &            & $20.345$  & $0.276$ & $0.162$ & $0.174$\\
+addition & $\alpha{=}0.5$   & $10.173$  & $0.047$ & $-0.069$ & $0.044$\\
+addition & $\alpha{=}1$     & $20.345$  & $0.155$ & $-0.073$ & $0.062$\\
+addition & $\alpha{=}2$     & $40.690$  & $0.497$ & $-0.059$ & $0.081$\\
+addition & $\alpha{=}4$     & $81.381$  & $0.495$ & $0.772$ & $0.572$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The answer splits by layer, and we state it that way. At layer~$4$, where the install
+operates, the addition never reaches it at any displacement in the sweep: its best cell
+scores $0.219$ against the install's $0.402$, and pushing harder makes it worse rather
+than better. At layer~$2$, which the addition's own search chose, matched displacement
+again favours the install ($0.276$ against $0.155$), but $1.353\times$ the displacement
+is enough for the addition to catch it and twice the displacement puts it ahead
+($0.497$).
+
+Read in nats rather than in displacement the picture changes, and this part runs against
+us. At layer~$2$ with $\alpha=2$ the addition is not only more successful but also less
+disturbing than the install: a median of $-0.059$ against $0.162$, meaning the reference
+model finds those continuations no more surprising than the unedited ones. So the
+install is the more efficient operation per unit of the quantity we control --- the
+displacement --- and not per unit of the quantity we measure as damage. Why the install
+is expensive at layer~$2$ is geometric: the displacement there is $20.345$ against a mean
+activation norm of $49.733$, so it moves $41\%$ of the activation, where at layer~$4$ it
+moves $21\%$ of a much longer vector.
+
+One property of the addition is visible in the same table and is worth naming. It has no
+fixed point, so raising $\alpha$ eventually destroys the distribution rather than
+strengthening the effect: the disturbance median reaches thousands of nats
+($24{,}015$ at $\alpha=8$ on layer~$2$, $86{,}216$ at $\alpha=16$) while the success rate
+collapses. The install cannot do this, because by construction it cannot overshoot the
+value it writes.
+
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.86\columnwidth]{supp_layers.pdf}
@@ -888,9 +979,15 @@ we report that rather than the pooled figure.
 % 0.497 / 0.378）。置換のもとでは、行の 0.787 が据え付けた調、そこから五度、またはその
 % 平行短調に着地し、プロンプトの調に留まるのは 0.085 だけである。変位を揃えていない
 % ランダム部分空間ではこの順序が反転する。0.517 がプロンプトの調に留まり、0.041 が標的に
-% 届く——本文で引用した2つの数字を、ここでは同じ行から再計算している。短調プロンプトも
-% 同じ振る舞いで、置換では 0.617 が据え付けた調に、ランダム部分空間では 0.003 であり、
-% 後者は 0.772 の行で元の調を保持する。
+% 届く——本文で引用した2つの数字を、ここでは同じ行から再計算している。
+% 短調プロンプトも同じ振る舞いをし、さらに旋法固有の疑いを1つ決着させる。置換は
+% 0.617 を据え付けた調に着地させ、ランダム部分空間は 0.003 で、後者は 0.772 の行で元の調を
+% 保持する。その疑いとは、短調は相対長調へ流れることで的中と採点されうるのではないか
+% （音階を共有するので）というものだが、問題になる率では起きていない。編集された行のうち
+% 相対長調に着地するのは 0.041、同主長調は 0.045 にすぎず、どちらのセルも統制のもとで
+% 同じ大きさ（変位一致で 0.043 と 0.047）なので、編集が生んだものではなく継続がもともと
+% 座る場所である。長調の残りを支配していた五度隣接の質量（0.288）は短調では小さい
+% （0.037）ので、短調の据え付けは標的に届くか散らばるかであり、五度圏を1歩滑ることはない。
 % 図は12×12の行列全体を示す。置換には対角があり、統制には無い。これは前節の第2の読み方
 % でもある。残りの質量はプロンプトの調に戻るのではなく、五度圏上で据え付けた調の隣に
 % 座っている。この種の僅差の外れには、これらの行では分離できない2つの説明がある——継続が
@@ -909,21 +1006,24 @@ disrupts produces scatter.
 \begin{table}[!t]
 \centering
 \caption{\textbf{S9} \textit{(main Sec.~4.2)}. Where the estimate lands on the $1100$
-non-identity major rows of each condition. "Fifth-adjacent" is one step around the circle
-of fifths from the installed key; "relative" and "parallel" are relative to it; "source
-retained" is the prompt's own key.}
+non-identity rows of each condition, major prompts left and minor right.
+"Fifth-adjacent" is one step around the circle of fifths from the installed key;
+"relative" and "parallel" are relative to it; "source retained" is the prompt's own key.}
 \label{tab:supp-landing}
 \small
-\begin{tabular}{lccc}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{\hskip 6pt}ccc@{}}
 \toprule
- & replacement & matched & random \\
+& \multicolumn{3}{c}{major} & \multicolumn{3}{c}{minor}\\
+\cmidrule(r){2-4}\cmidrule(l){5-7}
+ & repl. & matched & random & repl. & matched & random \\
 \midrule
-installed key      & $0.410$ & $0.059$ & $0.041$ \\
-fifth-adjacent     & $0.288$ & $0.074$ & $0.049$ \\
-relative           & $0.089$ & $0.010$ & $0.004$ \\
-parallel           & $0.004$ & $0.019$ & $0.011$ \\
-source retained    & $0.085$ & $0.340$ & $0.517$ \\
-other              & $0.124$ & $0.497$ & $0.378$ \\
+installed key      & $0.410$ & $0.059$ & $0.041$ & $0.617$ & $0.031$ & $0.003$ \\
+fifth-adjacent     & $0.288$ & $0.074$ & $0.049$ & $0.037$ & $0.026$ & $0.004$ \\
+relative           & $0.089$ & $0.010$ & $0.004$ & $0.041$ & $0.043$ & $0.019$ \\
+parallel           & $0.004$ & $0.019$ & $0.011$ & $0.045$ & $0.047$ & $0.027$ \\
+source retained    & $0.085$ & $0.340$ & $0.517$ & $0.052$ & $0.455$ & $0.772$ \\
+other              & $0.124$ & $0.497$ & $0.378$ & $0.207$ & $0.398$ & $0.176$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -932,9 +1032,18 @@ Table~\ref{tab:supp-landing} gives the split for major prompts. Under the replac
 $0.787$ of rows land on the installed key, one fifth from it, or on its relative minor,
 and only $0.085$ stay in the prompt's key. Under the unmatched random subspace the
 ordering inverts: $0.517$ stay in the prompt's key and $0.041$ reach the target --- the
-two figures quoted in the main text, recomputed here from the same rows. Minor prompts
-behave the same way, with $0.617$ on the installed key under the replacement against
-$0.003$ under the random subspace, which retains the source key in $0.772$ of rows.
+two figures quoted in the main text, recomputed here from the same rows.
+
+Minor prompts behave the same way and settle one mode-specific doubt. The replacement
+lands $0.617$ on the installed key against $0.003$ for the random subspace, which
+retains the source key in $0.772$ of rows. The doubt is that a minor key could be scored
+as a hit by drifting to its relative major, since the two share a scale: it does not
+happen at any rate that matters. Only $0.041$ of edited rows land on the relative major
+and $0.045$ on the parallel major, and both cells are as large under the controls
+($0.043$ and $0.047$ at matched displacement), so they are where continuations sit
+anyway rather than something the edit produces. The fifth-adjacent mass that dominates
+the major remainder ($0.288$) is small in minor ($0.037$), so a minor install either
+reaches its target or scatters; it does not slide one step around the circle.
 
 Figure~\ref{fig:supp-confusion} shows the full $12 \times 12$ matrices. The replacement
 has a diagonal; the control has none. This is also the second reading of the previous

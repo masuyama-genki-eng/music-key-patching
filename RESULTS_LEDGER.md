@@ -1951,3 +1951,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/b_threshold/threshold_sensitivity.json`, `results/reanalysis/b_threshold/sr_by_threshold.csv`
 - note: re-scored ours (5 arms x 2 modes), steering (3 conds x 2 modes) and 8 public cells at 12 grid thresholds + stored percentiles; ordering flips: 0
 
+## 2026-09-09T18:27:41+09:00 — POST-HOC additional experiment E: steering/install trade-off curve from the search stage (re-analysis)
+- git: `2ad3e5c96cae3168bf56f5557c7e9bd37d5c51b9+DIRTY`
+- config_hash: `308a492212bc97b543513a3a3462b5942d28553946721fd5c51883b55b6a1ce4`
+- seeds: []
+- artifacts: `results/reanalysis/e_pareto/pareto.json`, `results/reanalysis/e_pareto/pareto.csv`
+- note: alpha in {0.25..16} x 8 layers re-scored for KS-only SR, thresholded SR and disturbance; install read from the same search sweep at the same layer
+

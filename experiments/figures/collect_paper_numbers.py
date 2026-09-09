@@ -723,6 +723,32 @@ def main() -> None:
                     re_out[f"thr_public_{tag}_{cond}_{lab}"] = r3(r["sr"])
         re_out["thr_ordering_flips"] = str(len(th["ordering_flips"]))
 
+    # additional experiment E: the steering/install trade-off curve (search stage)
+    pa = load("results/reanalysis/e_pareto/pareto.json")
+    if pa:
+        for L, blk in pa["layers"].items():
+            if blk.get("install"):
+                i = blk["install"]
+                re_out[f"pareto_L{L}_install"] = {
+                    "sr_ks": r3(i["sr_ks_only"]), "sr_thr": r3(i["sr_thresholded"]),
+                    "disp": r3(i["displacement"]),
+                    "dist_med": r3(i["disturbance_median"]),
+                    "over": r3(i["over_limit"]), "ikr": r3(i["ikr_target"])}
+            for c in blk.get("steering_curve", []):
+                re_out[f"pareto_L{L}_a{c['alpha']:g}"] = {
+                    "sr_ks": r3(c["sr_ks_only"]), "sr_thr": r3(c["sr_thresholded"]),
+                    "disp": r3(c["displacement"]),
+                    "dist_med": r3(c["disturbance_median"]),
+                    "over": r3(c["over_limit"]), "ikr": r3(c["ikr_target"])}
+            re_out[f"pareto_L{L}_s_bar"] = r3(blk["s_bar"])
+            re_out[f"pareto_L{L}_h_norm"] = r3(blk["h_norm"])
+            if blk.get("displacement_ratio_steering_over_install"):
+                re_out[f"pareto_L{L}_ratio"] = \
+                    r3(blk["displacement_ratio_steering_over_install"])
+            if blk.get("steering_matching_install_sr"):
+                re_out[f"pareto_L{L}_match_disp"] = \
+                    r3(blk["steering_matching_install_sr"]["displacement"])
+
     if re_out:
         out["reanalysis"] = re_out
 
