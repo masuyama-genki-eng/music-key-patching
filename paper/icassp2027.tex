@@ -494,7 +494,9 @@ This result suggests that, once the edit changes the generated notes, those note
 %   あり、差し替えるならこの includegraphics の1行を書き換えるだけでよい。
 \caption{Probe readability and edit gain across layers.
 The key becomes linearly readable before replacing the corresponding representation substantially affects generation.
-Readability is the probe macro-$F_1$ and edit gain is the success rate of the target-key replacement minus that of the rank-matched random baseline at the same layer, both from the search stage.}
+Readability is the probe macro-$F_1$ and edit gain is the success rate of the target-key replacement minus that of the rank-matched random baseline at the same layer, both from the search stage.
+The probe curve is dotted with hollow markers where its control-corrected margin over the strongest note counter does not clear zero.
+The left band is the range across the six trained models and the right band is a prompt-level bootstrap interval.}
 \label{fig:layer_read_use}
 \end{figure}
 
@@ -503,11 +505,13 @@ Readability is the probe macro-$F_1$ and edit gain is the success rate of the ta
 %Probe性能と編集効果は、層とトークン位置の両方で分かれた。
 %図2が示すとおり、probe は第1層でほぼ最大の macro-F1 に達しているのに、そこでの編集効果はまだゼロ近くである。
 %編集効果は第2層以降で初めて上がり第4層で頂点になるが、その時点で probe の値はもう動いていない。
-%第0層はこの比較の外に置く。音符数えに対する統制補正後のマージンが負である唯一の層であり、我々の用いる意味で調が読めているとは言えないからである。
+%probe 曲線の点線部分は、その値が最強の音符数えをまだ上回っていない層を示す。したがって第1層までに飽和するのは生の値であり、音符数えが与えられない部分ではない。
+%生の probe 精度はプロービング研究が通常報告する量であり、編集が効く層を突き止められないのはその量である。
 Probe performance and edit effectiveness separate across layers and across token positions.
 Figure~\ref{fig:layer_read_use} shows the probe reaching almost its full macro-$F_1$ at layer~$1$ while the edit gain over the random baseline is still near zero there.
 The edit gain rises only from layer~$2$ onward and peaks at layer~$4$, by which point the probe score has stopped changing.
-Layer~$0$ stands outside this comparison because its control-corrected margin over the note counts is negative, so the key is not readable there in the sense we use.
+The dotted part of the probe curve marks the layers where that score does not yet beat the strongest note counter, so what saturates early is the raw score rather than the part of it the notes cannot already supply.
+Raw probe accuracy is the quantity a probing study normally reports, and it is that quantity which fails to locate the layers where the edit works.
 %同様の分かれ方はトークン位置でも見られ、そちらの数値は最終テストのものである。
 %音高位置だけを編集してもほとんど効果はなく（SR 0.035）、小節と音長の位置を編集すると0.233に達し、12個中11個の目標調で有意であった。
 %2つの集合は全位置の43%と48%でほぼ同じ大きさなので、この差は編集した箇所が少ないことから来るのではない。

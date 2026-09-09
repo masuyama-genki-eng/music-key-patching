@@ -59,12 +59,78 @@ def probe_raw_f1() -> dict[int, float]:
     return {L: float(r["layers"][str(L)]["probe"]["macro_f1_24"]) for L in LAYERS}
 
 
-def probe_margins() -> dict[int, float]:
+ALL_MODELS = ["R-Aug_s0", "R-Aug_s1", "R-Aug_s2",
+              "R-NoAug_s0", "R-NoAug_s1", "R-NoAug_s2"]
+
+
+def probe_raw_f1_all_models() -> dict[str, dict[int, float]]:
+    """The same per-layer curve for every trained model, so the band can show
+    that the shape is not particular to the run the headline numbers use."""
+    out = {}
+    for m in ALL_MODELS:
+        p = REPO / f"results/probing/{m}/probe_report.json"
+        if not p.exists():
+            continue
+        r = json.loads(p.read_text())
+        out[m] = {L: float(r["layers"][str(L)]["probe"]["macro_f1_24"])
+                  for L in LAYERS}
+    return out
+
+
+def edit_gain_ci() -> dict[int, tuple[float, float]]:
+    """Prompt-level BCa bootstrap 95% CI of the per-layer edit gain.
+
+    The unit is the prompt, as everywhere else in the paper: for each prompt we
+    take its mean success over the 12 targets under the replacement and under
+    the rank-matched random baseline, difference them, and bootstrap the mean of
+    those paired differences.
+    """
+    from src.analysis.stats import bca_ci
+    g = json.loads((REPO / "results/guard/delta_ppl.json").read_text())
+    per = collections.defaultdict(dict)          # layer -> cond -> DataFrame
+    for f in sorted((REPO / "results/sweep/R-Aug_s0/parts").glob("*.parquet")):
+        m = re.match(r"(v_probe|k1_r24)_L(\d+)_T\d+\.parquet$", f.name)
+        if not m:
+            continue
+        d = pd.read_parquet(f)
+        d = d[d.cond != "clean"] if "cond" in d.columns else d
+        ok = d.est_key == d.target_key
+        if "mref_ppl_excess" in d.columns:
+            ok = guarded_success(ok, d.mref_ppl_excess, g["delta_ppl"])
+        rows = pd.DataFrame({"prompt_idx": d.prompt_idx.values,
+                             "succ": np.asarray(ok, dtype=float)})
+        L, cond = int(m.group(2)), m.group(1)
+        per[L].setdefault(cond, []).append(rows)
+    out = {}
+    for L, byc in per.items():
+        if "v_probe" not in byc or "k1_r24" not in byc:
+            continue
+        e = pd.concat(byc["v_probe"]).groupby("prompt_idx").succ.mean()
+        k = pd.concat(byc["k1_r24"]).groupby("prompt_idx").succ.mean()
+        common = e.index.intersection(k.index)
+        diff = (e.loc[common] - k.loc[common]).to_numpy()
+        ci = bca_ci(np.arange(len(diff)), lambda idx: float(diff[idx].mean()))
+        out[L] = (float(ci["ci_lo"]), float(ci["ci_hi"]))
+    return out
+
+
+def probe_margins(with_ci: bool = False):
     p = REPO / "results/probing/R-Aug_s0/verdict_DR-H1_extD.json"
     v = json.loads(p.read_text())
+    if with_ci:
+        return {int(r["layer"]): (float(r["stat"]), float(r["ci_lo"]),
+                                  float(r["ci_hi"])) for r in v["layers"]}
     out = {int(r["layer"]): float(r["stat"]) for r in v["layers"]}
     log.info("probe margins from %s (best_c3=%s)", p.name, v.get("best_c3"))
     return out
+
+
+def beats_note_counts() -> dict[int, bool]:
+    """Per layer, does the control-corrected probe margin over the STRONGEST
+    note counter clear zero? Used to fill or hollow the marker, so the blue
+    curve carries both how readable the key is and whether that readability is
+    more than the notes already give away."""
+    return {L: (lo > 0.0) for L, (st, lo, hi) in probe_margins(True).items()}
 
 
 def edit_gains() -> dict[int, float]:
@@ -106,6 +172,8 @@ def main() -> None:
 
     pm = probe_margins() if args.readability == "margin" else probe_raw_f1()
     eg = edit_gains()
+    all_m = probe_raw_f1_all_models() if args.readability == "raw" else {}
+    gain_ci = edit_gain_ci()
     missing = [L for L in LAYERS if L not in pm or L not in eg]
     if missing:
         raise SystemExit(f"no artifact value for layer(s) {missing} -- refusing "
@@ -126,11 +194,32 @@ def main() -> None:
         a.set_facecolor("white")
     ax.axhline(0.0, color=ZERO, lw=0.8, zorder=1)
 
+    # 帯: 青は6モデルの範囲、オレンジはプロンプト単位のブートストラップ95% CI。
+    if all_m:
+        lo = [min(c[L] for c in all_m.values()) for L in LAYERS]
+        hi = [max(c[L] for c in all_m.values()) for L in LAYERS]
+        ax.fill_between(LAYERS, lo, hi, color=BLUE, alpha=0.15, lw=0, zorder=2)
+    if gain_ci:
+        glo = [gain_ci[L][0] for L in LAYERS]
+        ghi = [gain_ci[L][1] for L in LAYERS]
+        ax2.fill_between(LAYERS, glo, ghi, color=ORANGE, alpha=0.22, lw=0,
+                         zorder=2)
     lab = ("probe margin (left)" if args.readability == "margin"
            else "probe macro-$F_1$ (left)")
     # 丸マーカーは著者指示で廃止。三角と四角なら白黒印刷でも判別できる。
-    l1, = ax.plot(LAYERS, p, "-^", color=BLUE, lw=1.3, ms=4.2, zorder=3,
-                  label=lab)
+    # 青線の工夫: ただの一本線にせず、区間ごとに線種を変える。両端の層がどちらも
+    # 音符数えに勝っている区間は実線、そうでない区間は点線。マーカーも塗り分ける
+    # （塗り三角 = 勝つ層、白抜き = 勝たない層。第0層は負、第1層は CI がゼロを跨ぐ）。
+    # これで青線が「どれだけ読めるか」と「音符数えを超えているか」の2つを運ぶ。
+    beats = beats_note_counts()
+    for L in LAYERS[:-1]:
+        style = "-" if (beats.get(L) and beats.get(L + 1)) else ":"
+        ax.plot([L, L + 1], [p[L], p[L + 1]], style, color=BLUE, lw=1.4,
+                zorder=3)
+    for L in LAYERS:
+        ax.plot([L], [p[L]], "^", color=BLUE, ms=5.0, zorder=4,
+                markerfacecolor=(BLUE if beats.get(L) else "white"),
+                markeredgewidth=1.0)
     l2, = ax2.plot(LAYERS, e, "--s", color=ORANGE, lw=1.3, ms=4.0, zorder=3,
                    label="edit gain (right)")
 
@@ -153,8 +242,12 @@ def main() -> None:
             a.spines[side].set_visible(True)
             a.spines[side].set_color(FRAME)
             a.spines[side].set_linewidth(0.7)
-    ax.legend(handles=[l1, l2], frameon=False, fontsize=7.2,
-              loc="lower right", handlelength=2.4, borderaxespad=0.2)
+    from matplotlib.lines import Line2D
+    proxy = Line2D([], [], color=BLUE, lw=1.3, marker="^", ms=4.6,
+                   markerfacecolor=BLUE, markeredgewidth=1.1)
+    ax.legend(handles=[proxy, l2], labels=[lab, "edit gain (right)"],
+              frameon=False, fontsize=7.2, loc="lower right",
+              handlelength=2.4, borderaxespad=0.2)
     fig.savefig(args.out, bbox_inches="tight", pad_inches=0.01,
                 facecolor="white")
     plt.close(fig)
