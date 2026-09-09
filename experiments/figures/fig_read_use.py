@@ -44,7 +44,10 @@ from src.eval.guard import guarded_success
 
 log = logging.getLogger("fig_read_use")
 MM = 1.0 / 25.4
-INK, GRID, ACC, MUTED = "#26384d", "#d8dee6", "#c1522e", "#7d92ad"
+# 2026-09-09 著者指示: 参照図の配色（青／オレンジ）と全周の黒い枠線に合わせる。
+# 線種とマーカーの違いは白黒印刷のために残す。
+INK, FRAME, ZERO = "#000000", "#000000", "#BBBBBB"
+BLUE, ORANGE = "blue", "orange"
 LAYERS = list(range(8))
 
 
@@ -121,13 +124,13 @@ def main() -> None:
     ax2 = ax.twinx()
     for a in (ax, ax2):
         a.set_facecolor("white")
-    ax.axhline(0.0, color=GRID, lw=0.8, zorder=1)
+    ax.axhline(0.0, color=ZERO, lw=0.8, zorder=1)
 
     lab = ("probe margin (left)" if args.readability == "margin"
            else "probe macro-$F_1$ (left)")
-    l1, = ax.plot(LAYERS, p, "-o", color=MUTED, lw=1.4, ms=4.2, zorder=3,
+    l1, = ax.plot(LAYERS, p, "-o", color=BLUE, lw=1.3, ms=4.2, zorder=3,
                   markerfacecolor="white", markeredgewidth=1.1, label=lab)
-    l2, = ax2.plot(LAYERS, e, "--s", color=ACC, lw=1.4, ms=4.0, zorder=3,
+    l2, = ax2.plot(LAYERS, e, "--s", color=ORANGE, lw=1.3, ms=4.0, zorder=3,
                    label="edit gain (right)")
 
     ax.set_xlabel("layer", fontsize=8, color=INK)
@@ -142,11 +145,12 @@ def main() -> None:
         ax.set_ylim(0.0, 1.0)   # full macro-F1 range, no truncated axis
     ax2.set_ylim(-0.02, max(e) + 0.06)
     for a in (ax, ax2):
-        a.tick_params(colors=INK, labelsize=7.5, length=3, color=GRID)
-        for s in ("top",):
-            a.spines[s].set_visible(False)
-        for s in ("left", "bottom", "right"):
-            a.spines[s].set_color(GRID)
+        a.tick_params(colors=INK, labelsize=7.5, length=3, color=FRAME,
+                      width=0.8)
+        for side in ("top", "bottom", "left", "right"):
+            a.spines[side].set_visible(True)
+            a.spines[side].set_color(FRAME)
+            a.spines[side].set_linewidth(0.8)
     ax.legend(handles=[l1, l2], frameon=False, fontsize=7.2,
               loc="lower right", handlelength=2.4, borderaxespad=0.2)
     fig.savefig(args.out, bbox_inches="tight", pad_inches=0.01,
