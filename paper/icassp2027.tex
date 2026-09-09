@@ -481,28 +481,43 @@ Because no edited note exists at this point, the effect cannot arise from the mo
 In the search stage, the effect persisted when we stopped editing after the first generated bar.
 This result suggests that, once the edit changes the generated notes, those notes can carry the new key forward.
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig_read_use.pdf}
+% 図2キャプション [2026-09-09 追加]
+% 層をまたいだ可読性と編集効果。
+% 調は、対応する表現を置き換えることが生成に実質的な影響を与えるより前に、線形に読み取れるようになる。
+% 可読性は probe の macro-F1、編集効果は同じ層での標的調置換の成功率から順位を揃えたランダムベースラインの成功率を引いた値であり、いずれも探索段階のものである。
+% 注意（本文と整合）: 左軸には probe の生の macro-F1 を置いている。音符数えに対する
+%   マージンを左軸に置くと、そのマージンは第1層でピークの17%にとどまり編集効果の15%と
+%   ほぼ並ぶため、乖離が見えなくなる。マージン版の図は paper/fig_read_use_margin.pdf に
+%   あり、差し替えるならこの includegraphics の1行を書き換えるだけでよい。
+\caption{Probe readability and edit gain across layers.
+The key becomes linearly readable before replacing the corresponding representation substantially affects generation.
+Readability is the probe macro-$F_1$ and edit gain is the success rate of the target-key replacement minus that of the rank-matched random baseline at the same layer, both from the search stage.}
+\label{fig:layer_read_use}
+\end{figure}
+
 \subsection{Readability Does Not Identify Where the Key Is Used}
 \label{sec:h5}
-%Probe性能と編集効果は、層とトークン位置の両方で一致しなかった。
-%第0層と第1層ではすでにprobeが調を高い精度で読み取れるが、編集効果はランダムベースラインを0.03、0.04上回るだけであった。
-%一方、第2層以降ではprobe性能がほぼ変わらないにもかかわらず、編集はベースラインを0.19–0.30上回った。
-Probe performance and edit effectiveness separate across both layers and token positions.
-% [2026-08-27] 可読性のための言い換えのみ. 元の "reads the key well" でも
-%   内容は正しい (§4.1 の負のマージンは「音符数えに勝てない」という意味であり,
-%   プローブの絶対精度が低いことを意味しないため矛盾はない).
-%   元の表現に戻したい場合は下行を次に置き換える:
-%   The probe already reads the key well at layers~$0$ and~$1$, where the edit
-%   exceeds the random baseline by only $0.03$ and $0.04$.
-At layer~$1$ the probe already reads the key well, reaching raw macro-$F_1$ $0.872$ with a margin over the note counts whose CI excludes zero, yet the edit there exceeds the random baseline by only $0.04$ (search stage).
-From layer~$2$ onward the edit exceeds the baseline by $0.19$--$0.30$ while the raw probe score barely moves, from $0.921$ to $0.927$.
-We exclude layer~$0$ from this comparison: it is the one layer whose control-corrected margin is negative, so it is not a case of a readable key.
-%同様の違いはトークン位置でも見られた。
-%音高位置だけを編集してもほとんど効果はなかった（SR 0.035）が、小節と音長の位置を編集すると0.233に達し、12個中11個の目標調で有意であった。
-%したがって、ある位置から調を読み取れることは、その位置の調表現をモデルが生成に利用していることを意味しない。
-The same separation appears across token positions, and here the numbers come from the final test.
+%Probe性能と編集効果は、層とトークン位置の両方で分かれた。
+%図2が示すとおり、probe は第1層でほぼ最大の macro-F1 に達しているのに、そこでの編集効果はまだゼロ近くである。
+%編集効果は第2層以降で初めて上がり第4層で頂点になるが、その時点で probe の値はもう動いていない。
+%第0層はこの比較の外に置く。音符数えに対する統制補正後のマージンが負である唯一の層であり、我々の用いる意味で調が読めているとは言えないからである。
+Probe performance and edit effectiveness separate across layers and across token positions.
+Figure~\ref{fig:layer_read_use} shows the probe reaching almost its full macro-$F_1$ at layer~$1$ while the edit gain over the random baseline is still near zero there.
+The edit gain rises only from layer~$2$ onward and peaks at layer~$4$, by which point the probe score has stopped changing.
+Layer~$0$ stands outside this comparison because its control-corrected margin over the note counts is negative, so the key is not readable there in the sense we use.
+%同様の分かれ方はトークン位置でも見られ、そちらの数値は最終テストのものである。
+%音高位置だけを編集してもほとんど効果はなく（SR 0.035）、小節と音長の位置を編集すると0.233に達し、12個中11個の目標調で有意であった。
+%2つの集合は全位置の43%と48%でほぼ同じ大きさなので、この差は編集した箇所が少ないことから来るのではない。
+%標的が族に合っていないわけでもない。族ごとに推定した μ_κ は V の内側でコサイン0.92で一致し、異なる調の間では0.31にすぎない。
+%したがって probe の可読性だけでは、表現を変えることが生成される調に影響する層や位置を特定できない。
+The same separation appears across token positions, where the numbers come from the final test.
 Editing only pitch positions has little effect (SR $0.035$), whereas editing bar and note-length positions reaches $0.233$ and is significant for $11$ of the $12$ target keys (Table~\ref{tab:main}).
-The two sets are nearly the same size, $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places, nor is the target mismatched to the family: per-family estimates of $\mu_{\kappa}$ agree to cosine $0.92$ inside $V$, against $0.31$ across keys.
-Thus, a representation can be readable at a site without being used there to determine the generated key.
+The two sets are nearly the same size at $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places.
+The target is not mismatched to the family either, since per-family estimates of $\mu_{\kappa}$ agree to cosine $0.92$ inside $V$ against $0.31$ across keys.
+Thus probe readability alone does not identify the layers or the positions where changing the representation affects the generated key.
 
 \subsection{The Read--Use Gap Holds in Public Models}
 \label{sec:wild}
