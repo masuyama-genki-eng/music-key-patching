@@ -46,7 +46,7 @@ log = logging.getLogger("fig_read_use")
 MM = 1.0 / 25.4
 # 2026-09-09 著者指示: 参照図の配色（青／オレンジ）と全周の黒い枠線に合わせる。
 # 線種とマーカーの違いは白黒印刷のために残す。
-INK, FRAME, ZERO = "#000000", "#000000", "#BBBBBB"
+INK, FRAME, ZERO = "#000000", "#4D4D4D", "#CCCCCC"   # 枠は薄めの黒
 BLUE, ORANGE = "blue", "orange"
 LAYERS = list(range(8))
 
@@ -128,15 +128,17 @@ def main() -> None:
 
     lab = ("probe margin (left)" if args.readability == "margin"
            else "probe macro-$F_1$ (left)")
-    l1, = ax.plot(LAYERS, p, "-o", color=BLUE, lw=1.3, ms=4.2, zorder=3,
-                  markerfacecolor="white", markeredgewidth=1.1, label=lab)
+    # 丸マーカーは著者指示で廃止。三角と四角なら白黒印刷でも判別できる。
+    l1, = ax.plot(LAYERS, p, "-^", color=BLUE, lw=1.3, ms=4.2, zorder=3,
+                  label=lab)
     l2, = ax2.plot(LAYERS, e, "--s", color=ORANGE, lw=1.3, ms=4.0, zorder=3,
                    label="edit gain (right)")
 
     ax.set_xlabel("layer", fontsize=8, color=INK)
     ax.set_ylabel("probe margin" if args.readability == "margin"
                   else "probe macro-$F_1$", fontsize=8, color=INK)
-    ax2.set_ylabel("edit gain", fontsize=8, color=INK)
+    # 「SR そのもの」との混同を避けるため、軸ラベルで差分であることを明示する。
+    ax2.set_ylabel("edit gain (SR $-$ baseline)", fontsize=8, color=INK)
     ax.set_xticks(LAYERS)
     ax.set_xlim(-0.35, 7.35)
     if args.readability == "margin":
@@ -146,11 +148,11 @@ def main() -> None:
     ax2.set_ylim(-0.02, max(e) + 0.06)
     for a in (ax, ax2):
         a.tick_params(colors=INK, labelsize=7.5, length=3, color=FRAME,
-                      width=0.8)
+                      width=0.7)
         for side in ("top", "bottom", "left", "right"):
             a.spines[side].set_visible(True)
             a.spines[side].set_color(FRAME)
-            a.spines[side].set_linewidth(0.8)
+            a.spines[side].set_linewidth(0.7)
     ax.legend(handles=[l1, l2], frameon=False, fontsize=7.2,
               loc="lower right", handlelength=2.4, borderaxespad=0.2)
     fig.savefig(args.out, bbox_inches="tight", pad_inches=0.01,
