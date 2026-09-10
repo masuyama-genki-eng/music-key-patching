@@ -144,6 +144,7 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
     from matplotlib.patches import Rectangle, FancyBboxPatch
 
     bg, c_prompt, c_cont, c_accent, c_label, c_out = PALETTES[palette]
+    c_key_src, c_key_installed = args.key_colors.split(",")
     prompt_notes = ids_to_notes(data["prompt"])
     n_prompt_bars = max(n[0] // 16 for n in prompt_notes) + 1
     split = n_prompt_bars * 16                       # start of the first generated bar
@@ -191,6 +192,11 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
         for onset, dur, pitch in notes:
             past = onset >= split
             face = c_cont if past else c_prompt
+            if args.color_by == "key":
+                # 2026-09-10 著者指示: 調で色を決める。プロンプトと、調が変わらない
+                # 継続は黒、書き込んだ調に入る継続だけ赤。パネルを見比べたとき、
+                # 色が変わっている部分がそのまま「調が変わった部分」になる。
+                face = c_key_installed if (past and kind == "edited") else c_key_src
             # Only the CONTINUATION is marked: the prompt is the same eight bars in
             # both panels, so colouring it would add identical noise to each.
             if args.annotate == "outside" and past and not in_scale(pitch, ref):
@@ -238,12 +244,17 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
         # The bracket is drawn in FIGURE coordinates so it clears whatever sits
         # under the roll: the pitch-class strip when there is one, the roll itself
         # when there is not.
-        spans = ([(0, end, labels[0])] if len(labels) == 1
-                 else [(0, split, labels[0]), (split, end, labels[1])])
+        # in key mode each label wears the colour of the notes it names, so the
+        # word and the ink for that key agree.
+        lab_cols = ([c_key_src, c_key_installed] if args.color_by == "key"
+                    else [c_label, c_label])
+        spans = ([(0, end, labels[0], lab_cols[0])] if len(labels) == 1
+                 else [(0, split, labels[0], lab_cols[0]),
+                       (split, end, labels[1], lab_cols[1])])
         under = (bax if bax is not None else ax)
         y_fig = under.get_position().y0 - 0.030
         inv = fig.transFigure.inverted()
-        for x0, x1, lab in spans:
+        for x0, x1, lab, c_lab in spans:
             fx0 = inv.transform(ax.transData.transform((x0 + end * 0.004, 0)))[0]
             fx1 = inv.transform(ax.transData.transform((x1 - end * 0.004, 0)))[0]
             line = plt.Line2D([fx0, fx1], [y_fig, y_fig], color=c_accent, lw=1.5,
@@ -254,7 +265,7 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
                                           color=c_accent, lw=1.5,
                                           transform=fig.transFigure))
             fig.text((fx0 + fx1) / 2, y_fig - 0.014, lab, ha="center", va="top",
-                     fontsize=12.5, color=c_label, fontweight="semibold",
+                     fontsize=12.5, color=c_lab, fontweight="semibold",
                      **(cjk_font() if args.lang == "ja" else {}))
     fig.savefig(out, bbox_inches="tight", dpi=300,
                 facecolor="white", transparent=False)
@@ -287,6 +298,15 @@ def main() -> None:
                     help="figure height in inches; taller separates the pitches")
     ap.add_argument("--hspace", type=float, default=0.42,
                     help="gap between the two panels, in axes heights")
+    ap.add_argument("--color-by", default="segment",
+                    choices=["segment", "key"],
+                    help="segment: the palette's prompt/continuation colours "
+                         "(default, unchanged). key: one colour per key, so the "
+                         "prompt and any continuation that stays in it share a "
+                         "colour and only the installed key differs.")
+    ap.add_argument("--key-colors", default="#111111,#c0392b",
+                    help="with --color-by key: the prompt key's colour and the "
+                         "installed key's, in that order")
     ap.add_argument("--prompt-alpha", type=float, default=0.78,
                     help="opacity of the PROMPT notes; 1.0 makes them as dark as "
                          "the continuation's (default keeps the earlier look)")
