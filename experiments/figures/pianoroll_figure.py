@@ -278,6 +278,12 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
                 sp.set_visible(False)
             bax.axhline(0, color=c_label, lw=0.8, alpha=0.30)
 
+        # 2026-09-10 著者指示「文字いらない」。--labels none で下のラベルと括弧を
+        # 落とす。図の中の情報は音符の色だけになるので、どちらの調かはキャプション
+        # か外部の合成図の側で述べる必要がある。
+        if args.labels == "none":
+            continue
+
         # the only text: the key each region is in, bracketed underneath
         # The bracket is drawn in FIGURE coordinates so it clears whatever sits
         # under the roll: the pitch-class strip when there is one, the roll itself
@@ -358,6 +364,9 @@ def main() -> None:
                     help="0 = plain white behind the roll, 1 = the original tint. "
                          "The bar bands are a reading aid; at full strength they "
                          "competed with the notes they were meant to support.")
+    ap.add_argument("--labels", default="under", choices=["under", "none"],
+                    help="under = the key of each region, bracketed below the "
+                         "roll; none = no text in the figure at all")
     ap.add_argument("--bg-style", default="plain", choices=["plain", "pianoroll"],
                     help="plain = alternating bar bands; pianoroll = shaded "
                          "black-key lanes with bar and beat lines, the ground a "
