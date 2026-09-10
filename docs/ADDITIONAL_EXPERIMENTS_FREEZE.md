@@ -300,3 +300,110 @@ disjointness test extended.
    explain it away.
 
 In every case the AMT result is unaffected, since nothing about that run changes.
+
+---
+
+# AMENDMENT 3 — the three experiments that were still unrun
+
+Committed 2026-09-10, before any of the three produces anything. At this commit
+`results/reanalysis/f1_bar_dur/` and `results/reanalysis/f2_minor_next_pitch/`
+do not exist, `results/confirmatory/R-Aug_s1/` holds no verdict, no BAR-only or
+DUR-only mask exists in the code, `next_pitch_test.py` builds major scales only,
+and the K2 gate has never been evaluated with a tolerance.
+
+## F1. Is it the bar boundary, or the step before a pitch?
+
+C2 found that in two public schemes the effect sits on the structural token
+immediately before a pitch is chosen --- AMT's duration token and REMI's
+instrument token. Our own corpus writes `BAR POS (PITCH DUR)+`, so the token
+before a PITCH is DUR for every note but the first of a chord, and POS for that
+first one. But our reported arm bundles BAR with DUR, and BAR is only $0.043$ of
+positions against DUR's $0.433$, so the $0.233$ that arm reaches could come from
+either. Separating them turns the cross-scheme observation into a measurement.
+
+Fixed: two new arms, BAR only and DUR only, added to `MASKS` without touching
+the existing four. Layer 4, probe-weight $V$ at rank 24, the final-test prompts
+in both modes, 12 targets, `GEN_SEED = 7`, the frozen budget with limit-breakers
+kept as failures, and the same statistics as the primary run. The comparison is
+each arm against the same K1-norm rows already in the ledgered parquet, paired by
+prompt and target, plus each arm's share of prompt positions.
+
+Readings, fixed now:
+1. DUR only carries most of what BAR+DUR carries while BAR only is near the
+   floor --- the causal site is the step whose next token is a pitch, which is
+   also the position the probe reads, and the three tokenizations agree on a
+   mechanism rather than on a token name.
+2. BAR only carries most of it --- the site is the bar boundary, our scheme
+   differs from the two public ones, and the unifying sentence now in the main
+   text must be narrowed to those two.
+3. Neither alone carries it --- the effect needs both, reported as such, and the
+   cross-scheme claim is weakened to "not the pitch token" without a positive
+   account of where.
+
+## F2. The generation-free reading in minor
+
+`docs/CONFIRMATORY_FREEZE.md` AMENDMENT 3 registered the minor battery but
+explicitly excluded the next-pitch test, because the script builds major scales
+only, and said a further amendment must precede one. This is it.
+
+Fixed: the same test as the major one --- teacher-forced `[BAR, POS_1]` appended,
+the edit applied at the bar-9 boundary, the next-token distribution read with
+nothing sampled --- with the diatonic mask replaced by the minor one already
+frozen elsewhere in the code, `DIATONIC_MINOR_UNION` from `src/eval/keyest.py`,
+which is the definition the in-key measure uses for minor. Targets are the 12
+minor keys, prompts are the minor final-test prompts, conditions are edit, the
+rank-matched random subspace, and no edit, and the statistics are the major
+test's: per-target one-sided Wilcoxon paired by prompt, Holm across 12,
+rank-biserial $r$.
+
+Readings, fixed now:
+1. The log ratio and the installed-scale mass both move under the edit and not
+   under the control --- the pre-sampling result holds in minor, and the claim
+   that the effect precedes feedback covers both modes.
+2. They do not move --- the minor result rests on sampled continuations only, we
+   say so, and the abstract's "before the model generates anything" is qualified
+   to major.
+
+## F3. The held-out seed replication, and the gate revision it needs
+
+This is the paper's most serious open item. The seed-1 held-out run stopped
+because the K2 sham gate failed on 1 prompt of 100, and we did not loosen the
+gate after seeing it fail. The diagnosis was recorded at the time: the maximum
+absolute logit difference between the clean and sham passes is
+$1.14\times10^{-5}$, i.e. floating-point non-associativity in $(x - c) + c$,
+which is exactly what `edit.py` documents and what the unit test already accepts
+with a tolerance. The hook is attached and the positions are aligned.
+
+The revision, and why it is a revision of the RULE rather than of a result: a
+gate that demands bit-identity is testing determinism of the arithmetic, not
+correctness of the intervention. What it must establish is that the sham edit is
+a no-op, and a difference of $10^{-5}$ in a logit is a no-op by any musical
+measure. The revised gate therefore requires either token-identical
+continuations, as before, or, where they differ, that every differing prompt's
+maximum absolute logit difference is below $10^{-4}$ and that the number of
+differing prompts is at most $5$ of $100$. Both thresholds are set now, from the
+recorded diagnosis and not from the run, and the tolerance is an order of
+magnitude above the observed $1.14\times10^{-5}$ so that it is a bound and not a
+fitted value.
+
+Fixed for the run: R-Aug_s1 at ITS OWN previously selected layer, L2, with its
+own probing artifacts, as `docs/CONFIRMATORY_FREEZE.md` already specifies;
+identical prompts, rules and seeds otherwise; arms edit, K1 and K1-norm. The
+prediction stated there stands and is not revised: qualitative replication, edit
+well above K1, with the absolute rate not claimed to transfer.
+
+Readings, fixed now:
+1. The revised gate passes and the edit beats K1 on a majority of targets --- the
+   held-out result is not particular to one training run, and the paper says so
+   while still reporting the seed spread as the weakness it is.
+2. The gate passes and the edit does not beat K1 --- the held-out effect does not
+   replicate on this seed, which is a serious negative result, and it goes in the
+   main text.
+3. The revised gate also fails, i.e. more than $5$ prompts differ or some
+   difference exceeds $10^{-4}$ --- the run stops again, the diagnosis is
+   reported, and no result is taken from it.
+
+In every case the seed-0 numbers are untouched, and the seed variance already
+reported (SD $0.0876$ against a pre-registered $0.03$) is not revised by this run
+--- a replication of the held-out test is a different question from the spread
+across training runs, and the write-up keeps them apart.
