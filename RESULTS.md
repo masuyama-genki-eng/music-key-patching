@@ -157,6 +157,48 @@ artifact `results/reanalysis/{e_pareto,e2_scaled}/`。
 
 ---
 
+## 実験F — AMENDMENT 3 の3件
+
+### F1 BAR と DUR の分離
+
+**要約**: 本文が「小節と音長の位置」として報告しているアームは、**ほぼ全部 DUR が
+担っている**。長調は DUR のみ 0.2318（束ねたアーム 0.2327 の 0.996）で 11/12 有意、
+BAR のみ 0.0327 で対照 0.0391 を下回り 0/12。短調は DUR のみ 0.2091（束 0.2118 の
+0.987）で 12/12、BAR のみ 0.0000 で 0/12。音階内割合も DUR のみが束と3桁一致
+（長調 0.845、短調 0.890）で、BAR のみは無編集の水準（0.546 / 0.727）。BAR は位置の
+0.0432 しか覆わないという反論は残るが、**DUR と PITCH は同じ 0.4324 を覆っていて
+0.2318 対 0.0355** なので、覆う量では説明できない。事前登録の読み方1に該当。
+
+**英文（補足 §27 に記載済み）**:
+> DUR alone reproduces the bundled arm almost exactly, $0.2318$ against $0.2327$ in major and $0.2091$ against $0.2118$ in minor, while BAR alone sits at or below its control in both modes.
+
+**参照**: 補足 §27（表 S19）、本文 §4.4 の1文を差し替え。
+artifact `results/confirmatory/{R-Aug_s0,R-Aug_s0_minor}/verdict_f1.json`、
+`results/reanalysis/f1_bar_dur/summary.json`。
+
+### F2 短調の生成前（next-pitch）テスト
+
+**要約**: 凍結文書が明示的に除外していた欠けを埋めた。対数比は編集 0.3094 対
+対照 0.0261 で **12/12 有意**（最悪 p=6.9e-15、r≥0.93）、書き込んだ調の音階上の質量も
++0.1634 対 +0.0164。したがって「モデルが何も書く前に効く」は両モードを覆う。
+ただし**短調の動きは長調より小さい**（0.3094 対 0.6953）。短調マスクが3種の短音階の
+和で広く、編集前の質量が既に 0.7280（長調 0.5471）あって上限が近いためで、
+モード間の順序は主張しない。事前登録の読み方1に該当。
+
+**英文（補足 §28 に記載済み）**:
+> The natural-log ratio rises by $0.3094$ under the edit against $0.0261$ under the rank-matched random subspace, and separates on all $12$ targets after Holm correction.
+
+**参照**: 補足 §28、本文 §4.3 に1句追加。
+artifact `results/confirmatory/R-Aug_s0_minor/next_pitch.json`。
+
+### F3 seed 1 の held-out 再現
+
+**状態**: 実行中（開始 19:41、3アーム、見積り約40分）。許容付き K2 ゲートは
+**通過（100件中1件のみ差分、すべて 1e-4 未満）** で、事前に記録した診断
+（最大logit差 1.14e-5）と一致した。結果は出次第ここに追記する。
+
+---
+
 ## 実装として入ったもの（すべて既存挙動は不変、テストで固定）
 
 | 追加 | 場所 | 不変性の担保 |

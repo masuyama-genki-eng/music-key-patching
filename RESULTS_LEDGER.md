@@ -2056,3 +2056,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/mwild_sweep/remi-lmd-remi/stage2_eval_positions3.json`
 - note: L5 chosen on disjoint prompts; guarded TKR 0.421 vs K1 0.079 on 60 held-out prompts; DR-H3 supported=True (10/12); guard ref stanford-crfm/music-medium-800k
 
+## 2026-09-10T17:51:31+09:00 — CONFIRMATORY held-out sweep R-Aug_s0 L4
+- git: `1b752b6d9d50152f90886d9f93743596d9d582dc`
+- config_hash: `cf64ac3efd93bc7d5c9b83cd826e49aecddc85b4898a2dfd3cfd95aa4b30aef3`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/parts/confirmatory_L4.parquet`, `results/confirmatory/R-Aug_s0/verdict.json`
+- note: bar: guarded=0.033 sig=0/12; dur: guarded=0.232 sig=11/12
+
+## 2026-09-10T18:35:37+09:00 — CONFIRMATORY held-out sweep R-Aug_s0_minor L4
+- git: `dba6bb554a6034c88819f4272759d42811b60da7+DIRTY`
+- config_hash: `9888757ebbe2e33f9c22c8daba99fdc37e3a7d049928cf02957594cf8dbc4b1d`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/parts/confirmatory_L4.parquet`, `results/confirmatory/R-Aug_s0_minor/verdict.json`
+- note: bar: guarded=0.000 sig=0/12; dur: guarded=0.209 sig=12/12
+
+## 2026-09-10T19:39:45+09:00 — CONFIRMATORY next-pitch R-Aug_s0_minor L4
+- git: `3c40e63b3bba31298c4a3f242a3cd48b8f20641c+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/next_pitch_L4.parquet`, `results/confirmatory/R-Aug_s0_minor/next_pitch.json`
+- note: D_edit=0.3094 vs D_k1=0.0261; 12/12 sig
+
+## 2026-09-10T19:42:00+09:00 — F1 re-analysis: BAR-only against DUR-only (AMENDMENT 3)
+- git: `3c40e63b3bba31298c4a3f242a3cd48b8f20641c+DIRTY`
+- config_hash: `28dc8db01ebd65cb586c444ad583f48a91da29c1f76149aac579d11498ad048f`
+- seeds: []
+- artifacts: `results/reanalysis/f1_bar_dur/summary.json`
+- note: reading 1 of AMENDMENT 3: DUR only carries the arm and BAR only is at the floor. major DUR 0.2318181818181818 on 0.4324 of positions against BAR 0.03272727272727273 on 0.0432; minor 0.20909090909090908 against 0.0
+

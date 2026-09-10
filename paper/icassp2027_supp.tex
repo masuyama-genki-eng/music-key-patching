@@ -73,6 +73,13 @@ The position result is an artefact of your tokenizer.
  & \ref{sec:public-positions} & Two public schemes agree that the pitch token itself
    is inert, and in each the effect sits on the structural token before a pitch is
    chosen.\\
+The bar delimiter is doing the work, not the note-length token.
+ & \ref{sec:bardur} & Separated, DUR alone reaches $0.2318$ of the bundled arm's
+   $0.2327$ and BAR alone is at the floor, at equal coverage with the inert pitch
+   arm.\\
+The pre-sampling result is a major-key result.
+ & \ref{sec:nextpitch-minor} & The same test in minor moves the log ratio by
+   $0.3094$ against $0.0261$, on $12/12$ targets.\\
 The subspace is only the note counts in other coordinates.
  & \ref{sec:pitchclass} & A well-fitted pitch-class subspace ($R^2$ $0.78$) overlaps
    $V$ no more than a random one does, and writing through it is causally inert.\\
@@ -2132,6 +2139,127 @@ pitch token itself does nothing, and the positions that carry the effect are the
 structural tokens immediately before a pitch is chosen --- bar and note-length tokens in
 our scheme, time and duration in AMT, the instrument token in REMI. An intervention that
 worked by pushing on pitch probabilities would behave the other way around in all three.
+
+\section{The bar boundary, or the step before a pitch? \normalfont\textit{(main Sec.~4.4)}}
+\label{sec:bardur}
+
+% 【日本語訳】小節境界か、音高の直前の位置か（本文4.4節）
+% 本文が報告している「小節と音長の位置」というアームは、全位置の 0.0432 しかない
+% BAR と 0.4324 を占める DUR を束ねたものである。我々のコーパスは
+% BAR POS (PITCH DUR)+ と書くので、和音の最初の音を除けば PITCH の直前は必ず DUR で
+% ある。公開モデルの結果（S18）は、効く位置が「次に音高が決まる直前の構造トークン」
+% だと示していたので、この束を切り分ければ、その観察が測定になる。
+% AMENDMENT 3 で2つのアーム（BAR のみ、DUR のみ）を追加し、既存の4つのマスクには
+% 触れずに、最終テストのプロンプト・目標調・seed・予算をそのまま用いて両モードで
+% 走らせた。読み方は走らせる前に3通り固定した。
+% 結果は読み方1である。DUR のみが束ねたアームをほぼそのまま再現し（長調 0.2318 は
+% 0.2327 の 0.996、短調 0.2091 は 0.2118 の 0.987）、音階内割合も同一である。
+% BAR のみは対照より下で、両モードで 0/12 である。
+% BAR は位置の 0.0432 しか覆わないので、書く場所が少ないほど不利だという反論は
+% 残る。ただし DUR も PITCH と同じ 0.4324 であり、その PITCH のみのアームは 0.0355 で
+% 床にある。つまり覆う割合が同じ2つのアームが、10倍離れた成績を出している。
+%
+The arm the main text reports bundles two token families of very different size.
+BAR is $0.0432$ of prompt positions and DUR is $0.4324$, and our corpus writes
+\texttt{BAR POS (PITCH DUR)+}, so the token before a PITCH is a DUR for every note
+but the first of a chord. Since the public schemes put the effect on the structural
+token immediately before a pitch is chosen (\S\ref{sec:public-positions}), separating
+the two turns that cross-scheme observation into a measurement on our own model. We
+added a BAR-only and a DUR-only arm without touching the four existing masks, ran
+both modes on the final-test prompts with the frozen targets, seed and budget, and
+fixed the three possible readings in advance.
+
+The result is the first of them. DUR alone reproduces the bundled arm almost exactly,
+$0.2318$ against $0.2327$ in major and $0.2091$ against $0.2118$ in minor, with the
+same in-key share to three decimals, while BAR alone sits at or below its control in
+both modes and separates on no target.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S19} \textit{(main Sec.~4.4)}. The bundled arm separated, final test,
+$100$ prompts $\times$ $12$ targets per cell. ``Share'' is the fraction of prompt
+positions the mask covers, ``guard'' the fraction of continuations inside the budget,
+and ``keys'' the targets the arm beats the same K1 rows on after Holm correction.
+The pitch-only and bundled arms are the main text's, repeated here for reading.}
+\label{tab:supp-bardur}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+mode & arm & share & SR & in-key & guard & keys\\
+\midrule
+major & bar and dur   & $0.4757$ & $0.2327$ & $0.845$ & $0.822$ & $11/12$\\
+      & dur only      & $0.4324$ & $0.2318$ & $0.845$ & $0.822$ & $11/12$\\
+      & bar only      & $0.0432$ & $0.0327$ & $0.546$ & $1.000$ & $0/12$\\
+      & pitch only    & $0.4324$ & $0.0355$ & $0.547$ & $0.984$ & $0/12$\\
+      & K1, matched dimension & --- & $0.0391$ & $0.564$ & --- & ---\\
+\midrule
+minor & bar and dur   & $0.4757$ & $0.2118$ & $0.890$ & $0.755$ & $12/12$\\
+      & dur only      & $0.4324$ & $0.2091$ & $0.890$ & $0.754$ & $12/12$\\
+      & bar only      & $0.0432$ & $0.0000$ & $0.727$ & $1.000$ & $0/12$\\
+      & pitch only    & $0.4324$ & $0.0000$ & $0.727$ & $0.983$ & $0/12$\\
+      & K1, matched dimension & --- & $0.0027$ & $0.740$ & --- & ---\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The DUR arm's gain over its control is $+0.1927$ in major (BCa $95\%$ CI
+$[0.1618,0.2227]$, worst Holm-corrected $p=0.054$, $r$ $0.37$ to $1.00$) and
+$+0.2064$ in minor ($[0.1809,0.2327]$, worst $p=5.3\times10^{-4}$, $r\ge0.89$),
+while the BAR arm's is $-0.0064$ in major ($[-0.0191,0.0055]$) and $-0.0027$ in minor.
+Its in-key share stays at the unedited level, $0.546$ against the control's $0.564$,
+and its guard pass rate is exactly $1.000$ in both modes, which is what a write that
+changes almost nothing looks like.
+
+One objection survives and we state it. BAR covers only $0.0432$ of positions, so an
+arm that edits fewer places could lose for reasons unrelated to where the key lives.
+What the table settles is the comparison at equal coverage. DUR and PITCH cover the
+same $0.4324$ of positions, and they score $0.2318$ and $0.0355$. Two arms of
+identical size differ by a factor of six, so size is not what decides the outcome.
+Every prompt in this corpus has the same token layout, $8$ bar marks, $16$ positions
+and $80$ notes in $185$ tokens, which is why the shares are identical across modes.
+
+So the three tokenizations agree on a mechanism rather than on a token name, and the
+sentence in the main text can be read the same way in all of them. The causal site is
+the step whose next token is a pitch, which is also the position the probe reads.
+
+\section{The generation-free reading in minor \normalfont\textit{(main Secs.~4.3, 4.2)}}
+\label{sec:nextpitch-minor}
+
+% 【日本語訳】生成前の読み取り、短調（本文4.3節、4.2節）
+% CONFIRMATORY_FREEZE の AMENDMENT 3 は短調の一式を登録したが、next-pitch テストだけは
+% 除外していた。スクリプトが長調の音階しか作らなかったためで、走らせるには追加の
+% 修正条項が必要だと明記していた。AMENDMENT 3（追加実験）がそれである。
+% テストは長調と同一で、[BAR, POS_1] を teacher-forcing で足し、第9小節の境界で編集を
+% 適用し、何も標本抽出せずに次トークン分布を読む。音階マスクだけを、コード内で既に
+% 凍結されている短調の定義 DIATONIC_MINOR_UNION に差し替えた。
+% 結果は読み方1である。対数比は編集で 0.3094、対照で 0.0261 動き、12/12 で分離する
+% （最悪 p=6.9e-15、r>=0.93）。書き込んだ調の音階上の質量も +0.1634 対 +0.0164 である。
+% したがって「モデルが何も書く前に効く」という主張は両モードを覆う。
+% ただし短調の動きは長調より小さい（0.3094 対 0.6953）。これは短調の音階マスクが
+% 広く、編集前の質量が既に 0.7280（長調は 0.5471）あって上限が近いためである。
+% 我々は比を主張せず、両方の値を出す。
+%
+The minor battery registered in \texttt{CONFIRMATORY\_FREEZE} excluded the next-pitch
+test, because the script built major scales only, and it said a further amendment must
+precede one. This is that run. The test is the major one unchanged. We append
+\texttt{[BAR, POS\_1]} by teacher forcing, apply the edit at the bar-$9$ boundary, and
+read the next-token distribution with nothing sampled. Only the scale mask changes, to
+the minor definition already frozen in the code and used by the in-key measure.
+
+The first pre-registered reading holds. The natural-log ratio between the mass on the
+installed key's scale and the mass on the prompt key's scale rises by $0.3094$ under
+the edit against $0.0261$ under the rank-matched random subspace, and the difference
+separates on all $12$ targets after Holm correction (worst $p=6.9\times10^{-15}$,
+$r\ge0.93$). The probability mass on the installed scale itself rises by $0.1634$
+against $0.0164$. The claim that the effect precedes any feedback from the model's own
+notes therefore covers both modes.
+
+The minor shift is smaller than the major one, $0.3094$ against $0.6953$, and the
+reason is visible in the same artifact. The minor mask is the union of the three minor
+scales, so before any edit the mass on the target scale is already $0.7280$ against
+$0.5471$ in major, which leaves the ratio less room to move. We report both numbers
+and claim no ordering between the modes on this measure.
 
 \section{What we did not run, and why \normalfont\textit{(main Secs.~3.2, 4.5)}}
 

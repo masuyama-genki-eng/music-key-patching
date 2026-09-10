@@ -866,6 +866,60 @@ def main() -> None:
             re_out[f"c2_{tag}_share_pitch_plus_timing"] = r3(sh["pitch"] + sh["timing"])
         re_out[f"c2_{tag}_share_total"] = r3(sum(sh.values()))
 
+    # ---- F1 (AMENDMENT 3): the bundled arm separated into BAR and DUR.
+    # The supplementary section quotes these at four decimals, so they are emitted
+    # at four here rather than being rounded twice.
+    f1 = load("results/reanalysis/f1_bar_dur/summary.json")
+    if f1:
+        f1_out = {}
+        for mode, m in f1["modes"].items():
+            sh = m["position_shares"]
+            for fam in ("bar", "dur", "bar_dur", "pitch", "pos_pitch"):
+                f1_out[f"share_{fam}"] = r4(sh[fam])
+            f1_out[f"{mode}_n_positions"] = sh["n_positions"]
+            for arm, a in m["arms"].items():
+                f1_out[f"{mode}_{arm}_sr"] = r4(a["pooled_guarded_tkr"])
+                f1_out[f"{mode}_{arm}_raw"] = r4(a["raw_tkr"])
+                f1_out[f"{mode}_{arm}_k1"] = r4(a["pooled_k1"])
+                f1_out[f"{mode}_{arm}_ikr"] = r3(a["ikr_target"])
+                f1_out[f"{mode}_{arm}_guard"] = r3(a["guard_pass_rate"])
+                f1_out[f"{mode}_{arm}_sig"] = a["n_sig_holm"]
+                f1_out[f"{mode}_{arm}_gain"] = r4(abs(a["pooled_guarded_tkr"]
+                                                     - a["pooled_k1"]))
+                ci = a["diff_bca"]
+                f1_out[f"{mode}_{arm}_gain_ci"] = [r4(abs(ci["ci_lo"])),
+                                                   r4(abs(ci["ci_hi"]))]
+                f1_out[f"{mode}_{arm}_r_range"] = [r3(a["r_min"]), r3(a["r_max"])]
+        # the bundled arm the main text reports, for the ratio the section states
+        for mode, model in (("major", "R-Aug_s0"), ("minor", "R-Aug_s0_minor")):
+            v = load(f"results/confirmatory/{model}/verdict.json")
+            if v and "bar_dur" in v["conditions"]:
+                c = v["conditions"]["bar_dur"]
+                f1_out[f"{mode}_bundled_sr"] = r4(c["pooled_guarded_tkr"])
+                f1_out[f"{mode}_bundled_ikr"] = r3(c["ikr_target"])
+                f1_out[f"{mode}_bundled_guard"] = r3(c["guard_pass_rate"])
+            if v and "pitch" in v["conditions"]:
+                c = v["conditions"]["pitch"]
+                f1_out[f"{mode}_pitch_arm_sr"] = r4(c["pooled_guarded_tkr"])
+                f1_out[f"{mode}_pitch_arm_ikr"] = r3(c["ikr_target"])
+                f1_out[f"{mode}_pitch_arm_guard"] = r3(c["guard_pass_rate"])
+        re_out["f1_bar_dur"] = f1_out
+
+    # ---- F2 (AMENDMENT 3): the generation-free reading in minor
+    npm = load("results/confirmatory/R-Aug_s0_minor/next_pitch.json")
+    if npm and "pooled" in npm:
+        p, pj = npm["pooled"], (npj or {}).get("pooled", {})
+        re_out["f2_next_pitch_minor"] = {
+            "logratio_edit": r4(p["mean_D_edit"]),
+            "logratio_k1": r4(p["mean_D_k1"]),
+            "target_mass_edit": r4(p["mean_dP_target_edit"]),
+            "target_mass_k1": r4(p["mean_dP_target_k1"]),
+            "target_mass_clean": r4(p["mean_p_target_clean"]),
+            "n_sig_holm": npm["n_sig_holm"],
+            "major_logratio_edit": r4(pj["mean_D_edit"]) if pj else "MISSING",
+            "major_target_mass_clean": r4(pj["mean_p_target_clean"]) if pj else "MISSING",
+        }
+
     if re_out:
         out["reanalysis"] = re_out
 

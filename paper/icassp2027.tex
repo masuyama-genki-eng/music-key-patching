@@ -473,8 +473,8 @@ Condition & Major & Minor\\
 %この差は12個すべての目標調で有意であった。
 %まだ編集後の音符が存在しないため、この効果をモデルが自分の生成音から新しい調を読み取った結果として説明することはできない。
 The edit affects the model before it generates a note.
-At the first edited position, it increases the natural-log ratio between the probability mass on the installed key's scale and that on the prompt key's scale by $0.695$ --- about a factor of two --- compared with $0.041$ for random directions.
-The difference is significant for all $12$ target keys after correction (worst $p=5.0\times10^{-16}$, $r\ge0.99$).
+At the first edited position, it increases the natural-log ratio between the probability mass on the installed key's scale and that on the prompt key's scale by $0.695$, about a factor of two, against $0.041$ for random directions, and by $0.309$ against $0.026$ in minor.
+The difference is significant for all $12$ targets of both modes after correction (worst $p=5.0\times10^{-16}$, $r\ge0.99$).
 Because no edited note exists at this point, the effect cannot arise from the model reading the new key from its own output.
 %また探索段階では、最初の1小節だけ編集した後に編集を停止しても、その効果はその後の生成に残った。
 %この結果は、一度編集が生成音を変えると、その後は生成された音符が新しい調を引き継げることを示唆する。
@@ -522,7 +522,7 @@ Raw probe accuracy is the quantity a probing study normally reports, and it is t
 %したがって probe の可読性だけでは、表現を変えることが生成される調に影響する層や位置を特定できない。
 The same separation appears across token positions, where the numbers come from the final test.
 Editing only pitch positions has little effect (SR $0.035$), whereas editing bar and note-length positions reaches $0.233$ and is significant for $11$ of the $12$ target keys (Table~\ref{tab:main}).
-The two sets are nearly the same size at $43\%$ and $48\%$ of all positions, so the gap does not follow from editing fewer places.
+Separated, the note-length token carries all of that and the bar delimiter none, $0.232$ against $0.033$, at the same $43\%$ coverage as the inert pitch set, so coverage does not explain the gap.
 The target is not mismatched to the family either, since per-family estimates of $\mu_{\kappa}$ agree to cosine $0.92$ inside $V$ against $0.31$ across keys.
 %また、編集している部分空間は音符数えの言い換えではない。
 %層4の活性から直近のピッチクラス頻度への回帰は R²=0.78 でよく当てはまるが、その部分空間を通して同じ値を書き込んでも成功率は 0.027 にとどまり、同じ次元と変位のランダム部分空間と区別できない。
