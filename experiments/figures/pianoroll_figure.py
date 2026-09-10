@@ -75,6 +75,16 @@ PALETTES = {
 }
 
 MAJOR_SCALE = {0, 2, 4, 5, 7, 9, 11}
+BLACK_KEYS = {1, 3, 6, 8, 10}
+
+# 2026-09-10 著者指示「背景をピアノロールっぽく」。DAW のピアノロールの地は
+# 黒鍵レーンの帯 + 小節線 + 拍線 + 左端の鍵盤。どれも音符より薄い灰色に留め、
+# 音符が紙面で最も濃いままになるようにしている。
+LANE = "#efefef"        # black-key lane
+OCTAVE = "#d0d0d0"      # the C boundary and the keyboard outline
+BARLINE = "#cdcdcd"
+BEATLINE = "#f2f2f2"
+KEY_BLACK = "#4a4a4a"
 
 
 def in_scale(pitch: int, tonic: int) -> bool:
@@ -183,10 +193,38 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
         pale = tuple(1.0 - (1.0 - c) * k for c in rgb)      # blend toward white
         ax.add_patch(Rectangle((0, lo), end, hi - lo, facecolor=pale,
                                edgecolor="none", zorder=0))
-        for b in range(0, end // 16 + 1):            # alternating bar bands
-            if b % 2:
-                ax.add_patch(Rectangle((b * 16, lo), 16, hi - lo, facecolor=c_cont,
-                                       alpha=0.055 * k, edgecolor="none", zorder=1))
+        x0 = 0.0
+        if args.bg_style == "pianoroll":
+            # one shaded lane per black key, a line at every C, a bar line every
+            # 16 ticks and a beat line every 4. The alternating bar bands are
+            # dropped here because the bar lines already say where the bars are.
+            for p in range(int(np.floor(lo)), int(np.ceil(hi)) + 1):
+                if p % 12 in BLACK_KEYS:
+                    ax.add_patch(Rectangle((0, p - 0.5), end, 1.0, facecolor=LANE,
+                                           edgecolor="none", zorder=1))
+                if p % 12 == 0:
+                    ax.plot([0, end], [p - 0.5] * 2, color=OCTAVE, lw=0.5, zorder=2,
+                            solid_capstyle="butt")
+            for t in range(0, end + 1, 4):
+                bar = t % 16 == 0
+                ax.plot([t, t], [lo, hi], color=BARLINE if bar else BEATLINE,
+                        lw=0.7 if bar else 0.4, zorder=2, solid_capstyle="butt")
+            if args.keyboard:
+                # the keyboard down the left edge, outside the note area, so the
+                # lanes read as pitches rather than as decoration
+                kw = max(2.0, end * 0.022)
+                x0 = -kw
+                for p in range(int(np.floor(lo)), int(np.ceil(hi)) + 1):
+                    black = p % 12 in BLACK_KEYS
+                    ax.add_patch(Rectangle(
+                        (-kw, p - 0.5), kw, 1.0,
+                        facecolor=KEY_BLACK if black else "#ffffff",
+                        edgecolor=OCTAVE, linewidth=0.35, zorder=2))
+        else:
+            for b in range(0, end // 16 + 1):        # alternating bar bands
+                if b % 2:
+                    ax.add_patch(Rectangle((b * 16, lo), 16, hi - lo, facecolor=c_cont,
+                                           alpha=0.055 * k, edgecolor="none", zorder=1))
         ref = (data["target_key"] if args.relative_to == "installed"
                else data["src_key"]) % 12
         for onset, dur, pitch in notes:
@@ -211,7 +249,7 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
         # the edited panel made the two rolls look mismatched.
         ax.plot([split, split], [lo, hi], color=c_accent, lw=1.8,
                 zorder=4, solid_capstyle="butt")
-        ax.set_xlim(0, end); ax.set_ylim(lo, hi)
+        ax.set_xlim(x0, end); ax.set_ylim(lo, hi)
         ax.set_xticks([]); ax.set_yticks([])
         for sp in ax.spines.values():
             sp.set_visible(False)
@@ -320,6 +358,13 @@ def main() -> None:
                     help="0 = plain white behind the roll, 1 = the original tint. "
                          "The bar bands are a reading aid; at full strength they "
                          "competed with the notes they were meant to support.")
+    ap.add_argument("--bg-style", default="plain", choices=["plain", "pianoroll"],
+                    help="plain = alternating bar bands; pianoroll = shaded "
+                         "black-key lanes with bar and beat lines, the ground a "
+                         "DAW piano roll has")
+    ap.add_argument("--keyboard", action="store_true",
+                    help="draw the keyboard down the left edge (--bg-style "
+                         "pianoroll only)")
     ap.add_argument("--outdir", default=str(REPO / "results/figures/pianoroll"))
     ap.add_argument("--no-ledger", action="store_true")
     args = ap.parse_args()
