@@ -622,8 +622,9 @@ We do not claim that the models understand key in the same way as humans or that
 %Sec. 4.3および4.4の追加の因果対照は、自作モデルに対してのみ行った。
 %そのため、MMTとREMIでは編集によって生成音楽が変化することは示したが、その効果が自作モデルと同じ内部メカニズムによって生じることまでは確認していない。
 %disturbance criterionは、音楽的品質そのものではなく、編集によるreference modelのperplexityの変化を測る。また、本研究では聴取実験を行っていない。
-We ran the additional causal controls in Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} only on our own models.
-Therefore, for MMT and REMI, we show that the edits change the generated music, but we do not establish that the effect follows the same internal mechanism as in our models.
+%[2026-09-10] 旧文は「追加の因果統制は自前モデルのみ」と書いていたが、生成前シフトは3つの公開チェックポイントで、位置対照は2つで実施したので偽になった。残る限界を正確に書き直す。
+We ran the causal controls of Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} on the public checkpoints as well, and they hold there, so what remains untested is narrower.
+We did not run the position control on MMT, because its compound scheme emits every field at every step and a pitch position names no position in it, and we did not repeat the layer sweep or the pitch-class control outside our own models.
 The disturbance criterion measures changes in reference-model perplexity rather than musical quality itself.
 We also did not conduct a listening test.
 

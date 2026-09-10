@@ -2206,7 +2206,12 @@ The sections above were written as separate answers to separate doubts. Read tog
 they move the paper in both directions, and a reader is owed the ledger rather than
 the favourable half of it.
 
-\textbf{Four findings weaken what the paper says.} The first is the most serious and
+% 【日本語訳】この節は追加実験の前に書かれていたので、2026-09-10 に更新した。
+% 弱める発見は4件から5件になり（据え付けの標的が最適でないこと）、生き延びない反論の
+% 側にも4件が加わった（ピッチクラス対照、予算の閾値、位置の非対称の他方式での再現、
+% 公開モデルでの統制指標による read–use gap）。推定器についての一文も旋法つきに直した。
+%
+\textbf{Five findings weaken what the paper says.} The first is the most serious and
 cannot be repaired by wording. Across training seeds the edit reaches $0.3555$,
 $0.2182$ and $0.1927$ --- a standard deviation of $0.0876$ where we had pre-registered
 $0.03$ as the bar for calling the effect independent of the training run, and the run
@@ -2221,17 +2226,41 @@ not stored (\S\ref{sec:length}). The fourth is not new but is worth restating be
 the others --- the probe margin over note counting is $+0.105$, or $+0.071$ against
 the strongest counter: real, and small.
 
+The fifth is the newest and it is about our own choice of target. Scaling the install
+continuously shows it is a graded operation, rising monotonically up to full strength in
+both modes, but it does not stop there. At $s=1.25$ the rate reaches $0.4245$ in major
+and $0.6182$ in minor against the reported $0.3555$ and $0.4945$, with paired intervals
+excluding zero, and in major that point also has a lower disturbance median and a higher
+pass rate than the install does (\S\ref{sec:steering}). Writing the class mean is
+therefore not the best place to write, we have no account of why, and the frozen design
+is left alone so every reported number still comes from $s=1$.
+
 \textbf{Against that, several objections do not survive contact with the data.} The
 edit is distance-independent while its control is not (\S\ref{sec:distance}); failures
 land beside the installed key rather than back at the prompt's (\S\ref{sec:landing});
 the tonal centre moves and not merely the pitch collection, reaching about
 three quarters of what a genuine transposition achieves on where the music comes to
-rest (\S\ref{sec:tonic}); the finding holds under five key estimators, of which the
-pre-registered one gives the lowest rate (\S\ref{sec:estimators}); the geometry and the
+rest (\S\ref{sec:tonic}); the finding holds under five key estimators in both modes, of
+which the pre-registered one gives the lowest rate in major and the second lowest in
+minor (\S\ref{sec:estimators}); the geometry and the
 edit both survive training without augmentation (\S\ref{sec:augmentation},
 \S\ref{sec:seeds}); the register and mean pitch are untouched (\S\ref{sec:selectivity});
 resampling moves the rate by about a point (\S\ref{sec:gen-seed}); and the public
 baseline is one measurement rather than three (\S\ref{sec:public}).
+
+Four more objections joined that list after the sections above were first written, and
+they are the strongest of them. The subspace is not the note counts in other
+coordinates: a pitch-class subspace fitted from the same activations at $R^2$ $0.78$
+overlaps $V$ no more than a random one does, writing through it is indistinguishable
+from a random write of the same rank and displacement, and removing it from $V$ costs
+nothing (\S\ref{sec:pitchclass}). The disturbance budget is not what produces the
+result, since re-scoring every condition from a threshold of $0.2$ out to no limit at
+all never changes the ordering (\S\ref{sec:threshold}). The position asymmetry is not an
+artefact of our tokenizer, because in two public schemes the pitch token is likewise
+inert and the effect sits on the structural token before a pitch is chosen
+(\S\ref{sec:public-positions}). And the read--use gap is not confined to raw probe
+accuracy: in a public checkpoint the margin over note counting is high at layers where
+editing does nothing, at both ends of the network (\S\ref{sec:public-layers}).
 
 \textbf{Four things remain open, and none of them is closed by rewriting.} The Bach
 length confound needs continuations we did not keep. The cadence detector is a
