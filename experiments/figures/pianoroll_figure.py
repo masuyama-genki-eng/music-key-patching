@@ -67,6 +67,11 @@ PALETTES = {
     # green: sage for the prompt, deep forest for the continuation. The boundary
     # marker stays warm, because a green marker on green notes would vanish.
     "moss":    ("#f1f3ee", "#9cbfa8", "#1e4a34", "#c1522e", "#1a1a1a", "#d1462f"),
+    # 2026-09-10 著者指示「背景をなるべく薄く、MIDI を濃く」。上の配色は地が濃く
+    # 音符が明るいものが多いので、地をほぼ白に、音符を最も濃くした2つを足す。
+    # 既存の7配色は1バイトも変えていない。
+    "clear":   ("#ffffff", "#4a6785", "#13223a", "#c1522e", "#111111", "#c0392b"),
+    "clearmoss": ("#ffffff", "#5d8a6e", "#12331f", "#c1522e", "#111111", "#c0392b"),
 }
 
 MAJOR_SCALE = {0, 2, 4, 5, 7, 9, 11}
@@ -194,7 +199,7 @@ def draw(data: dict, palette: str, out: Path, args) -> None:
                 (onset + 0.16, pitch - 0.40), max(dur - 0.32, 0.55), 0.80,
                 boxstyle="round,pad=0,rounding_size=0.34",
                 facecolor=face, edgecolor="none", zorder=3,
-                alpha=1.0 if past else 0.78))
+                alpha=1.0 if past else args.prompt_alpha))
         # The bar-9 boundary, marked in BOTH panels: the same instant in time, where
         # the write begins below and where nothing happens above. Drawing it only on
         # the edited panel made the two rolls look mismatched.
@@ -282,6 +287,15 @@ def main() -> None:
                     help="figure height in inches; taller separates the pitches")
     ap.add_argument("--hspace", type=float, default=0.42,
                     help="gap between the two panels, in axes heights")
+    ap.add_argument("--prompt-alpha", type=float, default=0.78,
+                    help="opacity of the PROMPT notes; 1.0 makes them as dark as "
+                         "the continuation's (default keeps the earlier look)")
+    ap.add_argument("--from-dump", default="",
+                    help="redraw from a saved pianoroll_tokens.json instead of "
+                         "regenerating. The notes are then guaranteed identical "
+                         "to the ledgered render, and no GPU is needed.")
+    ap.add_argument("--palettes", default="",
+                    help="comma-separated subset of the palettes to draw")
     ap.add_argument("--bg-strength", type=float, default=0.45,
                     help="0 = plain white behind the roll, 1 = the original tint. "
                          "The bar bands are a reading aid; at full strength they "
@@ -305,12 +319,20 @@ def main() -> None:
         except ValueError:
             return str(q)
 
-    data = generate_pair(args, device)
-    dump = outdir / "pianoroll_tokens.json"
-    dump.write_text(json.dumps(data))
-    snapshot(dump, vars(args))
-    written = [rel(dump)]
-    for pal in PALETTES:
+    if args.from_dump:
+        data = json.loads(Path(args.from_dump).read_text())
+        log.info("redrawing from %s (no generation, notes unchanged)",
+                 args.from_dump)
+        written = []
+    else:
+        data = generate_pair(args, device)
+        dump = outdir / "pianoroll_tokens.json"
+        dump.write_text(json.dumps(data))
+        snapshot(dump, vars(args))
+        written = [rel(dump)]
+    pals = [p for p in (args.palettes.split(",") if args.palettes else PALETTES)
+            if p in PALETTES]
+    for pal in pals:
         out = outdir / f"pianoroll_{args.src}_to_{args.target}_{pal}.pdf"
         draw(data, pal, out, args)
         written.append(rel(out))

@@ -31,6 +31,14 @@ MASKS = {
                              ((ids >= PITCH_LO) & (ids <= PITCH_HI)),
     "pitch": lambda ids: (ids >= PITCH_LO) & (ids <= PITCH_HI),
     "bar_dur": lambda ids: (ids == BAR) | ((ids >= DUR_LO) & (ids <= DUR_HI)),
+    # AMENDMENT 3 (F1): bar_dur bundles a bar delimiter that is 0.043 of positions
+    # with a duration token that is 0.433, and the corpus writes
+    # BAR POS (PITCH DUR)+, so DUR is the step whose next token is a PITCH for
+    # every note but the first of a chord. Separating them decides whether the
+    # causal site is the bar boundary or the step before a pitch. The four masks
+    # above are untouched.
+    "bar": lambda ids: ids == BAR,
+    "dur": lambda ids: (ids >= DUR_LO) & (ids <= DUR_HI),
 }
 
 

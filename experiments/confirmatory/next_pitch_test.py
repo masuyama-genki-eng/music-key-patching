@@ -45,11 +45,20 @@ BAR, POS1 = VOCAB["BAR"], VOCAB["POS_1"]
 PITCH_LO, PITCH_HI = VOCAB["PITCH_21"], VOCAB["PITCH_108"]
 MAJOR_TARGETS = list(range(12))
 MAJOR_PCS = np.array([0, 2, 4, 5, 7, 9, 11])
+# AMENDMENT 3 (F2): the minor scale set is not invented here. It is the one the
+# in-key measure already uses for minor, DIATONIC_MINOR_UNION in src/eval/keyest.py,
+# so the generation-free reading and the note-counting measure agree on what minor
+# means. The major path below is unchanged.
+from src.eval.keyest import DIATONIC_MINOR_UNION
+MINOR_PCS = np.array(sorted(DIATONIC_MINOR_UNION))
 
 
 def diatonic_mask(key: int) -> np.ndarray:
-    """Boolean over PITCH ids 20..107: is midi (id+1) diatonic to major `key`?"""
-    pcs = (MAJOR_PCS + key) % 12
+    """Boolean over PITCH ids 20..107: is midi (id+1) diatonic to `key`?
+
+    key is 0..11 for major and 12..23 for minor, the corpus convention.
+    """
+    pcs = ((MINOR_PCS if key >= 12 else MAJOR_PCS) + (key % 12)) % 12
     midis = np.arange(PITCH_LO, PITCH_HI + 1) + 1
     return np.isin(midis % 12, pcs)
 
@@ -57,6 +66,9 @@ def diatonic_mask(key: int) -> np.ndarray:
 @torch.no_grad()
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", choices=["major", "minor"], default="major",
+                    help="AMENDMENT 3 (F2): minor runs the same test with the "
+                         "minor scale set and the minor prompts")
     ap.add_argument("--model-dir", default=str(REPO / "results/models/R-Aug_s0"))
     ap.add_argument("--probing-dir", default=str(REPO / "results/probing/R-Aug_s0"))
     ap.add_argument("--test-parquet", default=str(REPO / "results/data_syn/test.parquet"))
@@ -68,18 +80,23 @@ def main() -> None:
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     name = Path(args.model_dir).name
+    if args.mode == "minor":
+        name = f"{name}_minor"          # same artifact tree as the minor battery
     outdir = REPO / "results/confirmatory" / name
     outdir.mkdir(parents=True, exist_ok=True)
 
     model = load_model(str(Path(args.model_dir) / "final.pt"), device)
     prompts, rows_used = confirm.select_prompts_holdout(args.test_parquet,
-                                                        args.n_prompts)
+                                                        args.n_prompts,
+                                                        mode=args.mode)
+    targets = MAJOR_TARGETS if args.mode == "major" else \
+        [t + 12 for t in MAJOR_TARGETS]
     pw = np.load(Path(args.probing_dir) / "probe_weights.npz")
     cm = np.load(Path(args.probing_dir) / "class_means.npz")
     V = v_probe(pw[f"layer_{args.layer}"], rank=24)
     mus = mu_targets_from_means(cm[f"layer_{args.layer}"])
     K1 = SW.k1_basis(V, confirm.GEN_SEED + 31 * args.layer)   # same frozen basis
-    masks = {k: diatonic_mask(k) for k in range(12)}
+    masks = {k: diatonic_mask(k) for k in range(24)}   # both modes
 
     def pitch_probs(prompt, editor):
         ids = torch.tensor([prompt.ids + [BAR, POS1]], device=device)
@@ -94,7 +111,7 @@ def main() -> None:
     rows = []
     for pi, p in enumerate(prompts):
         clean = pitch_probs(p, None)
-        for tgt in MAJOR_TARGETS:
+        for tgt in targets:
             e = pitch_probs(p, SW.make_editor(V, mus[tgt], device))
             k = pitch_probs(p, SW.make_editor(K1, mus[tgt], device))
             for cond, pr in (("clean", clean), ("edit", e), ("k1", k)):
@@ -118,7 +135,7 @@ def main() -> None:
     piv["D_k1"] = piv["k1"] - piv["clean"]
     ni = piv[~piv["identity"]]
     recs, pvals = [], []
-    for tgt in MAJOR_TARGETS:
+    for tgt in targets:
         d = ni[ni["target_key"] == tgt].sort_values("prompt_idx")
         t = wilcoxon_rank_biserial(d["D_edit"].values, d["D_k1"].values,
                                    alternative="greater")
