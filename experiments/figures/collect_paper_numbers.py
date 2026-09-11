@@ -923,6 +923,34 @@ def main() -> None:
     if re_out:
         out["reanalysis"] = re_out
 
+    # ---------------- layer-wise re-aggregation behind main Fig. 2
+    # results/layerwise_read_use_*.csv are written by
+    # experiments/figures/fig2_layerwise.py from the artifacts above; exposing
+    # them here keeps every decimal the figure's discussion quotes traceable.
+    lw = {}
+    for tag, rel in (("ours", "results/layerwise_read_use_ours.csv"),
+                     ("amt_small_bach",
+                      "results/layerwise_read_use_amt_small_bach.csv"),
+                     ("amt_small_pop",
+                      "results/layerwise_read_use_amt_small_pop.csv")):
+        p = REPO / rel
+        if not p.exists():
+            continue
+        import csv as _csv
+        with p.open() as fh:
+            rows = list(_csv.DictReader(fh))
+        lw[tag] = {f"L{r['layer']}": {
+            "M_probe": r3(float(r["M_probe"])),
+            "M_edit": r3(float(r["M_edit"])),
+            "M_probe_ci": [r3(float(r["M_probe_ci_low"])),
+                           r3(float(r["M_probe_ci_high"]))]
+                          if r["M_probe_ci_low"] else "n/a",
+            "M_edit_ci": [r3(float(r["M_edit_ci_low"])),
+                          r3(float(r["M_edit_ci_high"]))],
+        } for r in rows}
+    if lw:
+        out["layerwise"] = lw
+
     (REPO / "results/paper_numbers.json").write_text(json.dumps(out, indent=2))
     if "--check-tex" in sys.argv:
         total = 0

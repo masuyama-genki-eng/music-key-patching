@@ -5,7 +5,7 @@
 # same subspace, same targets -- so the spread is generation variance and nothing
 # else. Major prompts, edit and matched control, as the specification scopes it.
 set -u
-cd /home/masuyama-genki/ICASSP③/tonal-world-model
+cd "$(dirname "$0")/../.."          # repo root, wherever it is checked out
 for S in 11 23; do
   echo "=== gen seed $S  $(date +%H:%M) ==="
   .venv/bin/python experiments/confirmatory/dump_continuations.py \

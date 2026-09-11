@@ -1,15 +1,16 @@
 \documentclass{article}
 \usepackage{spconf,amsmath,graphicx}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
-%\usepackage{newtxtext,newtxmath}
 \usepackage{amssymb,booktabs,array,tabularx}
 \usepackage{enumitem}
+
+\usepackage{cite}
 \usepackage[hidelinks]{hyperref}
+
 \usepackage{url}
 \usepackage[table]{xcolor}
 \definecolor{analysisblue}{RGB}{235,244,250}
-\graphicspath{{../results/figures/}}
+\graphicspath{{./}}
 \usepackage{pifont}
 
 \renewcommand{\topfraction}{0.92}
@@ -26,16 +27,6 @@
 \setlength{\intextsep}{6pt plus 2pt minus 2pt}
 \setlength{\abovecaptionskip}{4pt}
 \setlength{\belowcaptionskip}{0pt}
-
-\let\oldthebibliography\thebibliography
-\renewcommand{\thebibliography}[1]{%
-  \oldthebibliography{#1}%
-  \setlength{\topsep}{3pt}%
-  \setlength{\itemsep}{0pt plus 0.2pt}%
-  \setlength{\parsep}{0pt}%
-  \setlength{\parskip}{0pt}%
-}
-
 
 \title{Does a Music Transformer Know What Key It Is In?\\
 Replacing the Key, Not Just Reading It}
@@ -59,597 +50,521 @@ E-mail: \{masuyama, sakurai, togo, ogawa, mhaseyama\}@lmd.ist.hokudai.ac.jp }
 \setlength{\abovedisplayshortskip}{2pt plus 1pt}
 \setlength{\belowdisplayshortskip}{2pt plus 1pt}
 
+
 \begin{abstract}
-% 音楽 Transformer は，自分がいる調を我々が置き換えられる成分として保持しており，その音楽は書き込んだ調に従う．
-% 調のラベルも調の記号も持たない記号音楽で Transformer を訓練する．
-% 生成の途中で，1つの層の調を担う成分を別の調のそれに置き換え，入力は変更しない．
-% すると継続のおよそ3本に1本が，書き込んだ調にちょうど着地する．ランダムな方向では25本に1本である．短調ではさらに大きく動く．
-% 実音楽で訓練された4つの公開チェックポイントでも，同じ効果を観察する．
-% モデルが1音も生成しないうちに，置き換えは新しい調の音階へ確率質量を移す．これはモデルがその調を自身の音符から読んでいるという説明を排除する．
-% 我々はプローブの重みそのものへ書き込むが，プローブの精度は，そこへの書き込みが効くかを予測しない．
-% 本稿のテストが届く範囲において，調を知っているとは，置き換えられる調を保持し，その調で書くということである．その定義のもとで，音楽 Transformer は知っている．
-A music Transformer holds the key it is in as a component we can replace, and its music follows the key we install.
-We train Transformers on symbolic music with no key labels and no key symbols.
-During generation we replace the key-carrying component of one layer's activation with that of a different key and leave the input unchanged.
-About one continuation in three then lands in exactly the key we install ($0.355$), against $0.056$ for random directions matched in both dimension and displacement, and minor keys move further still.
-We observe the same effect in four public checkpoints trained on real music, though its strength varies across them.
-Before the model generates a single note, the replacement shifts probability mass toward the new key's scale, which rules out the model reading that key from its own notes.
-We write to the probe's own weights, yet probe accuracy does not predict whether writing to them takes effect.
-Knowing a key, within the scope of our test, means holding one we can replace and then writing in it, and by that definition a music Transformer does.
+% Transformerに基づく記号音楽生成モデルが，内部活性に調情報を表現し，その情報を生成に利用しているかを調べる．
+% 調を明示するラベルやトークンを含まない記号音楽でTransformerを学習し，線形プロービングによって調関連部分空間を求める．
+% 生成中に，この部分空間の成分を現在の調から目標調のものへ置き換える．
+% この置き換えにより，majorでは約3本に1本，minorでは約2本に1本が目標調に従うのに対し，対応するrandom-subspace controlでは約18本に1本と約40本に1本にとどまる．
+% また，新しい音符を生成する前から目標調の音高へ確率が移動し， 同様の編集効果は実音楽で学習された5つの公開モデルでも確認される．
+% 一方，調情報を読み取りやすい層と，編集が強く効く層は必ずしも一致しない．
+% これらの結果は，音楽Transformerが生成に影響する置き換え可能な調情報を内部に表現していることを示す．
+We investigate whether Transformers for symbolic music generation represent musical key in their internal activations and use this information during generation.
+We train Transformers on symbolic music without explicit key labels or tokens and use linear probing to identify a key-related subspace.
+During generation, we replace the component in this subspace for the current key with that for a target key.
+Roughly one in three generated pieces in major and one in two in minor follow the target key, compared with about one in eighteen and one in forty under a matched random-subspace control.
+The intervention shifts probability toward the target key before any new note is generated, and the patching effect also appears in five publicly available models trained on real music.
+However, the layers where key information is easy to read are not necessarily those where patching has the strongest effect.
+These results show that music Transformers represent replaceable key information that affects generation.
 \end{abstract}
 
+
 \begin{keywords}
-music generation, interpretability, activation patching, causal intervention, tonality, probing
+symbolic music generation, controllable music generation, activation patching, mechanistic interpretability
 \end{keywords}
 
 \section{Introduction}
-% 音楽生成モデルは，自分がどの調にいるのかを知っているかのように振る舞う．
-% 調とは，ある一節がホームとして扱う少数の音高の集まりである．
-% 音楽はそこに落ち着き，そこを離れ，また戻ってくる．
-% 学習済みモデルが生成する音楽も同じで，途中で離れてはまた戻る．
-% あまりに自然にこなすので，ここでひとつの疑問が生まれる．
-% モデルは内部のどこかで調を追い続けているのか，それとも音符の表面的なパターンをなぞっているだけなのか？．
-Music generation models behave as if they knew what key they were in~\cite{hadjeres2017deepbach,huang2019musictransformer,copet2023musicgen}.
-A key is the small set of pitches a passage treats as home.
-The music settles on them, leaves them, and comes back, and generated music does the same, moving away partway and returning.
-It happens so naturally that it raises a question.
-Does the model track the key somewhere inside itself, or does it only reproduce surface patterns of notes?
+% 背景
+% 近年，Transformerを用いた音楽生成モデルは，長期的な構造を持つ音楽を生成できるようになっている．
+% しかし，これらのモデルが内部にどのような音楽情報を持ち，その情報を生成時にどのように使っているかは十分に分かっていない．
+% 内部の情報が生成にどのように影響するかを理解することは，生成過程の理解だけでなく，音楽属性の制御にも重要である．
+Transformer-based music generation models can generate music with long-term structure~\cite{huang2019musictransformer,thickstun2023anticipatory,dong2023mmt}.
+However, we still do not fully know what musical information these models maintain internally or how they use it during generation.
+Understanding how internal information affects generation is important for both understanding the generation process and controlling musical attributes.
 
-% 手元にある証拠はこの問いに答えられない．
-% どの証拠も，我々が設定した調にモデルを従わせるものではないからである．
-% 既存研究がモデルの内部に働きかける操作は，読むこと，足すこと，上書きすることである．
-% 読むこととはプロービングであり，活性から概念を復元する．曲の調も読み出されてきた．
-% しかしプローブが示すのは我々が調を読めることまでであり，モデルがそれを使っていることは示さない．
-% 足すこととはステアリングであり，テンポ・音色・楽器・音域といった属性を，音響モデルで，そして本研究と同時期には記号音楽でも動かす．
-% 最も近い先行研究は，音階と和音をステアリングする．しかしどちらも方向を加算するだけで，既存の成分を置き換えない．
-% また音階はどの音高が現れるかを定めるだけであり，調はそれに加えて，一節全体にわたる主音と旋法を定める．
-% 読み出すだけではモデルが調表現を利用しているか判断できず、加算では既存の調成分が残る。
-The evidence we have cannot answer that, because none of it makes the model follow a key that we set.
-Existing work reaches inside a music model by reading, adding, or overwriting.
-Reading is probing, which recovers concepts from the activations~\cite{syntheory2024,mcgrath2022chess,ma2024root}, the key among them~\cite{castellon2021calm}, but a probe shows only that we can read the key, not that the model uses it~\cite{hewitt2019control,belinkov2022probing}.
-Adding is steering~\cite{li2023iti}, which moves attributes such as tempo, timbre, instrument, and register in audio models and, concurrently with this work, in symbolic ones~\cite{smitin2024,koo2024heads,facchiano2025patching,prokopiou2026latent}.
-The closest studies steer scales and chords~\cite{musicrfm2026,singh2026discovering}.
-Both add a direction instead of replacing one, and a scale only determines which pitches appear, whereas a key also determines the tonic and the mode of a whole passage.
-Reading cannot determine whether the model uses a key representation, while addition changes the representation without removing its existing key component.
+% 現状
+% 内部表現の解析には線形プロービングが，生成結果の制御にはactivation steeringが用いられている．
+% Transformerでは，各層が生成途中に数値ベクトルを計算しており，本研究ではこれを内部活性と呼ぶ．
+% 線形プローブは，内部活性から属性を予測する分類器を学習し，その予測性能から属性に関する情報をどの程度読み取れるかを調べる．
+% 音楽生成モデルについても，線形プロービングを用いて音楽属性を解析する研究が行われている．
+% Activation steeringは，目標属性に対応する方向を内部活性に加えることで生成結果を変化させる．
+% 音楽生成モデルについても，activation steeringを用いて音楽属性を制御する研究が行われている．
+% このように，内部活性から音楽情報を読み取る方法と，内部活性を変更して生成結果を制御する方法の両方が研究されている．
+Linear probing is used to analyze internal representations, and activation steering is used to control model outputs.
+At each layer, a Transformer computes a vector during generation, which we call an internal activation.
+A linear probe learns a classifier that predicts an attribute from an internal activation, and its performance shows how easily information about the attribute can be read from the activation~\cite{alain2017probes,belinkov2022probing}.
+Studies on music generation models have also used linear probing to analyze musical attributes~\cite{syntheory2024,ma2024root,mimidi2026}.
+Activation steering changes an internal activation by adding a direction associated with a target attribute~\cite{li2023iti,zou2023repe}.
+Studies on music generation models have also used activation steering to control musical attributes~\cite{smitin2024,musicrfm2026,singh2026discovering,mimidi2026}.
+Thus, prior work has studied both reading musical information from internal activations and controlling generated music by modifying those activations.
 
-% 上書きは、内部の値を読み出したり加算したりするのではなく、現在の値そのものを置き換えるため、より直接的な因果検証を可能にする。
-% どの手も盤面を名指さないが，手の予測だけで訓練されたオセロのモデルは盤面の表現を作る．
-% その表現を偽の盤面で上書きし，入力には手を触れずにおくと，モデルは偽の盤面のほうで合法な手を指す．
-% この種の編集は activation patching と呼ばれ，チェスと迷路でも働く．
-% どの音符も調を名指さない．そして上書きは音楽にも届いているが，調を運んだことはない．
-% Vélez Vásquez らは楽器とジャンルについて構成要素の寄与を入れ替え，
-% Facchiano らは自身の研究を activation patching と呼ぶが，方向を足している．
-% 調を書き込んだ研究はなく，置き換えることと足すことを比べた研究もない．
-Overwriting provides a more direct causal test because it replaces the current internal value rather than only reading or adding to it.
-No move names the board, yet an Othello model trained only on moves builds a representation of it~\cite{li2023othello,nanda2023emergent}, and overwriting that representation with a fake board, with the input untouched, makes the model play the fake board's legal moves.
-Such edits, activation patching~\cite{geiger2021causal,meng2022rome}, also work in chess~\cite{karvonen2024chess}.
-No note names a key, and overwriting has reached music without ever carrying one.
-V{\'e}lez V{\'a}squez et al.~\cite{velez2024exploring} interchange component contributions for instruments and genres, and Facchiano et al.~\cite{facchiano2025patching} name their study activation patching but add a direction instead.
-No one has installed a key, and no one has compared replacing one against adding to it.
+% 問題
+% しかし，線形プロービングとactivation steeringだけでは，内部の属性情報が実際の生成に使われているかを十分に検証できない．
+% 属性を内部活性から高精度に予測できても，モデルがその情報を使って次の出力を生成しているとは限らない．
+% また，activation steeringは，元の属性の情報を残したまま目標属性に対応する方向を加える．
+% そのため，元の属性と目標属性の影響が混ざり，生成結果だけからそれぞれの影響を分けることは難しい．
+% したがって，属性情報を内部から読み取れるかだけでなく，その情報を別の属性に対応する情報へ置き換えたときに生成結果が変化するかを検証する必要がある．
+However, linear probing and activation steering alone do not fully test whether internal attribute information is actually used for generation.
+A probe may accurately predict an attribute without showing that the model uses this information to generate the next output~\cite{belinkov2022probing}.
+Activation steering also keeps information about the original attribute while adding a direction associated with the target attribute~\cite{li2023iti,zou2023repe}.
+As a result, the effects of the original and target attributes can remain mixed, making it difficult to separate their effects from the generated output alone.
+Therefore, we need to test not only whether attribute information can be read from internal activations but also whether replacing it with information for another attribute changes the generated output.
 
-% プリアンブルに追加（①②用）
-% \usepackage{pifont}
+% 提案
+% そこで本研究では，音楽属性の一つである調を対象とする．
+% 調にはハ長調やイ短調などがあり，曲の中でどの音高が使われやすいかに関わる基本的な音楽属性である．
+% 音楽生成モデルは生成中に音高を選択し，生成された音符から調を推定できる．
+% そのため，調は，内部の調情報が実際の生成に使われているかを検証しやすい属性である．
+% 本研究では，この調情報が生成に使われているかを検証するためにactivation patchingを用いる．
+% Activation patchingとは，モデルへの入力を変えずに内部活性を置き換え，その置き換えが生成結果に与える影響を調べる方法である．
+% 具体的には，現在の調に対応する成分を目標調に対応する成分へ置き換え，その置き換えによって生成音楽が目標調に従うかを調べる．
 
-\begin{figure}[!t]
+We focus on musical key as the target attribute.
+Keys such as C major and A minor affect which pitches are likely to appear in a passage.
+Music generation models select pitches during generation, and we can estimate the key from the generated notes.
+Therefore, key is suitable for testing whether internal key information is actually used for generation.
+We use activation patching to test whether the model uses this key information.
+Activation patching replaces an internal activation without changing the model input and examines how this replacement affects the generated output~\cite{geiger2021causal,geiger2024das}.
+Specifically, we replace the component associated with the current key with that associated with a target key and test whether this replacement makes the generated music follow the target key.
+
+\begin{figure*}[!t]
+\vspace*{-7mm}
 \centering
-\includegraphics[width=\columnwidth]{fig1.pdf}
-% [和訳] 図1．活性パッチングによる介入の概要．
-% [和訳] 第9小節以降，ある層の活性から調を担う成分 P_V h を除去し，
-% 目標調 κ* の値 P_V μ_κ* を書き込む（h' = h − P_V h + P_V μ_κ*）．
-% 残りの活性と入力は変更しない．
-% [和訳] 右：置換あり（①）では続きが書き込んだ調に従い，
-% 置換なし（②）ではプロンプトの調に留まる．
-\caption{Overview of the activation-patching intervention.
-From bar 9 onward, we remove the key-carrying component $P_V h$ of one
-layer's activation and install the value $P_V \mu_{\kappa^*}$ of a target
-key $\kappa^*$, i.e., $h' = h - P_V h + P_V \mu_{\kappa^*}$,
-leaving the remaining activation and the input unchanged.
-Right: with the replacement (\ding{172}) the continuation follows the
-installed key; without it (\ding{173}) the music stays in the prompt key.}
+\includegraphics[width=\textwidth]{fig1.pdf}
+\caption{Overview of the activation-patching intervention.}
 \label{fig:overview}
-\end{figure}
+\vspace{-2mm}
+\end{figure*}
 
-% 我々はこの問いを，モデルの内部で調を変え，その後に何を書くかを見ることで決着させる（図1）．
-% モデルが生成する各位置で，1つの層の調を担う部分活性を別の調の同じ部分に置き換え，入力は変えない．
-% したがって出力に生じた変化はこの置き換えだけによる．
-% これは activation patching を部分空間に限定したものであり，distributed interchange intervention と呼ばれる．
-% 以後この操作を「調を install する（書き込む）」と呼ぶ．
-% 調がこのテストに適しているのは3つの理由による．
-% 調は1つの小節ではなく一節全体を支配し，語彙は調の記号を持たず，編集の成否は音符を数えれば確かめられる．
-% 書き込んだ値に音楽が従えば，モデルはその値を参照していたことになる．
-% 従わなかった場合に分かるのは，モデルがその層のその部分活性を使っていないということまでであり，調を持たないと結論することはできない．
-We settle the question by changing the key inside the model and watching what it writes next (Fig.~\ref{fig:overview}).
-At every position the model generates, we replace the key-carrying part of one layer's activation with the same part from a different key and leave the input unchanged, and therefore only the replacement can change the output.
-This is activation patching restricted to a subspace, a distributed interchange intervention~\cite{geiger2024das}, and we say that we \emph{install} the key.
-Key is the right concept to test because a key governs a whole passage rather than a single bar, because our vocabulary holds no key symbols, and because counting notes checks the edit~\cite{krumhansl1990,temperley1999ks}.
-If the music follows the installed value, the model was consulting it.
-If it does not, we learn only that the model does not use that part of that layer's activation, and not that it has no key.
-
-% 本論文は分析であって生成手法ではない．
-% 生成品質の向上は主張せず，データ・コード・事前登録した手続きを公開する．
-% 貢献は次の2点である．
-% ・生成の途中で別の調を書き込むと，自作モデルでも，実音楽で訓練された4つの公開チェックポイントでも，音楽がそれに従う．
-% ・あわせて，同じ方向へのプローブの精度が，そこへの書き込みが効くかを予測しないことを示す．
+% 本論文は生成手法の提案ではなく，モデル内部の分析を目的とする．
+% 本研究の貢献は次の2点である．
 This is an analysis, not a generation method.
-We claim no quality gain, and we release the data, code, and pre-specified protocol.
 We make two contributions.
 \begin{itemize}
-\item We install a different key during generation and the music follows it, in our own models and in four public checkpoints trained on real music.
-\item We also show that probe accuracy on the same directions does not predict whether writing to them takes effect.
+% 内部の調情報を置き換えると，音符を生成する前から音高予測が変化し，生成音楽が目標調に従いやすくなることを示す．
+% また，この目標調への変化は，5つの公開モデルでも確認される．
+% 調情報を読み取りやすい層と，その情報を置き換えたときに生成音楽の調が変化しやすい層は，必ずしも一致しないことを示す．
+\item We show that replacing internal key information shifts pitch prediction before generation and makes the generated music more likely to follow the target key.
+The target-key effect also appears in five publicly available models.
+\item We show that the layers where key information is easy to read are not always the layers where replacing it changes the generated key.
 \end{itemize}
 
-\section{Probing and Causal Intervention}
+\section{Method}
 \label{sec:method}
-% 実験1は，調情報が音符そのものからよりもモデルの活性から線形に読み取りやすいかを問う．
-% 実験2は，モデルが書くときにその調表現を利用しているのかを問う．
-% すなわち，その表現を別の調に置き換えたとき，生成音楽がその調に従うかを調べる．
-% データ，モデル，評価指標，およびモデル選択と最終評価を分離する探索・検証手続きは III 節で述べる．
-% 記法として，層 l・位置 t における活性を h_l(t)，そこでの真の調を kappa(t) と書く．
-% kappa(t) は24クラス（12の主音それぞれに長調と短調）を取り，層は Transformer ブロックの出力を指す．
-% プローブは24クラスすべてを判別する．
-% 編集は，主テストでは12の長調を，副テストでは12の短調を書き込む．
-We write $h_\ell(t)$ for the activation at layer $\ell$ and position $t$, where layers index the Transformer block outputs, and $\kappa(t)$ for the true key there, one of $24$ classes ($12$ tonics $\times$ major/minor). The probe distinguishes all $24$; the edits install the $12$ major keys in the primary test and the $12$ minor keys in a secondary one. Section~\ref{sec:setup} gives the data, models, measures and the search-then-test protocol.
+% 内部活性から調情報を読み取れるだけでは，その情報が実際の生成に使われているとは判断できない．
+% そこで本研究では，まず線形プロービングによって調情報を読み取れる内部表現を特定し，次にactivation patchingによってその表現を変更したときに生成音楽が変化するかを検証する．
+Reading key information from an internal activation does not show that the model uses this information for generation.
+We therefore first use linear probing to identify internal representations from which key information can be read and then use activation patching to test whether changing these representations affects the generated music.
 
-\subsection{Experiment 1: Reading the Key with a Probe}
-\label{sec:exp1}
-% 実験1は，調が音符そのものからよりも h_ℓ(t) からのほうが線形に読み取りやすいかを尋ねる．
-% 活性は音符から計算されるため，プローブは音符に含まれる情報だけから調を復元している可能性がある．
-% そこで，活性からの読み取り性能を音符数えベースラインと比較する．
-% h_ℓ(t) から κ(t) を予測する線形プローブを訓練し，訓練とテストは曲単位で分ける．
-% 各位置で，直前のトークンにとった窓の中の音高トークンについて12のピッチクラス（C，C♯，…，B）がそれぞれ何回現れたかを数える．
-% その12個の数から，ロジスティック回帰と，ピッチクラスの出現回数から調を推定する標準手法であるKrumhansl–Schmuckler（KS）法の2通りで調を予測する．
-% 窓を広げれば音符数えの成績が上がる可能性があるため，複数の窓幅を評価し，その中で最も強いものを音符数えベースラインとする．
-% プローブがこのベースラインを上回れば，調はこれらの音符数えよりも活性から線形に読み取りやすいことを示す．
-% さらに，プローブ容量と未訓練ネットワークという2つの統制を評価する．
-Experiment~1 asks whether the key is more linearly accessible from $h_\ell(t)$ than from the notes themselves.
-Since the activation is computed from the notes, a probe could recover the key from note information alone.
-We therefore compare the probe with baselines that estimate the key directly from the notes.
-We train a linear probe~\cite{alain2017probes,belinkov2022probing} to predict $\kappa(t)$ from $h_\ell(t)$, splitting train and test by piece.
-At each position, we count how many times each of the twelve pitch classes (C, C$\sharp$, \dots, B) occurs among the pitch tokens in a window over the preceding tokens.
-% [2026-08-27 FIX / B-5] krumhansl1982 (Krumhansl--Kessler の原論文) を追加.
-%   KS 法の一次出典なので, ここで引かないと引用漏れになる.
-We then predict the key from those twelve counts by logistic regression and by Krumhansl--Schmuckler (KS) matching~\cite{krumhansl1982,krumhansl1990,temperley1999ks}, the standard method for estimating key from pitch-class counts.
-Since a note counter might improve with more history, we also evaluate wider windows and call the strongest of these methods the note-counting baseline.
-The window settings are given in the supplementary material.
-A probe that exceeds this baseline shows that the key is more linearly accessible from the activation than from these note counts.
-We also evaluate two controls.
-\begin{itemize}
-% プローブ容量：表現力の高いプローブは，意味のないラベルでも偶然を超える得点を出すことがある．
-% そこで，各曲の調をランダムな調に置き換えた統制課題を用い，その得点を報告するprobe marginから差し引く．
-\item \textbf{Probe capacity.} An expressive probe can reach above-chance accuracy even on meaningless labels. We therefore run a control task~\cite{hewitt2019control}, replacing the key of each piece with a random one, and subtract the resulting score from every margin we report.
-% 未訓練の活性：ネットワークの構造だけで得点が生じる可能性があるため，同じプローブを未訓練のネットワークにも適用する．
-\item \textbf{Untrained activations.} Structure alone could produce a nonzero score, and we therefore apply the same probe to an untrained network.
-\end{itemize}
-
-\subsection{Experiment 2: Replacing the Key During Generation}
-\label{sec:exp2}
-% 実験2では，生成中に内部の調表現を置き換えたとき，生成音楽がその調に従うかを調べる．
-% 1回の実行は5つの手順からなる．
-Experiment~2 asks whether the music follows a key installed by replacing its internal representation during generation.
-Each run has five steps.
-
-\begin{enumerate}
-
-% 1．部分空間を選ぶ．
-% プローブの重み，調ごとの平均活性，編集効果を最適化して得た方向の3種類を比較する．
-% 各方法について24調に対応する方向をVの列として並べ，正規直交化する．
-% P_V=VV^Tは選択した部分空間への射影となる．
-% 探索段階で方向の種類と層を選択し，最終評価では固定する．
-\item \textbf{Choose the subspace.}
-We compare three constructions of the key directions: probe weights, per-key mean activations, and directions optimized for edit effectiveness~\cite{geiger2024das}.
-For each construction, we collect one direction per key class in $V$ and orthonormalize them, giving the projector $P_V{=}VV^{\!\top}$. $V$ holds all $24$ key classes, not only the $12$ we install, and keeps full rank $24$ in the $512$-dimensional activation.
-The search stage selects the direction type and layer, which are fixed for final evaluation (Sec.~\ref{sec:measures}).
-Because an optimized subspace can succeed for reasons unrelated to the model's own computation~\cite{makelov2024illusion}, we select among the three by intervention on held-out prompts rather than by how well each reconstructs the key.
-
-% 2．書き込む値を選ぶ．
-% 標的調κ*に属する位置の活性を平均してμ_{κ*}を得る．
-% Vは編集する部分空間を，μ_{κ*}は書き込む値を定める．
-\item \textbf{Choose the value to install.}
-For target key $\kappa^{*}$, we average the layer-$\ell$ activations at positions with that key to obtain $\mu_{\kappa^{*}}$.
-$V$ determines the edited subspace, and $\mu_{\kappa^{*}}$ determines the value written into it.
-
-% 公開チェックポイントでは，モデルとコーパスに応じて平均の推定方法を変える．
-% AMTではkey-balanced sampleを用いる．
-% Bachでは不足する調を補うため12の主音への移調を用い，
-% Pop上のMMTとREMIでは24調がすべて存在するため直接平均を用いる．
-For the public checkpoints, we use key-balanced means for AMT.
-For Bach, we obtain them by transposing the chorales to all $12$ tonics, while MMT and REMI on pop music use direct means because all $24$ keys are present.
-
-% 3．1つの調にある8小節をプロンプトとして与える．
-\item \textbf{Prompt} the model with $8$ bars in a single key.
-
-% 4．第9小節以降で選択した部分空間を標的調の値に置き換える．
-% 他の層とプロンプト部分は変更しない．
-\item \textbf{Replace.}
-From bar~$9$ onward, we replace the selected component of the layer-$\ell$ activation before it enters the next block~\cite{geiger2021causal,meng2022rome}:
+\subsection{Linear Probing}
+\label{sec:probe}
+% 線形プロービングを，12種類の主音と長短を組み合わせた24種類の調を予測する多クラス分類タスクとして定式化する．
+% 層$\ell$のTransformer blockの出力における位置$t$の内部活性を$h_\ell(t)$とする．
+% プローブは$h_\ell(t)$を入力とし，その位置の正解調$\kappa(t)$を予測する．
+% 分類器には多項ロジスティック回帰を用いる．
+% 分類器は，次式で表される24種類の調に対する予測確率分布$p_\ell(t)$を出力する．
+% $W_\ell$と$b_\ell$は分類器の学習可能なパラメータであり，正解調$\kappa(t)$を予測するように学習する．
+% この線形プローブにより，各Transformer blockの出力から調情報をどの程度線形に読み出せるかを定量化できる．
+We formulate linear probing as a 24-class key classification task covering 12 tonics in major and minor modes.
+We denote the internal activation at position $t$ from the output of Transformer block $\ell$ by $h_\ell(t)$.
+The probe takes $h_\ell(t)$ as input and predicts the true key $\kappa(t)$.
+We use multinomial logistic regression as the classifier.
+The classifier outputs a probability distribution $p_\ell(t)$ over the $24$ keys given by
 \begin{equation}
-h' \;=\; h - P_V h + P_V\,\mu_{\kappa^{*}}.
+p_\ell(t)
+=
+\operatorname{softmax}
+\left(
+W_\ell h_\ell(t)+b_\ell
+\right),
+\label{eq:probe}
+\end{equation}
+where $W_\ell$ and $b_\ell$ are learnable parameters trained to predict the true key $\kappa(t)$.
+This linear probe allows us to quantify how linearly accessible key information is from the output of each Transformer block.
+
+\subsection{Activation Patching}
+\label{sec:patching}
+% Activation patchingでは，現在の内部活性の調に関する成分を，目標調で得られた内部活性の対応する成分に置き換える．
+% 層$\ell$では，線形プローブの24調に対応する重みベクトルから正規直交基底$V_\ell$を構成する．
+% この基底は，プローブが24調を識別するために用いる部分空間を定める．
+% $P_{V_\ell}=V_\ell V_\ell^\top$は，内部活性をこの部分空間へ射影する．
+% 目標調$\kappa^*$について，その調に属する内部活性を平均し，$\mu_{\ell,\kappa^*}$を求める．
+% プローブの重みは置き換える部分空間を定め，目標調の平均活性は置き換え先を定める．
+% 8小節のプロンプトを入力し，9小節目以降では，現在の内部活性の対応する成分を目標調の成分に置き換える．
+% 以上により，線形プロービングで読み出した調表現を，生成中に直接変更できる．
+Activation patching replaces the key-related component of the current activation with the corresponding component of an activation observed for a target key.
+For layer $\ell$, we construct an orthonormal basis $V_\ell$ from the probe weight vectors for the $24$ keys.
+This basis defines the subspace used by the probe to distinguish keys.
+We define
+\begin{equation}
+P_{V_\ell}
+=
+V_\ell V_\ell^\top,
+\label{eq:projector}
+\end{equation}
+which projects an activation onto this subspace.
+For target key $\kappa^*$, we average the corresponding internal activations to obtain $\mu_{\ell,\kappa^*}$.
+The probe weights define the subspace to replace, while the target-key mean defines the replacement value.
+We give the model an eight-bar prompt and apply the replacement from bar~9 onward as
+\begin{equation}
+h'_\ell(t)
+=
+h_\ell(t)
+-
+\underbrace{P_{V_\ell}h_\ell(t)}_{\text{remove}}
++
+\underbrace{P_{V_\ell}\mu_{\ell,\kappa^*}}_{\text{insert}}.
 \label{eq:edit}
 \end{equation}
-The first two terms remove the selected component, and the third writes the target value, moving the activation by $\Delta{=}\lVert h'-h\rVert{=}\lVert P_V(\mu_{\kappa^{*}}-h)\rVert$, which we call the displacement.
-All other activation components, layers, and prompt positions remain unchanged.
-
-% 5．プロンプトと標的調ごとに継続を1本生成し，第9小節以降を評価する．
-% 温度1.0，top-p 0.95，固定seed，最大384 tokensを用いる．
-\item \textbf{Sample and score.}
-We generate one continuation per prompt and target key with temperature $1.0$, top-$p$ $0.95$, a fixed seed, and a maximum of $384$ tokens.
-We score the continuation from bar~$9$ onward.
-
-\end{enumerate}
-
-% 追加の統制介入．
-% 編集方向そのものの効果を確認するため，同じ次元数のランダム部分空間を用いる．
-% さらに，部分空間の次元数と活性変位量の両方を合わせたランダム統制も用いる．
-% 介入位置の効果を調べるため，音高位置だけを編集する条件と，小節・音長位置だけを編集する条件を用いる．
-% 置換と加算を比較するため，既存のP_V hを取り除かずに標的成分を加える条件も評価する．
-% 加算では置換と同じ活性変位量に合わせた条件と，その2倍の変位量を用いる条件を評価する．
-\noindent\textbf{Control interventions.}
-We use additional interventions to identify which part of the replacement produces the effect.
-For the direction controls, we use a random subspace with the same dimension and a second random control that also matches the activation displacement.
-To test the intervention positions, we apply the same replacement only at pitch positions or only at bar and note-length positions.
-To compare replacement with addition, we add along $u{=}P_V\mu_{\kappa^{*}}/\lVert P_V\mu_{\kappa^{*}}\rVert$ without removing the existing component $P_Vh$, at the replacement's own displacement $\Delta$ per position and at $2\Delta$.
-
-% 生成前の読み取り．
-% 継続全体を評価するだけでは，モデルが自分で生成した音符から新しい調を読み取り，その後の生成を変えている可能性を排除できない．
-% そこで，モデルが編集後の音符を1音も生成していない時点で次音確率を測る．
-% 調に中立な小節記号と拍位置を追加し，第9小節の境界で編集を適用した直後の次音確率を読む．
-% さらに，最初の1小節だけ編集した後に介入を停止し，効果がその後も残るかを調べる．
-\noindent\textbf{Pre-generation test.}
-Since Step~5 measures the edit over the whole continuation, it does not rule out the possibility that the model reads the new key from the notes it has already generated.
-We therefore use a variant that measures only the first decision.
-We append a key-neutral bar mark and beat position ourselves, apply the edit at the bar-$9$ boundary, and read the next-note probabilities without letting the model generate anything (Sec.~\ref{sec:nextpitch}).
-If the probabilities move before the model has written anything, the effect cannot follow from reading its own output.
-We also test whether the effect persists after the intervention stops by editing only the first generated bar and then continuing without further edits.
+This formulation allows us to directly modify the key representation identified by linear probing during generation, leaving the input and all other components unchanged (Fig.~\ref{fig:overview}).
 
 \section{Experimental Setup}
 \label{sec:setup}
 
 \subsection{Data}
 \label{sec:data}
-%主実験では、各トークンの正しい調が必要なため、合成音楽を用いる。プログラムは最初に調を選択し、その調に基づくコード進行を生成した後、各コードを4音で表現する。半数の楽曲にはメロディも加える。学習用に200,000曲、検証用とテスト用にそれぞれ10,000曲を生成する。各楽曲には0〜3回の転調を含む。プログラムが音符を生成する前に調を決定するため、各トークンの調ラベルを正確に取得できる。語彙には小節、位置、絶対MIDI音高、音長を含むが、調やコードの記号は含まない。
-%実音楽での評価には、When in Romeの人手による調ラベルを持つ300曲のBachコラールと、POP909-CLの909曲のうち905曲のポップ楽曲を用いる。
-We use synthetic music for the main experiments because our intervention requires the true key at every token: a program selects the key before generating any notes, so every token's label is exact.
-We generate $200{,}000$ training pieces and $10{,}000$ each for validation and test, with $0$--$3$ key changes each; the vocabulary holds bars, positions, absolute MIDI pitches and note lengths, but no key or chord symbols.
-The supplementary gives the generation procedure.
-For evaluation on real music, we use $300$ Bach chorales with human key labels from When in Rome~\cite{gotham2023wir} and $905$ of the $909$ pop songs in POP909-CL~\cite{pop909cl2026}; the supplementary material lists the four songs we exclude and why.
+% 主実験では，各トークンの正確な調ラベルを得るために合成音楽を用いる．
+% 学習用に200,000曲，検証用とテスト用にそれぞれ10,000曲を生成し，各楽曲には0--3回の転調を含める．
+% 語彙には小節，位置，絶対MIDI音高，音長を含むが，調やコードの記号は含まない．
+% 合成データで得られた結果が実音楽にも当てはまるかを確認するため，人手による調ラベルを持つ実音楽でも評価する．
+% BachではWhen in Romeの300曲のコラールを用いる．
+% POP909-CLでは，注釈に欠損または不整合がある4曲を除いた909曲中905曲を用いる．
+We use synthetic music for the main experiments to obtain exact key labels at every token.
+We generate $200{,}000$ training pieces and $10{,}000$ pieces each for validation and test, with $0$--$3$ key changes per piece.
+The vocabulary includes bars, positions, absolute MIDI pitches, and note lengths, but no key or chord symbols.
+To test whether the findings extend to real music, we also evaluate models trained on datasets with human key annotations.
+We use $300$ Bach chorales from When in Rome~\cite{gotham2023wir} and $905$ of the $909$ songs in POP909-CL~\cite{pop909cl2026}, excluding four songs with missing or inconsistent annotations.
 
 \subsection{Models}
 \label{sec:models}
-%主モデルには、8層、512次元の活性、約25Mパラメータを持つGPT-2型decoderを用いる。3つのrandom seedと、移調augmentationの有無を組み合わせて6モデルを学習する。主実験では移調augmentationあり・seed 0のモデルを用いる。残りの5モデルは、probeの結果が特定の学習結果に依存しないことを確認するために用いる。
+% 主実験には，8層，512次元の内部活性，約25Mパラメータを持つGPT-2型decoderを用いる．
+% 同じアーキテクチャについて，異なる学習条件で学習した5つの追加モデルも用いる．
+% 実音楽で学習されたモデルの評価には，5つの公開checkpointを用いる．
+% AMTでは12層，24層，36層の3つのcheckpointを用いる．
+% さらに，MMTと，MMTとともに公開されたREMI baselineを用いる．
 Our main model is an $8$-layer GPT-2-style~\cite{radford2019gpt2} decoder with $512$-dimensional activations and about $25$M parameters.
-We train six models using three random seeds, with and without transposition augmentation.
-The main experiments use the transposition-augmented model with seed~$0$.
-The other five models test whether the probe result depends on a particular training run. A seventh model, trained on a disjoint split with its own seed, serves only as the disturbance reference and is never probed or edited.
-%また、実音楽で学習された5つの公開チェックポイントを評価する。AMTは12層、24層、36層の3サイズを用い、3つすべてでprobeを評価する。編集は12層と24層で評価し、36層はprobeのみとする。MMTとREMIではprobeと編集の両方を評価する。
-We also evaluate five public checkpoints trained on real music, probing all five and editing four of them.
-We use three sizes of the Anticipatory Music Transformer (AMT)~\cite{thickstun2023anticipatory}, with $12$, $24$, and $36$ layers.
-We evaluate the probe on all three and the edit on the $12$- and $24$-layer checkpoints.
-We also evaluate both probing and editing on the Multitrack Music Transformer (MMT)~\cite{dong2023mmt} and the REMI baseline released with MMT.
-% [2026-08-28 FIX / N1] 「音数を揃えた」とも「240トークン固定」とも書けない．
-%   実際は音数を揃える方針で，AMT 240トークン=80音，MMT 80ステップ=80音，
-%   REMI だけ共有既定の240トークンのまま=58音．事実どおりに書いた．
-We fix the continuation length in notes rather than tokens, which needs a different step count per scheme: $240$ tokens give the Anticipatory model about $80$ note events, and MMT emits one position per note, so it runs for $80$ steps. The REMI baseline ran at the shared $240$-step default and produced about $58$ notes, which the supplementary records.
-
+We use five additional models with the same architecture trained under different settings.
+For evaluation on real music, we use five publicly available checkpoints.
+These include $12$-, $24$-, and $36$-layer Anticipatory Music Transformer (AMT) checkpoints~\cite{thickstun2023anticipatory}.
+We further use the Multitrack Music Transformer (MMT)~\cite{dong2023mmt} and the REMI baseline released with MMT.
 
 \subsection{Evaluation Protocol}
 \label{sec:measures}
-%評価方法。 各実験を行う前に、評価方法を固定した。
-We fixed all evaluation rules before the corresponding runs.
+% 評価では，二つの研究質問を検証する．
+% RQ1：内部活性から，過去の音高だけでは説明できない調情報を読み出せるか？
+% RQ2：内部の調関連成分を目標調のものに置き換えると，同程度のランダム部分空間の置き換えよりも，生成された続きを目標調へ変化させられるか？
+% これら二つの研究質問により，調情報が単に内部活性から読み出せるだけなのか，それともその表現を置き換えることで生成に影響する形で保持されているのかを区別する．
+% さらに，統制実験と層・トークン位置ごとの分析を行い， 観測された効果に対する別の説明を検証するとともに，読み取りやすさと編集可能性が一致する場所と異なる場所を調べる．
+% すべての評価基準と閾値はfinal testの前に固定する．
+We structure the evaluation around two research questions:
+\begin{itemize}
+    \item \textbf{RQ1:} Can key information be read from internal activations beyond what can be inferred from preceding pitches?
+    \item \textbf{RQ2:} Does replacing the internal key-related component with that of a target key shift the generated continuation toward the target key more than a matched random-subspace replacement?
+\end{itemize}
+Together, these questions distinguish whether key information is merely readable from internal activations or is represented in a form whose replacement affects generation.
+We further use control experiments and layer- and token-position analyses to test alternative explanations and examine where readability and editability coincide or differ.
+All evaluation criteria and thresholds are fixed before the final test.
 
-%対照条件。 編集する方向、活性の変位量、介入位置の影響を分けて検証するため、Table 1の対照条件を用いる。
-\noindent\textbf{Controls.}
-We use controls that isolate the effects of the edited directions, activation displacement, and intervention positions (Table~\ref{tab:main}).
+\noindent\textbf{RQ1:}
+% まず，内部活性から24調のいずれかを予測する線形プローブを学習し， macro-F1で性能を評価する．
+% この性能が過去の音高だけで説明できるかを確認するため，それ以前の音高トークンから12種類のpitch classを数えるnote-counting baselineと比較する．
+% Baselineにはロジスティック回帰とKrumhansl--Schmuckler（KS）法を用い，複数の履歴長の中で最も性能の高いものを比較対象とする．
+% KS法は，12次元のpitch-class count vectorと24調それぞれのkey profileとの相関を計算し，最も相関が高い調を予測する．
+% また，プローブ自体の表現力による影響を補正するため，各曲にランダムな調ラベルを割り当てたcontrol taskでも同じプローブを学習する．
+% Probe marginを M_probe = (F1_probe - F1_control) - F1_noteと定義する．
+% ここで，F1_probeは実際の調分類，F1_controlはランダムラベルのcontrol task，F1_noteは最も性能の高いnote-counting baselineのmacro-F1である．
+% 各曲を単位としたブートストラップによる95%信頼区間の下限が0を上回る場合，probe marginは正であると判断する
+We train a linear probe to predict one of the $24$ keys from the internal activation at each position and evaluate it using macro-$F_1$.
+To test whether this performance can be explained by preceding pitches, we compare it with note-counting baselines.
+The baselines count the $12$ pitch classes in preceding pitch tokens and predict the key using logistic regression or
+Krumhansl--Schmuckler (KS) matching~\cite{krumhansl1982,krumhansl1990,temperley1999ks}.
+KS matching compares the $12$-dimensional pitch-class count vector with the key profiles for the $24$ major and minor keys and predicts the key with the highest correlation.
+We evaluate multiple context lengths and use the strongest baseline.
+To control for probe capacity, we also train the same probe on a control task with random piece-level key labels~\cite{hewitt2019control}.
+We define the \emph{probe margin} as
+\begin{equation}
+M_{\mathrm{probe}}
+=
+\left(F_1^{\mathrm{probe}}-F_1^{\mathrm{control}}\right)
+-F_1^{\mathrm{note}},
+\label{eq:probe-margin}
+\end{equation}
+where $F_1^{\mathrm{probe}}$ is the macro-$F_1$ for true key labels, $F_1^{\mathrm{control}}$ is that for random labels, and $F_1^{\mathrm{note}}$ is that of the strongest note-counting baseline.
+We regard the margin as positive when the lower bound of its piece-level bootstrap $95\%$ confidence interval is above zero.
 
-%Experiment 1. Probe marginは、controlで補正したprobe scoreから最も強いnote-counting baselineを引いた値であり、24個の調クラスに対するmacro-F1で測る。曲単位のbootstrap 95%信頼区間が0を含まない場合に正のmarginとする。
-\noindent\textbf{Experiment~1.}
-The \emph{probe margin} is the control-corrected probe score minus the strongest note-counting baseline, measured by macro-$F_1$ over the $24$ key classes.
-We regard the margin as positive when a piece-level bootstrap $95\%$ CI excludes zero.
+\noindent\textbf{RQ2:}
+% 各介入についてsuccess rate（SR）を求める．
+% KS推定器が生成された続きを目標調と判定し，かつlikelihoodの変化が自然な転調で観測される範囲内である場合を成功とする．
+% 自作モデルでは，異なるseedと重複しないデータで学習したreference modelを用いてlikelihoodの変化を測定する．
+% 自然な転調で観測されたlikelihood変化の90パーセンタイルである0.613を閾値とする．
+% 公開モデルでは，各コーパスについて別のreference modelを用いて閾値を再計算する．
+% 調関連部分空間に特有の効果を評価するため，replacementのSRと，同じ次元数を持つ
+% random-subspace replacementのSRとの差をedit marginとして定義する．
+% 変位量まで揃えた統制は，選択した層でのみ用いる（Table 1）．
+We compute the \emph{success rate} (SR) for each intervention.
+We count an intervention as successful when the KS estimator identifies the generated continuation as the target key and the likelihood change remains within the range observed at natural key changes.
+For our trained models, we measure the likelihood change using a reference model trained with a different seed on a disjoint data split.
+We use $0.613$, the $90$th percentile of the likelihood change observed at natural key changes, as the threshold.
+For public models, we recompute this threshold for each corpus using a separate reference model.
+To measure the effect specific to the key-related subspace, we define the \emph{edit margin} as
+\begin{equation}
+M_{\mathrm{edit}}
+=
+\mathrm{SR}_{\mathrm{replace}}
+-
+\mathrm{SR}_{\mathrm{random}},
+\label{eq:edit_margin}
+\end{equation}
+where $\mathrm{SR}_{\mathrm{replace}}$ and $\mathrm{SR}_{\mathrm{random}}$ are the success rates of target-key replacement and of a random-subspace replacement of the same dimension, respectively.
+A positive edit margin indicates that target-key replacement is more effective than the random-subspace intervention.
+At the selected layer we additionally match the activation displacement of the random subspace to that of the replacement (Table~\ref{tab:main}).
 
-%Experiment 2. Success rate (SR)では、2つの条件を満たした継続を成功とする。第一に、KS推定器が継続から書き込んだ調を推定する。第二に、編集による変化が別のreference modelで測った事前定義の閾値以内に収まる。閾値には、自然な転調におけるreference modelのperplexity変化の90パーセンタイルである0.613を用いる。どちらかの条件を満たさない継続は失敗とし、偶然一致は1/12である。公開チェックポイントでは、対応するコーパス上で閾値を再計算し、別の公開checkpointをreferenceとして用いる。
-\noindent\textbf{Experiment~2.}
-The \emph{success rate} (SR) counts a continuation as successful when two conditions hold.
-First, the KS estimator (Sec.~\ref{sec:exp1}) identifies the installed key from the continuation.
-Second, the edit remains within a pre-defined disturbance threshold, in nats, measured by a reference model of the same architecture trained on a different seed and a disjoint data split, which we never probe or edit.
-We set this threshold to $0.613$, the $90$th percentile of that model's perplexity change at natural key changes.
-Continuations that fail either condition count as failures. A uniform key estimate would give $1/12$; the controls fall below it because a continuation the edit does not move stays in the prompt's key, which the estimator returns for $51.7\%$ of the random-subspace rows against $4.1\%$ for the target key.
-For the public checkpoints we recompute the threshold on the corresponding corpus: on Bach the reference is a different checkpoint of the same family --- the requirement is that no model grade its own output, not that the grader be the larger of the two --- and on pop a single checkpoint scores every model, never the one being edited.
-%また、調推定器を使わない指標として、継続音のうち対象の音階に属する音の割合をin-key note shareとして測る。各目標調について、同じprompt上の編集とbaselineを片側Wilcoxon符号順位検定で比較し、12調に対してHolm補正を行う。
-We also report the \emph{in-key note share}, the fraction of continuation notes that belong to a given scale.
-This measure does not use the key estimator. For each target key, we compare the edit and baseline on paired prompts using a one-sided Wilcoxon signed-rank test with Holm correction over the $12$ keys~\cite{holm1979}.
-The effect size $r$ is the rank-biserial correlation.
+\noindent\textbf{Controls and additional analyses.}
+% まず，結果がKS推定器だけに依存していないことを確認するため，生成音符のうち目標調の音階に属する割合であるpitch-in-scale rateも測定する．
+% 次に，生成された音符をモデルが読み直した結果として目標調へ変化した可能性を検証するため，新しい音符が生成される前の次音高分布を調べる．
+% さらに，層およびトークン位置ごとにprobe marginとedit marginを比較し，調情報を読み出しやすい場所と，その情報を変更したときに生成へ強く影響する場所の関係を調べる．
+% 同じ評価を公開モデルにも適用し，これらの結果が自作モデルに限定されないかを検証する．
+% 最後に，replacementとactivation steeringを比較し，元の調関連成分を置き換える効果と，目標調成分を単純に加算する効果を区別する．
+To test the robustness and interpretation of the observed effect, we conduct several additional analyses.
+First, we measure the \emph{pitch-in-scale rate}, the fraction of generated notes belonging to the target-key scale, to test whether the result depends on the KS estimator.
+We then examine the next-pitch distribution before any new note is generated to test whether the target-key shift appears before the model can infer the target key from its own generated notes.
+We further compare probe margin and edit margin across layers and token positions to examine whether key information is readable at the same locations where changing it most strongly affects generation.
+We apply the same evaluation to publicly available models to test whether these findings extend beyond our trained models.
+Finally, we compare replacement with activation steering to distinguish replacing the original key-related component from simply adding a target-key component.
 
-%探索と最終テスト。 介入設定をsearch stageで選択し、独立したfinal testで主結果を評価する。Search stageでは100 prompts上で8層と3種類の方向を比較し、第4層のprobe directionsを選択する。この100 promptsはprobeの学習にも使用するため、この段階の結果は最終評価には用いない。Final testでは、それ以前の実験やprobeが見ていない100個の新しいpromptsを用いる。各promptについて元の調を除く11個の目標調を評価し、1条件あたり1,100 continuationsを得る。選択した設定、seed、sample sizeはfinal testの前に固定する。短調では新たな探索を行わず、長調で選択した設定をそのまま用いる。
 \noindent\textbf{Search and final test.}
-We use a search stage to select the intervention settings and a separate final test to report the main results.
-The search stage compares $8$ layers and $3$ direction types on $100$ prompts and selects the probe directions at layer~$4$ ($0.378$ against $0.346$ for the per-key means and $0.213$ for the optimized subspace, which did not win).
-Because these prompts are also used to train the probe, we use this stage only for selection and not for final evaluation.
-The final test uses $100$ new prompts that neither the probe nor any earlier run has seen.
-For each prompt, we evaluate the $11$ target keys of its own mode other than its original key, giving $1{,}100$ continuations per condition; the major and minor runs are separate, each with its own $100$ prompts and its own Holm correction over $12$ keys.
-We fix the selected settings, seeds, and sample size before the final test.
-For minor keys, we reuse the settings selected for major keys without another search stage.
+% 自作のGPT-2型モデルでは，Search stageで100個のpromptを用いて介入設定を選択し，最終評価で用いる層を第4層に固定する．
+% Final testでは，probeの学習にも介入設定の選択にも使用していない100個のpromptを用いて，Search stageで選択した設定を評価する．
+% 各promptについて，同じmajor/minor mode内で元の調を除く11種類の目標調へ介入し，各条件で合計1,100個の生成結果を評価する．
+% 介入設定はmajorのpromptを用いて選択し，minorでは追加の設定選択を行わず， majorで選択した設定をそのまま使用する．
+% 12種類の各目標調について，同じpromptに対するtarget-key replacementとrandom-subspace replacementを片側Wilcoxon符号順位検定で比較し，12個の目標調に対してHolm補正を適用する．
+For our GPT-2-style models, we use $100$ prompts in the search stage to select the intervention setting and choose layer~$4$ for the final evaluation.
+We then evaluate the selected setting on $100$ unseen prompts used for neither probe training nor intervention selection.
+For each prompt, we intervene toward the $11$ other target keys within the same major or minor mode, giving $1{,}100$ generated continuations per condition.
+We select the intervention setting using major-key prompts and apply the same setting to minor-key prompts without additional selection.
+For each of the $12$ target keys, we compare target-key replacement with the random-subspace replacement using a one-sided Wilcoxon signed-rank test on paired prompts and apply Holm correction over the $12$ target keys~\cite{holm1979}.
 
 % IV. 結果
 \section{Results}
 \label{sec:results}
-% まず調を読み取れるかを調べ，次に対応する表現を編集したとき生成が変化するかを調べる．
-% 自作モデルの主結果には，移調augmentationあり・seed 0のモデルを用いる．
-We first test whether the key is readable and then whether editing the corresponding representation affects generation.
-We report the main synthetic-model results using the transposition-augmented model with seed~$0$.
 
-\subsection{Experiment 1: The Key Is Easier to Read}
+\subsection{Linear Probing}
 \label{sec:h1}
-% 調は，音符数えベースラインよりもモデルの活性から線形に読み取りやすい．
-% 第4層では，プローブのmacro-F1は0.927であり，最良の音符数えベースラインの0.790を上回る．
-% 統制課題の得点を差し引いたmarginは+0.105である
-% （bootstrap 95% CI [0.091, 0.114]）．
-% このmarginは，訓練済み6モデルすべての第1--7層で正であり，
-% より広い窓を用いた音符数えに対しても+0.071 [0.056, 0.081]残る．
-% 未訓練のネットワークではプローブは0.243にとどまり，
-% 第0層だけはcontrol-corrected marginが負となる（-0.20）．
-% したがって，我々が主張するのは，これらの音符数えよりも活性から調を線形に読み取りやすいことまでである．
-% 音符から調を推定するより良い方法は存在しうる．
-The key is more linearly accessible from the model activation than from the note-counting baselines.
-At layer~$4$ the probe reaches macro-$F_1$ $0.927$. The strongest note-counting baseline within the pre-specified window set reaches $0.790$; widening that set raises it to $0.824$ (Supp.), and both comparisons are reported below.
-% [2026-08-27 FIX / D] 0.927 - 0.790 = 0.137 なのに margin が +0.105 で,
-%   何を引いたのかが読者に伝わらなかった. 引き算の対象を明示した.
-After subtracting the control-task score from the probe, the margin is $+0.105$ over the pre-specified baseline (bootstrap $95\%$ CI $[0.091,0.114]$, resampled over pieces) and $+0.071$ over the wider one.
-The margin remains positive across layers~$1$--$7$ of all six trained models and against wider-window note-counting baselines ($+0.071$, $[0.056,0.081]$).
-An untrained network reaches only $0.243$, and layer~$0$ is the only layer with a negative control-corrected margin ($-0.20$).
-We claim only that the key is more linearly accessible from the activation than from these note counts.
-A better estimator from the notes may still exist.
+% 調情報は，過去の音高だけを用いるnote-counting baselineよりも，モデルの内部活性から読み取りやすい．
+% 第4層では，probeのmacro-F1は0.927であり，最も性能の高いnote-counting baselineの0.824を上回る．
+% Control taskによる補正後のprobe marginは+0.071であり，bootstrap 95\%信頼区間は[0.056, 0.081]である．
+The key is more linearly accessible from the internal activations than from the note-counting baselines.
+At layer~$4$, the probe reaches macro-$F_1$ $0.927$, compared with $0.824$ for the strongest note-counting baseline.
+After correcting for the control task, the probe margin is $+0.071$, with a bootstrap $95\%$ confidence interval of $[0.056,0.081]$.
 
-
-\subsection{Experiment 2: The Music Follows the Installed Key}
+\subsection{Activation Patching}
 \label{sec:h3}
-%生成音楽は、書き込んだ調に従った。
-%最終テストでは、置換の成功率は \(0.355\) であり、ランダム方向の \(0.039\) を大きく上回った。
-%置換は12個すべての目標調でベースラインを上回り、Holm補正後も有意であった。
-The music follows the key we install.
-In the final test, the replacement reaches the installed key with a success rate of $0.355$, compared with $0.056$ for random directions matched in dimension and displacement, or $0.039$ without the displacement match (Table~\ref{tab:main}).
-The replacement outperforms the baseline for all $12$ target keys after Holm correction (worst $p=4.8\times10^{-5}$, $r=0.72$--$1.00$).
-%この結果は調推定器だけによるものではない。
-%調推定器を用いずに音符を数えた場合でも、継続音の \(0.936\) が書き込んだ調の音階に属し、プロンプトの調では \(0.617\) であった。
-The result does not depend on the key estimator.
-Without using an estimator, $0.936$ of the edited continuation's notes belong to the installed key's scale, against $0.564$ and $0.602$ for the two random controls on the same measure, matched in dimension and in dimension plus displacement --- near the floor scale overlap alone sets, since two distinct major scales share $0.545$ of their notes on average.
-% [2026-08-28 FIX / S1] 移調上限との比は段落末の 56.4%/54.8% と
-%   同一量だったので、この一文を削除した（上限値は表1にある）。
-%短調でも同様の結果が得られた。
-%置換の成功率は \(0.495\)、ランダム方向では \(0.003\) であり、12個すべての目標調でベースラインを上回った。
-The same result holds for minor keys.
-The replacement reaches $0.495$ compared with $0.026$ for the matched control, or $0.003$ unmatched, and outperforms the baseline for all $12$ target keys (worst $p=1.7\times10^{-7}$, $r\ge0.96$).
-The minor rate is higher because its ceiling is higher: transposing the prompt reaches $0.877$ in minor against $0.648$ in major, and as a fraction of that ceiling the two conditions are almost equal, $56.4\%$ and $54.8\%$.
+% 調関連成分を目標調のものに置き換えると，生成音楽は目標調に従いやすくなる（Table~\ref{tab:main}）．
+% Replacementは，majorとminorの両方でmatched random-subspace controlを大きく上回り， 12個すべての目標調で有意な改善を示す．
+% また，pitch-in-scale rateでも同じ傾向が得られる．
+% したがって，目標調への変化はKS推定器だけに依存した結果ではない．
+Replacing the key-related component with that of the target key makes the generated music more likely to follow the target key (Table~\ref{tab:main}).
+Replacement substantially outperforms the matched random-subspace control in both major and minor settings and shows a significant improvement for all $12$ target keys.
+The same pattern appears in the \emph{pitch-in-scale rate}, showing that the shift toward the target key does not depend only on the KS estimator.
 
 \begin{table}[!t]
 \centering
-\footnotesize
-\caption{Success rates for the target-key replacement and controlled changes to its subspace, intervention positions, and operation.
+\caption{Success rates for target-key replacement and control conditions.
 Displacement denotes the magnitude of the activation change.}
 \label{tab:main}
 
+\setlength{\tabcolsep}{4pt}
 \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xcc@{}}
 \toprule
-Condition & Major & Minor\\
+Condition & Major & Minor \\
 \midrule
 
-\multicolumn{3}{@{}l}{\emph{Main intervention}}\\[1pt]
+\multicolumn{3}{@{}l}{\emph{Main intervention}} \\[1pt]
 \rowcolor{analysisblue}[0pt][0pt]
 \quad Target-key replacement
-& \textbf{0.355} & \textbf{0.495}\\
+& \textbf{0.355} & \textbf{0.495} \\
 
 \addlinespace[3pt]
-\multicolumn{3}{@{}l}{\emph{Change the subspace}}\\[1pt]
+\multicolumn{3}{@{}l}{\emph{Subspace controls}} \\[1pt]
 \quad Random subspace, same dimension
-& 0.039 & 0.003\\
+& 0.039 & 0.003 \\
 \quad Random subspace, matched dimension and displacement
-& 0.056 & 0.026\\
+& 0.056 & 0.026 \\
 
 \addlinespace[3pt]
-\multicolumn{3}{@{}l}{\emph{Change the intervention positions}}\\[1pt]
+\multicolumn{3}{@{}l}{\emph{Position controls}} \\[1pt]
 \quad Pitch positions only
-& 0.035 & 0.000\\
+& 0.035 & 0.000 \\
 \quad Bar and note-length positions only
-& 0.233 & 0.212\\
+& 0.233 & 0.212 \\
 
 \addlinespace[3pt]
-\multicolumn{3}{@{}l}{\emph{Change the operation and strength}}\\[1pt]
+\multicolumn{3}{@{}l}{\emph{Operation and strength controls}} \\[1pt]
 \quad Addition (steering), matched displacement
-& 0.245 & 0.154\\
+& 0.245 & 0.154 \\
 \quad Addition (steering), $2\times$ displacement
-& 0.471 & 0.505\\
+& 0.471 & 0.505 \\
 
 \addlinespace[3pt]
-\multicolumn{3}{@{}l}{\emph{Upper anchor}}\\[1pt]
+\multicolumn{3}{@{}l}{\emph{Reference condition}} \\[1pt]
 \quad Transposing the prompt itself
-& 0.648 & 0.877\\
+& 0.648 & 0.877 \\
 
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{The Edit Acts Before Any Output}
+\subsection{Activation Patching Affects Pitch Prediction Before Generation}
 \label{sec:nextpitch}
-%編集は、モデルが音符を生成する前から次音予測に影響する。
-%最初の編集位置では、書き込んだ調の音階上の確率質量とプロンプトの調の音階上の確率質量の対数比を0.695増加させた。ランダム方向では0.041であった。
-%この差は12個すべての目標調で有意であった。
-%まだ編集後の音符が存在しないため、この効果をモデルが自分の生成音から新しい調を読み取った結果として説明することはできない。
-The edit affects the model before it generates a note.
-At the first edited position, it increases the natural-log ratio between the probability mass on the installed key's scale and that on the prompt key's scale by $0.695$, about a factor of two, against $0.041$ for random directions, and by $0.309$ against $0.026$ in minor.
-The difference is significant for all $12$ targets of both modes after correction (worst $p=5.0\times10^{-16}$, $r\ge0.99$).
-Because no edited note exists at this point, the effect cannot arise from the model reading the new key from its own output.
-%また探索段階では、最初の1小節だけ編集した後に編集を停止しても、その効果はその後の生成に残った。
-%この結果は、一度編集が生成音を変えると、その後は生成された音符が新しい調を引き継げることを示唆する。
-In the search stage, the effect persisted when we stopped editing after the first generated bar.
-This result suggests that, once the edit changes the generated notes, those notes can carry the new key forward.
+% Activation patchingは，モデルが新しい音符を生成する前から音高予測に影響する．
+% 最初の編集位置では，目標調の音階に割り当てられる確率が，元の調の音階に割り当てられる確率に対して相対的に増加する．
+% この変化を両者の確率質量の対数比の変化として測定すると，replacementでは0.695，random-subspace controlでは0.041となる．
+% この差は12個すべての目標調で有意である．
+% この時点では編集後の音符がまだ存在しないため，この効果はモデルが自分で生成した音符から目標調を読み取った結果では説明できない．
+Activation patching affects pitch prediction before the model generates any new note.
+At the first intervention position, replacement shifts probability toward pitches in the target-key scale relative to pitches in the original-key scale.
+We quantify this shift as the change in the log ratio of probability mass on the target-key scale to that on the original-key scale.
+This value is $0.695$ for replacement and $0.041$ for the random-subspace control.
+The difference is significant for all $12$ target keys.
+Because no new note has been generated after the intervention at this point, the effect cannot be explained by the model reading the target key from its own generated notes.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{fig_read_use.pdf}
-% 図2キャプション [2026-09-09 追加]
-% 層をまたいだ可読性と編集効果。
-% 調は、対応する表現を置き換えることが生成に実質的な影響を与えるより前に、線形に読み取れるようになる。
-% 可読性は probe の macro-F1、編集効果は同じ層での標的調置換の成功率から順位を揃えたランダムベースラインの成功率を引いた値であり、いずれも探索段階のものである。
-% 注意（本文と整合）: 左軸には probe の生の macro-F1 を置いている。音符数えに対する
-%   マージンを左軸に置くと、そのマージンは第1層でピークの17%にとどまり編集効果の15%と
-%   ほぼ並ぶため、乖離が見えなくなる。マージン版の図は paper/fig_read_use_margin.pdf に
-%   あり、差し替えるならこの includegraphics の1行を書き換えるだけでよい。
-% キャプション [2026-09-09 締め: 5文 -> 4文]
-%   図の要素はすべて説明する必要がある（二軸・線種・マーカーの塗り・帯・段階）が、
-%   ページに余裕がないので最後の2文を1文に統合した。著者の元案（2文）に戻すなら
-%   第3文と第4文を削れば済むが、そうすると点線と白抜きマーカーが未説明になる。
-\caption{Probe readability and edit gain across layers.
-The key becomes linearly readable before replacing the corresponding representation substantially affects generation.
-Readability is the probe macro-$F_1$ and edit gain is the replacement's success rate minus the rank-matched random baseline's at the same layer, both from the search stage.
-The probe curve is dotted with hollow markers where its control-corrected margin over the strongest note counter does not clear zero, and the band is a prompt-level bootstrap interval on the gain.}
-\label{fig:layer_read_use}
+\subsection{Probe Margin Does Not Fully Predict Edit Strength}
+\label{sec:h5}
+% Probe marginとedit marginは層によって異なる変化を示す．
+% 第0層のprobe marginは負で，第1層でもまだ正にならず，edit marginはどちらの層でも小さい．
+% 第2層以降ではprobe marginは正となり，層間で比較的小さな変化を示す．
+% 一方，edit marginは層によって大きく変化し，第4層で最大となる．
+% したがって，probe marginが正であることだけでは，その層への介入が生成にどの程度強く影響するかは分からない．
+Probe margin and edit margin show different layer-wise variation.
+Probe margin is negative at layer~$0$ and not yet positive at layer~$1$, and edit margin is small at both; from layer~$2$ onward probe margin is positive and varies relatively little across the deeper layers.
+In contrast, edit margin varies more strongly across layers and reaches its maximum at layer~$4$ (Fig.~\ref{fig:readuse}).
+Thus, a positive probe margin alone does not determine how strongly an intervention at that layer affects generation.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fig2_layerwise_three_a_ours_synthetic_corpus.pdf}
+  \caption{Probe margin and edit margin across layers of our model in the search stage.
+  Probe margin measures key readability beyond the random-label control and the strongest note-counting baseline.
+  Edit margin is the success-rate difference between target-key replacement and a random-subspace replacement of the same dimension.
+  Error bars and the shaded band show $95\%$ confidence intervals.}
+  \label{fig:readuse}
 \end{figure}
 
-\subsection{Readability Does Not Identify Where the Key Is Used}
-\label{sec:h5}
-%Probe性能と編集効果は、層とトークン位置の両方で分かれた。
-%図2が示すとおり、probe は第1層でほぼ最大の macro-F1 に達しているのに、そこでの編集効果はまだゼロ近くである。
-%編集効果は第2層以降で初めて上がり第4層で頂点になるが、その時点で probe の値はもう動いていない。
-%probe 曲線の点線部分は、その値が最強の音符数えをまだ上回っていない層を示す。したがって第1層までに飽和するのは生の値であり、音符数えが与えられない部分ではない。
-%生の probe 精度はプロービング研究が通常報告する量であり、編集が効く層を突き止められないのはその量である。
-Probe performance and edit effectiveness separate across layers and across token positions.
-Figure~\ref{fig:layer_read_use} shows the probe reaching almost its full macro-$F_1$ at layer~$1$ while the edit gain over the random baseline is still near zero there.
-The edit gain rises only from layer~$2$ onward and peaks at layer~$4$, by which point the probe score has stopped changing.
-The dotted part of the probe curve marks the layers where that score does not yet beat the strongest note counter, so what saturates early is the raw score rather than the part of it the notes cannot already supply.
-Raw probe accuracy is the quantity a probing study normally reports, and it is that quantity which fails to locate the layers where the edit works.
-%同様の分かれ方はトークン位置でも見られ、そちらの数値は最終テストのものである。
-%音高位置だけを編集してもほとんど効果はなく（SR 0.035）、小節と音長の位置を編集すると0.233に達し、12個中11個の目標調で有意であった。
-%2つの集合は全位置の43%と48%でほぼ同じ大きさなので、この差は編集した箇所が少ないことから来るのではない。
-%標的が族に合っていないわけでもない。族ごとに推定した μ_κ は V の内側でコサイン0.92で一致し、異なる調の間では0.31にすぎない。
-%したがって probe の可読性だけでは、表現を変えることが生成される調に影響する層や位置を特定できない。
-The same separation appears across token positions, where the numbers come from the final test.
-Editing only pitch positions has little effect (SR $0.035$), whereas editing bar and note-length positions reaches $0.233$ and is significant for $11$ of the $12$ target keys (Table~\ref{tab:main}).
-Separated, the note-length token carries all of that and the bar delimiter none, $0.232$ against $0.033$, at the same $43\%$ coverage as the inert pitch set, so coverage does not explain the gap.
-The target is not mismatched to the family either, since per-family estimates of $\mu_{\kappa}$ agree to cosine $0.92$ inside $V$ against $0.31$ across keys.
-%また、編集している部分空間は音符数えの言い換えではない。
-%層4の活性から直近のピッチクラス頻度への回帰は R²=0.78 でよく当てはまるが、その部分空間を通して同じ値を書き込んでも成功率は 0.027 にとどまり、同じ次元と変位のランダム部分空間と区別できない。
-%逆にその部分空間を V から除去しても 0.360 に達し、据え付けそのものと差がない。
-The subspace we edit is also not the note counts in other coordinates.
-A regression from the same activations to the recent pitch-class frequencies fits well at $R^2$ $0.78$, yet writing the same value through the subspace it spans reaches only $0.027$ and is indistinguishable from a random subspace of the same dimension and displacement, while removing that subspace from $V$ still reaches $0.360$.
-Thus probe readability alone does not identify the layers or the positions where changing the representation affects the generated key.
+% トークン位置についても，介入効果は位置によって大きく異なる．
+% 音高位置だけを編集した場合のsuccess rateは0.035であるのに対し，小節と音長の位置だけを編集した場合は0.233となる．
+% したがって，調関連情報への介入効果は層だけでなくトークン位置にも依存する．
+Edit effectiveness also depends strongly on token position.
+Patching only pitch positions reaches a success rate of $0.035$, whereas patching only bar and note-length positions reaches $0.233$.
+Thus, the effect of changing key-related information depends on both layer and token position.
 
-\subsection{The Read--Use Gap Holds in Public Models}
+\subsection{Probe Performance and Patching Effect Do Not Necessarily Agree in Public Models}
 \label{sec:wild}
-%次に、2つの主要な結果が実音楽で学習された公開チェックポイントでも成り立つかを調べる。
-%同じAMTをBachとPopで比較し、さらに同じPopコーパス上でAMT、MMT、REMIを比較する。
-We next test whether the two main findings extend to public checkpoints trained on real music.
-We compare the same AMT checkpoint on Bach and pop music, then AMT sizes on Bach, and then AMT, MMT, and REMI on each corpus in turn (Table~\ref{tab:wild}).
-%Bachでは、AMTは調を読み取り、編集にも反応した。probe marginは+0.196であり、編集のSRは0.479に達し、12個すべての目標調で成功した。
-%より大きなAMTでも同じ傾向が得られた。
-On Bach, AMT both reads and uses the key: the probe margin is $+0.196$, and the edit reaches an SR of $0.479$ and outperforms the baseline for all $12$ target keys.
-The $24$- and $36$-layer checkpoints behave the same way ($+0.213$, SR $0.557$ and $+0.203$, SR $0.540$, both $12/12$), so reading and using the key both survive a threefold increase in depth.
-%一方Popでは、probe性能は編集効果を予測しなかった。
-%AMTは最も高いprobe margin（+0.132）を示したが、編集効果は最も弱かった（0.212、9/12調）。
-%これに対してMMTとREMIのprobeはnote-counting baselineを上回らなかったが、編集はそれぞれ0.360と0.393に達し、12個すべての目標調で成功した。
-%したがって、高いprobe性能は、同じ表現を編集したときに強い効果が得られることを意味しない。
-On pop music, however, probe performance does not predict edit effectiveness.
-AMT has the highest probe margin ($+0.132$) but the weakest edit ($0.212$, $9/12$ keys).
-In contrast, MMT and REMI do not outperform the note-counting baseline in probing ($-0.060$ and $-0.022$), yet their edits reach $0.360$ and $0.393$ and succeed for all $12$ target keys.
-%Bach では同じ2モデルのプローブが表層を超える（+0.107 / +0.153）ので、
-%『読めない』側はコーパス依存であり、編集は6セルすべてで効く。
-Thus, high probe performance does not imply a strong effect when the same representation is edited.
-The probe verdict is also corpus-dependent: on Bach the same two models do beat the note counts ($+0.107$ and $+0.153$) and edit better still ($0.701$ and $0.610$), so what flips between corpora is whether the key is readable above the note counts, while the edit works in all six cells ($0.212$--$0.701$).
-%層をまたいだ乖離も、公開チェックポイントでは我々のモデルより強い形で現れる。
-%AMT の 12 層では編集効果は第8層で頂点になるが、probe margin の頂点は第10層であり、第0層と第11層ではマージンが高いのに編集効果は床にある。
-%位置についての結果も2つの公開スキームで再現する。どちらでも音高トークンそのものへの書き込みは無効で、効果は次の音高が決まる直前の構造トークンに乗る（AMT では時刻と音長、REMI では楽器トークン）。
-The position result reproduces in two public schemes as well, where writing at the pitch token itself is inert in both and the effect sits instead on the structural token before a pitch is chosen, the time and duration tokens in AMT and the instrument token in REMI.
-The layer-wise separation also appears in a public checkpoint, and in a stronger form than in our own model.
-Across AMT's $12$ layers the edit gain peaks at layer~$8$ while the probe margin peaks at layer~$10$, and at layers~$0$ and~$11$ the margin is high while the edit gain sits at the floor, so here the margin over the note counts fails to locate the layers where the edit works.
-Together with Sec.~\ref{sec:h5}, this result suggests that intervention sites and directions should be validated by intervention rather than selected from probe performance alone, as also reported for language models~\cite{wu2025axbench,arad2025selecting}.
+% Read--use gapは，実音楽で学習された公開モデルでも確認できる（Table~\ref{tab:wild}）．
+% Bachでは，AMT，MMT，REMIのすべてでprobe marginが正となり，activation patchingはすべての目標調でrandom-subspace controlを上回る．
+% また，評価したAMTの異なるモデルサイズでも同じ傾向が得られる．
+% 一方，Popではprobe performanceとpatching effectは一致しない．
+% AMTは最も高いprobe marginを示す一方でpatching success rateは最も低く，MMTとREMIはprobeではnote-counting baselineを上回らないが，
+% activation patchingではすべての目標調でrandom-subspace controlを上回る．
+% したがって，公開モデルにおいても，probe performanceとpatching effectは必ずしも一致しない．
+% 追加分析でも同じ傾向が得られる．
+% Bachでは，replacementは新しい音符を生成する前から次に生成される音高の確率分布を目標調の方向へ変化させるが，random subspaceでは同程度の変化は見られない．
+% また，AMTとREMIでは音高位置だけを編集してもほとんど効果がない一方，音高の直前にある構造的な位置への編集は，
+% 制限なしの編集と同程度の効果を示す．
+% さらにAMT-12Lでは，edit marginは第8層で最大となる一方，probe marginは第10層で最大となる．
+% Sec.~\ref{sec:h5}の結果と合わせると，probe性能だけでは，調情報の変更が生成に強く影響する場所を特定できない．
+
+A similar difference between probe performance and patching effect appears in publicly available models trained on real music (Table~\ref{tab:wild}).
+On Bach, AMT, MMT, and REMI all have positive probe margins, and activation patching outperforms the random-subspace control for all target keys.
+The same pattern holds across the evaluated AMT model sizes.
+On pop, however, probe performance and patching effect do not agree.
+AMT has the highest probe margin but the lowest replacement success rate, whereas MMT and REMI do not outperform the note-counting baseline in probing but outperform the random-subspace control for all target keys under activation patching.
+Thus, probe performance and patching effect do not necessarily agree in the public models.
+
+Additional analyses show the same separation.
+On Bach, replacement shifts the probability distribution over the next pitch toward the target key before any new note is generated, whereas a random subspace of the same dimension produces little change.
+In AMT and REMI, patching only pitch positions is largely ineffective, whereas patching structural positions immediately before pitch prediction produces an effect comparable to unrestricted patching.
+Across the layers of AMT-12L, the edit margin peaks at layer~$8$, whereas the probe margin peaks at layer~$10$.
+Together with Sec.~\ref{sec:h5}, these results show that probe performance alone does not identify where changing key-related information most strongly affects generation.
+
+\subsection{Replacement versus Addition}
+\label{sec:addition}
+% Addition（steering）は，replacementと異なり，既存の成分$P_Vh$を残す．
+% 同じ変位量ではreplacementの方が大きな効果を示す．
+% 一方，変位量を2倍にするとadditionはreplacementと同程度以上のsuccess rateに達する．
+% したがって，本結果が示すのは，replacementが常に優れることではなく，同じ変位量でより大きな効果を示すことである．
+Unlike replacement, addition (steering) retains the existing component $P_{V_\ell}h_\ell(t)$.
+At matched displacement, replacement produces a larger effect than addition (Table~\ref{tab:main}).
+Doubling the addition displacement allows it to reach a comparable or higher success rate.
+Thus, our result does not show that replacement always achieves the highest success rate, but that it produces a larger effect when the activation displacement is matched.
+
+\section{Limitations}
+\label{sec:limits}
+% 本研究の結論は，本研究で評価したモデルおよび介入手法の範囲に限られる．
+% 主な因果解析では正確な調ラベルを得るために合成音楽を用い，実音楽への一般化については公開モデルを用いて評価した．
+% 本研究では，評価対象としたモデルが調を置換可能な形式で表現し，その表現が生成に影響することを示したが，すべての音楽Transformerが同じ表現を持つことや，モデルが人間と同じように調を理解していることは主張しない．
+% また，likelihoodに基づくsuccess criterionはreference modelによる評価に基づいており，音楽的品質を直接評価するものではない．
+% さらに，本研究では聴取実験を行っていない．
+% 絶対的なsuccess rateは，データセットによって調推定性能が異なるため，各corpus内で解釈する必要がある．
+Our conclusions are limited to the models and interventions evaluated here.
+Our main causal analyses use synthetic music to obtain exact key labels, while we assess generalization to real music using publicly available models.
+We show that the evaluated models represent key in a replaceable form that affects generation, but we do not claim that all music Transformers use the same representation or that the models understand key in a human-like manner.
+Our likelihood-based success criterion relies on a reference model and does not directly measure musical quality.
+We also do not conduct a listening test.
+Absolute success rates should be interpreted within each corpus because key-estimation performance differs across datasets.
 
 \begin{table}[!t]
 \centering
 \footnotesize
-\caption{Probe readability and edit effectiveness in public checkpoints.
-Panel (a) varies the corpus, (b) the model scale, and (c, d) the tokenization on each corpus in turn.
-Keys counts the target keys the edit wins after correction. $\checkmark$ marks a probe margin whose CI excludes zero, and an edit that wins all $12$ keys; AMT on pop wins $9$, hence $\times$ despite a significant overall effect.}
+\caption{Probe performance and target-key replacement success in public models.
+Improved keys denotes target keys for which target-key replacement significantly outperforms the random-subspace control.}
 \label{tab:wild}
 
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrcc@{}}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrc@{}}
 \toprule
-& Probe margin & Edit SR & Keys & Probe/Edit\\
+& Probe margin & Replacement SR & Improved keys \\
 \midrule
 
-\multicolumn{5}{@{}l}{\textit{(a) Corpus: AMT-12L fixed}}\\[3pt]
-Bach & $+0.196$ & $0.479$ & $12/12$ & $\checkmark/\checkmark$\\
-Pop  & $+0.132$ & $0.212$ & $9/12$  & $\checkmark/\times$\\
+\multicolumn{4}{@{}l}{\textit{(a) Corpus comparison with AMT-12L}} \\[2pt]
+Bach & $+0.196$ & $0.479$ & $12/12$ \\
+Pop  & $+0.132$ & $0.212$ & $9/12$  \\
 
-\addlinespace[7pt]
+\addlinespace[4pt]
+\multicolumn{4}{@{}l}{\textit{(b) AMT scale comparison on Bach}} \\[2pt]
+AMT-12L & $+0.196$ & $0.479$ & $12/12$ \\
+AMT-24L & $+0.213$ & $0.557$ & $12/12$ \\
+AMT-36L & $+0.203$ & $0.540$ & $12/12$ \\
 
-\multicolumn{5}{@{}l}{\textit{(b) Scale: Bach fixed}}\\[3pt]
-AMT-12L & $+0.196$ & $0.479$ & $12/12$ & $\checkmark/\checkmark$\\
-AMT-24L & $+0.213$ & $0.557$ & $12/12$ & $\checkmark/\checkmark$\\
-AMT-36L & $+0.203$ & $0.540$ & $12/12$ & $\checkmark/\checkmark$\\
+\addlinespace[4pt]
+\multicolumn{4}{@{}l}{\textit{(c) Model comparison on Pop}} \\[2pt]
+AMT-12L & $+0.132$ & $0.212$ & $9/12$  \\
+REMI    & $-0.022$ & $0.393$ & $12/12$ \\
+MMT     & $-0.060$ & $0.360$ & $12/12$ \\
 
-\addlinespace[7pt]
+\addlinespace[4pt]
+\multicolumn{4}{@{}l}{\textit{(d) Model comparison on Bach}} \\[2pt]
+AMT-12L & $+0.196$ & $0.479$ & $12/12$ \\
+REMI    & $+0.153$ & $0.610$ & $12/12$ \\
+MMT     & $+0.107$ & $0.701$ & $12/12$ \\
 
-\multicolumn{5}{@{}l}{\textit{(c) Tokenization on pop}}\\[3pt]
-AMT-12L & $+0.132$ & $0.212$ & $9/12$  & $\checkmark/\times$\\
-REMI    & $-0.022$ & $0.393$ & $12/12$ & $\times/\checkmark$\\
-MMT     & $-0.060$ & $0.360$ & $12/12$ & $\times/\checkmark$\\
-
-\addlinespace[7pt]
-
-\multicolumn{5}{@{}l}{\textit{(d) Tokenization on Bach}}\\[3pt]
-AMT-12L & $+0.196$ & $0.479$ & $12/12$ & $\checkmark/\checkmark$\\
-REMI    & $+0.153$ & $0.610$ & $12/12$ & $\checkmark/\checkmark$\\
-MMT     & $+0.107$ & $0.701$ & $12/12$ & $\checkmark/\checkmark$\\
-
-\addlinespace[2pt]
 \bottomrule
 \end{tabular*}
 \end{table}
 
-\subsection{Replacement versus Addition}
-\label{sec:addition}
-
-Addition (steering) keeps the component $P_Vh$ that replacement removes, so we match the displacement $\Delta$ to separate the operation from its strength: replacement then wins, $0.355$ against $0.245$ in major and $0.495$ against $0.154$ in minor.
-Given $2\Delta$ addition reaches $0.471$ and $0.505$, and not by disturbing more, so what replacement buys is control per unit of perturbation, in line with linear concept erasure~\cite{leace2023}; the supplementary has the breakdown.
-
-
-\section{Limitations}
-\label{sec:limits}
-%本研究の結論は、評価したモデルと介入方法の範囲に限られる。
-%本研究は、これらのモデルが調を置換可能な内部表現として保持し、その表現が生成に影響することを示した。
-%ただし、モデルが人間と同じように調を理解しているとは主張しない。また、すべての音楽Transformerが同じ形式で調を表現するとも主張しない。
-Our conclusions apply only to the models and interventions tested in this study.
-We show that these models represent key in a form that we can replace and that affects generation.
-We do not claim that the models understand key in the same way as humans or that all music Transformers represent key in this form.
-
-%Sec. 4.3および4.4の追加の因果対照は、自作モデルに対してのみ行った。
-%そのため、MMTとREMIでは編集によって生成音楽が変化することは示したが、その効果が自作モデルと同じ内部メカニズムによって生じることまでは確認していない。
-%disturbance criterionは、音楽的品質そのものではなく、編集によるreference modelのperplexityの変化を測る。また、本研究では聴取実験を行っていない。
-%[2026-09-10] 旧文は「追加の因果統制は自前モデルのみ」と書いていたが、生成前シフトは3つの公開チェックポイントで、位置対照は2つで実施したので偽になった。残る限界を正確に書き直す。
-We ran the causal controls of Secs.~\ref{sec:nextpitch} and~\ref{sec:h5} on the public checkpoints as well, and they hold there, so what remains untested is narrower.
-We did not run the position control on MMT, because its compound scheme emits every field at every step and a pitch position names no position in it, and we did not repeat the layer sweep or the pitch-class control outside our own models.
-The disturbance criterion measures changes in reference-model perplexity rather than musical quality itself.
-We also did not conduct a listening test.
-
-%一部の評価条件は実験間で異なる。
-%自作モデルと公開チェックポイントでは異なるnote-counting baselineを用いているため、probe marginを直接比較できない。
-%また、調推定器の性能はBachとPopで異なるため、success rateはコーパス間ではなく、同じコーパス内で比較する必要がある。
-%したがって、モデルやコーパスをまたいだ絶対値の比較には注意が必要である。
-Some evaluation settings differ across experiments, and the supplementary lists them: our models and the public checkpoints use different note-counting baselines, and the key estimator performs differently on Bach and pop, so probe margins and success rates should be read within a corpus rather than across.
-
 \section{Conclusion}
-%本研究では、調を置換可能な形式で表現し、置換後の値を生成時に利用することを「調を知っている」と定義する。
-%この定義のもとで、編集した各モデルは調情報を表現し、生成時に利用していた。
-%36層のチェックポイントはプローブのみで、使用は検証していないので、そう書き分ける。
-We define knowing the key as representing it in a form that can be replaced and then using the replaced value during generation.
-By this definition, every model we edited represents and uses key information, in our own models and in public checkpoints trained on real music.
-One further checkpoint was probed but not edited, and for that one we show only that the key is readable.
-%Probe性能だけでは、モデルが符号化された調情報を生成時に利用しているかどうかを判断するには不十分である。
-%Probeは生成に影響しない表現からも調を読み取れる一方で、probe性能が低いモデルでも介入に強く反応する場合がある。
-%したがって、音楽表現を分析する研究では、probe性能だけに依存せず、実際に介入して候補方向の効果を検証する必要がある。
-Probe performance alone is insufficient to determine whether the model uses the encoded key information during generation.
-A probe can recover the key from representations that do not affect generation, while models with weaker probe performance can still respond strongly to intervention.
-Therefore, studies of music representations should validate candidate directions through intervention rather than rely only on probe performance.
-
+% 本研究では，調を置換可能な形式で表現し，置換後の値を生成時に利用することを，本研究における「調を知っている」と定義した．
+% 線形プロービングによって調情報を読み出し，activation patchingによってその情報を目標調のものに置き換えた．
+% 調表現の置換は，新しい音符を生成する前から音高予測を目標調の方向へ変化させ，生成音楽が目標調に従う割合も増加させた．
+% 一方，probe性能と介入効果は必ずしも一致しなかった．
+% したがって，内部表現から情報を読み出せることと，その情報が実際の生成に利用されていることは区別して評価する必要がある．
+We define knowing the key in this study as representing it in a replaceable form and using the replaced value during generation.
+We use linear probing to identify key-related information and activation patching to replace it with information for a target key.
+Replacing the key representation shifts pitch prediction toward the target key before any new note is generated and increases target-key following in the generated music.
+However, probe performance does not reliably predict the effect of patching.
+These results show the importance of distinguishing whether information can be read from an internal representation from whether the model actually uses that information during generation.
 We release the testbed, code, and demos at \repourl.
 
+\clearpage
 \bibliographystyle{IEEEbib}
 \bibliography{refs}
 

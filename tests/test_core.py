@@ -13,7 +13,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from src.tokenizer.vocab import VOCAB, FORBIDDEN_SUBSTRINGS, pitch_of
 from src.datagen.generator import GenConfig, generate_piece, Key, triad_pcs, fifths_distance
-from src.eval.keyest import estimate_key, in_key_ratio, key_posterior_entropy
+from src.eval.keyest import (estimate_key, estimate_key_or_none, in_key_ratio,
+                             key_posterior_entropy, ks_scores)
 
 
 def test_vocab_no_leak():
@@ -190,3 +191,27 @@ def test_figure_peak_layers_match_the_data_when_artifacts_exist():
         assert got == cached, f"{model_dir.name}: cached L{cached}, data argmax L{got}"
         checked += 1
     assert checked >= 4, f"expected to check several models, checked {checked}"
+
+
+def test_ks_unestimable_defaults_to_index_zero():
+    """Pin the silent default, because a published number depends on it.
+
+    `c3_ks` takes argmax(ks_scores(hist)) per window, so windows KS cannot score are
+    counted as C major, and the note-counting baseline the paper reports was computed
+    that way. If someone "fixes" ks_scores to return None or to raise, F1_note moves
+    and the probe margin in the paper stops being reproducible. This test fails in
+    that case, on purpose.
+    """
+    import numpy as np
+    empty = np.zeros(12)
+    assert not np.isfinite(ks_scores(empty)).any()
+    assert int(np.argmax(ks_scores(empty))) == 0            # C major, silently
+    flat = np.ones(12)                                       # constant -> corrcoef NaN
+    assert not np.isfinite(ks_scores(flat)).any()
+    assert int(np.argmax(ks_scores(flat))) == 0
+    assert estimate_key([]) == 0                             # same default
+    # the safe entry point says None instead
+    assert estimate_key_or_none([]) is None
+    assert estimate_key_or_none([60, 62, 64]) is None        # under min_notes
+    c_major = [60, 62, 64, 65, 67, 69, 71, 72]
+    assert estimate_key_or_none(c_major) == estimate_key(c_major)

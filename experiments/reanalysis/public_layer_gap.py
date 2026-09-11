@@ -1,5 +1,9 @@
 """C3: the read-use gap across the layers of a public checkpoint.
 
+Probe performance against patching gain; the patching gain is the target-key
+replacement's success rate minus the dimension-matched random-subspace
+control's at the same layer.
+
 No generation. Both curves already exist as ledgered artifacts and are only put
 on one axis here:
 
@@ -7,7 +11,7 @@ on one axis here:
                raw macro-F1 of the linear probe, and the control-corrected margin
                over the strongest note counter, which is
                probe - c1_selectivity_floor - max(c3 macro_f1_24).
-  edit gain    results/mwild_sweep/<ckpt>/stage1_layer_scan.json -> profile[]
+  patching gain results/mwild_sweep/<ckpt>/stage1_layer_scan.json -> profile[]
                tkr_edit - tkr_k1 at each layer, from the SEARCH stage (20 prompts
                x 12 targets = 240 continuations per point, so Wilson intervals are
                reported and the points are not over-read).
@@ -36,7 +40,8 @@ from src.utils.ledger import append_entry, snapshot
 log = logging.getLogger("c3")
 MM = 1.0 / 25.4
 INK, FRAME, ZERO = "#000000", "#4D4D4D", "#CCCCCC"
-BLUE, ORANGE = "blue", "orange"
+# 2026-09-11: 本文 Fig.2 と配色を統一（probe = 紫、edit = ピンク）
+PURPLE, PINK = "#6A3D9A", "#E7298A"
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -80,7 +85,7 @@ def main() -> None:
                      "gain": round(e - k, 4),
                      "edit_ci": [round(lo_e, 4), round(hi_e, 4)]})
 
-    out = {"what": "C3 (AMENDMENT 1): readability against edit gain across the "
+    out = {"what": "C3 (AMENDMENT 1): probe performance against patching gain across the "
                    "layers of a public checkpoint; no generation, both curves "
                    "from ledgered artifacts",
            "checkpoint": args.ckpt,
@@ -116,16 +121,17 @@ def main() -> None:
     ax2 = ax.twinx()
     ax.axhline(0.0, color=ZERO, lw=0.8, zorder=1)
     xs = [r["layer"] for r in rows]
-    ax.plot(xs, [r["margin"] for r in rows], "-^", color=BLUE, lw=1.3, ms=4.2,
-            zorder=3, label="probe margin (left)")
-    ax2.plot(xs, [r["gain"] for r in rows], "-s", color=ORANGE, lw=1.3, ms=4.0,
-             zorder=3, label="edit gain (right)")
+    ax.plot(xs, [r["margin"] for r in rows], "-^", color=PURPLE, lw=1.3, ms=4.2,
+            zorder=3, label="Probe margin (left)")
+    ax2.plot(xs, [r["gain"] for r in rows], "-s", color=PINK, lw=1.3, ms=4.0,
+             zorder=3, label="Patching gain (right)")
     ax2.fill_between(xs, [r["edit_ci"][0] - r["k1"] for r in rows],
                      [r["edit_ci"][1] - r["k1"] for r in rows],
-                     color=ORANGE, alpha=0.22, lw=0, zorder=2)
-    ax.set_xlabel("layer", fontsize=8, color=INK)
-    ax.set_ylabel("probe margin", fontsize=8, color=INK)
-    ax2.set_ylabel("edit gain (SR $-$ baseline)", fontsize=8, color=INK)
+                     color=PINK, alpha=0.22, lw=0, zorder=2)
+    ax.set_xlabel("Layer", fontsize=8, color=INK)
+    ax.set_ylabel("Probe margin", fontsize=8, color=INK)
+    ax2.set_ylabel("Patching gain\n(SR $-$ control)", fontsize=8, color=INK,
+                   linespacing=1.15)
     ax.set_xticks(xs)
     for a in (ax, ax2):
         a.set_facecolor("white")

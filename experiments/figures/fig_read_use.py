@@ -1,4 +1,4 @@
-"""Main-text figure: readability against usability, layer by layer.
+"""Main-text figure: probe performance against patching gain, layer by layer.
 
 Both curves are read from ledgered artifacts; neither is typed in by hand.
 
@@ -7,10 +7,11 @@ Both curves are read from ledgered artifacts; neither is typed in by hand.
                 baseline (lr_W16cat512). Evaluated on test.parquet rows 0-5999
                 at sampled positions, sequence-level split.
 
-  edit gain     results/sweep/R-Aug_s0/parts/{v_probe,k1_r24}_L<l>_T<t>.parquet
-                guarded success of the target-key replacement minus that of the
-                rank-matched random baseline at the same layer, on the 100
-                search prompts (test rows 0-167) x 12 targets, tau = 0.613.
+  patching gain results/sweep/R-Aug_s0/parts/{v_probe,k1_r24}_L<l>_T<t>.parquet
+                guarded success rate of the target-key replacement minus that of
+                the dimension-matched random-subspace control at the same layer,
+                on the 100 search prompts (test rows 0-167) x 12 targets,
+                tau = 0.613.  The label the figure carries is "SR - control".
                 This is the same definition the manuscript's per-layer numbers
                 use (experiments/figures/collect_paper_numbers.py), so the
                 figure and the text cannot disagree.
@@ -77,13 +78,13 @@ def probe_raw_f1_all_models() -> dict[str, dict[int, float]]:
     return out
 
 
-def edit_gain_ci() -> dict[int, tuple[float, float]]:
-    """Prompt-level BCa bootstrap 95% CI of the per-layer edit gain.
+def patching_gain_ci() -> dict[int, tuple[float, float]]:
+    """Prompt-level BCa bootstrap 95% CI of the per-layer patching gain.
 
     The unit is the prompt, as everywhere else in the paper: for each prompt we
     take its mean success over the 12 targets under the replacement and under
-    the rank-matched random baseline, difference them, and bootstrap the mean of
-    those paired differences.
+    the dimension-matched random-subspace control, difference them, and
+    bootstrap the mean of those paired differences.
     """
     from src.analysis.stats import bca_ci
     g = json.loads((REPO / "results/guard/delta_ppl.json").read_text())
@@ -133,7 +134,7 @@ def beats_note_counts() -> dict[int, bool]:
     return {L: (lo > 0.0) for L, (st, lo, hi) in probe_margins(True).items()}
 
 
-def edit_gains() -> dict[int, float]:
+def patching_gains() -> dict[int, float]:
     """Identical computation to collect_paper_numbers.py, so the figure and the
     manuscript's per-layer numbers come from one definition."""
     g = json.loads((REPO / "results/guard/delta_ppl.json").read_text())
@@ -154,7 +155,7 @@ def edit_gains() -> dict[int, float]:
         a, b = hits.get(("v_probe", L)), hits.get(("k1_r24", L))
         if a and b:
             out[L] = sum(a) / len(a) - sum(b) / len(b)
-    log.info("edit gains from %d sweep parts", len(parts))
+    log.info("patching gains from %d sweep parts", len(parts))
     return out
 
 
@@ -171,9 +172,9 @@ def main() -> None:
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
     pm = probe_margins() if args.readability == "margin" else probe_raw_f1()
-    eg = edit_gains()
+    eg = patching_gains()
     all_m = probe_raw_f1_all_models() if args.readability == "raw" else {}
-    gain_ci = edit_gain_ci()
+    gain_ci = patching_gain_ci()
     missing = [L for L in LAYERS if L not in pm or L not in eg]
     if missing:
         raise SystemExit(f"no artifact value for layer(s) {missing} -- refusing "
@@ -201,8 +202,8 @@ def main() -> None:
         ghi = [gain_ci[L][1] for L in LAYERS]
         ax2.fill_between(LAYERS, glo, ghi, color=ORANGE, alpha=0.22, lw=0,
                          zorder=2)
-    lab = ("probe margin (left)" if args.readability == "margin"
-           else "probe macro-$F_1$ (left)")
+    lab = ("Probe margin (left)" if args.readability == "margin"
+           else "Probe macro-$F_1$ (left)")
     # 丸マーカーは著者指示で廃止。三角と四角なら白黒印刷でも判別できる。
     # 青線の工夫: ただの一本線にせず、区間ごとに線種を変える。両端の層がどちらも
     # 音符数えに勝っている区間は実線、そうでない区間は点線。マーカーも塗り分ける
@@ -211,20 +212,23 @@ def main() -> None:
     beats = beats_note_counts()
     for L in LAYERS[:-1]:
         style = "-" if (beats.get(L) and beats.get(L + 1)) else ":"
-        ax.plot([L, L + 1], [p[L], p[L + 1]], style, color=BLUE, lw=1.4,
+        ax.plot([L, L + 1], [p[L], p[L + 1]], style, color=BLUE, lw=1.6,
                 zorder=3)
     for L in LAYERS:
-        ax.plot([L], [p[L]], "^", color=BLUE, ms=5.0, zorder=4,
+        ax.plot([L], [p[L]], "^", color=BLUE, ms=5.6, zorder=4,
                 markerfacecolor=(BLUE if beats.get(L) else "white"),
-                markeredgewidth=1.0)
-    l2, = ax2.plot(LAYERS, e, "-s", color=ORANGE, lw=1.3, ms=4.0, zorder=3,
-                   label="edit gain (right)")
+                markeredgewidth=1.1)
+    l2, = ax2.plot(LAYERS, e, "-s", color=ORANGE, lw=1.5, ms=4.6, zorder=3,
+                   label="Patching gain (right)")
 
-    ax.set_xlabel("layer", fontsize=8, color=INK)
-    ax.set_ylabel("probe margin" if args.readability == "margin"
-                  else "probe macro-$F_1$", fontsize=8, color=INK)
+    ax.set_xlabel("Layer", fontsize=9, color=INK)
+    ax.set_ylabel("Probe margin" if args.readability == "margin"
+                  else "Probe macro-$F_1$", fontsize=9, color=INK)
     # 「SR そのもの」との混同を避けるため、軸ラベルで差分であることを明示する。
-    ax2.set_ylabel("edit gain (SR $-$ baseline)", fontsize=8, color=INK)
+    # 統制の呼び方は control に統一する（baseline は音符数えベースライン専用）。
+    # 一行だと 9pt では軸の高さを超えて末尾が切れるので、語句は変えずに2行に折る。
+    ax2.set_ylabel("Patching gain\n(SR $-$ control)", fontsize=9, color=INK,
+                   linespacing=1.15)
     ax.set_xticks(LAYERS)
     ax.set_xlim(-0.35, 7.35)
     if args.readability == "margin":
@@ -233,24 +237,24 @@ def main() -> None:
         ax.set_ylim(0.0, 1.0)   # full macro-F1 range, no truncated axis
     ax2.set_ylim(-0.02, max(e) + 0.06)
     for a in (ax, ax2):
-        a.tick_params(colors=INK, labelsize=7.5, length=3, color=FRAME,
-                      width=0.7)
+        a.tick_params(colors=INK, labelsize=8, length=3, color=FRAME,
+                      width=0.8)
         for side in ("top", "bottom", "left", "right"):
             a.spines[side].set_visible(True)
             a.spines[side].set_color(FRAME)
             a.spines[side].set_linewidth(0.7)
     from matplotlib.lines import Line2D
-    proxy = Line2D([], [], color=BLUE, lw=1.3, marker="^", ms=4.6,
+    proxy = Line2D([], [], color=BLUE, lw=1.5, marker="^", ms=5.0,
                    markerfacecolor=BLUE, markeredgewidth=1.1)
-    ax.legend(handles=[proxy, l2], labels=[lab, "edit gain (right)"],
-              frameon=False, fontsize=7.2, loc="lower right",
+    ax.legend(handles=[proxy, l2], labels=[lab, "Patching gain (right)"],
+              frameon=False, fontsize=8, loc="lower right",
               handlelength=2.4, borderaxespad=0.2)
     fig.savefig(args.out, bbox_inches="tight", pad_inches=0.01,
                 facecolor="white")
     plt.close(fig)
     log.info("wrote %s", args.out)
     log.info("probe margin: %s", [f"{x:+.4f}" for x in p])
-    log.info("edit gain   : %s", [f"{x:.4f}" for x in e])
+    log.info("patching gain: %s", [f"{x:.4f}" for x in e])
 
 
 if __name__ == "__main__":

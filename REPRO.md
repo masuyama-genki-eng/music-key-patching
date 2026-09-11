@@ -30,7 +30,7 @@
 再現コマンド（本ファイルの表を生成したもの）:
 
 ```bash
-cd <REPO_ROOT>   # = /home/masuyama-genki/ICASSP③/tonal-world-model
+cd <REPO_ROOT>   # = the directory this repository is checked out into
 .venv/bin/python - <<'EOF'
 import json
 for mode, sub in (("major","R-Aug_s0"), ("minor","R-Aug_s0_minor")):
@@ -62,11 +62,10 @@ EOF
 | Python | 3.12.3（`.venv`） |
 | PyTorch | 2.13.0+cu130 / CUDA 13.0 |
 | リポジトリ HEAD（確認時） | `3e53bc7` |
-| テスト | `pytest tests/ -q` → 365 passed |
+| テスト | `pytest tests/ -q` → 393 passed（確認時。テストは以後も追加された） |
 
 指示書の `<GPU_SPEC>` は未置換だったため、実機の上記 GPU を前提として見積もった。
-`<REPO_ROOT>` も未置換だったため `/home/masuyama-genki/ICASSP③/tonal-world-model`
-と解釈した。
+`<REPO_ROOT>` も未置換だったため、チェックアウト先のディレクトリと解釈した。
 
 ## 3. 生成スループット（見積りの根拠）
 

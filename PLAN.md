@@ -5,7 +5,7 @@
 再現確認は REPRO.md（6項目すべて ±0.001 以内で合格）。
 
 placeholder が未置換だったため次のとおり解釈した:
-`<REPO_ROOT>` = `/home/masuyama-genki/ICASSP③/tonal-world-model`、
+`<REPO_ROOT>` = このリポジトリをチェックアウトしたディレクトリ、
 `<GPU_SPEC>` = 実機の NVIDIA RTX 6000 Ada 48GB（driver 580.173.02）。
 
 ---

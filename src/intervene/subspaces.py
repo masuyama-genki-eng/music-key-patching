@@ -26,9 +26,25 @@ PITCH_ID_LO, PITCH_ID_HI = VOCAB["PITCH_21"], VOCAB["PITCH_108"]
 
 
 def orthonormal_rows(M: np.ndarray, rank: int) -> np.ndarray:
-    """(k, d) matrix -> (d, r) orthonormal basis of its row space via SVD."""
+    """(k, d) matrix -> (d, r) orthonormal basis of its row space via SVD.
+
+    The paper and the supplement both state that the edited subspace has rank 24, so
+    a rank-deficient M would silently give a SMALLER subspace than reported. That has
+    not happened on any model here (layer 4 of R-Aug_s0 has 24 singular values from
+    0.697 down to 0.187), but the drop is logged rather than swallowed.
+
+    Note on what the row space contains: a softmax classifier's decision function is
+    unchanged by adding the same vector to every class weight, so one direction in the
+    row space of a 24-class probe's weights does not affect its predictions. It is
+    small here (the row-mean vector has norm 0.052 against a median row norm of 0.428)
+    and it is kept, because V is defined as the row space rather than as the span of
+    the pairwise differences."""
     U, S, Vt = np.linalg.svd(M, full_matrices=False)
     r = min(rank, int((S > 1e-8).sum()))
+    if r < rank:
+        log.warning("orthonormal_rows: requested rank %d but the row space has rank "
+                    "%d (smallest kept singular value %.3g) -- the edited subspace "
+                    "is SMALLER than the reported rank", rank, r, S[r - 1] if r else 0.0)
     return Vt[:r].T.astype(np.float32)                     # (d, r)
 
 

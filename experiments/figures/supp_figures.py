@@ -37,7 +37,7 @@ def load(rel):
 
 
 def fig_layers(out: Path):
-    """S1 (main Sec 4.4): readable where the edit does not work."""
+    """S1 (main Sec 4.4): probe performance is high where patching does not work."""
     import matplotlib; matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     pr = load("results/probing/R-Aug_s0/probe_report.json")
@@ -48,10 +48,13 @@ def fig_layers(out: Path):
 
     fig, ax = plt.subplots(figsize=(3.3, 2.1))
     _style(ax)
-    ax.plot(layers, raw, "o-", color=MUTED, lw=1.6, ms=4, label="probe (raw $F_1$)")
-    ax.plot(layers, marg, "s-", color=ACC, lw=1.6, ms=4,
-            label="edit $-$ control")
-    ax.set_xlabel("layer", fontsize=8.5, color=INK)
+    # 2026-09-11: 本文 Fig.2 と配色を統一（probe = 紫、edit = ピンク）。
+    # 他の補足図（S2/S3/S4）は ACC/WARM に別の意味を割り当てているので触らない。
+    ax.plot(layers, raw, "o-", color="#6A3D9A", lw=1.6, ms=4,
+            label="Probe macro-$F_1$")
+    ax.plot(layers, marg, "s-", color="#E7298A", lw=1.6, ms=4,
+            label="Patching gain (SR $-$ control)")
+    ax.set_xlabel("Layer", fontsize=8.5, color=INK)
     ax.set_ylim(0, 1.0)
     ax.set_xticks(layers)
     ax.legend(frameon=False, fontsize=7.5, loc="center right")
@@ -105,8 +108,8 @@ def fig_public(out: Path):
                    edgecolor="white", lw=0.8, zorder=3)
         ax.annotate(lab, (x, y), textcoords="offset points", xytext=(5, -2),
                     fontsize=6.4, color=INK)
-    ax.set_xlabel("probe margin over note counts", fontsize=8.5, color=INK)
-    ax.set_ylabel("edit success rate", fontsize=8.5, color=INK)
+    ax.set_xlabel("Probe margin over note counts", fontsize=8.5, color=INK)
+    ax.set_ylabel("Patching success rate", fontsize=8.5, color=INK)
     ax.set_xlim(-0.12, 0.26); ax.set_ylim(0, 0.8)
     fig.savefig(out, bbox_inches="tight", dpi=300, facecolor="white")
     plt.close(fig)

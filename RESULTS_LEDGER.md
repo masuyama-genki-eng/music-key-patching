@@ -2084,3 +2084,23 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/reanalysis/f1_bar_dur/summary.json`
 - note: reading 1 of AMENDMENT 3: DUR only carries the arm and BAR only is at the floor. major DUR 0.2318181818181818 on 0.4324 of positions against BAR 0.03272727272727273 on 0.0432; minor 0.20909090909090908 against 0.0
 
+## 2026-09-10T20:12:55+09:00 — CONFIRMATORY held-out sweep R-Aug_s1 L2
+- git: `949c1f2fe969fa0e8dfd09546d3d6cc9c625ccb2`
+- config_hash: `895f3013031255f684c5badef32cadbcac67e566ce550f92e05f4b7713f34951`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s1/parts/confirmatory_L2.parquet`, `results/confirmatory/R-Aug_s1/verdict.json`
+- note: edit: guarded=0.289 sig=12/12
+
+## 2026-09-11T05:25:38+09:00 — Fig. 2 layer-wise re-aggregation (RQ1 M_probe vs RQ2 M_edit), no generation
+- git: `949c1f2fe969fa0e8dfd09546d3d6cc9c625ccb2`
+- config_hash: `49d05541683330b50ee9117cf782e530be7a7c7a834b611da748d6e4a421724f`
+- seeds: [0]
+- artifacts: `results/layerwise_read_use_ours.csv`, `results/layerwise_read_use_amt_small_bach.csv`, `results/layerwise_read_use_all.csv`, `results/figures/fig2_layerwise_read_use.pdf`, `results/figures/fig2_layerwise_read_use.png`, `results/figures/fig2_layerwise_read_use_a_ours.pdf`, `results/figures/fig2_layerwise_read_use_b_amt_small_bach.pdf`
+- note: re-aggregation only, from existing artifacts + results/rerun_after_fix.log; ours M_edit profile reproduces the ledgered [0.030 0.044 0.193 0.258 0.303 0.259 0.232 0.228] exactly; ours M_probe reproduces verdict_DR-H1_extD exactly; AMT M_probe recomputed with the PER-LAYER C1b floor from the source log, which moves L0 +0.1238->+0.1142 and L11 +0.1879->+0.1799 relative to the supplement (which reused the best layer's floor); M_edit CI for ours = paired prompt-level BCa (new), for AMT = Newcombe unpaired (per-prompt rows were never stored); per-layer M_edit uses the rank-matched K1, NOT the displacement-matched K1-norm, which exists only at L4 of the final test (matching displacement there costs 0.0173 of margin: 0.3164 -> 0.2991)
+
+## 2026-09-11T15:38:11+09:00 — results/figures/ deleted at the author's instruction (housekeeping, no run)
+- git: `949c1f2fe969fa0e8dfd09546d3d6cc9c625ccb2`
+- config_hash: `419ef92527d228e54186295618e6942a0003d060794afa6530a1821715c6b250`
+- seeds: n/a
+- artifacts: none (140 files removed from `results/figures/`, including `supp/`, `pianoroll*/` demo renders, the superseded paper figures and their `.meta.json` provenance files)
+- note: HOUSEKEEPING, NOT A RUN. The ten figures the two manuscripts use were first copied into `paper/` and both documents' \graphicspath set to `{./}`, so `paper/` is self-contained; verified by building both with `results/figures/` absent (main 5 pages, supplement 18 pages, no missing-file warnings). Earlier ledger entries name paths under `results/figures/` that no longer exist; every one of them is regenerable from the surviving artifacts under `results/` with `experiments/figures/make_figures.py`, `experiments/figures/supp_figures.py`, `experiments/figures/fig2_layerwise.py`, `experiments/reanalysis/supp_reanalysis_figures.py`, `experiments/reanalysis/public_layer_gap.py` and `experiments/figures/pianoroll_figure.py` (no GPU, minutes). `paper/fig1.pdf` is the one exception: it is hand-drawn, has no generating script, and is not tracked by git.

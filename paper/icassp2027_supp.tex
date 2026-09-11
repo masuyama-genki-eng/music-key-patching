@@ -3,9 +3,8 @@
 % experiments/figures/collect_paper_numbers.py; none is transcribed by hand.
 \documentclass{article}
 \usepackage{spconf,amsmath,graphicx}
-\graphicspath{{../results/figures/supp/}}
+\graphicspath{{./}}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{amssymb,booktabs,array,tabularx}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
@@ -27,75 +26,95 @@ Section numbers in italics refer to the main paper. Every value below is recompu
 from a logged artifact by a script that also re-reads both documents and reports any
 figure it cannot trace back to one; its report is currently empty.
 
-This supplement is long because it is doing two jobs: recording the protocol in enough
-detail to reproduce it, and answering the questions a reader is most likely to press on.
-The table below is for the second job. Each row names a doubt, the section that takes it
-up, and what that section found --- including where the answer goes against us.
+% 【日本語訳】用語の対応（2026-09-10 追記）
+% 本文と本補足で同じ量に別の名前を使っている箇所があるので、対応をここで一度だけ与える。
+% 特に「edit gain」と「success rate」は別の量である。前者は2つの率の差、後者は率そのもので、
+% 本補足の層スキャンは差を、表のセルは率を報告している。混同を避けるため定義を明示する。
+% ランダム統制も2種類ある。K1 は rank（=24次元）だけを揃えたもので、本文の
+% ``same dimension'' に当たり、以下の節では rank-matched あるいは unmatched とも呼ぶ。
+% K1-norm は活性変位量まで揃えたもので、本文の ``matched dimension and displacement''
+% に当たる。各目標調の Wilcoxon 検定、層スキャン、edit gain はすべて K1 を相手にしており、
+% 本文アブストラクトの「18本に1本／40本に1本」は K1-norm である。
+%
+\textbf{Measures.} Two quantities are easy to conflate and are kept apart throughout.
+A \emph{success rate} is a rate, the fraction of continuations the estimator assigns to
+the target key within the likelihood-change threshold. A \emph{patching gain} is a
+difference of two such rates, the replacement's minus its random control's at the same
+layer, so a patching gain and a success rate are not comparable. Two random controls are
+used. The dimension-matched control replaces the same number of randomly chosen
+directions ($24$), and the displacement-matched control additionally matches the
+activation displacement. Every per-key test, every layer scan and every patching gain is
+measured against the dimension-matched control ($0.0391$ in major, $0.0027$ in minor),
+while the main text's abstract reports the displacement-matched one.
+
+This supplement records the protocol in enough detail to reproduce it and reports the
+control experiments and additional analyses that the main text summarizes. The table
+below lists the question each section answers, including the analyses whose results
+weaken our claims.
 
 \begin{table}[!h]
 \centering
-\caption{Where to look, and what is there.}
+\caption{The question each section answers.}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{@{}p{0.40\columnwidth}cp{0.44\columnwidth}@{}}
 \toprule
-the doubt & § & what we found\\
+question & § & result\\
 \midrule
-The probe just reads the notes that are already visible.
- & \ref{sec:probes} & It beats the strongest note counter by $+0.071$, which is a
-   real but small margin.\\
-A success rate of $0.355$ is low.
- & \ref{sec:estimator-ceiling} & Transposing the prompt into the target key --- a
-   correct answer by construction --- scores $0.648$ on the same pipeline.\\
-The disturbance budget was chosen to flatter the edit.
+Does the probe only read notes that are already visible?
+ & \ref{sec:probes} & It exceeds the strongest note counter by $+0.071$, a real
+   but small margin.\\
+Is a success rate of $0.355$ low?
+ & \ref{sec:estimator-ceiling} & Transposing the prompt into the target key, a
+   correct answer by construction, scores $0.648$ on the same pipeline.\\
+Was the likelihood-change threshold chosen to favour the edit?
  & \ref{sec:threshold} & Re-scored from $\tau=0.2$ to no limit at all, the ordering
    of conditions never changes.\\
-The edit only moves the key to a neighbour.
+Does the edit only move the key to a neighbour?
  & \ref{sec:distance} & The distance coefficient's interval contains zero. At the
    tritone the edit scores $0.340$ and the control $0.000$.\\
-When it fails, nothing happened.
+Does nothing happen when the edit fails?
  & \ref{sec:landing} & $0.085$ of edited rows stay in the prompt's key, against
    $0.517$ for a random subspace.\\
-In-key share cannot tell a key from its relative.
- & \ref{sec:tonic} & True, so we also measure the tonic: the bass arrives on it in
-   $0.755$ of edited continuations against $0.003$ unedited.\\
-The edit damages the music in ways the budget hides.
+Can the pitch-in-scale rate tell a key from its relative?
+ & \ref{sec:tonic} & It cannot, so we also measure the tonic: the bass arrives
+   on it in $0.755$ of edited continuations against $0.003$ unedited.\\
+Does the edit damage the music in ways the threshold hides?
  & \ref{sec:selectivity} & Register and mean pitch do not move. Note density does,
    by a sixth of what an equal-sized random write does.\\
-You chose a flattering key estimator.
- & \ref{sec:estimators} & Five estimators, all favouring the edit in both modes; the
-   pre-registered one gives the \emph{lowest} rate of the five in major and the
-   second lowest in minor.\\
-Minor scores higher, so the result is unstable.
+Is the key estimator a favourable choice?
+ & \ref{sec:estimators} & Five estimators all favour the edit in both modes, and
+   the pre-registered one gives the \emph{lowest} rate of the five in major and
+   the second lowest in minor.\\
+Does minor scoring higher make the result unstable?
  & \ref{sec:minor} & The estimator is better at minor. Against each mode's own
-   ceiling the gap is $+0.015$, and one in-key definition reverses.\\
-The position result is an artefact of your tokenizer.
+   ceiling the gap is $+0.015$, and one pitch-in-scale definition reverses.\\
+Is the position result an artefact of our tokenization?
  & \ref{sec:public-positions} & Two public schemes agree that the pitch token itself
    is inert, and in each the effect sits on the structural token before a pitch is
    chosen.\\
-The bar delimiter is doing the work, not the note-length token.
+Is the bar delimiter doing the work rather than the note-length token?
  & \ref{sec:bardur} & Separated, DUR alone reaches $0.2318$ of the bundled arm's
    $0.2327$ and BAR alone is at the floor, at equal coverage with the inert pitch
    arm.\\
-The pre-sampling result is a major-key result.
+Is the pre-sampling result a major-key result?
  & \ref{sec:nextpitch-minor} & The same test in minor moves the log ratio by
    $0.3094$ against $0.0261$, on $12/12$ targets.\\
-The subspace is only the note counts in other coordinates.
+Is the subspace only the note counts in other coordinates?
  & \ref{sec:pitchclass} & A well-fitted pitch-class subspace ($R^2$ $0.78$) overlaps
    $V$ no more than a random one does, and writing through it is causally inert.\\
-The subspace is a print of transposition augmentation.
+Is the subspace an artefact of transposition augmentation?
  & \ref{sec:augmentation} & Three models trained without it give the same geometry
    ($-0.963$ against $-0.960$).\\
-The cross-model comparison is not like for like.
- & \ref{sec:public} & The baseline is identical across tokenizations. But the Bach
-   continuations are not length-matched (§\ref{sec:length}), and that is open.\\
-The install works only at the one magnitude you chose.
- & \ref{sec:steering} & Scaling it is monotone up to $s=1$ and keeps rising past it,
-   so the class-mean target is graded but not optimal, which we report against
-   ourselves.\\
-A sustained edit proves nothing about memory.
- & \ref{sec:oneshot} & A single write holds for six bars --- which still does not
-   establish an internal state, and we say why.\\
+Is the cross-model comparison like for like?
+ & \ref{sec:public} & The baseline is identical across tokenizations, but the
+   Bach continuations are not length-matched (§\ref{sec:length}), which is open.\\
+Does the replacement work only at the magnitude we chose?
+ & \ref{sec:steering} & Scaling it is monotone up to $s=1$ and keeps rising past
+   it, so the class-mean target is graded but not optimal.\\
+Does a sustained edit establish memory?
+ & \ref{sec:oneshot} & A single write holds for six bars, which still does not
+   establish an internal state, for the reasons given there.\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -119,7 +138,7 @@ A sustained edit proves nothing about memory.
 % 全12主音へ移調して作る。300曲のコラールには嬰ヘ長調と嬰ニ短調が1つも無く、直接平均を
 % 取るとその2標的がゼロベクトルになるからである。分割は元のコラール単位なので、ある曲の
 % 移調群が訓練とテストにまたがることはない。
-% (3) 移調参照——プロンプト自体を移調することは行動上の上側の錨であり、訓練でも推定でも
+% (3) 移調参照——プロンプト自体を移調することは行動上の参照条件であり、訓練でも推定でも
 % ない（表1）。公開チェックポイントは微調整も再訓練も増強もしない。活性を読み、編集する
 % だけである。
 % Bach コラール: **kern 形式の300曲、調は When in Rome のローマ数字分析から。コラールと
@@ -127,13 +146,13 @@ A sustained edit proves nothing about memory.
 % POP909-CL: 909ファイルのうち905が読み込める。4曲は評価前に固定した規則で除外し、理由も
 % 記録した——2曲は調号イベントを一切持たず、2曲は公開元がダウンビートの不整合と、専門家
 % ではなくアルゴリズムによるラベルを明記している。127曲が転調する。曲は 0.7/0.15/0.15 で
-% 訓練（プローブ、調毎平均、予算）、探索（層とハイパーパラメータの選択）、最終（一度だけ
+% 訓練（プローブ、調毎平均、閾値）、探索（層とハイパーパラメータの選択）、最終（一度だけ
 % 触る）に分け、1曲は必ずどれか1つに丸ごと入る。
 % モデルの窓による曲の除外: 各トークン化は表現できる時間に上限を持ち、その上限内に収まる
 % 音符位置が34未満の曲は除外する。これで除かれるのは REMI チェックポイントの訓練分割の
 % 1曲だけ（番号247、70.5拍の無音で始まる）。最終評価用の分割は何も失わない。
 %
-\textbf{D-SYN} (Sec.~2.3): $200{,}000$ training, $10{,}000$ validation and $10{,}000$
+\textbf{D-SYN}: $200{,}000$ training, $10{,}000$ validation and $10{,}000$
 test pieces from a functional-harmony generator, plus a separate $200{,}000/10{,}000$
 pair for the reference model. The four sets share no piece: hashing every token
 sequence gives zero overlap between train and test, train and reference-train, and
@@ -158,9 +177,9 @@ augmentation, not in data.
 sample. On Bach that sample is built by transposing each chorale through all twelve
 tonics, because the $300$ chorales contain no F$\sharp$ major and no D$\sharp$ minor
 at all and a direct mean would leave those two targets as zero vectors. The split is
-by ORIGINAL chorale, so a piece's transpositions never straddle train and test.
+by original chorale, so a piece's transpositions never straddle train and test.
 \item \emph{The transposition reference.} Transposing the prompt itself is a
-behavioural upper anchor, not a training or estimation step (Table~1).
+behavioural reference condition, not a training or estimation step (Table~1).
 \end{itemize}
 No public checkpoint is fine-tuned, retrained, or augmented: we only read and edit
 their activations.
@@ -173,7 +192,7 @@ number, never by order.
 evaluation, with reasons recorded: two carry no key-signature event at all, and two are
 listed by the release as having misaligned downbeats and algorithmic rather than expert
 labels. $127$ pieces change key. Pieces split $0.7/0.15/0.15$ into train (probe,
-per-key means, guard budget), search (layer and hyperparameter choices) and final
+per-key means, threshold), search (layer and hyperparameter choices) and final
 (touched once); a piece lands wholly in one part.
 
 \textbf{Piece exclusions from a model's window.} Each tokenization bounds
@@ -214,7 +233,7 @@ held-out splits lose nothing.
 %
 
 Multinomial logistic probe per layer, trained with AdamW; a two-layer MLP as a
-secondary probe. Splits are by SEQUENCE, so no position of a piece appears in two
+secondary probe. Splits are by sequence, so no position of a piece appears in two
 parts. The note-counting baselines (C3) look back over windows of $8$, $16$, $32$ and
 $64$ pitch tokens and predict the key from the twelve pitch-class counts, by logistic
 regression and by Krumhansl--Schmuckler. The control task (C1b) permutes the key
@@ -238,7 +257,7 @@ bound $+0.021$), but not at layer $0$ ($-0.231$) or layer $1$ ($+0.012$, CI
 $[-0.00006, +0.021]$). Layer $1$ fails in three of the six models
 (R-Aug\_s0, R-Aug\_s2, R-NoAug\_s1) and clears zero in the other three, so we treat
 it as unresolved rather than positive. Against the pre-specified baseline alone layer
-$1$ would clear zero in all six ($+0.044$ to $+0.062$) --- the layer-$1$ verdict is the
+$1$ would clear zero in all six ($+0.044$ to $+0.062$). The layer-$1$ verdict is the
 one conclusion in this paper that depends on which baseline is used.
 
 \textbf{Seed replication.} All six main models support the probe result
@@ -272,7 +291,7 @@ works. Rank is $24$ throughout.
 \caption{Every checkpoint we probe or edit \normalfont\textit{(main Sec.~3.2)}.
 Edited cells use the same subspace construction and the same replacement.
 ``Ours, main'' is the six models R-Aug/R-NoAug $\times$ three seeds. ``Ref.'' marks a
-model used to score another model's disturbance; AMT large is now edited as well, at
+model used to score another model's likelihood change; AMT large is now edited as well, at
 layer $18$.}
 \setlength{\tabcolsep}{3pt}\scriptsize
 \begin{tabular}{@{}llrrccc@{}}
@@ -291,41 +310,41 @@ REMI            & flat     & $6$  & $512$  & \checkmark & \checkmark & \\
 \label{tab:models}
 \end{table}
 
-\section{Quality gate and quality budget \normalfont\textit{(main Secs.~3.2, 3.3)}}
+\section{Quality gate and likelihood-change threshold \normalfont\textit{(main Secs.~3.2, 3.3)}}
 
-% 【日本語訳】品質ゲートと品質予算（本文3.2節、3.3節）
+% 【日本語訳】品質ゲートと尤度変化の閾値（本文3.2節、3.3節）
 % ゲート（介入作業の前に）: 検証データの次トークン top-1 が、定数予測器の 0.434 の
-% 1.5倍に達すること、および無条件生成の音階内割合が検証平均の3標準偏差以内に留まること。
+% 1.5倍に達すること、および無条件生成の音階内音高率が検証平均の3標準偏差以内に留まること。
 % 完成した13チェックポイントすべてが通過し、主要6モデルは 0.878–0.881 を測る。
-% 予算 δ_PPL は、編集を1つも採点する前に、参照モデルのパープレキシティが自然な転調を
+% 閾値 δ_PPL は、編集を1つも採点する前に、参照モデルのパープレキシティが自然な転調を
 % またいで上昇する量の90パーセンタイルとして凍結した——D-SYN で 7,989 件から 0.613。
-% 公開モデルの予算はコーパス毎である。あるモデルの nat で表した予算は移らないからで、
+% 公開モデルの閾値はコーパス毎である。あるモデルの nat で表した閾値は移らないからで、
 % Bach では 1,180 件から 0.849（参照 music-medium-800k）、POP909 では 103 件から
-% 1.119（参照 music-large-800k）。凍結した予算が別の参照モデルを指しているランは、
+% 1.119（参照 music-large-800k）。凍結した閾値が別の参照モデルを指しているランは、
 % 警告ではなく即時エラーとして扱う。
 %
 \textbf{Gate} (before any intervention work): validation next-token top-$1$ must reach
-$1.5\times$ the constant-predictor rate of $0.434$, and the in-key share of
+$1.5\times$ the constant-predictor rate of $0.434$, and the pitch-in-scale rate of
 unconditional generation must stay within $3$ standard deviations of the validation
 mean. All $13$ finished checkpoints pass; the six main models measure
 $0.878$--$0.881$.
 
 \textbf{Budget} $\delta_{\text{PPL}}$, frozen before any edit is scored, as the
 $90$th percentile of the reference model's perplexity rise across natural key changes:
-$0.613$ over $7{,}989$ events on D-SYN. The public-model budgets are per corpus, since
-a budget in one model's nats does not transfer: $0.849$ on Bach over $1{,}180$ events
+$0.613$ over $7{,}989$ events on D-SYN. The public-model thresholds are per corpus, since
+a threshold in one model's nats does not transfer: $0.849$ on Bach over $1{,}180$ events
 (reference \texttt{music-medium-800k}) and $1.119$ on POP909 over $103$ events
-(reference \texttt{music-large-800k}). A run whose frozen budget names a different
+(reference \texttt{music-large-800k}). A run whose frozen threshold names a different
 reference model is a hard error, not a warning.
 
-\section{Does the budget decide the result? \normalfont\textit{(main Secs.~3.3, 4.2, 4.6)}}
+\section{The threshold does not decide the result \normalfont\textit{(main Secs.~3.3, 4.2, 4.6)}}
 \label{sec:threshold}
 
-% 【日本語訳】予算が結果を決めているのか（本文3.3節、4.2節、4.6節）
-% 予算 0.613 は自然な転調での上昇の90パーセンタイルであり、我々が選んだ1点である。
+% 【日本語訳】閾値が結果を決めているのか（本文3.3節、4.2節、4.6節）
+% 閾値 0.613 は自然な転調での上昇の90パーセンタイルであり、我々が選んだ1点である。
 % 読者には、別の選び方でも条件の順序が保たれるのかを問う権利がある。
-% ここでは何も再生成していない。どの条件にも継続ごとの行があり、推定した調と擾乱の値を
-% 持っているので、閾値 t での成功を「調が一致 かつ 擾乱 ≤ t」として厳密に採点し直せる。
+% ここでは何も再生成していない。どの条件にも継続ごとの行があり、推定した調と尤度変化の値を
+% 持っているので、閾値 t での成功を「調が一致 かつ 尤度変化 ≤ t」として厳密に採点し直せる。
 % 限度を破った継続は凍結した規則と同じく分母に残して失敗として数える。
 % 順序は一度も入れ替わらない。閾値 0.2（編集の 42.4% が限度を破る水準）から限度なしまで、
 % 長調でも短調でも、置換はどの対照も上回り続ける。条件の順序と凍結閾値での順序との
@@ -333,46 +352,46 @@ reference model is a hard error, not a warning.
 % 順序が僅かに入れ替わり、長調 0.900、短調 0.975 になる。置換の首位は動かない）。
 % 表は代表的な閾値での成功率を与える。
 % 音高位置のみの書き込みは、この表の中で唯一まったく動かない行である（長調 0.035、
-% 短調 0.000 で全閾値一定）。それが音楽をほとんど変えないので予算が一度も効かないからで、
+% 短調 0.000 で全閾値一定）。それが音楽をほとんど変えないので閾値が一度も効かないからで、
 % 位置についての帰無結果は採点規則の産物ではない。
-% steering との比較も閾値に依存しない。変位を揃えた加算に対して据え付けは
+% steering との比較も閾値に依存しない。変位を揃えた加算に対して置換は
 % 全閾値・両旋法で上回る（長調で 0.241 対 0.176 から 0.410 対 0.267、短調で
 % 0.318 対 0.105 から 0.617 対 0.177）。
 % ただし2倍の変位を与えた加算については向きが閾値に依存し、それは正直に述べる。
-% 長調ではこの加算が全閾値で据え付けを上回る（本文が既に述べているとおり）。短調では
+% 長調ではこの加算が全閾値で置換を上回る（本文が既に述べているとおり）。短調では
 % 凍結閾値の近くで交差し、そこでは僅かに上（0.505 対 0.494）だが、限度を緩めると
-% 据え付けが追い越す（限度なしで 0.617 対 0.599）。
-% 公開チェックポイントでは予算がほとんど効いていない。編集の成功率は凍結閾値と限度なしで
+% 置換が追い越す（限度なしで 0.617 対 0.599）。
+% 公開チェックポイントでは閾値がほとんど効いていない。編集の成功率は凍結閾値と限度なしで
 % ほぼ同じ（例: AMT-24L で 0.540 と 0.540、REMI で 0.602 と 0.629）で、唯一 MMT が
 % 目立って支払っている（0.700 と 0.832）。編集はどのセルでもランダム対照を大きく上回る。
 % パーセンタイルの表記について。7,989件の per-event の上昇は凍結時に要約へ縮約されたので、
 % artifact として存在するのは p50/p75/p90/p99 だけである。p80/p85/p95 を出すには参照
 % モデルを検証分割で再実行する必要があり、それは行っていない。上の閾値グリッドのほうが
 % 広い主張なので、そこに保存済みのパーセンタイルを重ねて示す。
-% 再採点できない条件が1つある。移調参照は擾乱の値を持たない（その無編集の双子が移調
+% 再採点できない条件が1つある。移調参照は尤度変化の値を持たない（その無編集の双子が移調
 % されていないので guard が未定義）ので、この節の対象から外れる。これは回避ではなく報告である。
 %
-The budget $0.613$ is the $90$th percentile of a distribution, which is one choice
-among several, and a reader is entitled to ask whether the ordering of conditions
-survives another. Nothing is regenerated here: every condition already has a
-per-continuation row carrying its estimated key and its disturbance, so success at a
-threshold $t$ re-scores exactly as ``key matches AND disturbance $\le t$'', with
+The threshold $0.613$ is the $90$th percentile of a distribution, which is one choice
+among several, so we also test whether the ordering of conditions survives another
+choice. Nothing is regenerated here: every condition already has a
+per-continuation row carrying its estimated key and its likelihood change, so success at a
+threshold $t$ re-scores exactly as ``key matches and likelihood change $\le t$'', with
 limit-breakers kept in the denominator as failures exactly as the frozen rule does.
 
 \begin{table}[!t]
 \centering
 \caption{\textbf{S14} \textit{(main Secs.~4.2, 4.6)}. Success rate re-scored at other
-disturbance thresholds, non-identity rows, major prompts above and minor below.
+likelihood-change thresholds, non-identity rows, major prompts above and minor below.
 ``no limit'' scores the key estimate alone. The last column is the share of edited
 continuations over the limit at that threshold; they count as failures, they are not
 dropped. $p50$--$p99$ are percentiles of the same natural-modulation distribution the
-frozen budget came from.}
+frozen threshold came from.}
 \label{tab:supp-threshold}
 \footnotesize
 \setlength{\tabcolsep}{3.2pt}
 \begin{tabular}{@{}lccccc@{\hskip 5pt}c@{}}
 \toprule
-$\tau$ & install & bar/dur & pitch & matched & random & over limit\\
+$\tau$ & replacement & bar/dur & pitch & matched & random & over limit\\
 \midrule
 \multicolumn{7}{@{}l}{\emph{major prompts}}\\
 $0.2$          & $0.241$ & $0.158$ & $0.033$ & $0.045$ & $0.032$ & $0.424$\\
@@ -396,38 +415,39 @@ no limit       & $0.617$ & $0.254$ & $0.000$ & $0.031$ & $0.003$ & $0.000$\\
 The ordering never changes. From $\tau=0.2$, where $0.424$ of edited continuations
 break the limit, out to no limit at all, the replacement beats every control in both
 modes (Table~\ref{tab:supp-threshold}). Ranking the conditions at each threshold and
-correlating that ranking with the one at the frozen budget gives a Spearman
+correlating that ranking with the one at the frozen threshold gives a Spearman
 $\rho$ of $1.000$ at every threshold except the extreme $\tau=0.2$, where two
 controls swap and $\rho$ falls to $0.900$ in major and $0.975$ in minor; the
 replacement's position is untouched throughout.
 
-One row is flat, and it is the informative one. Writing at pitch positions only scores
+One row is flat, and it is the informative one: writing at pitch positions only scores
 $0.035$ in major and $0.000$ in minor at every threshold, because it barely changes the
-music and so never pays the budget. The position null of Section~\ref{sec:position} is
+music and so never pays the threshold. The position null of Section~\ref{sec:position} is
 therefore not an artefact of the scoring rule.
 
 The comparison against steering is threshold-independent in the form the paper claims
-it. At matched displacement the install wins at every threshold in both modes: in major
-from $0.241$ against $0.176$ at $\tau=0.2$ to $0.410$ against $0.267$ with no limit, and
-in minor from $0.318$ against $0.105$ to $0.617$ against $0.177$. The comparison against
-addition at twice the displacement does depend on the threshold, and we say so: in major
-that addition is ahead of install everywhere, as the main text already reports, while in
-minor the two cross near the frozen budget --- $0.505$ against $0.494$ there --- and the
-install overtakes it once the limit is loosened ($0.617$ against $0.599$ with no limit).
+it. At matched displacement the replacement wins at every threshold in both modes: in
+major from $0.241$ against $0.176$ at $\tau=0.2$ to $0.410$ against $0.267$ with no
+limit, and in minor from $0.318$ against $0.105$ to $0.617$ against $0.177$. The
+comparison against addition at twice the displacement does depend on the threshold, and
+we say so: in major that addition is ahead of the replacement everywhere, as the main
+text already reports, while in minor the two cross near the frozen threshold, at $0.505$
+against $0.494$, and the replacement overtakes it once the limit is loosened ($0.617$
+against $0.599$ with no limit).
 
-In the public checkpoints the budget is barely binding. The edit's rate at the frozen
+In the public checkpoints the threshold is barely binding. The edit's rate at the frozen
 threshold and with no limit are almost the same ($0.540$ and $0.540$ for AMT-24L,
 $0.602$ and $0.629$ for REMI, $0.455$ and $0.458$ for AMT-12L); MMT is the one cell
 that visibly pays ($0.700$ against $0.832$). The edit beats its random control by a
 wide margin in every cell at every threshold.
 
-Two limits belong with this section. The $7{,}989$ per-event rises were reduced to a
-summary when the budget was frozen, so only $p50$, $p75$, $p90$ and $p99$ exist as
+Two limits apply to this section. The $7{,}989$ per-event rises were reduced to a
+summary when the threshold was frozen, so only $p50$, $p75$, $p90$ and $p99$ exist as
 artefacts; $p80$, $p85$ and $p95$ would need the reference model re-run over the
-validation split, which we did not do --- the threshold grid is the wider statement in
+validation split, which we did not do, and the threshold grid is the wider statement in
 any case. And one condition cannot be re-scored at all: the transposition reference
-carries no disturbance value, because its unedited twin is untransposed and the guard is
-undefined for it.
+carries no likelihood-change value, because its unedited twin is untransposed and the
+criterion is undefined for it.
 
 \section{Two gates on the data \normalfont\textit{(main Secs.~3.1, 3.2)}}
 
@@ -462,7 +482,7 @@ $1/24=0.042$.
 \textbf{Tokenizer against the model.} Each public model's token scheme is
 re-implemented from its published configuration, so before probing we check that the
 model finds correctly encoded music cheaper than corrupted music. The gate detects a
-wrong field structure and a wrong time scale. It does NOT detect a uniform offset on
+wrong field structure and a wrong time scale. It does not detect a uniform offset on
 the note field, because in these vocabularies that is a transposition: the note codes
 are instrument-major (verified against the reference implementation, which masks one
 instrument as $128$ consecutive codes), so an off-by-one moves pitch and could reach
@@ -486,9 +506,9 @@ all of them control or special codes, concentrated in one prompt of twelve.
 % 継続あたり1つの推定。推定器は継続全体に一度だけ適用し、トークン毎には適用しない。
 % 音高は単一のピッチクラスヒストグラムに集約し（中央値110音、曲末トークンと16小節で
 % 打ち切る）、24の回転プロファイルと相関を取り、その argmax を継続の調とする。成功とは
-% その調が据え付けた調と主音も旋法も完全に一致することであり、近隣の調に部分点は無い。
+% その調が目標調と主音も旋法も完全に一致することであり、近隣の調に部分点は無い。
 % この粒度は意図的な選択であり、コストを伴う。そしてそのコストは我々に不利に働く。
-% 据え付けた調に落ち着くまで1–2小節かかる継続は、その間プロンプトの調をヒストグラムに
+% 目標調に落ち着くまで1–2小節かかる継続は、その間プロンプトの調をヒストグラムに
 % 持ち込み、集約した推定はそれで薄められる。途中で転調する継続には2つではなく1つの
 % ラベルが付く。つまりこの尺度は効果の発現時期について保守的であり、それが第15節の主音
 % 尺度——音楽がどう終わるかだけを読む——が同じ継続に対してずっと高い数値（0.755 対
@@ -508,25 +528,25 @@ all of them control or special codes, concentrated in one prompt of twelve.
 
 \textbf{One estimate per continuation.} The estimator is applied once to the whole
 continuation, not per token: the pitches are pooled into a single pitch-class
-histogram --- $110$ notes at the median, truncated at the end-of-piece token and after
-sixteen bars --- correlated against the twenty-four rotated profiles, and the argmax is
-the continuation's key. Success is that key matching the installed one exactly, in both
+histogram of $110$ notes at the median, truncated at the end-of-piece token and after
+sixteen bars, then correlated against the twenty-four rotated profiles, and the argmax is
+the continuation's key. Success is that key matching the target key exactly, in both
 tonic and mode; there is no partial credit for a neighbouring key.
 
-This granularity is a deliberate choice with a cost, and the cost runs against us. A
-continuation that needs a bar or two to settle into the installed key carries the
+This granularity is a deliberate choice, and its cost lowers the reported rate. A
+continuation that needs a bar or two to settle into the target key carries the
 prompt's key in its histogram for those bars, and the pooled estimate is diluted by
 them; a continuation that modulates part-way through gets one label rather than two.
 The measure is therefore conservative about onset, which is part of why the tonic
-metrics of \S\ref{sec:tonic} --- which read only how the music ends --- give much higher
+metrics of \S\ref{sec:tonic}, which read only how the music ends, give much higher
 numbers on the same continuations ($0.755$ against $0.355$). Where bar-level resolution
 is what the question needs, we measure per bar instead: the persistence rows of
 \S\ref{sec:oneshot} carry an estimate for each bar.
 
 Our Krumhansl--Schmuckler implementation was checked against \texttt{music21}. The
 Krumhansl--Kessler profiles are identical in both modes, and given the same pitch
-content with uniform note lengths --- so that duration weighting and unweighted counts
-coincide --- the two implementations return the SAME key on $800$ of $800$ real
+content with uniform note lengths, so that duration weighting and unweighted counts
+coincide, the two implementations return the same key on $800$ of $800$ real
 segments, with no disagreement of any relation.
 
 The same run measures how often the estimator recovers a key a human annotated, which
@@ -579,7 +599,7 @@ compared within a corpus and not across.}
 % 外れた予測。AMT×pop の均衡再推定は、期待される効果を書き留めた上で事前に指定して
 % あった。「0.135 が約 0.17 になり、おそらく調毎の基準はなお通らないだろう。ランは
 % どちらであれ行い、その結果はどちらであれ報告する」。実際には 0.212 に達し、9/12の調が
-% 分離した（外れた3つは p_Holm 0.051–0.052）うえ、音階内割合も交差した。予測は外れて
+% 分離した（外れた3つは p_Holm 0.051–0.052）うえ、音階内音高率も交差した。予測は外れて
 % おり、このセルはもはや失敗として読まない。
 %
 Layers and hyperparameters were chosen on a search stage that was allowed to look; the
@@ -594,125 +614,133 @@ same component must reproduce the clean continuation token for token; it is comp
 as a real edit rather than short-circuited, so a detached hook or a drifted position
 makes it fail.
 
-\textbf{Per-layer separation} (search stage, our model): the edit beats its control by
-$0.030$ and $0.044$ at layers $0$ and $1$, then $0.193$, $0.258$, $0.303$, $0.259$,
-$0.232$ and $0.228$ at layers $2$--$7$. The key is readable at layers $0$--$1$, where
-writing to it barely works.
+\textbf{Per-layer separation} (search stage, our model). These are patching gains, that is
+differences of success rates against the dimension-matched control at the same layer,
+and not success rates: the replacement beats its control by $0.030$ and $0.044$ at
+layers $0$ and $1$, then by $0.193$, $0.258$, $0.303$, $0.259$, $0.232$ and $0.228$ at
+layers $2$--$7$. The key is readable at layers $0$--$1$, where writing to it barely
+works. The main text's Fig.~2 plots these gains, and its layer-$4$ value of $0.303$ is a
+gain over that control on the $100$ search prompts, not the final test's success rate of
+$0.3555$.
 
 \textbf{Estimation condition.} Per-key targets come from a key-balanced sample, built
 by transposing each piece through all twelve keys and splitting by original piece so
 transpositions never straddle. On Bach this is forced: no F$\sharp$ major and no
 D$\sharp$ minor occur, so a direct estimate leaves those two targets as zero vectors
-and the F$\sharp$ major cell scores exactly $0$ --- edit $0.365$ with $11/12$ keys
+and the F$\sharp$ major cell scores exactly $0$: edit $0.365$ with $11/12$ keys
 separating for the $12$-layer model, and $0.439$ with $11/12$ for the $24$-layer one,
 against $0.479$ and $0.557$ balanced.
 
-\textbf{A prediction that failed.} The balanced re-estimation for AMT $\times$ pop was
-specified in advance with its expected effect written down: ``$0.135$ becomes $\approx0.17$,
-which likely still fails the per-key bar. The run happens either way, and its outcome
-is reported either way.'' It reached $0.212$ with $9/12$ keys separating (the three
-misses at $p_{\text{Holm}}$ $0.051$--$0.052$) and the in-key shares crossing. The
-prediction was wrong, and the cell is no longer read as a failure.
+\textbf{A prediction that was not borne out.} The balanced re-estimation for AMT
+$\times$ pop was specified in advance with its expected effect written down: ``$0.135$
+becomes $\approx0.17$, which likely still fails the per-key bar. The run happens either
+way, and its outcome is reported either way.'' It reached $0.212$ with $9/12$ keys
+separating (the three misses at $p_{\text{Holm}}$ $0.051$--$0.052$) and the
+pitch-in-scale rates crossing. The prediction was wrong, and the cell is no longer read
+as a failure.
 
-\section{Install against steering, in full \normalfont\textit{(main Sec.~4.6)}}
+\section{Replacement versus addition, in full \normalfont\textit{(main Sec.~4.6)}}
 \label{sec:steering}
 
-% 【日本語訳】据え付け対ステアリング、全数値（本文4.6節）
-% 事前指定した比較は、式(1)の据え付けを同じ値の加算に置き換える。これで残る違いは、
+% 【日本語訳】置換対ステアリング、全数値（本文4.6節）
+% 事前指定した比較は、式(1)の置換を同じ値の加算に置き換える。これで残る違いは、
 % 古い成分 P_Vh を除去するか否かだけになる。加算はそれを保持することが証明できる。
-% 取り置きプロンプト上で、据え付けの行とプロンプト単位で対にする。
+% 取り置きプロンプト上で、置換の行とプロンプト単位で対にする。
 % 変位を揃えると、置換が 0.111 の差で勝つ（95% CI [0.078, 0.145]、補正後に12調のうち
 % 3つが個別に有意）。そして音符が機構を明かす。加算の継続のうち 28.8% がプロンプトの調に
 % 留まり、変位を2倍にした加算では 11.5%、対比方向では 0.6% である。変位を2倍与えると
 % 加算は置換を追い越す（0.471 対 0.355）。これは事前指定した方向とは逆であり、出たままを
-% 報告する。加算はその追加の押しの代償を、4倍では継続の半分が品質予算を破ることで、
+% 報告する。加算はその追加の押しの代償を、4倍では継続の半分が尤度変化の閾値を破ることで、
 % 8倍ではほぼ全部が破ることで支払う。平均差の方向はプロンプトの調をほとんどどこにも
-% 残さない（継続の 0.6%、音階内割合 0.438）。これは古い成分の除去が、減算によってでは
+% 残さない（継続の 0.6%、音階内音高率 0.438）。これは古い成分の除去が、減算によってでは
 % なく暗黙に起きているということである。短調では、変位を揃えた加算はさらにずっと弱い
-% （0.154 対 据え付けの 0.495、12調すべてが有意）。
+% （0.154 対 置換の 0.495、12調すべてが有意）。
 % つまり加算でも調を設定することはできる。置換が買うのは摂動あたりの効率であり、この
 % 比較が単離しているのは、既に書かれているものを除去することが仕事の一部を担っている、
 % ということである。
 %
-The pre-specified comparison replaces Eq.~(1)'s installation with an ADDITION of the
-same value, so the only difference left is whether the old component $P_Vh$ is removed;
-addition provably keeps it. Held-out prompts, paired by prompt against the install rows.
+The pre-specified comparison substitutes an addition of the same value for the
+replacement of Eq.~(3), so the only difference left is whether the old component $P_Vh$
+is removed, which addition provably keeps. Held-out prompts are paired by prompt against
+the replacement rows.
 
 At matched displacement, replacement wins by $0.111$ ($95\%$ CI $[0.078,0.145]$, three
 of twelve keys individually significant after correction), and the notes show the
-mechanism: $28.8\%$ of the addition's continuations stay in the PROMPT's key, against
+mechanism: $28.8\%$ of the addition's continuations stay in the prompt's key, against
 $11.5\%$ for the doubled addition and $0.6\%$ for the contrastive direction. Given
 twice the displacement the addition overtakes replacement ($0.471$ against $0.355$),
-which is the opposite of the pre-specified direction and is reported as it fell; it
-pays for the extra push at $4\times$, where half the continuations break the quality
-budget, and at $8\times$, where nearly all do. The difference-of-means direction leaves
-the prompt key almost nowhere ($0.6\%$ of continuations, in-key share $0.438$), which
+which is the opposite of the pre-specified direction and is reported as observed; it
+pays for the extra push at $4\times$, where half the continuations break the
+threshold, and at $8\times$, where nearly all do. The difference-of-means direction leaves
+the prompt key almost nowhere ($0.6\%$ of continuations, pitch-in-scale rate $0.438$), which
 is the removal of the old component happening implicitly rather than by subtraction. In
-minor keys the matched addition is far weaker still ($0.154$ against install's $0.495$,
+minor keys the displacement-matched addition is weaker still ($0.154$ against the
+replacement's $0.495$,
 all twelve keys significant).
 
-So addition CAN set a key; what replacement buys is efficiency per unit of
-perturbation, and what the comparison isolates is that removing what is already written
-does part of the work.
+Addition can therefore set a key as well. What replacement provides is efficiency per
+unit of perturbation, and what the comparison isolates is that removing what is already
+written does part of the work.
 
 % 【日本語訳】同じ効果では、どちらが安いのか（追記 2026-09-09、探索段階の再解析）
 % 上の比較は「同じ変位ならどちらが勝つか」に答えるが、「同じ効果ならどちらが音楽を
 % 乱さないか」には答えない。それには点ではなく曲線が必要で、その曲線はすでに存在する。
 % ステアリングの探索段階が各層で α ∈ {0.25,…,16} を掃いており、各セルに継続ごとの行が
-% 残っているので、α ごとに成功率と擾乱の両方を読み戻せる。以下は生成なしの再解析であり、
+% 残っているので、α ごとに成功率と尤度変化の両方を読み戻せる。以下は生成なしの再解析であり、
 % 探索段階の100プロンプト上の特性把握なので、報告済みの数値は1つも変わらない。
 % 変位は行に保存されていないが、この条件では構成上 α·s̄(層) で厳密に決まる。
-% 読み方は数値を見る前に固定した: ステアリングが据え付けの成功率に達するのに、より大きな
-% 変位を要するなら、据え付けのほうが摂動あたり効率的である。等しいか小さい変位で達するなら
+% 読み方は数値を見る前に固定した: ステアリングが置換の成功率に達するのに、より大きな
+% 変位を要するなら、置換のほうが摂動あたり効率的である。等しいか小さい変位で達するなら
 % そうではない。
 % 結果は層で分かれ、そのまま述べる。
-% 据え付けが働く第4層では、ステアリングは掃いた範囲のどの変位でも据え付けに届かない
-% （最大 0.219、α=2、対して据え付け 0.402）。押しを強めても届かず、α=4 以降は崩壊する。
-% ステアリング自身が選んだ第2層では、変位を揃えれば据え付けが勝つ（0.276 対 0.155）が、
+% 置換が働く第4層では、ステアリングは掃いた範囲のどの変位でも置換に届かない
+% （最大 0.219、α=2、対して置換 0.402）。押しを強めても届かず、α=4 以降は崩壊する。
+% ステアリング自身が選んだ第2層では、変位を揃えれば置換が勝つ（0.276 対 0.155）が、
 % 変位を 1.353 倍にするとステアリングが追いつき、2倍（α=2）では追い越す（0.497 対 0.276）。
-% 擾乱で見ると話が変わり、これは我々に不利な側面である。第2層の α=2 では、ステアリングは
-% 成功率が高いだけでなく擾乱の中央値も低い（−0.059 対 据え付けの 0.162）。参照モデルは
-% その継続を無編集より驚かないと判定している。つまり据え付けが効率的なのは、我々が
-% 制御する量（変位）あたりであって、我々が損害として測る量（擾乱）あたりとは限らない。
-% 第2層で据え付けが高くつく理由は幾何にある。そこでは活性の平均長が 49.7 しかないのに
+% 尤度変化で見ると話が変わり、これは我々に不利な側面である。第2層の α=2 では、ステアリングは
+% 成功率が高いだけでなく尤度変化の中央値も低い（−0.059 対 置換の 0.162）。参照モデルは
+% その継続を無編集より驚かないと判定している。つまり置換が効率的なのは、我々が
+% 制御する量（変位）あたりであって、我々が損害として測る量（尤度変化）あたりとは限らない。
+% 第2層で置換が高くつく理由は幾何にある。そこでは活性の平均長が 49.7 しかないのに
 % 変位が 20.3、つまり活性の 41% を動かしている。第4層では 168.5 に対して 34.6 の 21% である。
-% 最後に、加算には固定点が無いことがこの表に現れている。α を上げ続けると擾乱は
+% 最後に、加算には固定点が無いことがこの表に現れている。α を上げ続けると尤度変化は
 % 数千 nat（第2層の α=8 で 24,015、α=16 で 86,216）に達し、成功率は逆に崩れる。
-% 据え付けは構成上その標的を超えられないので、この崩壊が起こらない。
+% 置換は構成上その標的を超えられないので、この崩壊が起こらない。
 %
-\textbf{At the same effect, which is cheaper?} The comparison above answers "at the
-same displacement, which wins". It does not answer "at the same effect, which disturbs
-the music less", and that needs a curve rather than a point. The curve already exists:
-the steering search stage swept $\alpha\in\{0.25,\dots,16\}$ at every layer and kept a
-per-continuation row for each cell, so success and disturbance can both be read back per
-$\alpha$ with no generation. What follows is therefore a characterisation on the $100$
-search prompts, not a headline, and it changes no reported number. The displacement is
-not stored per row but is fixed by construction at $\alpha\,\bar{s}(\ell)$.
+\textbf{Effect against cost.} The comparison above answers which operation wins at the
+same displacement. It does not answer which operation changes the music less at the same
+effect, and that needs a curve rather than a point. The curve already exists: the
+steering search stage swept $\alpha\in\{0.25,\dots,16\}$ at every layer and kept a
+per-continuation row for each cell, so success and likelihood change can both be read
+back per $\alpha$ with no generation. What follows is therefore a characterisation on
+the $100$ search prompts, not a headline, and it changes no reported number. The
+displacement is not stored per row but is fixed by construction at
+$\alpha\,\bar{s}(\ell)$.
 
 \begin{table}[!t]
 \centering
 \caption{\textbf{S15} \textit{(main Sec.~4.6)}. Effect against cost for the two
 operations, search stage, major prompts. $\|\Delta\|$ is the per-position displacement;
-SR is the key estimate alone, so the budget does not enter it; the disturbance median is
-in nats and can be negative when the reference model finds the edited continuation no
-more surprising than the unedited one. Layer~$4$ is where the install operates,
-layer~$2$ is where the swept addition's own search put it.}
+SR is the key estimate alone, so the threshold does not enter it; the median likelihood
+change is in nats and can be negative when the reference model finds the edited
+continuation no more surprising than the unedited one. Layer~$4$ is where the
+replacement operates, layer~$2$ is where the swept addition's own search put it.}
 \label{tab:supp-pareto}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}llrrrr@{}}
 \toprule
- & & $\|\Delta\|$ & SR & disturb. & over limit\\
+ & & $\|\Delta\|$ & SR & lik. change & over limit\\
 \midrule
 \multicolumn{6}{@{}l}{\emph{layer 4}\quad($\bar{s}=34.634$, mean $\|h\|=168.476$)}\\
-install        &            & $34.634$  & $0.402$ & $0.092$ & $0.139$\\
+replacement    &            & $34.634$  & $0.402$ & $0.092$ & $0.139$\\
 addition & $\alpha{=}0.5$   & $17.317$  & $0.090$ & $-0.027$ & $0.093$\\
 addition & $\alpha{=}1$     & $34.634$  & $0.214$ & $-0.036$ & $0.115$\\
 addition & $\alpha{=}2$     & $69.267$  & $0.219$ & $0.122$ & $0.228$\\
 addition & $\alpha{=}4$     & $138.535$ & $0.202$ & $1.947$ & $0.708$\\
 \midrule
 \multicolumn{6}{@{}l}{\emph{layer 2}\quad($\bar{s}=20.345$, mean $\|h\|=49.733$)}\\
-install        &            & $20.345$  & $0.276$ & $0.162$ & $0.174$\\
+replacement    &            & $20.345$  & $0.276$ & $0.162$ & $0.174$\\
 addition & $\alpha{=}0.5$   & $10.173$  & $0.047$ & $-0.069$ & $0.044$\\
 addition & $\alpha{=}1$     & $20.345$  & $0.155$ & $-0.073$ & $0.062$\\
 addition & $\alpha{=}2$     & $40.690$  & $0.497$ & $-0.059$ & $0.081$\\
@@ -721,76 +749,77 @@ addition & $\alpha{=}4$     & $81.381$  & $0.495$ & $0.772$ & $0.572$\\
 \end{tabular}
 \end{table}
 
-The answer splits by layer, and we state it that way. At layer~$4$, where the install
+The answer differs by layer. At layer~$4$, where the replacement
 operates, the addition never reaches it at any displacement in the sweep: its best cell
-scores $0.219$ against the install's $0.402$, and pushing harder makes it worse rather
+scores $0.219$ against the replacement's $0.402$, and pushing harder makes it worse rather
 than better. At layer~$2$, which the addition's own search chose, matched displacement
-again favours the install ($0.276$ against $0.155$), but $1.353\times$ the displacement
+again favours the replacement ($0.276$ against $0.155$), but $1.353\times$ the displacement
 is enough for the addition to catch it and twice the displacement puts it ahead
 ($0.497$).
 
-Read in nats rather than in displacement the picture changes, and this part runs against
-us. At layer~$2$ with $\alpha=2$ the addition is not only more successful but also less
-disturbing than the install: a median of $-0.059$ against $0.162$, meaning the reference
-model finds those continuations no more surprising than the unedited ones. So the
-install is the more efficient operation per unit of the quantity we control --- the
-displacement --- and not per unit of the quantity we measure as damage. Why the install
+Read in nats rather than in displacement the picture changes, and this result weakens
+our claim. At layer~$2$ with $\alpha=2$ the addition is not only more successful but also
+changes the likelihood less than the replacement, a median of $-0.059$ against $0.162$,
+meaning the reference model finds those continuations no more surprising than the
+unedited ones. Therefore the
+replacement is the more efficient operation per unit of the quantity we control, the
+displacement, and not per unit of the quantity we measure as damage. Why the replacement
 is expensive at layer~$2$ is geometric: the displacement there is $20.345$ against a mean
 activation norm of $49.733$, so it moves $41\%$ of the activation, where at layer~$4$ it
 moves $21\%$ of a much longer vector.
 
-One property of the addition is visible in the same table and is worth naming. It has no
-fixed point, so raising $\alpha$ eventually destroys the distribution rather than
-strengthening the effect: the disturbance median reaches thousands of nats
+One further property of the addition is visible in the same table. It has no fixed
+point, so raising $\alpha$ eventually destroys the distribution rather than
+strengthening the effect: the median likelihood change reaches thousands of nats
 ($24{,}015$ at $\alpha=8$ on layer~$2$, $86{,}216$ at $\alpha=16$) while the success rate
-collapses. The install cannot do this, because by construction it cannot overshoot the
+collapses. The replacement cannot do this, because by construction it cannot overshoot the
 value it writes.
 
-% 【日本語訳】据え付けを連続的に弱め、そして強めた場合（追記 2026-09-10）
-% 上の比較は加算の強さを掃いて、据え付けは全強度のままにしている。だから据え付けそのものが
+% 【日本語訳】置換を連続的に弱め、そして強めた場合（追記 2026-09-10）
+% 上の比較は加算の強さを掃いて、置換は全強度のままにしている。だから置換そのものが
 % 連続的に弱められるのか、そして全強度が最適なのかは、まだ何も語っていない。
-% そこで据え付けをスケールする編集モードを足した。h ← h + s(−P_V h + P_V μ) であり、
-% s=0 で恒等、s=1 で通常の据え付けになる。s=1 で既存の replace とビット一致することは
+% そこで置換をスケールする編集モードを足した。h ← h + s(−P_V h + P_V μ) であり、
+% s=0 で恒等、s=1 で通常の置換になる。s=1 で既存の replace とビット一致することは
 % 単体テストで固定してあるので、s=1 の点は凍結済みの行をそのまま読んでいる。
 % 設計と「結果の読み方」は走らせる前に凍結した。
 % 結果は事前に書いた3つの読み方のうち2つに同時に該当し、片方は我々に不利である。
 % 第一に、成功率は s=1 まで単調に上がる（長調 0.099 → 0.222 → 0.356、短調
-% 0.064 → 0.256 → 0.494）。据え付けは段階的な操作であり、ある大きさで初めて働く
+% 0.064 → 0.256 → 0.494）。置換は段階的な操作であり、ある大きさで初めて働く
 % 閾値的な現象ではない。
 % 第二に、s を 1 より大きくするとさらに上がる。長調では s=1.25 で 0.425、s=1.5 で 0.457、
 % 短調では 0.618 と 0.662 であり、対応のある差の信頼区間はいずれもゼロを除外する。
 % 我々が選んだ標的（そのクラス平均そのもの）は最適ではなく、25% 越えて書くほうが強い。
 % これは我々自身の選択に不利な結果であり、そのまま報告する。
-% 代償の有無も見ておく。長調の s=1.25 は擾乱中央値が 0.093 で s=1 の 0.104 より低く、
+% 代償の有無も見ておく。長調の s=1.25 は尤度変化中央値が 0.093 で s=1 の 0.104 より低く、
 % 品質の限度の通過率も 0.855 対 0.840 で高い。つまりこの点では追加の代償なしに
-% 成功率が上がっている。s=1.5 になると擾乱は 0.151 に上がり通過率は 0.812 に落ちる。
-% 短調では s=1.25 の擾乱が 0.183 で s=1 の 0.180 とほぼ同じ、通過率も 0.785 対 0.792 で
+% 成功率が上がっている。s=1.5 になると尤度変化は 0.151 に上がり通過率は 0.812 に落ちる。
+% 短調では s=1.25 の尤度変化が 0.183 で s=1 の 0.180 とほぼ同じ、通過率も 0.785 対 0.792 で
 % ほぼ同じである。
 % なぜクラス平均が最適でないのかについて、我々は説明を持っていない。クラス平均は
 % その調の活性の平均であって、その調を最も強く表す点ではないという読み方はできるが、
 % 検証していない。凍結した設計は変えないので、報告する数値は s=1 のままである。
 %
-\textbf{The install, weakened and strengthened.} The comparison above sweeps the
-addition's strength and leaves the install at full strength, so it says nothing about
-whether the install itself can be weakened continuously or whether full strength is the
+\textbf{The replacement scaled continuously.} The comparison above sweeps the
+addition's strength and leaves the replacement at full strength, so it says nothing about
+whether the replacement itself can be weakened continuously or whether full strength is the
 best place to stand. A scaled mode answers that, $h \leftarrow h + s(-P_Vh +
-P_V\mu_{\kappa^{*}})$, which is the identity at $s=0$ and the ordinary install at
+P_V\mu_{\kappa^{*}})$, which is the identity at $s=0$ and the ordinary replacement at
 $s=1$. A unit test pins it to be bit-identical to the frozen operation at $s=1$, so
 that point is read from the ledgered rows rather than regenerated. The design and the
 readings were fixed before the run.
 
 \begin{table}[!t]
 \centering
-\caption{\textbf{S17} \textit{(main Secs.~4.2, 4.6)}. The install scaled by $s$,
-final-test prompts, non-identity rows. $s=1$ is the reported install, read from the
+\caption{\textbf{S17} \textit{(main Secs.~4.2, 4.6)}. The replacement scaled by $s$,
+final-test prompts, non-identity rows. $s=1$ is the reported replacement, read from the
 frozen rows. The last column is the paired difference from it, so a negative value
-means that scale beats the install.}
+means that scale beats the replacement.}
 \label{tab:supp-scaled}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{@{}lccccc@{}}
 \toprule
-$s$ & SR major & SR minor & guard (maj) & disturb. (maj) & install $-$ $s$ (maj)\\
+$s$ & SR major & SR minor & within thr. (maj) & lik. change (maj) & repl. $-$ $s$ (maj)\\
 \midrule
 $0.5$  & $0.0991$ & $0.0636$ & $0.866$ & $+0.079$ & $+0.256$ $[0.224,0.291]$\\
 $0.75$ & $0.2218$ & $0.2564$ & $0.851$ & $+0.102$ & $+0.134$ $[0.099,0.168]$\\
@@ -802,19 +831,19 @@ $1.5$  & $0.4573$ & $0.6618$ & $0.812$ & $+0.151$ & $-0.102$ $[-0.145,-0.060]$\\
 \end{table}
 
 Two of the three pre-written readings hold at once, and one of them runs against us.
-The success rate rises monotonically up to $s=1$ in both modes, so the install is a
+The success rate rises monotonically up to $s=1$ in both modes, so the replacement is a
 graded operation rather than something that only works at one magnitude. And it keeps
 rising past $s=1$: $0.4245$ and $0.4573$ in major, $0.6182$ and $0.6618$ in minor, with
-paired differences from the install whose intervals exclude zero in every case. The
+paired differences from the replacement whose intervals exclude zero in every case. The
 target we chose, the class mean itself, is not the best place to write, and writing a
 quarter further is stronger.
 
-Whether that costs anything is worth reading beside it. In major, $s=1.25$ has a lower
-disturbance median than the install does ($+0.093$ against $+0.104$) and a higher
-quality-limit pass rate ($0.855$ against $0.840$), so at that point the extra success is
-not paid for. By $s=1.5$ the disturbance rises to $+0.151$ and the pass rate falls to
-$0.812$. In minor the two are almost indistinguishable at $s=1.25$, $+0.183$ against
-$+0.180$ with pass rates of $0.785$ and $0.792$.
+Whether that costs anything is measured alongside it. In major, $s=1.25$ has a lower
+median likelihood change than the replacement does ($+0.093$ against $+0.104$) and a
+higher pass rate inside the threshold ($0.855$ against $0.840$), so at that point the
+extra success is not paid for. By $s=1.5$ the likelihood change rises to $+0.151$ and
+the pass rate falls to $0.812$. In minor the two are almost indistinguishable at
+$s=1.25$, $+0.183$ against $+0.180$ with pass rates of $0.785$ and $0.792$.
 
 We do not have an explanation for why the class mean is not the best target. One reading
 is that the mean is the average activation of a key rather than the point that most
@@ -826,14 +855,14 @@ so every number the paper reports still comes from $s=1$.
 \includegraphics[width=0.86\columnwidth]{supp_layers.pdf}
 \caption{\textbf{S1} \textit{(main Sec.~4.4)}. The probe reads the key almost as well
 at layer~$1$ as anywhere deeper, while the edit's margin over its control only opens
-from layer~$2$ on. Readability and usability are not the same axis.}
+from layer~$2$ on. Probe performance and patching gain are not the same axis.}
 \label{fig:supp-layers}
 \end{figure}
 
-\section{Is the installed value position-appropriate? \normalfont\textit{(main Sec.~4.4)}}
+\section{The value written is appropriate to the position \normalfont\textit{(main Sec.~4.4)}}
 \label{sec:position}
 
-% 【日本語訳】据え付ける値は位置に対して適切か（本文4.4節）
+% 【日本語訳】置換する値は位置に対して適切か（本文4.4節）
 % 調毎の平均はトークン種を混ぜている——サンプルした144,000位置のうち62,509が音高、
 % 69,134が小節または音長である——そして編集はマスクが許すところどこにでも同じ
 % P_V μ_κ を書く。これは位置についての結果への反論を招く。音高位置だけを編集して何も
@@ -849,17 +878,17 @@ from layer~$2$ on. Readability and usability are not the same axis.}
 % 訓練したプローブから来ているので、位置固有の V は我々が検証していない別の問題として
 % 残る。
 %
-The per-key means pool the token types --- of $144{,}000$ sampled positions, $62{,}509$
-are pitch, $69{,}134$ bar or note length --- and the edit then writes the same
+The per-key means pool the token types, since of $144{,}000$ sampled positions $62{,}509$
+are pitch and $69{,}134$ bar or note length, and the edit then writes the same
 $P_V\mu_\kappa$ wherever the mask allows. That invites an objection to the position
 result: editing only pitch positions may do nothing because the model does not consult
 the key there, or because we wrote a value that does not belong there.
 
 Estimating $\mu_\kappa$ from each family on its own separates the two. Inside $V$,
-the two estimates of the SAME key agree to a cosine of $0.920$ on average
+the two estimates of the same key agree to a cosine of $0.920$ on average
 ($0.877$--$0.953$) and are the same size (norm ratio $1.028$, $0.936$--$1.097$). For
-scale, two DIFFERENT keys estimated from the same family agree only to $0.314$ on
-average, at most $0.808$ --- so the worst-matched key across families is still more
+scale, two different keys estimated from the same family agree only to $0.314$ on
+average, at most $0.808$, so the worst-matched key across families is still more
 aligned than any two distinct keys are within one. The value we write is therefore
 close to position-independent, and the null result at pitch positions is not an
 artefact of writing an alien target.
@@ -873,13 +902,13 @@ question we did not test.
 \includegraphics[width=0.86\columnwidth]{supp_mu.pdf}
 \caption{\textbf{S4} \textit{(main Sec.~4.4)}. The target estimated from pitch
 positions and from bar/note-length positions agrees, for every key, better than any two
-distinct keys agree with each other. The value we install is close to
+distinct keys agree with each other. The value we write is close to
 position-independent, so the null result at pitch positions is not an artefact of
 writing an alien target.}
 \label{fig:supp-mu}
 \end{figure}
 
-\section{Continuation length across tokenizations \normalfont\textit{(main Secs.~3.2, 5)}}
+\section{Continuation length across tokenizations \normalfont\textit{(main Sec.~5)}}
 \label{sec:length}
 % 【日本語訳】トークン化をまたぐ継続長（本文3.2節、5節）
 % 継続長はステップ数ではなく音符数で固定する。取り置きの編集行で測ると、中央値は
@@ -917,9 +946,9 @@ the median is $80$ notes for the Anticipatory model and $80$ for MMT, but $58$ f
 REMI baseline: its flat encoding spends $4.40$ tokens per note and no note-matched step
 count was declared for it when it was re-admitted, so it ran at the shared default.
 
-The shortfall depresses rather than flatters its number. Shortness is not caused by the
-edit --- the control condition has MORE short rows ($13.3\%$ against $10.0\%$ below
-$55$ notes) --- and by margin:
+The shortfall lowers rather than raises its number. Shortness is not caused by the edit,
+since the control condition has more short rows ($13.3\%$ against $10.0\%$ below $55$
+notes), and the margin by length is as follows:
 
 \begin{center}\footnotesize
 \begin{tabular}{@{}lcccc@{}}
@@ -963,8 +992,8 @@ Rates are the balanced condition Table~2 reports. MMT hears four times the music
 does, and has the highest rate. We cannot show that
 this ordering survives a common length. The stored rows carry each continuation's note
 count but not its notes, so re-scoring at a common length needs the cells regenerated,
-and within a cell the note count is fixed by the step budget --- the spread between the
-10th and 90th percentiles is under five notes everywhere --- so there is no internal
+and within a cell the note count is fixed by the step budget, with the spread between
+the 10th and 90th percentiles under five notes everywhere, so there is no internal
 variation to test against either. The comparison of tokenizations on Bach is therefore
 reported with this confound open. The pop comparison, which is note-matched for two of
 three models and tested by margin for the third, is the one that carries weight.
@@ -980,12 +1009,12 @@ sit with the weakest edit. Orange marks a cell that separates all twelve keys.}
 \label{fig:supp-public}
 \end{figure}
 
-\section{Does the edit reach distant keys? \normalfont\textit{(main Sec.~4.2)}}
+\section{The edit reaches distant keys \normalfont\textit{(main Sec.~4.2)}}
 \label{sec:distance}
 % 【日本語訳】編集は遠い調にも届くか（本文4.2節）
-% 近隣の調の間でしか働かない置換は弱い結果になる。どの調も据え付けられていないまま、
+% 近隣の調の間でしか働かない置換は弱い結果になる。どの調も置換られていないまま、
 % モデルが五度圏を1歩だけ押されただけかもしれないからである。そこで取り置きの全行を、
-% プロンプトの調と据え付けた調の五度圏距離 d で分割した。100本のプロンプトはそれぞれ
+% プロンプトの調と目標調の五度圏距離 d で分割した。100本のプロンプトはそれぞれ
 % 同一調を除く11標的すべてで評価されるので、行は構成上すでに対になっている。
 % d=1..5 に各200行、五度圏で唯一の調である三全音の d=6 に100行である。
 % 数値を見る前に、それぞれの結果が何を意味するかを固定した。距離係数の信頼区間がゼロを
@@ -996,27 +1025,27 @@ sit with the weakest edit. Orange marks a cell that separates all twelve keys.}
 % 回帰すると（GEE、交換可能、ロジスティック）、長調プロンプトで β_d = −0.004、
 % 95% CI [−0.080, +0.072]、短調で −0.046、[−0.116, +0.024] である。混合効果による
 % 当てはめと、プロンプト単位のクラスタブートストラップ2000反復も一致し、3つすべてを
-% results/reanalysis/a1_a3/ に報告している。三全音の据え付けは 0.340（長調）と 0.440
+% results/reanalysis/a1_a3/ に報告している。三全音の置換は 0.340（長調）と 0.440
 % （短調）で成功し、変位を揃えた統制は 0.000 と 0.030 である。
 % 統制は逆の振る舞いをし、こちらが図の情報量の多い半分である。長調プロンプトでその係数は
 % 強く負で、−0.689、[−0.937, −0.441] である。ランダムな部分空間は、標的がたまたま隣の
 % 調であるときに 0.195 で成功し、それより遠いところではどこでも 0.035 以下になる。これは、
 % 推定器がもともとその標的を名指ししかけていたときにだけ成功として登録される介入の
 % プロファイルである。置換にはそのプロファイルが無い。
-% 妨害の予算が遠い据え付けを制限しているのではないかも検討した。予算は自然な転調から
-% 凍結しており、自然な転調は近い調を好むので、遠い標的を構造的に不利にする予算は距離の
-% 効果を捏造しうる。各失敗を「推定器が標的を名指ししなかった」「予算を超えた」「両方」に
-% 分けると、長調プロンプトでの予算だけによる失敗率は d に対して平坦である（0.050、
+% 尤度変化の閾値が遠い置換を制限しているのではないかも検討した。閾値は自然な転調から
+% 凍結しており、自然な転調は近い調を好むので、遠い標的を構造的に不利にする閾値は距離の
+% 効果を捏造しうる。各失敗を「推定器が標的を名指ししなかった」「閾値を超えた」「両方」に
+% 分けると、長調プロンプトでの閾値だけによる失敗率は d に対して平坦である（0.050、
 % 0.060、0.035、0.050、0.065、0.080）。この仮説は支持されない。失敗は全域にわたって
 % 推定器が標的を名指ししないことに支配されている（0.405 から 0.540）。短調プロンプトでは
-% 予算だけの率が距離とともに緩やかに上昇し、0.115 から 0.170 になるので、プールした数字
+% 閾値だけの率が距離とともに緩やかに上昇し、0.115 から 0.170 になるので、プールした数字
 % ではなくそれを報告する。
 %
 
 A replacement that only worked between neighbouring keys would be a weak result: the
-model might be nudged a step around the circle of fifths without any key being
-installed. We therefore split every held-out row by the circle-of-fifths distance $d$
-between the prompt's key and the installed key. Each of the $100$ prompts is evaluated
+model might be nudged a step around the circle of fifths without a key being
+replaced. We therefore split every held-out row by the circle-of-fifths distance $d$
+between the prompt's key and the target key. Each of the $100$ prompts is evaluated
 at all $11$ non-identity targets, so the rows are paired by construction: $200$ rows at
 each of $d=1..5$ and $100$ at $d=6$, the tritone, where only one key lies.
 
@@ -1031,68 +1060,68 @@ The first case holds, in both modes. Fitting success on $d$ with the prompt as a
 (GEE, exchangeable, logistic) gives $\hat\beta_d = -0.004$, $95\%$ CI $[-0.080, +0.072]$
 for major prompts and $-0.046$, $[-0.116, +0.024]$ for minor. A mixed-effects fit and a
 prompt-level cluster bootstrap over $2000$ replicates agree; all three are reported in
-\texttt{results/reanalysis/a1\_a3/}. The tritone install succeeds at $0.340$ (major) and
-$0.440$ (minor) against $0.000$ and $0.030$ for the matched-displacement control.
+\texttt{results/reanalysis/a1\_a3/}. The tritone replacement succeeds at $0.340$ (major) and
+$0.440$ (minor) against $0.000$ and $0.030$ for the displacement-matched control.
 
-The control behaves in the opposite way, and this is the more informative half of the
-figure. Its coefficient is strongly negative on major prompts, $-0.689$,
-$[-0.937, -0.441]$: a random subspace succeeds at $0.195$ when the target happens to be
-the neighbouring key and at $0.035$ or less everywhere beyond it. That is the profile of
-an intervention that only ever registers as a success when the estimator was nearly going
-to name the target anyway. The replacement does not have that profile.
+The control behaves in the opposite way. Its coefficient is strongly negative on major
+prompts, $-0.689$, $[-0.937, -0.441]$: a random subspace succeeds at $0.195$ when the
+target happens to be the neighbouring key and at $0.035$ or less everywhere beyond it.
+That is the profile of an intervention that only ever registers as a success when the
+estimator was nearly going to name the target anyway. The replacement does not have that
+profile.
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.98\textwidth]{supp_distance.pdf}
 \caption{\textbf{S5} \textit{(main Sec.~4.2)}. Success rate against circle-of-fifths
 distance, with Wilson $95\%$ intervals. The replacement is flat; the
-matched-displacement control decays to the floor beyond the neighbouring key. Coefficient
+displacement-matched control decays to the floor beyond the neighbouring key. Coefficient
 and interval in each title are from the GEE fit with the prompt as a cluster.}
 \label{fig:supp-distance}
 \end{figure*}
 
-We also asked whether the disturbance budget is what limits distant installs. It was
-frozen from natural key changes, and natural key changes favour near keys, so a budget
-that structurally penalised distant targets would manufacture a distance effect. Splitting
-each failure into "the estimator did not name the target", "the budget was exceeded", and
-both, the budget-only failure rate on major prompts is flat in $d$ ($0.050$, $0.060$,
-$0.035$, $0.050$, $0.065$, $0.080$). The hypothesis is not supported: failures are
-dominated throughout by the estimator not naming the target ($0.405$ to $0.540$). On minor
-prompts the budget-only rate does rise mildly with distance, from $0.115$ to $0.170$, and
-we report that rather than the pooled figure.
+We also asked whether the likelihood-change threshold is what limits distant
+replacements. It was frozen from natural key changes, and natural key changes favour
+near keys, so a threshold that structurally penalised distant targets would manufacture
+a distance effect. Splitting each failure into "the estimator did not name the target",
+"the threshold was exceeded", and both, the threshold-only failure rate on major prompts
+is flat in $d$ ($0.050$, $0.060$, $0.035$, $0.050$, $0.065$, $0.080$). The hypothesis is
+not supported: failures are dominated throughout by the estimator not naming the target
+($0.405$ to $0.540$). On minor prompts the threshold-only rate does rise mildly with
+distance, from $0.115$ to $0.170$, which we report separately rather than pooling it.
 
-\section{Where a failed install lands \normalfont\textit{(main Sec.~4.2)}}
+\section{Where a failed replacement lands \normalfont\textit{(main Sec.~4.2)}}
 \label{sec:landing}
-% 【日本語訳】失敗した据え付けはどこに着地するか（本文4.2節）
-% 成功率は、推定器が据え付けた調を名指しする頻度だけを語り、それ以外のときに何を名指し
+% 【日本語訳】失敗した置換はどこに着地するか（本文4.2節）
+% 成功率は、推定器が目標調を名指しする頻度だけを語り、それ以外のときに何を名指し
 % するかは何も語らない。その残りは、成功率では分離できない仮説を分離する。何もしない
 % 編集はプロンプトの調を残し、継続を調性的に隣接した場所へ動かす編集は僅差の外れを生み、
 % 単に乱すだけの編集は散らばりを生む。
-% 表は長調プロンプトについての内訳を与える（据え付けた調: 置換 0.410 / 変位一致 0.059 /
+% 表は長調プロンプトについての内訳を与える（目標調: 置換 0.410 / 変位一致 0.059 /
 % ランダム 0.041、五度隣接: 0.288 / 0.074 / 0.049、平行調: 0.089 / 0.010 / 0.004、
 % 同主調: 0.004 / 0.019 / 0.011、元の調を保持: 0.085 / 0.340 / 0.517、その他: 0.124 /
-% 0.497 / 0.378）。置換のもとでは、行の 0.787 が据え付けた調、そこから五度、またはその
+% 0.497 / 0.378）。置換のもとでは、行の 0.787 が目標調、そこから五度、またはその
 % 平行短調に着地し、プロンプトの調に留まるのは 0.085 だけである。変位を揃えていない
 % ランダム部分空間ではこの順序が反転する。0.517 がプロンプトの調に留まり、0.041 が標的に
 % 届く——本文で引用した2つの数字を、ここでは同じ行から再計算している。
 % 短調プロンプトも同じ振る舞いをし、さらに旋法固有の疑いを1つ決着させる。置換は
-% 0.617 を据え付けた調に着地させ、ランダム部分空間は 0.003 で、後者は 0.772 の行で元の調を
+% 0.617 を目標調に着地させ、ランダム部分空間は 0.003 で、後者は 0.772 の行で元の調を
 % 保持する。その疑いとは、短調は相対長調へ流れることで的中と採点されうるのではないか
 % （音階を共有するので）というものだが、問題になる率では起きていない。編集された行のうち
 % 相対長調に着地するのは 0.041、同主長調は 0.045 にすぎず、どちらのセルも統制のもとで
 % 同じ大きさ（変位一致で 0.043 と 0.047）なので、編集が生んだものではなく継続がもともと
 % 座る場所である。長調の残りを支配していた五度隣接の質量（0.288）は短調では小さい
-% （0.037）ので、短調の据え付けは標的に届くか散らばるかであり、五度圏を1歩滑ることはない。
+% （0.037）ので、短調の置換は標的に届くか散らばるかであり、五度圏を1歩滑ることはない。
 % 図は12×12の行列全体を示す。置換には対角があり、統制には無い。これは前節の第2の読み方
-% でもある。残りの質量はプロンプトの調に戻るのではなく、五度圏上で据え付けた調の隣に
+% でもある。残りの質量はプロンプトの調に戻るのではなく、五度圏上で目標調の隣に
 % 座っている。この種の僅差の外れには、これらの行では分離できない2つの説明がある——継続が
-% 本当に隣の調にあるのか、それとも据え付けた調にあって、7音のうち6音を共有する2つの
+% 本当に隣の調にあるのか、それとも目標調にあって、7音のうち6音を共有する2つの
 % 音階に直面した推定器が隣を名指ししたのか。これらの行が確立するのは、どちらの説明も
 % 「モデルが書き込みを無視している」ではないということである。両者の決着には、同じ継続を
 % 別の推定器で採点する必要がある。
 %
 
-The success rate says how often the estimator names the installed key and nothing about
+The success rate says how often the estimator names the target key and nothing about
 what it names the rest of the time. Those remainders separate hypotheses that the success
 rate cannot: an edit that does nothing leaves the prompt's key, an edit that moves the
 continuation to a tonally adjacent place produces a near miss, and an edit that merely
@@ -1102,7 +1131,7 @@ disrupts produces scatter.
 \centering
 \caption{\textbf{S9} \textit{(main Sec.~4.2)}. Where the estimate lands on the $1100$
 non-identity rows of each condition, major prompts left and minor right.
-"Fifth-adjacent" is one step around the circle of fifths from the installed key;
+"Fifth-adjacent" is one step around the circle of fifths from the target key;
 "relative" and "parallel" are relative to it; "source retained" is the prompt's own key.}
 \label{tab:supp-landing}
 \small
@@ -1113,7 +1142,7 @@ non-identity rows of each condition, major prompts left and minor right.
 \cmidrule(r){2-4}\cmidrule(l){5-7}
  & repl. & matched & random & repl. & matched & random \\
 \midrule
-installed key      & $0.410$ & $0.059$ & $0.041$ & $0.617$ & $0.031$ & $0.003$ \\
+target key      & $0.410$ & $0.059$ & $0.041$ & $0.617$ & $0.031$ & $0.003$ \\
 fifth-adjacent     & $0.288$ & $0.074$ & $0.049$ & $0.037$ & $0.026$ & $0.004$ \\
 relative           & $0.089$ & $0.010$ & $0.004$ & $0.041$ & $0.043$ & $0.019$ \\
 parallel           & $0.004$ & $0.019$ & $0.011$ & $0.045$ & $0.047$ & $0.027$ \\
@@ -1124,27 +1153,27 @@ other              & $0.124$ & $0.497$ & $0.378$ & $0.207$ & $0.398$ & $0.176$ \
 \end{table}
 
 Table~\ref{tab:supp-landing} gives the split for major prompts. Under the replacement,
-$0.787$ of rows land on the installed key, one fifth from it, or on its relative minor,
-and only $0.085$ stay in the prompt's key. Under the unmatched random subspace the
-ordering inverts: $0.517$ stay in the prompt's key and $0.041$ reach the target --- the
-two figures quoted in the main text, recomputed here from the same rows.
+$0.787$ of rows land on the target key, one fifth from it, or on its relative minor,
+and only $0.085$ stay in the prompt's key. Under the dimension-matched random subspace the
+ordering inverts: $0.517$ stay in the prompt's key and $0.041$ reach the target, both
+recomputed here from the same rows the main text's Table~1 is built on.
 
 Minor prompts behave the same way and settle one mode-specific doubt. The replacement
-lands $0.617$ on the installed key against $0.003$ for the random subspace, which
+lands $0.617$ on the target key against $0.003$ for the random subspace, which
 retains the source key in $0.772$ of rows. The doubt is that a minor key could be scored
 as a hit by drifting to its relative major, since the two share a scale: it does not
 happen at any rate that matters. Only $0.041$ of edited rows land on the relative major
 and $0.045$ on the parallel major, and both cells are as large under the controls
 ($0.043$ and $0.047$ at matched displacement), so they are where continuations sit
 anyway rather than something the edit produces. The fifth-adjacent mass that dominates
-the major remainder ($0.288$) is small in minor ($0.037$), so a minor install either
+the major remainder ($0.288$) is small in minor ($0.037$), so a minor replacement either
 reaches its target or scatters; it does not slide one step around the circle.
 
 Figure~\ref{fig:supp-confusion} shows the full $12 \times 12$ matrices. The replacement
 has a diagonal; the control has none. This is also the second reading of the previous
-section: the residual mass sits next to the installed key on the circle of fifths, not
+section: the residual mass sits next to the target key on the circle of fifths, not
 back at the prompt's key. A near miss of this kind has two explanations these rows cannot
-separate --- the continuation really is in the neighbouring key, or it is in the installed
+separate: the continuation really is in the neighbouring key, or it is in the target
 key and the estimator, faced with two scales that share six of their seven notes, named
 the neighbour. What the rows do establish is that neither explanation is the model
 ignoring the write; deciding between them needs the same continuations scored by other
@@ -1153,13 +1182,13 @@ estimators.
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.98\textwidth]{supp_confusion.pdf}
-\caption{\textbf{S6} \textit{(main Sec.~4.2)}. Installed key against estimated key, major
+\caption{\textbf{S6} \textit{(main Sec.~4.2)}. Target key against estimated key, major
 prompts, row-normalised. Left, target-key replacement; right, the matched-displacement
 control at the same displacement.}
 \label{fig:supp-confusion}
 \end{figure*}
 
-\section{The geometry of the key subspace \normalfont\textit{(main Sec.~4.4)}}
+\section{The geometry of the key subspace \normalfont\textit{(main Sec.~2.2)}}
 \label{sec:geometry}
 % 【日本語訳】調部分空間の幾何（本文4.4節）
 % V はプローブの重みから作られるので、その内側にある構造は、モデルが保持しているもの
@@ -1185,20 +1214,20 @@ geometry on the raw class means $\mu_\kappa$, which the probe never touched.
 Among major keys the circle of fifths is already there before any projection: the rank
 correlation between cosine similarity and circle-of-fifths distance is $-0.936$ on the raw
 means, $-0.961$ after removing the component common to all $24$ keys, and $-0.961$ after
-projection into $V$. Projection sharpens the contrast --- neighbouring keys sit at $0.681$
-and tritone-related keys at $-0.118$, against $0.978$ and $0.928$ before centring --- but
+projection into $V$. Projection sharpens the contrast, with neighbouring keys at $0.681$
+and tritone-related keys at $-0.118$ against $0.978$ and $0.928$ before centring, but
 it does not create the ordering. Classical scaling of the centred means recovers the
 circle of fifths as a closed ring (Fig.~\ref{fig:supp-geometry}). Relative keys are closer
 than parallel ones ($0.581$ against $0.435$), which we report without a prediction, since
 theory does not settle which should be nearer.
 
-Two facts cut the other way and we state them plainly. Among minor keys there is
+Two facts point the other way. Among minor keys there is
 essentially no fifths ordering ($-0.063$ centred, $-0.216$ projected), so the structure
 described above is a property of the major keys. And $V$ captures only $5.2\%$ of the
 energy of $\mu_\kappa$ on average: it is a thin slice of the class means, not a summary of
 them.
 
-\section{Is the subspace a linear image of pitch-class frequency? \normalfont\textit{(main Secs.~4.1, 4.2, 4.4)}}
+\section{The subspace is not a linear image of pitch-class frequency \normalfont\textit{(main Secs.~4.1, 4.2)}}
 \label{sec:pitchclass}
 
 % 【日本語訳】部分空間はピッチクラス頻度の線形像なのか（本文4.1節、4.2節、4.4節）
@@ -1227,8 +1256,8 @@ them.
 % 達しない。これは同じ次元・同じ変位のランダム部分空間（0.025 と 0.004）と区別できず、
 % 補正後に分離する調は 12 のうち 0 である。11次元の全履歴版も同じである。
 % 一方、V からピッチクラス部分空間を除去した残差で書き込むと、長調 0.360、短調 0.478 に
-% 達し、据え付けそのもの（0.356 と 0.494）との差は信頼区間がゼロを含む。
-% 音符の移り方も同じ方向を指す。残差での編集は音階内割合 0.935 と 0.957 で据え付けと
+% 達し、置換そのもの（0.356 と 0.494）との差は信頼区間がゼロを含む。
+% 音符の移り方も同じ方向を指す。残差での編集は音階内音高率 0.935 と 0.957 で置換と
 % 同等だが、ピッチクラス側は 0.55 と 0.73 で無編集の水準にとどまる。
 % したがってこの反論は成り立たない。編集が効くのは V のうちピッチクラス頻度で
 % 説明できない部分であり、説明できる部分だけを書き込んでもランダムと同じである。
@@ -1247,15 +1276,15 @@ this ran.
 
 \textbf{The control subspaces.} We fit ridge regressions from layer-$4$ activations to
 the L1-normalized pitch-class histogram of the last $w$ tokens over $50{,}400$ positions
-of the TRAINING split, for $w=16$ and $w=512$ --- the two windows of
+of the training split, for $w=16$ and $w=512$, the two windows of
 \texttt{lr\_W16cat512}, the strongest note counter in the paper. $\lambda$ was chosen
 from $\{10^{-3},10^{-2},10^{-1}\}$ on positions of the search-stage prompts and came out
 at $10^{-3}$. The final-test prompts are used for neither the fit nor that choice.
 
 The fit is good, which is what makes the control worth running. On the search prompts
 $R^2$ is $0.654$ for $w=16$ and $0.781$ for $w=512$, and on a held-out split of the
-fitting positions $0.631$ and $0.754$. This is a genuine encoding of pitch-class
-frequency rather than a straw man.
+fitting positions $0.631$ and $0.754$. The control is therefore a genuine encoding of
+pitch-class frequency rather than a weak one.
 
 \textbf{It barely overlaps $V$.} Only $5.6\%$ of $V$'s energy lies inside the
 $22$-dimensional stack of both windows, against $0.047 \pm 0.003$ for random rank-$24$
@@ -1268,16 +1297,16 @@ with none below $30^\circ$. Projecting the stack out of $V$ leaves $V$ at full r
 pitch-class subspace instead of through $V$, final-test prompts, non-identity rows.
 Each pitch-class arm has its own random control of the same rank, matched to that arm's
 displacement. ``Keys'' counts the target keys the arm beats its own control on after
-correction, and the last column is the paired difference from the install with its
+correction, and the last column is the paired difference from the replacement with its
 bootstrap interval.}
 \label{tab:supp-pitchclass}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-arm (dimension) & major & minor & keys & install $-$ arm (major)\\
+arm (dimension) & major & minor & keys & repl. $-$ arm (major)\\
 \midrule
-install ($24$)              & $0.3555$ & $0.4945$ & --- & ---\\
+replacement ($24$)         & $0.3555$ & $0.4945$ & --- & ---\\
 pitch-class, both windows ($22$) & $0.0273$ & $0.0027$ & $0/12$ & $+0.328$ $[0.296,0.362]$\\
 \quad its random control    & $0.0245$ & $0.0036$ & --- & ---\\
 pitch-class, whole prefix ($11$) & $0.0300$ & $0.0027$ & $0/12$ & $+0.326$ $[0.293,0.359]$\\
@@ -1289,17 +1318,18 @@ $V$ with pitch-class removed ($24$) & $0.3600$ & $0.4782$ & $12/12$ & $-0.005$ $
 \end{table}
 
 \textbf{And it carries none of the effect.} Table~\ref{tab:supp-pitchclass} gives the
-interventions. Writing the same $\mu_{\kappa^*}$ through the pitch-class subspace reaches
-$0.0273$ in major and $0.0027$ in minor, which is indistinguishable from a random
-subspace of the same rank and displacement and separates from it on $0$ of the $12$ keys.
-Writing through $V$ with that subspace projected out reaches $0.3600$ and $0.4782$, and
-its paired difference from the install has an interval containing zero in both modes. The
-notes agree, with in-key shares of $0.935$ and $0.957$ for the residual against $0.551$
-and $0.728$ for the pitch-class arms, the latter at the unedited level.
+interventions. Writing the same $\mu_{\kappa^*}$ through the pitch-class subspace
+reaches $0.0273$ in major and $0.0027$ in minor, which is indistinguishable from a
+random subspace of the same rank and displacement and separates from it on $0$ of the
+$12$ keys. Writing through $V$ with that subspace projected out reaches $0.3600$ and
+$0.4782$, and its paired difference from the replacement has an interval containing zero
+in both modes. The notes agree, with pitch-in-scale rates of $0.935$ and $0.957$ for the
+residual against $0.551$ and $0.728$ for the pitch-class arms, the latter at the
+unedited level.
 
 The objection therefore fails. What the edit acts through is the part of $V$ that
 pitch-class frequency does not explain, and the part it does explain is causally inert.
-Two limits belong with that. The regression is linear, so a nonlinear function of the
+Two limits apply. The regression is linear, so a nonlinear function of the
 pitch-class history that the network computes is not ruled out, and $V$ itself comes from
 a probe trained on pooled positions, so a position-specific subspace remains untested as
 in \S\ref{sec:position}.
@@ -1307,20 +1337,20 @@ in \S\ref{sec:position}.
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.98\textwidth]{supp_geometry.pdf}
-\caption{\textbf{S7} \textit{(main Sec.~4.4)}. Classical scaling of the cosine
+\caption{\textbf{S7} \textit{(main Sec.~2.2)}. Classical scaling of the cosine
 dissimilarity between the $12$ major class means, before and after projection into $V$.
 The grey path connects the keys in circle-of-fifths order; it is drawn, not fitted.}
 \label{fig:supp-geometry}
 \end{figure*}
 
-\section{A one-shot install, bar by bar \normalfont\textit{(main Sec.~4.5)}}
+\section{A one-shot replacement, bar by bar \normalfont\textit{(main Sec.~4.2)}}
 \label{sec:oneshot}
-% 【日本語訳】一度だけの据え付け、小節ごとに（本文4.5節）
-% 本文の編集は継続の全体にわたって保持されるので、据え付けた調を前へ運んでいるモデルと、
+% 【日本語訳】一度だけの置換、小節ごとに（本文4.5節）
+% 本文の編集は継続の全体にわたって保持されるので、目標調を前へ運んでいるモデルと、
 % 単にクランプされているだけのモデルを区別できない。探索段階では、第9小節の境界で一度
 % だけ書き込み、その後はモデルを放置する実行も行っていた。その行は集約されたことが
 % なかったので、ここで集約する。
-% 継続が届く6小節にわたって、一度だけの据え付けは音符の 0.687 から 0.711 を据え付けた調の
+% 継続が届く6小節にわたって、一度だけの置換は音符の 0.687 から 0.711 を目標調の
 % 内側に保ち、同じ書き込みをランダム部分空間へ行った場合は 0.575 から 0.584 である——
 % プロンプト対応の Wilcoxon 検定で Holm 補正後、どの小節でも分離しており、目に見える
 % 減衰は無い。継続して書き込む編集は両者のはるか上、0.978 から 0.991 に座るが、これは
@@ -1333,17 +1363,17 @@ The grey path connects the keys in circle-of-fifths order; it is drawn, not fitt
 %
 
 The main text's edit is held for the whole continuation, which cannot distinguish a model
-that carries the installed key forward from one that is simply being clamped. The search
+that carries the target key forward from one that is simply being clamped. The search
 stage also ran the write once, at the bar-$9$ boundary, and then left the model alone. Its
-rows were never aggregated; we do that here.
+rows were never aggregated, and the main text does not report them; we do that here.
 
-Over the six bars the continuations reach, the one-shot install holds $0.687$ to $0.711$
-of notes inside the installed key against $0.575$ to $0.584$ for the same write into a
-random subspace --- separated at every bar by a prompt-paired Wilcoxon test after Holm
+Over the six bars the continuations reach, the one-shot replacement holds $0.687$ to $0.711$
+of notes inside the target key against $0.575$ to $0.584$ for the same write into a
+random subspace, separated at every bar by a prompt-paired Wilcoxon test after Holm
 correction, with no visible decay. The sustained edit sits far above both, at $0.978$ to
 $0.991$, which is the expected consequence of continuing to write.
 
-Two limits belong with this result. The continuations only extend to bar $14$, so nothing
+Two limits apply to this result. The continuations only extend to bar $14$, so nothing
 here speaks to longer horizons. More importantly, a persistent effect on the output does
 not establish a persistent internal state: the model may be re-reading the key from the
 notes it has already produced, which would reproduce this curve without anything being
@@ -1353,7 +1383,7 @@ submission's scope.
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.86\columnwidth]{supp_decay.pdf}
-\caption{\textbf{S8} \textit{(main Sec.~4.5)}. Notes inside the installed key, by bar,
+\caption{\textbf{S8} \textit{(main Sec.~4.2)}. Notes inside the target key, by bar,
 for a write applied once at bar $9$, the same write into a random subspace, and the
 sustained edit. Bars are $95\%$ intervals on the mean.}
 \label{fig:supp-decay}
@@ -1362,23 +1392,23 @@ sustained edit. Bars are $95\%$ intervals on the mean.}
 \section{Writing the prompt's own key \normalfont\textit{(main Sec.~4.2)}}
 
 % 【日本語訳】プロンプト自身の調を書き込む（本文4.2節）
-% 取り置きのスイープはいずれも、据え付ける調がプロンプト自身の調である100行を含む。この行は
+% 取り置きのスイープはいずれも、置換する調がプロンプト自身の調である100行を含む。この行は
 % 操作についてのサニティチェックであり、その実証ではない。正しい値を書いて継続が損なわれる
 % なら、編集は調を設定する以外のことをしていることになる。
 % これは通る。プロンプト自身の調を書き込むことは長調プロンプトで 0.650、短調で 0.800 の
-% 成功率になり、妨害の予算はそれらの行の 0.930 と 0.950 で満たされる。しかしこの比較は
+% 成功率になり、尤度変化の閾値はそれらの行の 0.930 と 0.950 で満たされる。しかしこの比較は
 % それ自体ではほとんど重みを持たず、表がその理由を示す。どの統制も同じ行で 0.510 から
 % 0.850 の点を取り、その区間は置換の区間と重なる。どの介入も動かさない継続は、始まった
 % 調に留まるからである。同一調の行が確立するのは、書き込みが正しいときには無害である
 % ということであり、それが働くことを確立するのは同一調でない行である。
 %
-Each held-out sweep includes $100$ rows where the installed key is the prompt's own. The
+Each held-out sweep includes $100$ rows where the target key is the prompt's own. The
 row is a sanity check on the operation, not a demonstration of it: if writing the correct
 value damaged the continuation, the edit would be doing something besides setting the key.
 
 \begin{table}[!t]
 \centering
-\caption{\textbf{S10} \textit{(main Sec.~4.2)}. Identity install, $n=100$ per cell, with
+\caption{\textbf{S10} \textit{(main Sec.~4.2)}. Identity replacement, $n=100$ per cell, with
 Wilson $95\%$ intervals for the replacement. The controls are close behind, which is the
 point: a continuation nothing moves stays in its own key.}
 \label{tab:supp-identity}
@@ -1389,7 +1419,7 @@ point: a continuation nothing moves stays in its own key.}
  & major & minor \\
 \midrule
 target-key replacement & $0.650$ \tiny$[0.553,0.736]$ & $0.800$ \tiny$[0.711,0.867]$ \\
-matched control        & $0.510$ & $0.740$ \\
+displacement-matched control        & $0.510$ & $0.740$ \\
 random subspace        & $0.530$ & $0.750$ \\
 bar/duration positions & $0.650$ & $0.780$ \\
 pitch positions        & $0.580$ & $0.850$ \\
@@ -1398,17 +1428,18 @@ pitch positions        & $0.580$ & $0.850$ \\
 \end{table}
 
 It passes: writing the prompt's own key succeeds at $0.650$ on major prompts and $0.800$
-on minor, and the disturbance budget is met in $0.930$ and $0.950$ of those rows. But the
-comparison carries little weight on its own, and Table~\ref{tab:supp-identity} shows why.
-Every control scores between $0.510$ and $0.850$ on the same rows, with intervals that
-overlap the replacement's, because a continuation that no intervention moves remains in
-the key it started in. The identity row establishes that the write is harmless when
-correct; it is the non-identity rows that establish that it works.
+on minor, and the likelihood-change threshold is met in $0.930$ and $0.950$ of those
+rows. But the comparison carries little weight on its own, and
+Table~\ref{tab:supp-identity} shows why. Every control scores between $0.510$ and
+$0.850$ on the same rows, with intervals that overlap the replacement's, because a
+continuation that no intervention moves remains in the key it started in. The identity
+row establishes that the write is harmless when correct; it is the non-identity rows
+that establish that it works.
 
 \section{Measuring the tonic, not the scale \normalfont\textit{(main Sec.~4.2)}}
 \label{sec:tonic}
 % 【日本語訳】音階ではなく主音を測る（本文4.2節）
-% 音階内の音の割合は音高内容の尺度であり、音高内容はある調とその平行短調を分離できない。
+% 音階内音高率は音高内容の尺度であり、音高内容はある調とその平行短調を分離できない。
 % つまり本論文の最大の数値は、序論が依拠している区別に対して盲目な尺度から来ている。
 % ここでの指標は代わりに、音楽がどこに落ち着くかを見る。100本の継続すべてが曲末トークンに
 % 到達しているので、最後の和音はトークン予算が尽きた地点ではなく、モデルが作曲したもので
@@ -1416,11 +1447,11 @@ correct; it is the non-identity rows that establish that it works.
 % 表は、同じプロンプトの無編集の継続に対して、継続がどこに落ち着くかを与える（長調が左、
 % 短調が右、順に 置換 / 無編集 / 変位一致統制 / 参照 で、最後はプロンプト自身を標的調へ
 % 移調したもの——正当な転調が同じ尺度で取る点数である。行は、最後の低音、主音への
-% カデンツ、主和音に属する音の割合、最後の旋律音、強拍上の低音であり、いずれも据え付けた
+% カデンツ、主和音に属する音の割合、最後の旋律音、強拍上の低音であり、いずれも置換た
 % 調に対して採点する。長調の置換は上から 0.755、0.205、0.456、0.302、0.185、無編集は
 % 0.003、0.001、0.227、0.058、0.072、参照は 0.977、0.269、0.519、0.342、0.231）。
 % どの指標も、Holm 補正後に順位双列相関 0.99 以上の効果で編集を無編集の継続から分離する。
-% 低音は編集された継続の4分の3で据え付けた主音に到達し、無編集では千に3である。そして
+% 低音は編集された継続の4分の3で置換た主音に到達し、無編集では千に3である。そして
 % カデンツ——完全な主和音へ向かう属音から主音への低音の動き——はその5分の1に現れ、
 % 無編集では千に1である。これらのどれも平行調の混同では生じ得ない。
 % 参照の列に照らして読むと、編集は最後の低音で本物の移調の 0.773、カデンツで 0.760 に
@@ -1433,11 +1464,11 @@ correct; it is the non-identity rows that establish that it works.
 % 属さない23の調に対して採点すれば既知の負例が得られる。取り置きの500曲にわたって、
 % 検出器は真の終止の 0.218 で発火し、誤った調との組の 0.00322 で発火する。この釣り合いに
 % おける適合率は 0.986 である。つまり検出器は、発明するよりはるかに多くのカデンツを
-% 見落とす。表の率は、音楽が据え付けた調に落ち着く頻度の下限であり、条件間の比——両側で
+% 見落とす。表の率は、音楽が目標調に落ち着く頻度の下限であり、条件間の比——両側で
 % 同じ検出器を使っている——が読むべき部分である。
 %
 
-In-key note share is a measure of pitch content, and pitch content cannot separate a
+The pitch-in-scale rate is a measure of pitch content, and pitch content cannot separate a
 key from its relative minor. The paper's largest number therefore comes from a measure
 that is blind to the distinction the introduction rests on. These metrics look at where
 the music comes to rest instead. All $100$ continuations reach the end-of-piece token,
@@ -1448,11 +1479,11 @@ budget ran out.
 \centering
 \caption{\textbf{S11} \textit{(main Sec.~4.2)}. Where the continuation settles, against
 the unedited continuation of the same prompt. Major prompts left, minor right, in the
-order replacement / unedited / matched control / reference, the last being the
-prompt itself transposed into the target key --- what a legitimate key change scores
-on the same measures. Rows: the final bass note, a cadence into the tonic, the share
-of notes in the tonic triad, the final melody note, and the bass on downbeats --- each
-scored against the installed key.}
+order replacement / unedited / displacement-matched control / reference, the last being the
+prompt itself transposed into the target key, which is what a legitimate key change
+scores on the same measures. Rows: the final bass note, a cadence into the tonic, the share
+of notes in the tonic triad, the final melody note, and the bass on downbeats, each
+scored against the target key.}
 \label{tab:supp-tonic}
 \scriptsize
 \setlength{\tabcolsep}{1.8pt}
@@ -1472,9 +1503,9 @@ downbeat bass& $0.185$ & $0.072$ & $0.087$ & $0.231$ & $0.186$ & $0.070$ & $0.09
 \end{table}
 
 Every metric separates the edit from the unedited continuation with a rank-biserial
-effect of $0.99$ or above after Holm correction. The bass arrives on the installed
+effect of $0.99$ or above after Holm correction. The bass arrives on the target
 tonic in three quarters of edited continuations against three in a thousand unedited
-ones, and a cadence --- a dominant-to-tonic bass motion into a complete tonic triad ---
+ones, and a cadence, a dominant-to-tonic bass motion into a complete tonic triad,
 appears in one fifth of them against one in a thousand. None of this can be produced by
 a relative-key confusion.
 
@@ -1490,12 +1521,12 @@ generator ends every piece on its tonic by construction, so a held-out corpus pi
 a known positive; scoring the same piece against each of the $23$ keys it is not in
 gives known negatives. Over $500$ held-out pieces the detector fires on $0.218$ of the
 true endings and on $0.00322$ of the wrong-key pairs, a precision of $0.986$ at that
-balance. It therefore misses far more cadences than it invents: the rates in
-Table~\ref{tab:supp-tonic} are floors on how often the music comes to rest in the
-installed key, and the ratios between conditions --- the same detector on both sides
---- are the part to read.
+balance. The detector therefore misses far more cadences than it reports falsely, so the
+rates in Table~\ref{tab:supp-tonic} are lower bounds on how often the music comes to
+rest in the target key, and the ratios between conditions, which use the same detector
+on both sides, are the values to read.
 
-\section{What else the edit changes \normalfont\textit{(main Sec.~4.3)}}
+\section{What else the edit changes \normalfont\textit{(main Secs.~3.3, 5)}}
 \label{sec:selectivity}
 % 【日本語訳】編集は他に何を変えるか（本文4.3節）
 % 第2の成功条件は、参照モデルがどれだけ驚くかを制限する。それは要約であり、編集は
@@ -1526,7 +1557,7 @@ replacement moves one attribute of three: notes per bar fall by $0.595$
 ($r=-0.41$, $p_{\text{Holm}}=1.2\times10^{-3}$), while mean pitch ($-0.092$, $p=0.43$)
 and register width ($-0.223$, $p_{\text{Holm}}=0.36$) do not move at all.
 
-The matched-displacement control moves all three, and much further: notes per bar by
+The displacement-matched control moves all three, and much further: notes per bar by
 $-3.471$ with a rank-biserial effect of $-1.000$, mean pitch by $-0.484$, register width
 by $+1.323$. Comparing the two directly on the same prompts, the replacement's change is
 the smaller on every attribute (Holm-corrected). A write of that size is not gentle in
@@ -1534,28 +1565,29 @@ general; this one is.
 
 The third arm settles what a legitimate key change looks like on these measures.
 Transposing the prompt into the target key and continuing with no edit at all moves the
-mean pitch by $+5.648$ semitones --- a rank-biserial effect of $1.000$, since a
-transposition must shift register --- while leaving notes per bar ($-0.057$, $p=0.92$)
+mean pitch by $+5.648$ semitones, a rank-biserial effect of $1.000$ since a
+transposition must shift register, while leaving notes per bar ($-0.057$, $p=0.92$)
 and register width ($-0.096$, $p=0.52$) untouched. The two interventions therefore have
 opposite footprints: transposition moves the register and not the texture, the edit
 moves the texture a little and not the register. Neither is a subset of the other, and
-neither resembles the matched control, which moves all three.
+neither resembles the displacement-matched control, which moves all three.
 
 Three attributes the audit was designed to cover cannot be measured on this corpus, and
-we report that rather than substituting something else: the vocabulary has no rest or
-chord token, and every note carries duration $8$ by construction, so the duration
-distribution is a point mass and its divergence is identically zero in every condition.
+we report them as unmeasurable rather than substituting others: the vocabulary has no
+rest or chord token, and every note carries duration $8$ by construction, so the
+duration distribution is a point mass and its divergence is identically zero in every
+condition.
 
-\section{Does the result depend on the key estimator? \normalfont\textit{(main Secs.~3.3, 4.2)}}
+\section{The result does not depend on the key estimator \normalfont\textit{(main Secs.~3.3, 4.2)}}
 \label{sec:estimators}
 % 【日本語訳】結果は調推定器に依存するか（本文3.3節、4.2節）
 % Krumhansl–Kessler はラン前に固定してあり、判定はそれのままである。この節は事後的な
 % 検討である。公開された4つのプロファイル集合を music21 から取り、ベクトルが標準のもので
 % あるようにしたうえで、我々自身の相関コードで採点して、変わるのはプロファイルだけである
 % ようにした。4つがいずれも順序を無視するピッチクラスの袋詰め手法なので、Viterbi
-% トラッカーを加えた。妨害の条件は全体を通じて固定しているので、変化があればそれは推定器の
+% トラッカーを加えた。尤度変化の条件は全体を通じて固定しているので、変化があればそれは推定器の
 % ものである。
-% 表は5つの推定器のもとでの成功率を与える（長調プロンプト、妨害条件は不変。
+% 表は5つの推定器のもとでの成功率を与える（長調プロンプト、尤度変化条件は不変。
 % Krumhansl–Kessler*: 編集 0.3555 / 統制 0.0564 / 差 0.2991、Aarden–Essen: 0.4191 /
 % 0.0391 / 0.3800、Bellman–Budge: 0.5682 / 0.0264 / 0.5418、Temperley–Kostka–Payne:
 % 0.5464 / 0.0300 / 0.5164、Viterbi トラッカー: 0.3736 / 0.0555 / 0.3181。* が事前
@@ -1576,13 +1608,13 @@ Krumhansl--Kessler was fixed before the runs and remains the judgment; this is p
 Four published profile sets were taken from \texttt{music21} so the vectors are the
 standard ones, and scored with our own correlation code so the profile is the only thing
 that varies. A Viterbi tracker is added because all four are bag-of-pitch-class methods
-that ignore order. The disturbance condition is held fixed throughout, so any change is
-the estimator's.
+that ignore order. The likelihood-change condition is held fixed throughout, so any
+change is the estimator's.
 
 \begin{table}[!t]
 \centering
 \caption{\textbf{S12} \textit{(main Secs.~3.3, 4.2)}. Success rate under five key
-estimators, major prompts, with the disturbance condition unchanged.
+estimators, major prompts, with the likelihood-change condition unchanged.
 $^{*}$the pre-registered estimator, and the lowest of the five.}
 \label{tab:supp-estimators}
 \footnotesize
@@ -1600,14 +1632,14 @@ Viterbi tracker          & $0.3736$ & $0.0555$ & $0.3181$\\
 \end{tabular}
 \end{table}
 
-The edit beats its matched control under every one. What is not robust is the absolute
-rate, which runs from $0.3555$ to $0.5682$ --- and the pre-registered choice is the
-lowest of the five, so the headline number is the most conservative available rather
-than a favourable pick. The estimators disagree with each other freely: Krumhansl--Kessler
-and Bellman--Budge name the same key on only $0.545$ of rows. Of the edited
-continuations, $0.274$ are called a hit by all five and $0.445$ by some but not all,
-which is a direct measure of how many continuations are tonally ambiguous rather than
-wrong.
+The edit beats its displacement-matched control under every one. What is not robust is
+the absolute rate, which runs from $0.3555$ to $0.5682$, and the pre-registered choice
+is the lowest of the five, so the headline number is the most conservative available
+rather than a favourable pick. The estimators disagree with each other freely:
+Krumhansl--Kessler and Bellman--Budge name the same key on only $0.545$ of rows. Of the
+edited continuations, $0.274$ are called a hit by all five and $0.445$ by some but not
+all, which is a direct measure of how many continuations are tonally ambiguous rather
+than wrong.
 
 % 【日本語訳】短調でも同じ再採点を行った（追記 2026-09-10）
 % 上の表は長調である。短調の継続は保存されているので、同じ5推定器で採点し直せる。
@@ -1622,9 +1654,9 @@ wrong.
 % 優位自体はどの推定器でも残るが、その大きさは測定の性質であって編集の性質ではない。
 %
 \textbf{The same re-scoring in minor.} The minor continuations are stored too, so the
-five estimators can be applied to them as well. The conclusion does not change. The
-edit beats its matched control under all five, with rates from $0.4755$ to $0.6236$
-against controls between $0.0200$ and $0.0264$.
+five estimators can be applied to them as well. The conclusion does not change. The edit
+beats its displacement-matched control under all five, with rates from $0.4755$ to
+$0.6236$ against controls between $0.0200$ and $0.0264$.
 
 One sentence above has to be narrowed, though. In major the pre-registered
 Krumhansl--Kessler gives the lowest of the five rates, and in minor it does not: the
@@ -1637,7 +1669,7 @@ survives every estimator, its size is a property of the measurement rather than 
 edit.
 
 Re-scoring reproduces the pipeline's stored estimate on every row, and the script
-refuses to report anything if it falls below $0.999$. That check earned its place: a
+refuses to report anything if it falls below $0.999$. That check was necessary: a
 first version read the raw token stream instead of the pipeline's own extraction, which
 stops at the end-of-piece token and after sixteen bars, and matched only $809$ of
 $1{,}200$ rows.
@@ -1652,7 +1684,7 @@ $1{,}200$ rows.
 % 旋法の天井に照らして読むと、編集は短調で 0.564、長調で 0.548 に達する。生の +0.139 の
 % 優位は +0.015 になる。その実質すべてが、編集がよく働いているのではなく、推定器が短調で
 % より容易に同意しているということである。
-% 音階内の音の割合が小さい半分である。この指標は短調に自然的・和声的・旋律的短音階の
+% 音階内音高率が小さい半分である。この指標は短調に自然的・和声的・旋律的短音階の
 % 合併——12のピッチクラスのうち9つ——を許し、長調には7つなので、短調の継続はどの単一の
 % 短音階も含まない音でも点を取る。生成器が実際に書く和声的短音階のもとでは、編集された
 % 割合は 0.957 から 0.903 に下がり、これは長調の 0.936 を下回る。統制は 0.764 から
@@ -1670,15 +1702,15 @@ ceiling, the edit reaches $0.564$ in minor and $0.548$ in major. The raw advanta
 $+0.139$ becomes $+0.015$. Essentially all of it is the estimator agreeing more readily
 in minor, not the edit working better.
 
-In-key note share is the smaller half. It allows minor the union of the natural,
-harmonic and melodic forms --- nine of twelve pitch classes --- against seven for major,
+The pitch-in-scale rate is the smaller half. It allows minor the union of the natural,
+harmonic and melodic forms, nine of twelve pitch classes, against seven for major,
 so a minor continuation scores on notes that no single minor scale contains. Under the
 harmonic minor the generator actually writes, the edited share falls from $0.957$ to
 $0.903$, which is below major's $0.936$; the control falls from $0.764$ to $0.602$,
 exactly major's $0.602$. The reported minor advantage on this measure is an artefact of
 the definition, and the corrected comparison reverses its sign.
 
-\section{Is the key subspace a print of the augmentation? \normalfont\textit{(main Secs.~4.4, 5)}}
+\section{The key subspace is not an artefact of the augmentation \normalfont\textit{(main Secs.~2.2, 5)}}
 \label{sec:augmentation}
 % 【日本語訳】調部分空間は増強の刷り跡なのか（本文4.4節、5節）
 % クラス平均はどんな射影よりも前から五度圏を担っている。長調の間でのコサイン類似度と
@@ -1709,10 +1741,11 @@ transposing every piece into every key teaches the twelve keys as twelve version
 thing.
 
 Three of the six trained models had no augmentation, so the objection is testable
-without re-searching anything --- same layer, same construction of $V$, same statistic,
-only the model changes. Augmented models give $-0.960 \pm 0.002$; models trained without
-augmentation give $-0.963 \pm 0.003$. The two are indistinguishable, and every one of the
-six falls between $-0.957$ and $-0.966$. The geometry is not a print of the augmentation.
+without re-searching anything: the same layer, the same construction of $V$, the same
+statistic, and only the model changes. Augmented models give $-0.960 \pm 0.002$; models
+trained without augmentation give $-0.963 \pm 0.003$. The two are indistinguishable, and
+every one of the six falls between $-0.957$ and $-0.966$. The geometry is not a print of
+the augmentation.
 
 This does not settle the wider version of the objection, and we separate them. That the
 vocabulary contains no key token rules out the probe copying a label. It does not rule
@@ -1725,7 +1758,7 @@ Anticipatory checkpoints and for the REMI checkpoint we could not establish from
 information whether transposition augmentation was used, and we write that as unknown
 rather than assume the common practice.
 
-\section{Is the public comparison a common measurement? \normalfont\textit{(main Sec.~4.5)}}
+\section{The public comparison uses a common measurement \normalfont\textit{(main Sec.~4.5)}}
 \label{sec:public}
 % 【日本語訳】公開モデルの比較は共通の測定になっているか（本文4.5節）
 % 表2のモデル横断の行が意味を持つのは、音符数えベースラインが各トークン化で同じことを
@@ -1756,16 +1789,16 @@ the question was raised about. Comparing the key-balanced and direct estimates k
 key, the smallest cosine is $0.9935$ for AMT on pop: the two are the same direction
 everywhere, and the edit cannot tell them apart. On Bach the agreement is looser
 ($0.9744$ for MMT, $0.9281$ for REMI, $0.8593$ for AMT-36L), which is why the balanced
-condition is the one reported there. Two Bach keys have a degenerate mean --- no position
-in the corpus carries them --- and are excluded from the comparison rather than scored as
-perfect agreement.
+condition is the one reported there. Two Bach keys have a degenerate mean, since no
+position in the corpus carries them, and are excluded from the comparison rather than
+scored as perfect agreement.
 
 \section{The same edit on other training runs \normalfont\textit{(main Secs.~4.2, 5)}}
 \label{sec:seeds}
 % 【日本語訳】他の学習実行での同じ編集（本文4.2節、5節）
 % 本文の編集の結果は、1つの学習済みモデルから来ている。さらに3つを走らせた。増強ありの
 % シードが2つと、移調増強なしで訓練した1つである。何も再探索していない——層4、V の
-% プローブ重みによる構成、凍結した予算 0.613 はすべてそのまま持ち越す。予算は共有の
+% プローブ重みによる構成、凍結した閾値 0.613 はすべてそのまま持ち越す。閾値は共有の
 % 参照モデルと検証分割にのみ依存するので再計算を要しない。モデル毎に作り直すのは V、
 % クラス平均、ランダム統制の基底であり、それらはそのモデル自身の活性から作る。別の
 % モデルの基底で表した部分空間は何も意味しないからである。
@@ -1779,7 +1812,7 @@ perfect agreement.
 % 3シードの平均は 0.2555 である。
 % どの実行でも成り立つのは、本論文が組み立てられている比較のほうである。編集は変位一致
 % 統制を4モデルすべてで 5.9 倍から 10.0 倍上回り、どの統制もどこでも 0.0564 を超えない。
-% 生き残る主張は質的なもの——調を据え付けることは働き、同じ大きさの変化をランダム部分
+% 生き残る主張は質的なもの——調を置換することは働き、同じ大きさの変化をランダム部分
 % 空間に加えても働かない——であり、個々の値 0.3555 は、およそ 0.19 から 0.36 の幅からの
 % 1つの引きとして読むべきである。
 % 対して増強についての反論はデータとの接触を生き延びない。増強なしで編集は 0.2627 に
@@ -1790,8 +1823,8 @@ perfect agreement.
 
 The edit result in the main text comes from one trained model. Three more were run:
 two further augmented seeds, and one trained without transposition augmentation.
-Nothing was re-searched --- layer $4$, the probe-weight construction of $V$ and the
-frozen budget of $0.613$ all carry over, the budget needing no recomputation because
+Nothing was re-searched, and layer $4$, the probe-weight construction of $V$ and the
+frozen threshold of $0.613$ all carry over, the threshold needing no recomputation because
 it depends only on the shared reference model and the validation split. What is
 rebuilt per model is $V$, the class means and the random control basis, from that
 model's own activations; a subspace expressed in another model's basis means nothing.
@@ -1814,17 +1847,18 @@ R-NoAug\_s0           & no  & $0.2627$ & $0.0445$ & $5.9$\\
 \end{tabular}
 \end{table}
 
-The seed result goes against us and we state it plainly. The standard deviation across
+The seed result weakens this claim. The standard deviation across
 the three augmented seeds is $0.0876$, where we had pre-registered $0.03$ as the bar
 for calling the effect independent of the training run. It is not independent, and the
 run reported in the main text is the highest of the three; the three-seed mean is
 $0.2555$.
 
 What does hold across every run is the comparison the paper is built on. The edit beats
-its matched control by between $5.9$ and $10.0$ times in all four models, and no control
-exceeds $0.0564$ anywhere. The claim that survives is qualitative --- installing a key
-works, and the same-sized change to a random subspace does not --- while the particular
-value $0.3555$ should be read as one draw from a spread of roughly $0.19$ to $0.36$.
+its displacement-matched control by between $5.9$ and $10.0$ times in all four models,
+and no control exceeds $0.0564$ anywhere. The claim that survives is qualitative, that
+replacing the key component works while the same-sized change to a random subspace does
+not, and the particular value $0.3555$ should be read as one draw from a spread of
+roughly $0.19$ to $0.36$.
 
 The augmentation objection, by contrast, does not survive contact with the data.
 Without augmentation the edit reaches $0.2627$ against $0.0445$, above the augmented
@@ -1874,9 +1908,9 @@ training, not in the draw.
 One further number says what a success rate of a third actually describes. Of the
 $1{,}100$ (prompt, target) cells, $0.059$ succeed in all three draws and $0.314$ in
 none; the remaining $0.627$ succeed in one or two. Success is mostly not a property of
-the cell but a probability within it --- which is the same population that
-\S\ref{sec:estimators} finds split between estimators, and the honest reading of these
-continuations is that most of them are tonally ambiguous rather than right or wrong.
+the cell but a probability within it, and this is the same population that
+\S\ref{sec:estimators} finds split between estimators. Most of these continuations are
+therefore tonally ambiguous rather than right or wrong.
 
 \section{Erasing the key, before any note \normalfont\textit{(main Secs.~4.3, 5)}}
 \label{sec:erase}
@@ -1913,22 +1947,22 @@ twenty times what the random removal costs, and the effect is unanimous across t
 hundred prompts (rank-biserial $-1.000$, $p = 3.9 \times 10^{-18}$, against $-0.396$
 for the random control).
 
-Two things keep this from being a demonstration of necessity, and both belong here.
+Two facts keep this from being a demonstration of necessity.
 The drop is decisive statistically and small musically: at $0.9069$ the model is still
 overwhelmingly in the prompt's key, so the key is largely recoverable from outside $V$
 or re-read from the prompt at each position. And the direction of the second measure
-was not what we expected --- the entropy of the induced key posterior fell slightly
+was not what we expected, since the entropy of the induced key posterior fell slightly
 ($1.936$ to $1.901$) rather than rising, and the most probable key was unchanged for
 $0.71$ of prompts. Erasure loosens the model's commitment to the key's scale; it does
 not leave the model unsure which key it is in.
 
-\section{Does the edit reach a public model's first decision? \normalfont\textit{(main Secs.~4.3, 4.5)}}
+\section{The edit reaches a public model's first decision \normalfont\textit{(main Secs.~4.3, 4.5)}}
 \label{sec:public-logits}
 % 【日本語訳】編集は公開モデルの最初の決定にも届くか（本文4.3節、4.5節）
 % 本文は我々自身のモデルで、編集が次の音高の分布を変えること、したがってどの音も引かれる
 % 前に作用することを示している。同じ問いは、サンプリングなしで公開チェックポイントにも
 % 問える。プローブが使う位置——次のトークンが音符であるステップ——で、分布を楽器方向に
-% 畳んで12のピッチクラスにし、据え付けた調の音階に乗る質量とプロンプトの調の音階に乗る
+% 畳んで12のピッチクラスにし、目標調の音階に乗る質量とプロンプトの調の音階に乗る
 % 質量の対数比として読む。
 % AMT small の Bach では、スイープが既に選んでいた層で、その比が無編集の −0.0239 から
 % 編集下の −0.0096 へ動く（順位双列相関 0.494、p_Holm = 0.0018）。一方、rank を揃えた
@@ -1942,19 +1976,19 @@ not leave the model unsure which key it is in.
 
 The main text shows on our own model that the edit changes the next-pitch distribution,
 so it acts before any note is drawn. The same question can be put to a public
-checkpoint without sampling. At the position the probe uses --- the step whose next
-token is a note --- the distribution is folded over instruments to twelve pitch classes
-and read as the log ratio of mass on the installed key's scale to mass on the prompt
+checkpoint without sampling. At the position the probe uses, the step whose next
+token is a note, the distribution is folded over instruments to twelve pitch classes
+and read as the log ratio of mass on the target key's scale to mass on the prompt
 key's.
 
 On AMT small over Bach, at the layer the sweep had already chosen, that ratio moves from
 $-0.0239$ unedited to $-0.0096$ under the edit (rank-biserial $0.494$,
-$p_{\text{Holm}} = 0.0018$), while a rank-matched random subspace does not move it at
+$p_{\text{Holm}} = 0.0018$), while a dimension-matched random subspace does not move it at
 all ($-0.0216$, $r = 0.004$, $p = 0.98$). The mechanism demonstrated on the synthetic
 model is present in a public checkpoint, and one limitation the paper carried is
 answered.
 
-The size is not comparable, and we do not present it as though it were. Our own model
+The size of the shift is not comparable across models. Our own model
 separates the two keys by $0.695$ against $0.041$ for its control; here the separation
 is $0.014$ of a log ratio. The claim this licenses is that the edit acts before
 sampling in a public model too, not that it acts as strongly.
@@ -1991,14 +2025,14 @@ MMT     & $-0.6895$ & $+0.2051$ & $-0.6145$ & $+0.8197$ ($r$ $1.000$)\\
 \end{tabular}
 \end{center}
 
-In REMI and MMT the edit reverses the sign of the ratio, so the installed key's scale
+In REMI and MMT the edit reverses the sign of the ratio, so the target key's scale
 ends up carrying more mass than the prompt key's before a single note is drawn. Every
 edit-minus-random difference is paired by prompt and one-sided, with
 $p \le 1.1\times10^{-11}$ in those two and $p = 3.4\times10^{-4}$ in AMT.
 
-Two things belong beside that. In REMI and MMT the random subspace also moves the ratio
+Two qualifications apply. In REMI and MMT the random subspace also moves the ratio
 slightly against no edit ($+0.026$ and $+0.075$, both significant), so the pre-fixed
-reading --- the ratio moves under the edit and not under the control --- had to be
+reading, that the ratio moves under the edit and not under the control, had to be
 measured as the contrast it names rather than as two separate tests against no edit.
 That paired comparison was added afterwards and the earlier per-condition tests were
 left as they were. The differences are twenty to thirty times the control's movement,
@@ -2013,51 +2047,60 @@ afterwards.
 \label{sec:public-layers}
 
 % 【日本語訳】公開モデルの層をまたいだ read–use gap（本文4.4節、4.5節）
-% 本文の図2は我々自身のモデルについて、生のプローブ精度が第1層で飽和するのに編集効果は
+% 本文の図2は我々自身のモデルについて、生のプローブ精度が第1層で飽和するのにpatching gainは
 % 第2層以降でしか上がらないことを示している。そこには弱点があり、我々はそれを隠さない。
-% 我々のモデルでは、音符数えに対する統制補正後のマージンは編集効果とほぼ並走するので、
+% 我々のモデルでは、音符数えに対する統制補正後のマージンはpatching gainとほぼ並走するので、
 % 図2の乖離は生の精度についてのものであってマージンについてのものではない。
 % 公開チェックポイントでは事情が異なり、そちらのほうが強い。生成は一切していない。
 % 層別のプローブと層スキャンはどちらも既存の artifact であり、ここで同じ軸に載せただけである。
-% AMT-small の Bach では、編集効果は第8層で頂点（+0.287）になるのに、プローブもマージンも
+% AMT-small の Bach では、patching gain（率ではなく率の差）は第8層で頂点（+0.287）になるのに、
+% プローブもマージンも
 % 頂点は第10層である。そして両端に「読めるのに効かない」層がある。第0層はマージンが
-% +0.124 で第7層の +0.127 とほぼ同じなのに、編集効果は −0.004 で床にある。第11層は
-% マージンが +0.188 とほぼ最大なのに、編集効果は +0.029 しかない。
-% つまりここでは、統制した可読性の指標そのものが、編集が効く層を特定できていない。
+% +0.124 で第7層の +0.127 とほぼ同じなのに、patching gainは −0.004 で床にある。第11層は
+% マージンが +0.188 とほぼ最大なのに、patching gainは +0.029 しかない。
+% つまりここでは、統制したプローブ性能の指標そのものが、編集が効く層を特定できていない。
 % 数値の読み方に注意が1つある。編集側は探索段階の層スキャンであり、1点あたり
 % 240 継続（20プロンプト × 12標的）しかない。図の帯は Wilson の95%区間で、第0層と
 % 第8層、第11層と第8層は明確に分離するが、隣接する層の細かい上下は読み過ぎるべきでない。
 %
-The main text's Fig.~2 shows, on our own model, that raw probe accuracy saturates by
-layer~$1$ while the edit gain only opens from layer~$2$. That figure has a weakness we
-do not hide. On our model the control-corrected margin over note counting rises roughly
-where the edit gain rises, so the separation there is about the raw score and not about
-the margin.
+The main text's Fig.~2 shows the two controlled measures across the layers of our own
+model, and it records a limitation we do not hide: there the probe margin over note
+counting rises where the edit margin rises and the two peak at the same layer~$4$, so
+what the panel shows is that a positive probe margin does not fix the strength of the
+intervention, not that the two peak in different places. This section is the stronger
+form of the separation, on a public checkpoint, and it costs no generation: the
+per-layer probe and the layer scan are both existing artefacts, put on one axis.
 
-In a public checkpoint the separation is the stronger one, and it costs no generation:
-the per-layer probe and the layer scan are both existing artefacts, put on one axis
-here.
+The per-layer numbers here differ slightly from the main text's, and the reason is the
+control term. Only the best layer's control probe was retained for this checkpoint, so
+this section subtracts that one floor at every layer, while Eq.~(4) subtracts each
+layer's own. Both are reported below; the two agree exactly at layer~$10$, whose floor
+is the one that was kept.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.92\columnwidth]{supp_public_layers.pdf}
 \caption{\textbf{S9b} \textit{(main Secs.~4.4, 4.5)}. AMT small on Bach. The probe
 margin over the strongest note counter is high at layers where editing does nothing,
-at both ends of the network. The band is a Wilson interval on the edit rate, which
-rests on $240$ continuations per layer.}
+at both ends of the network. The right-hand axis is the patching gain, a difference of
+rates; the band is the Wilson interval on the replacement's own rate, shifted onto that axis
+by subtracting the control, and each point rests on $240$ continuations.}
 \label{fig:supp-public-layers}
 \end{figure}
 
-On AMT small over Bach the edit gain peaks at layer~$8$ at $+0.287$, while both the
-probe and its margin peak at layer~$10$. More telling are the two ends.
-At layer~$0$ the margin is $+0.124$, as high as layer~$7$'s $+0.127$, and the edit gain
-is $-0.004$, at the floor. At layer~$11$ the margin is $+0.188$, near its maximum, and
-the edit gain is $+0.029$. Here the controlled readability measure itself fails to
-locate the layers where the edit works, which is the claim in its stronger form.
+On AMT small over Bach the patching gain, a difference of rates against the
+dimension-matched control and not a rate itself, peaks at layer~$8$ at $+0.287$, while
+both the probe and its margin peak at layer~$10$. More telling are the two ends. At
+layer~$0$ the margin is $+0.124$ with the retained floor and $+0.114$ with layer~$0$'s
+own, as high as layer~$7$'s $+0.127$ and $+0.118$, and the edit margin is $-0.004$, at
+the floor. At layer~$11$ the margin is $+0.188$ and $+0.180$, near its maximum, and the
+edit margin is $+0.029$. Here the controlled probe measure itself fails to locate the
+layers where the edit works, which is the claim in its stronger form.
 
-One caution on reading the numbers. The edit side is the search-stage layer scan, so
+One caution applies to these numbers. The edit side is the search-stage layer scan, so
 each point rests on $240$ continuations, $20$ prompts at $12$ targets. The band in
-Fig.~\ref{fig:supp-public-layers} is a Wilson interval on that rate. It separates
+Fig.~\ref{fig:supp-public-layers} is a Wilson interval on the replacement's rate, drawn on
+the gain axis. It separates
 layer~$0$ and layer~$11$ from layer~$8$ clearly, and it does not support reading small
 differences between neighbouring layers.
 
@@ -2080,7 +2123,7 @@ differences between neighbouring layers.
 % これは null を見た後に選んだ追加条件であり、事前登録テストではない。その旨を先に
 % 文書化してから走らせた。
 % 結果は説明を支持する。instrument 位置だけに書くと 0.431 に達し、制限なしの編集を
-% 102% 再現し、11/12 で分離する。音階内割合も 0.881 で制限なしに近く、他の2条件の
+% 102% 再現し、11/12 で分離する。音階内音高率も 0.881 で制限なしに近く、他の2条件の
 % 0.58 台は無編集の水準である。
 % したがって3つのトークン化で共通するのは「音高トークンそのものに書いても効かない」
 % ことであり、効く位置はいずれも次の音高が決まる直前の構造トークンである。
@@ -2099,7 +2142,7 @@ In REMI both restrictions were null at first, at $0.0694$ and $0.0611$ against a
 unrestricted $0.4208$, each separating on $0/12$. That null had a candidate explanation.
 REMI writes a note as \texttt{position\_}, \texttt{instrument\_piano},
 \texttt{pitch\_}, \texttt{duration\_}, so those two masks covered only $0.759$ of
-positions and the one they left out was the instrument token --- which is exactly where
+positions and the one they left out was the instrument token, which is exactly where
 this scheme's probe reads the key, one step before the pitch. We therefore added an
 instrument-only condition. It was chosen after seeing a null, so it is a follow-up and
 not a pre-registered test, and it was written down as such before it ran.
@@ -2115,7 +2158,7 @@ after correction.}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}llcccc@{}}
 \toprule
-model & family & share & SR & in-key & keys\\
+model & family & share & SR & in-scale & keys\\
 \midrule
 AMT-12L & all positions        & ---     & $0.3653$ & $0.824$ & $11/12$\\
         & pitch only           & $0.332$ & $0.0597$ & $0.582$ & $0/12$\\
@@ -2131,16 +2174,16 @@ REMI    & all positions        & ---     & $0.4208$ & $0.881$ & $10/12$\\
 
 The follow-up supports the explanation. Writing only at REMI's instrument positions
 reaches $0.4306$, which is $1.023$ of the unrestricted edit, and separates on $11/12$
-keys, with an in-key share of $0.881$ against the $0.58$ of the other two restrictions,
-which is the unedited level.
+keys, with an pitch-in-scale rate of $0.881$ against the $0.58$ of the other two
+restrictions, which is the unedited level.
 
 So what the three tokenizations share is not a token name. In all three, writing at the
 pitch token itself does nothing, and the positions that carry the effect are the
-structural tokens immediately before a pitch is chosen --- bar and note-length tokens in
-our scheme, time and duration in AMT, the instrument token in REMI. An intervention that
+structural tokens immediately before a pitch is chosen: bar and note-length tokens in
+our scheme, time and duration in AMT, and the instrument token in REMI. An intervention that
 worked by pushing on pitch probabilities would behave the other way around in all three.
 
-\section{The bar boundary, or the step before a pitch? \normalfont\textit{(main Sec.~4.4)}}
+\section{The note-length token, not the bar boundary \normalfont\textit{(main Sec.~4.4)}}
 \label{sec:bardur}
 
 % 【日本語訳】小節境界か、音高の直前の位置か（本文4.4節）
@@ -2150,10 +2193,10 @@ worked by pushing on pitch probabilities would behave the other way around in al
 % ある。公開モデルの結果（S18）は、効く位置が「次に音高が決まる直前の構造トークン」
 % だと示していたので、この束を切り分ければ、その観察が測定になる。
 % AMENDMENT 3 で2つのアーム（BAR のみ、DUR のみ）を追加し、既存の4つのマスクには
-% 触れずに、最終テストのプロンプト・目標調・seed・予算をそのまま用いて両モードで
+% 触れずに、最終テストのプロンプト・目標調・seed・閾値をそのまま用いて両モードで
 % 走らせた。読み方は走らせる前に3通り固定した。
 % 結果は読み方1である。DUR のみが束ねたアームをほぼそのまま再現し（長調 0.2318 は
-% 0.2327 の 0.996、短調 0.2091 は 0.2118 の 0.987）、音階内割合も同一である。
+% 0.2327 の 0.996、短調 0.2091 は 0.2118 の 0.987）、音階内音高率も同一である。
 % BAR のみは対照より下で、両モードで 0/12 である。
 % BAR は位置の 0.0432 しか覆わないので、書く場所が少ないほど不利だという反論は
 % 残る。ただし DUR も PITCH と同じ 0.4324 であり、その PITCH のみのアームは 0.0355 で
@@ -2166,39 +2209,40 @@ but the first of a chord. Since the public schemes put the effect on the structu
 token immediately before a pitch is chosen (\S\ref{sec:public-positions}), separating
 the two turns that cross-scheme observation into a measurement on our own model. We
 added a BAR-only and a DUR-only arm without touching the four existing masks, ran
-both modes on the final-test prompts with the frozen targets, seed and budget, and
+both modes on the final-test prompts with the frozen targets, seed and threshold, and
 fixed the three possible readings in advance.
 
 The result is the first of them. DUR alone reproduces the bundled arm almost exactly,
 $0.2318$ against $0.2327$ in major and $0.2091$ against $0.2118$ in minor, with the
-same in-key share to three decimals, while BAR alone sits at or below its control in
+same pitch-in-scale rate to three decimals, while BAR alone sits at or below its control in
 both modes and separates on no target.
 
 \begin{table}[!t]
 \centering
 \caption{\textbf{S19} \textit{(main Sec.~4.4)}. The bundled arm separated, final test,
 $100$ prompts $\times$ $12$ targets per cell. ``Share'' is the fraction of prompt
-positions the mask covers, ``guard'' the fraction of continuations inside the budget,
-and ``keys'' the targets the arm beats the same K1 rows on after Holm correction.
-The pitch-only and bundled arms are the main text's, repeated here for reading.}
+positions the mask covers, ``within thr.'' the fraction of continuations inside the
+threshold, and ``keys'' the targets the arm beats the same dimension-matched control
+rows on after Holm correction. The pitch-only and bundled arms are the main text's,
+repeated here for reading.}
 \label{tab:supp-bardur}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}llccccc@{}}
 \toprule
-mode & arm & share & SR & in-key & guard & keys\\
+mode & arm & share & SR & in-scale & within thr. & keys\\
 \midrule
 major & bar and dur   & $0.4757$ & $0.2327$ & $0.845$ & $0.822$ & $11/12$\\
       & dur only      & $0.4324$ & $0.2318$ & $0.845$ & $0.822$ & $11/12$\\
       & bar only      & $0.0432$ & $0.0327$ & $0.546$ & $1.000$ & $0/12$\\
       & pitch only    & $0.4324$ & $0.0355$ & $0.547$ & $0.984$ & $0/12$\\
-      & K1, matched dimension & --- & $0.0391$ & $0.564$ & --- & ---\\
+      & random, dim.-matched & --- & $0.0391$ & $0.564$ & --- & ---\\
 \midrule
 minor & bar and dur   & $0.4757$ & $0.2118$ & $0.890$ & $0.755$ & $12/12$\\
       & dur only      & $0.4324$ & $0.2091$ & $0.890$ & $0.754$ & $12/12$\\
       & bar only      & $0.0432$ & $0.0000$ & $0.727$ & $1.000$ & $0/12$\\
       & pitch only    & $0.4324$ & $0.0000$ & $0.727$ & $0.983$ & $0/12$\\
-      & K1, matched dimension & --- & $0.0027$ & $0.740$ & --- & ---\\
+      & random, dim.-matched & --- & $0.0027$ & $0.740$ & --- & ---\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2207,11 +2251,11 @@ The DUR arm's gain over its control is $+0.1927$ in major (BCa $95\%$ CI
 $[0.1618,0.2227]$, worst Holm-corrected $p=0.054$, $r$ $0.37$ to $1.00$) and
 $+0.2064$ in minor ($[0.1809,0.2327]$, worst $p=5.3\times10^{-4}$, $r\ge0.89$),
 while the BAR arm's is $-0.0064$ in major ($[-0.0191,0.0055]$) and $-0.0027$ in minor.
-Its in-key share stays at the unedited level, $0.546$ against the control's $0.564$,
-and its guard pass rate is exactly $1.000$ in both modes, which is what a write that
+Its pitch-in-scale rate stays at the unedited level, $0.546$ against the control's $0.564$,
+and its pass rate is exactly $1.000$ in both modes, which is what a write that
 changes almost nothing looks like.
 
-One objection survives and we state it. BAR covers only $0.0432$ of positions, so an
+One objection remains. BAR covers only $0.0432$ of positions, so an
 arm that edits fewer places could lose for reasons unrelated to where the key lives.
 What the table settles is the comparison at equal coverage. DUR and PITCH cover the
 same $0.4324$ of positions, and they score $0.2318$ and $0.0355$. Two arms of
@@ -2245,13 +2289,13 @@ test, because the script built major scales only, and it said a further amendmen
 precede one. This is that run. The test is the major one unchanged. We append
 \texttt{[BAR, POS\_1]} by teacher forcing, apply the edit at the bar-$9$ boundary, and
 read the next-token distribution with nothing sampled. Only the scale mask changes, to
-the minor definition already frozen in the code and used by the in-key measure.
+the minor definition already frozen in the code and used by the pitch-in-scale measure.
 
 The first pre-registered reading holds. The natural-log ratio between the mass on the
-installed key's scale and the mass on the prompt key's scale rises by $0.3094$ under
-the edit against $0.0261$ under the rank-matched random subspace, and the difference
+target key's scale and the mass on the prompt key's scale rises by $0.3094$ under
+the edit against $0.0261$ under the dimension-matched random subspace, and the difference
 separates on all $12$ targets after Holm correction (worst $p=6.9\times10^{-15}$,
-$r\ge0.93$). The probability mass on the installed scale itself rises by $0.1634$
+$r\ge0.93$). The probability mass on the target-key scale itself rises by $0.1634$
 against $0.0164$. The claim that the effect precedes any feedback from the model's own
 notes therefore covers both modes.
 
@@ -2278,19 +2322,20 @@ and claim no ordering between the modes on this measure.
 % ことになる。それらのセルは直接推定のままとし、それは、それらを使う唯一の主張にとって
 % 保守的な方向である。
 %
-An earlier version of this section said AMT large's Bach edit had not been run,
-because the guard would grade a $36$-layer model with a $24$-layer one. That reason
+An earlier version of this section said AMT large's Bach edit had not been run, because
+the reference model would grade a $36$-layer model with a $24$-layer one. That reason
 was wrong twice over. The requirement the freeze states is that the reference be a
-different public checkpoint, not a larger one --- a model must not grade its own
-output, and nothing about the argument needs the grader to be the bigger of the two.
-And the assignment for all three targets was fixed in writing before any of them ran
-(freeze §3: small$\rightarrow$medium, medium$\rightarrow$large, large$\rightarrow$medium),
-so declining the run would have been a deviation from the pre-registration rather
-than adherence to it. The run has since been made under that assignment and its cell
-is reported in Table~2.
+different public checkpoint, not a larger one, because a model must not grade its own
+output, and nothing about the argument needs the grader to be the bigger of the two. And
+the assignment for all three targets was fixed in writing before any of them ran (freeze
+§3: small$\rightarrow$medium, medium$\rightarrow$large, large$\rightarrow$medium), so
+declining the run would have been a deviation from the pre-registration rather than
+adherence to it. The run has since been made under that assignment and its cell is
+reported in Table~2.
 
 The balanced re-estimation was specified for AMT $\times$ pop only. Running it for MMT
-and REMI after seeing AMT gain $+0.078$, on a split already spent, would be choosing an
+and REMI after seeing AMT improve by $+0.078$ under it, on a split already spent, would
+be choosing an
 analysis by its effect on a number; their cells keep the direct estimate, which is the
 conservative direction for the one claim that uses them.
 
@@ -2311,7 +2356,7 @@ conservative direction for the one claim that uses them.
 % 述べ直す価値がある——音符数えに対するプローブのマージンは +0.105、最強の数え上げに対して
 % +0.071 である。本物であり、そして小さい。
 % それに対して、いくつかの反論はデータとの接触を生き延びない。編集は距離に依存しないが
-% その統制は依存する（第10節）。失敗はプロンプトの調に戻るのではなく据え付けた調の傍に
+% その統制は依存する（第10節）。失敗はプロンプトの調に戻るのではなく目標調の傍に
 % 着地する（第11節）。動くのは音高の集まりだけでなく調性の中心であり、音楽がどこに落ち着く
 % かという点で本物の移調が達成することの約4分の3に届く（第15節）。この発見は5つの調推定器
 % のもとで成り立ち、そのうち事前登録したものが最も低い率を与える（第17節）。幾何も編集も
@@ -2327,45 +2372,45 @@ conservative direction for the one claim that uses them.
 % プロンプトの調に残すので、部分空間が何を担っていようと、調はそれ無しでも大きく回復
 % 可能である。
 % 1つの境界は、本論文の何もそれを検証していないので述べておく価値がある。すべての標的は
-% プロンプト自身の旋法の12の調のいずれかである。同主調の据え付けは試みていないので、
+% プロンプト自身の旋法の12の調のいずれかである。同主調の置換は試みていないので、
 % 旋法を変えられるかどうかについて、ここには何も示すものが無い。
 %
-The sections above were written as separate answers to separate doubts. Read together
-they move the paper in both directions, and a reader is owed the ledger rather than
-the favourable half of it.
+The sections above answer separate questions. Read together they move the paper in both
+directions, and we summarize both directions here rather than only the favourable one.
 
 % 【日本語訳】この節は追加実験の前に書かれていたので、2026-09-10 に更新した。
-% 弱める発見は4件から5件になり（据え付けの標的が最適でないこと）、生き延びない反論の
-% 側にも4件が加わった（ピッチクラス対照、予算の閾値、位置の非対称の他方式での再現、
+% 弱める発見は4件から5件になり（置換の標的が最適でないこと）、生き延びない反論の
+% 側にも4件が加わった（ピッチクラス対照、閾値の閾値、位置の非対称の他方式での再現、
 % 公開モデルでの統制指標による read–use gap）。推定器についての一文も旋法つきに直した。
 %
-\textbf{Five findings weaken what the paper says.} The first is the most serious and
-cannot be repaired by wording. Across training seeds the edit reaches $0.3555$,
-$0.2182$ and $0.1927$ --- a standard deviation of $0.0876$ where we had pre-registered
+\textbf{Five findings weaken what the paper says.} The first is the most serious.
+Across training seeds the edit reaches $0.3555$,
+$0.2182$ and $0.1927$, a standard deviation of $0.0876$ where we had pre-registered
 $0.03$ as the bar for calling the effect independent of the training run, and the run
 reported in the main text is the strongest of the three (\S\ref{sec:seeds}). The
 second: minor's advantage over major is the measurement, not the edit. Read against
 each mode's own transposition ceiling the gap falls from $+0.139$ to $+0.015$, and the
-in-key definition that produced part of it reverses when minor is held to the seven
+pitch-in-scale definition that produced part of it reverses when minor is held to the seven
 pitch classes the generator writes (\S\ref{sec:minor}). The third is a confound we
 cannot close: the Bach cells were never length-matched, MMT hearing $240$ notes where
 REMI hears $57$, and the re-score that would settle it needs continuations that were
 not stored (\S\ref{sec:length}). The fourth is not new but is worth restating beside
-the others --- the probe margin over note counting is $+0.105$, or $+0.071$ against
-the strongest counter: real, and small.
+the others. The probe margin over note counting is the $+0.071$ the main text reports
+against the strongest counter, or $+0.105$ against the pre-specified one, which is real
+but small.
 
-The fifth is the newest and it is about our own choice of target. Scaling the install
-continuously shows it is a graded operation, rising monotonically up to full strength in
-both modes, but it does not stop there. At $s=1.25$ the rate reaches $0.4245$ in major
-and $0.6182$ in minor against the reported $0.3555$ and $0.4945$, with paired intervals
-excluding zero, and in major that point also has a lower disturbance median and a higher
-pass rate than the install does (\S\ref{sec:steering}). Writing the class mean is
-therefore not the best place to write, we have no account of why, and the frozen design
-is left alone so every reported number still comes from $s=1$.
+The fifth concerns our own choice of target. Scaling the replacement continuously shows
+it is a graded operation, rising monotonically up to full strength in both modes, but it
+does not stop there. At $s=1.25$ the rate reaches $0.4245$ in major and $0.6182$ in
+minor against the reported $0.3555$ and $0.4945$, with paired intervals excluding zero,
+and in major that point also has a lower median likelihood change and a higher pass rate
+than the replacement does (\S\ref{sec:steering}). Writing the class mean is therefore
+not the best place to write, we have no account of why, and the frozen design is left
+alone so every reported number still comes from $s=1$.
 
 \textbf{Against that, several objections do not survive contact with the data.} The
 edit is distance-independent while its control is not (\S\ref{sec:distance}); failures
-land beside the installed key rather than back at the prompt's (\S\ref{sec:landing});
+land beside the target key rather than back at the prompt's (\S\ref{sec:landing});
 the tonal centre moves and not merely the pitch collection, reaching about
 three quarters of what a genuine transposition achieves on where the music comes to
 rest (\S\ref{sec:tonic}); the finding holds under five key estimators in both modes, of
@@ -2381,7 +2426,7 @@ they are the strongest of them. The subspace is not the note counts in other
 coordinates: a pitch-class subspace fitted from the same activations at $R^2$ $0.78$
 overlaps $V$ no more than a random one does, writing through it is indistinguishable
 from a random write of the same rank and displacement, and removing it from $V$ costs
-nothing (\S\ref{sec:pitchclass}). The disturbance budget is not what produces the
+nothing (\S\ref{sec:pitchclass}). The likelihood-change threshold is not what produces the
 result, since re-scoring every condition from a threshold of $0.2$ out to no limit at
 all never changes the ordering (\S\ref{sec:threshold}). The position asymmetry is not an
 artefact of our tokenizer, because in two public schemes the pitch token is likewise
@@ -2401,7 +2446,7 @@ next-pitch mass in the prompt's key, so whatever the subspace carries, the key i
 largely recoverable without it.
 
 One boundary is worth stating because nothing in the paper tests it: every target is
-one of the twelve keys of the prompt's own mode. No parallel-key install was attempted,
+one of the twelve keys of the prompt's own mode. No parallel-key replacement was attempted,
 so nothing here shows that the mode can be changed at all.
 
 \end{document}

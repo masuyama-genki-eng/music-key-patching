@@ -7,7 +7,7 @@
 # and the budget needs no recomputation because it depends only on the shared
 # reference model and validation split.
 set -u
-cd /home/masuyama-genki/ICASSP③/tonal-world-model
+cd "$(dirname "$0")/../.."          # repo root, wherever it is checked out
 for M in R-Aug_s1 R-Aug_s2 R-NoAug_s0; do
   echo "=== $M $(date +%H:%M) ==="
   .venv/bin/python experiments/confirmatory/dump_continuations.py \
