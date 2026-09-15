@@ -1,0 +1,7 @@
+# Tokenizer (SPEC §1.2). LEAK-FREE: no key/chord/roman/degree tokens, ever.
+# Must stay in sync with src/tokenizer/vocab.py (tests/test_core.py::test_vocab_no_leak).
+pitch_min: 21          # A0
+pitch_max: 108         # C8
+pos_res: 16            # 16th-note grid per 4/4 bar
+dur_max: 16            # durations in 16th units, 1..16
+specials: [PAD, BOS, EOS, BAR]

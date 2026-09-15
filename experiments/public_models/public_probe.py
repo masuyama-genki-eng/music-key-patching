@@ -1,0 +1,325 @@
+"""M-WILD (SPEC §2.3): does a PUBLIC model trained on REAL music carry a key state
+that beats the pitch surface — where ours, trained on synthetic music, did not?
+
+The decisive comparison is `music-small` (12 layers, d=768) against our own
+size-L12d768: architecturally identical, differing only in training data. The
+protocol is the SAME as Phase A and D-REAL — same chorales, same human local-key
+labels, same C1 selectivity control, same C3 input baselines, same DR-H1 rule — so
+the only thing that changes is the model.
+
+Prediction, stated before running (CHANGELOG 2026-07-14): if the real-trained model
+clears the surface baseline, our negative D-REAL is distribution shift, not a limit
+of the method. If it does not, the sharper conclusion is that for key specifically a
+hand-designed estimator is simply hard to beat from internal state.
+
+Usage: .venv/bin/python experiments/public_models/public_probe.py [--model stanford-crfm/music-small-800k]
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
+
+import numpy as np
+import torch
+import yaml
+
+from src.analysis.stats import bca_ci
+from src.datagen.dreal import ANALYSES_SUBDIR, load_corpus_local
+from src.probing import controls as C
+from src.probing.probes import (
+    ProbeConfig,
+    confusion,
+    macro_f1_from_conf,
+    per_sequence_confusions,
+    split_by_sequence,
+    train_probe,
+)
+from src.probing.public_model import extract_activations, pc_hists
+from src.publicmodels import get_adapter
+from src.publicmodels.pop909 import load_pop909_part
+from src.utils.ledger import append_entry, snapshot
+
+log = logging.getLogger("public_probe")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--model", default=None, help="checkpoint; default = the adapter's own"
+    )
+    ap.add_argument(
+        "--adapter",
+        default="anticipatory",
+        help="public-model adapter (src/publicmodels/registry.py)",
+    )
+    ap.add_argument(
+        "--corpus",
+        choices=["bach", "pop909"],
+        default="bach",
+        help="evaluation corpus; pop909 reads configs/pop909.yaml and "
+        "keeps its artifacts in a separate results tree",
+    )
+    ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
+    ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
+    ap.add_argument("--config", default=str(REPO / "configs/probe.yaml"))
+    ap.add_argument("--per-seq", type=int, default=120)
+    ap.add_argument("--min-event", type=int, default=16)
+    ap.add_argument(
+        "--probe-at",
+        choices=["predict_pitch", "at_note"],
+        default="predict_pitch",
+        help="residual position: where the model is about to CHOOSE a "
+        "pitch (principled) vs. where it has just emitted one",
+    )
+    ap.add_argument("--no-ledger", action="store_true")
+    args = ap.parse_args()
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s"
+    )
+
+    pcfg = yaml.safe_load(Path(args.config).read_text())
+    seed = int(pcfg["seed"])
+    windows = list(pcfg["controls"]["c3_windows"])
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    adapter = get_adapter(args.adapter)
+    checkpoint = args.model or adapter.default_checkpoint
+    short = adapter.artifact_name(checkpoint)
+    # probe_at MUST be in the path: the two conventions are different measurements, and
+    # a shared path silently overwrites one with the other (this bit us once already in
+    # the D-REAL probe — CHANGELOG 2026-07-15). predict_pitch keeps the original,
+    # unsuffixed location so existing artifacts and their ledger entries stay valid.
+    outdir = (
+        REPO
+        / ("results/mwild_pop909" if args.corpus == "pop909" else "results/mwild")
+        / short
+    )
+    if args.probe_at != "predict_pitch":
+        outdir = outdir / args.probe_at
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    log.info("loading %s", checkpoint)
+    model = adapter.load(checkpoint, device)
+    adapter.check_vocab(model)  # refuse to probe a mis-encoded input
+    # recorded here because the model is freed below, before the artifact is written
+    arch = {
+        "n_layer": adapter.n_layers(model),
+        "d": adapter.d_model(model),
+        "vocab": adapter.vocab_size(model),
+    }
+    log.info(
+        "%s: %d layers, d=%d, vocab %d (leak-free: time/dur/note only)",
+        short,
+        arch["n_layer"],
+        arch["d"],
+        arch["vocab"],
+    )
+
+    if args.corpus == "pop909":
+        # TRAIN split only: the probe and the per-key means may never see the
+        # search or final pieces (docs/CROSS_CORPUS_FREEZE.md §3)
+        pc = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())
+        chorales, match_stats = load_pop909_part(
+            REPO / pc["corpus"]["root"],
+            "train",
+            pc["split"]["seed"],
+            tuple(pc["split"]["frac"]),
+            pc["corpus"]["min_labeled_events"],
+        )
+        log.info(
+            "%d POP909-CL train-split pieces with human local-key labels", len(chorales)
+        )
+    else:
+        chorales, match_stats = load_corpus_local(
+            Path(args.scores) / "kern", Path(args.analyses) / ANALYSES_SUBDIR
+        )
+        log.info("%d chorales with human local-key labels", len(chorales))
+
+    # GATE: prove the reimplemented tokenizer is the one the model was trained with,
+    # before reading a single activation. A wrong offset yields plausible-looking but
+    # meaningless probe numbers, which is the worst possible failure here.
+    sanity = adapter.encoding_is_sane(model, chorales, device)
+    log.info(
+        "encoding gate: NLL correct %.3f | pitch-shifted %.3f | time-scrambled "
+        "%.3f -> %s",
+        sanity["nll_correct"],
+        sanity["nll_pitch_shifted"],
+        sanity["nll_time_scrambled"],
+        "PASS" if sanity["sane"] else "FAIL",
+    )
+    if not sanity["sane"]:
+        raise SystemExit(
+            "ENCODING GATE FAILED: correctly-encoded chorales are not cheaper for this "
+            "model than corrupted ones, so our token offsets are not the ones it was "
+            "trained with. Refusing to report probe numbers from mis-encoded input."
+        )
+
+    log.info("extracting activations from the public model")
+    data = extract_activations(
+        adapter,
+        model,
+        chorales,
+        device,
+        args.per_seq,
+        args.min_event,
+        seed,
+        probe_at=args.probe_at,
+    )
+    if data["excluded"]:
+        log.info(
+            "EXCLUDED %d/%d pieces (too little inside this checkpoint's window): %s",
+            len(data["excluded"]),
+            len(chorales),
+            ", ".join(
+                f"{e['name']}({e['reason']}, {e['n_in_window']}/{e['n_events']})"
+                for e in data["excluded"]
+            ),
+        )
+    data.update(pc_hists(data["pitch_windows"], windows))
+    del model
+    torch.cuda.empty_cache()
+
+    y = data["label"].astype(np.int64)
+    seq_idx = data["seq_idx"]
+    masks = split_by_sequence(seq_idx, seed)
+    test = masks["test"]
+    n_layers = data["acts"].shape[0]
+    log.info(
+        "%d positions over %d chorales, %d layers", len(y), data["n_chorales"], n_layers
+    )
+
+    # ---------------- C3 input baselines (identical to Phase A / D-REAL)
+    c3 = {}
+    for w in windows:
+        h = data[f"pc_hist_W{w}"]
+        c3[f"lr_W{w}"] = C.c3_pc_hist_lr(h, y, masks, seed, device)
+        c3[f"ks_W{w}"] = C.c3_ks(h, y, test)
+    best_c3_name = max(c3, key=lambda k: c3[k]["report"]["macro_f1_24"])
+    best_c3 = c3[best_c3_name]
+    log.info(
+        "best C3 on chorales: %s F1=%.4f",
+        best_c3_name,
+        best_c3["report"]["macro_f1_24"],
+    )
+
+    # ---------------- probe + C1 selectivity control, per layer
+    y_c1b = C.c1b_permute_keys_per_sequence(y, seq_idx, seed + 2)
+    probes, c1b = {}, {}
+    for li in range(n_layers):
+        X = data["acts"][li].astype(np.float32)
+        probes[li] = train_probe(X, y, masks, ProbeConfig(seed=seed), device=device)
+        c1b[li] = train_probe(X, y_c1b, masks, ProbeConfig(seed=seed), device=device)
+        log.info(
+            "  layer %2d: probe F1=%.4f  (C1 floor on true labels %.4f)",
+            li,
+            probes[li]["report"]["macro_f1_24"],
+            macro_f1_from_conf(confusion(y[test], c1b[li]["y_pred_test"], 24)),
+        )
+    best = max(probes, key=lambda li: probes[li]["report"]["macro_f1_24"])
+
+    # ---------------- DR-H1 rule, unchanged
+    y_test, sidx_test = y[test], seq_idx[test]
+    conf_p, _ = per_sequence_confusions(y_test, probes[best]["y_pred_test"], sidx_test)
+    conf_b, _ = per_sequence_confusions(y_test, c1b[best]["y_pred_test"], sidx_test)
+    conf_c, _ = per_sequence_confusions(y_test, best_c3["y_pred_test"], sidx_test)
+    flat = {
+        k: v.reshape(len(v), -1)
+        for k, v in {"probe": conf_p, "c1b": conf_b, "c3": conf_c}.items()
+    }
+    S = conf_p.shape[0]
+
+    def stat(idx):
+        cnt = np.bincount(idx, minlength=S).astype(np.float64)
+        f1 = {k: macro_f1_from_conf((cnt @ v).reshape(24, 24)) for k, v in flat.items()}
+        return (f1["probe"] - f1["c1b"]) - f1["c3"]
+
+    ci = bca_ci(np.arange(S), stat, n_boot=int(pcfg["bootstrap"]["n"]), seed=seed)
+    c1_floor = macro_f1_from_conf(confusion(y_test, c1b[best]["y_pred_test"], 24))
+
+    result = {
+        "model": checkpoint,
+        "arch": arch,
+        "encoding_gate": sanity,
+        "probe_at": args.probe_at,
+        "corpus": {
+            "id": args.corpus,
+            "n_chorales": data["n_chorales"],
+            "n_positions": int(len(y)),
+            "excluded_pieces": data["excluded"],
+            "labels": (
+                "human-corrected key signatures (POP909-CL, MIT), TRAIN split only"
+                if args.corpus == "pop909"
+                else "human Roman-numeral LOCAL key (When-in-Rome, CC BY-SA)"
+            ),
+            "match_stats": {k: v for k, v in match_stats.items() if k != "excluded"}
+            if args.corpus == "pop909"
+            else match_stats,
+        },
+        "probe_per_layer": {str(li): probes[li]["report"] for li in probes},
+        "best_layer": int(best),
+        "best_probe_f1": probes[best]["report"]["macro_f1_24"],
+        "c1_selectivity_floor": float(c1_floor),
+        "c3": {k: v["report"] for k, v in c3.items()},
+        "best_c3": best_c3_name,
+        "best_c3_f1": best_c3["report"]["macro_f1_24"],
+        "corrected_margin_ci": ci,
+        "beats_surface": bool(ci["ci_lo"] > 0),
+    }
+    # artifacts the intervention needs: probe row space (V-PROBE) and the
+    # class-conditional means (the edit target), both in RAW activation space
+    np.savez_compressed(
+        outdir / "probe_weights.npz",
+        **{f"layer_{li}": probes[li]["weights"] for li in probes},
+        **{f"bias_{li}": probes[li]["bias"] for li in probes},
+    )
+    means = {}
+    for li in range(n_layers):
+        A = data["acts"][li].astype(np.float32)
+        means[f"layer_{li}"] = np.stack(
+            [
+                A[y == k].mean(0) if (y == k).any() else np.zeros(A.shape[1])
+                for k in range(24)
+            ]
+        ).astype(np.float32)
+    np.savez_compressed(outdir / "class_means.npz", **means)
+
+    out = outdir / "mwild_probe.json"
+    out.write_text(json.dumps(result, indent=2))
+    run_cfg = {k: v for k, v in vars(args).items() if k != "no_ledger"}
+    snapshot(out, run_cfg, seeds=[seed])
+    log.info(
+        "M-WILD %s: probe %.4f (L%d) | C1 floor %.4f | best C3 %.4f (%s) | "
+        "corrected margin %.4f CI[%.4f, %.4f] -> BEATS SURFACE: %s",
+        short,
+        result["best_probe_f1"],
+        best,
+        c1_floor,
+        result["best_c3_f1"],
+        best_c3_name,
+        ci["stat"],
+        ci["ci_lo"],
+        ci["ci_hi"],
+        result["beats_surface"],
+    )
+    if not args.no_ledger:
+        append_entry(
+            stage=f"M-WILD probe {short}",
+            config=run_cfg,
+            seeds=[seed],
+            artifacts=[str(out.relative_to(REPO))],
+            note=f"public model trained on REAL music (Apache-2.0); "
+            f"probe F1={result['best_probe_f1']:.4f} (L{best}) vs best C3 "
+            f"{result['best_c3_f1']:.4f}; corrected margin {ci['stat']:.4f} "
+            f"CI[{ci['ci_lo']:.4f},{ci['ci_hi']:.4f}]; "
+            f"beats_surface={result['beats_surface']}",
+        )
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,7 @@
+# Core synthetic-data experiments. Python 3.12 is recommended.
+numpy>=1.26,<3
+torch>=2.2,<3
+pandas>=2.0,<4
+pyarrow>=14
+scipy>=1.11,<2
+PyYAML>=6,<7

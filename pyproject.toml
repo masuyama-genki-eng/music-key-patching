@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+extend-exclude = ["src/publicmodels/mmt_vendor"]
+
+[tool.ruff.lint]
+# Entry points intentionally add the repository to sys.path before local imports.
+select = ["E4", "E7", "E9", "F", "I"]
+ignore = ["E402", "E741"]

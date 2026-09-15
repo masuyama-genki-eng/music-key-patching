@@ -1,0 +1,379 @@
+# Vendored verbatim from salu133445/mmt baseline/representation_remi.py (MIT).
+# Extraction rule and provenance: see mmt_vendor/__init__.py.
+"""Representation utilities."""
+
+import numpy as np
+
+
+# The one helper the vendored constants need from mmt/utils.py, three lines,
+# reproduced verbatim (MIT) — same shim as representation_min.py.
+class _Utils:
+    @staticmethod
+    def inverse_dict(d):
+        """Return the inverse dictionary."""
+        return {v: k for k, v in d.items()}
+
+
+utils = _Utils()
+
+RESOLUTION = 12
+
+MAX_BEAT = 1024
+
+MAX_DURATION = 384
+
+KNOWN_DURATIONS = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    15,
+    16,
+    18,
+    20,
+    21,
+    24,
+    30,
+    36,
+    40,
+    42,
+    48,
+    60,
+    72,
+    84,
+    96,
+    120,
+    144,
+    168,
+    192,
+    384,
+]
+
+DURATION_MAP = {
+    i: KNOWN_DURATIONS[np.argmin(np.abs(np.array(KNOWN_DURATIONS) - i))]
+    for i in range(1, MAX_DURATION + 1)
+}
+
+PROGRAM_INSTRUMENT_MAP = {
+    # Pianos
+    0: "piano",
+    1: "piano",
+    2: "piano",
+    3: "piano",
+    4: "electric-piano",
+    5: "electric-piano",
+    6: "harpsichord",
+    7: "clavinet",
+    # Chromatic Percussion
+    8: "celesta",
+    9: "glockenspiel",
+    10: "music-box",
+    11: "vibraphone",
+    12: "marimba",
+    13: "xylophone",
+    14: "tubular-bells",
+    15: "dulcimer",
+    # Organs
+    16: "organ",
+    17: "organ",
+    18: "organ",
+    19: "church-organ",
+    20: "organ",
+    21: "accordion",
+    22: "harmonica",
+    23: "bandoneon",
+    # Guitars
+    24: "nylon-string-guitar",
+    25: "steel-string-guitar",
+    26: "electric-guitar",
+    27: "electric-guitar",
+    28: "electric-guitar",
+    29: "electric-guitar",
+    30: "electric-guitar",
+    31: "electric-guitar",
+    # Basses
+    32: "bass",
+    33: "electric-bass",
+    34: "electric-bass",
+    35: "electric-bass",
+    36: "slap-bass",
+    37: "slap-bass",
+    38: "synth-bass",
+    39: "synth-bass",
+    # Strings
+    40: "violin",
+    41: "viola",
+    42: "cello",
+    43: "contrabass",
+    44: "strings",
+    45: "strings",
+    46: "harp",
+    47: "timpani",
+    # Ensemble
+    48: "strings",
+    49: "strings",
+    50: "synth-strings",
+    51: "synth-strings",
+    52: "voices",
+    53: "voices",
+    54: "voices",
+    55: "orchestra-hit",
+    # Brass
+    56: "trumpet",
+    57: "trombone",
+    58: "tuba",
+    59: "trumpet",
+    60: "horn",
+    61: "brasses",
+    62: "synth-brasses",
+    63: "synth-brasses",
+    # Reed
+    64: "soprano-saxophone",
+    65: "alto-saxophone",
+    66: "tenor-saxophone",
+    67: "baritone-saxophone",
+    68: "oboe",
+    69: "english-horn",
+    70: "bassoon",
+    71: "clarinet",
+    # Pipe
+    72: "piccolo",
+    73: "flute",
+    74: "recorder",
+    75: "pan-flute",
+    76: None,
+    77: None,
+    78: None,
+    79: "ocarina",
+    # Synth Lead
+    80: "lead",
+    81: "lead",
+    82: "lead",
+    83: "lead",
+    84: "lead",
+    85: "lead",
+    86: "lead",
+    87: "lead",
+    # Synth Pad
+    88: "pad",
+    89: "pad",
+    90: "pad",
+    91: "pad",
+    92: "pad",
+    93: "pad",
+    94: "pad",
+    95: "pad",
+    # Synth Effects
+    96: None,
+    97: None,
+    98: None,
+    99: None,
+    100: None,
+    101: None,
+    102: None,
+    103: None,
+    # Ethnic
+    104: "sitar",
+    105: "banjo",
+    106: "shamisen",
+    107: "koto",
+    108: "kalimba",
+    109: "bag-pipe",
+    110: "violin",
+    111: "shehnai",
+    # Percussive
+    112: None,
+    113: None,
+    114: None,
+    115: None,
+    116: None,
+    117: "melodic-tom",
+    118: "synth-drums",
+    119: "synth-drums",
+    120: None,
+    # Sound effects
+    121: None,
+    122: None,
+    123: None,
+    124: None,
+    125: None,
+    126: None,
+    127: None,
+    128: None,
+}
+
+INSTRUMENT_PROGRAM_MAP = {
+    # Pianos
+    "piano": 0,
+    "electric-piano": 4,
+    "harpsichord": 6,
+    "clavinet": 7,
+    # Chromatic Percussion
+    "celesta": 8,
+    "glockenspiel": 9,
+    "music-box": 10,
+    "vibraphone": 11,
+    "marimba": 12,
+    "xylophone": 13,
+    "tubular-bells": 14,
+    "dulcimer": 15,
+    # Organs
+    "organ": 16,
+    "church-organ": 19,
+    "accordion": 21,
+    "harmonica": 22,
+    "bandoneon": 23,
+    # Guitars
+    "nylon-string-guitar": 24,
+    "steel-string-guitar": 25,
+    "electric-guitar": 26,
+    # Basses
+    "bass": 32,
+    "electric-bass": 33,
+    "slap-bass": 36,
+    "synth-bass": 38,
+    # Strings
+    "violin": 40,
+    "viola": 41,
+    "cello": 42,
+    "contrabass": 43,
+    "harp": 46,
+    "timpani": 47,
+    # Ensemble
+    "strings": 49,
+    "synth-strings": 50,
+    "voices": 52,
+    "orchestra-hit": 55,
+    # Brass
+    "trumpet": 56,
+    "trombone": 57,
+    "tuba": 58,
+    "horn": 60,
+    "brasses": 61,
+    "synth-brasses": 62,
+    # Reed
+    "soprano-saxophone": 64,
+    "alto-saxophone": 65,
+    "tenor-saxophone": 66,
+    "baritone-saxophone": 67,
+    "oboe": 68,
+    "english-horn": 69,
+    "bassoon": 70,
+    "clarinet": 71,
+    # Pipe
+    "piccolo": 72,
+    "flute": 73,
+    "recorder": 74,
+    "pan-flute": 75,
+    "ocarina": 79,
+    # Synth Lead
+    "lead": 80,
+    # Synth Pad
+    "pad": 88,
+    # Ethnic
+    "sitar": 104,
+    "banjo": 105,
+    "shamisen": 106,
+    "koto": 107,
+    "kalimba": 108,
+    "bag-pipe": 109,
+    "shehnai": 111,
+    # Percussive
+    "melodic-tom": 117,
+    "synth-drums": 118,
+}
+
+KNOWN_PROGRAMS = list(
+    k for k, v in INSTRUMENT_PROGRAM_MAP.items() if v is not None
+)
+
+KNOWN_INSTRUMENTS = list(dict.fromkeys(INSTRUMENT_PROGRAM_MAP.keys()))
+
+KNOWN_EVENTS = [
+    "start-of-song",
+    "end-of-song",
+    "start-of-track",
+    "end-of-track",
+]
+
+KNOWN_EVENTS.extend(f"beat_{i}" for i in range(MAX_BEAT))
+
+KNOWN_EVENTS.extend(f"position_{i}" for i in range(RESOLUTION))
+
+KNOWN_EVENTS.extend(
+    f"instrument_{instrument}" for instrument in KNOWN_INSTRUMENTS
+)
+
+KNOWN_EVENTS.extend(f"pitch_{i}" for i in range(128))
+
+KNOWN_EVENTS.extend(f"duration_{i}" for i in KNOWN_DURATIONS)
+
+EVENT_CODE_MAPS = {event: i for i, event in enumerate(KNOWN_EVENTS)}
+
+CODE_EVENT_MAPS = utils.inverse_dict(EVENT_CODE_MAPS)
+
+def get_encoding():
+    """Return the encoding configurations."""
+    return {
+        "resolution": RESOLUTION,
+        "max_beat": MAX_BEAT,
+        "max_duration": MAX_DURATION,
+        "program_instrument_map": PROGRAM_INSTRUMENT_MAP,
+        "instrument_program_map": INSTRUMENT_PROGRAM_MAP,
+        "duration_map": DURATION_MAP,
+        "event_code_map": EVENT_CODE_MAPS,
+        "code_event_map": CODE_EVENT_MAPS,
+    }
+
+def encode_notes(notes, encoding, indexer):
+    """Encode the notes into a sequence of code tuples.
+
+    Each row of the output is encoded as follows.
+
+        (event_type, beat, position, pitch, duration, instrument)
+
+    """
+    # Get variables
+    max_beat = encoding["max_beat"]
+    max_duration = encoding["max_duration"]
+
+    # Get maps
+    duration_map = encoding["duration_map"]
+    program_instrument_map = encoding["program_instrument_map"]
+
+    # Start the codes with an SOS event
+    codes = [indexer["start-of-song"]]
+
+    # Encode the notes
+    last_beat = 0
+    for beat, position, pitch, duration, program in notes:
+        # Skip if max_beat has reached
+        if beat > max_beat:
+            continue
+        # Skip unknown instruments
+        instrument = program_instrument_map[program]
+        if instrument is None:
+            continue
+        if beat > last_beat:
+            codes.append(indexer[f"beat_{beat}"])
+            last_beat = beat
+        codes.append(indexer[f"position_{position}"])
+        codes.append(indexer[f"instrument_{instrument}"])
+        codes.append(indexer[f"pitch_{pitch}"])
+        codes.append(
+            indexer[f"duration_{duration_map[min(duration, max_duration)]}"]
+        )
+
+    # End the codes with an EOS event
+    codes.append(indexer["end-of-song"])
+
+    return np.array(codes)
+

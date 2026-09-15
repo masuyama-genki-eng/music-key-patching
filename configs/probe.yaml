@@ -1,0 +1,18 @@
+layers: all
+probes:
+  linear:
+    type: multinomial_logistic
+split: by_sequence
+metric: macro_f1_24
+controls:
+  c3_windows:
+  - 8
+  - 16
+  - 32
+  - 64
+bootstrap:
+  n: 10000
+  ci: 0.95
+  method: bca
+  unit: sequence
+seed: 0

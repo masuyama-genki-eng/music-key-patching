@@ -1,0 +1,24 @@
+# M-CTRL / M-REF training. Fixed optimizer and model settings for the experiments.
+model:
+  d: 512
+  n_layers: 8
+  n_heads: 8
+  ctx: 512
+  dropout: 0.1
+
+regimes:                       # operated variable (SPEC §2.1)
+  R-NoAug: { transpose_aug: false, seeds: [0, 1, 2] }   # seed 2 added 2026-07-12
+  R-Aug:   { transpose_aug: true,  seeds: [0, 1, 2] }   # (DR-H2b seed-level power)
+
+m_ref:                         # SPEC §2.2: separate seed AND separate data split
+  seed: 100
+  split_seed: 100
+
+optim:                         # finalized P2 (2026-07-11) before first ledgered run
+  lr: 3.0e-4
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+  warmup_steps: 1000
+  max_steps: 12000             # ~3.8 epochs over 200k pieces at batch 64
+  batch_size: 64
+  grad_clip: 1.0

@@ -1,0 +1,6 @@
+# Generation settings for Phase B continuations (SPEC §4.2). Frozen once P4 starts.
+temperature: 1.0
+top_p: 0.95
+max_new_tokens: 384            # 16 bars = 368 tokens at 23/bar; truncated at 16 bars
+batch_size: 64                 # tune to GPU in P4; value change is not protocol change
+seed: 0

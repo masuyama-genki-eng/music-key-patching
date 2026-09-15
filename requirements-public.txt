@@ -1,0 +1,6 @@
+-r requirements.txt
+# MMT's vendored classes require this upstream-pinned release.
+x-transformers==0.25.9
+einops>=0.6,<1
+# AMT loads GPT-2 checkpoints through Hugging Face Transformers.
+transformers>=4.40,<5
