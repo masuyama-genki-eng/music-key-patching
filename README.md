@@ -3,11 +3,11 @@
 Code accompanying the manuscript by Genki Masuyama, Keigo Sakurai, Ren Togo,
 Takahiro Ogawa, and Miki Haseyama (Hokkaido University).
 
-![Overview of the study](figure1.pdf)
+[![Overview of the study](figure1.png)](figure1.pdf)
 
 This distribution contains the main paper's experiment code, shared libraries,
 configuration, and tests. It contains no datasets, trained weights, computed
-results, manuscript files, figures, drawing scripts, demos, or additional studies.
+results, manuscript files, drawing scripts, demos, or additional studies.
 
 ## Installation and checks
 
