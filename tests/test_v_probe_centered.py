@@ -20,11 +20,11 @@ def test_removes_exactly_the_softmax_invariant_direction():
     V23 = v_probe_centered(W).astype(np.float64)
     V24 = v_probe(W).astype(np.float64)
     # v lies in span(V24) but is orthogonal to span(V23)
-    assert np.linalg.norm(V24 @ (V24.T @ v) - v) < 1e-8 * np.linalg.norm(v)
-    assert np.abs(V23.T @ v).max() < 1e-8
+    assert np.linalg.norm(V24 @ (V24.T @ v) - v) < 1e-5 * np.linalg.norm(v)   # basis is float32
+    assert np.abs(V23.T @ v).max() < 1e-5
     # span(V23) ⊂ span(V24)
     P24 = V24 @ V24.T
-    assert np.linalg.norm(P24 @ V23 - V23) < 1e-8
+    assert np.linalg.norm(P24 @ V23 - V23) < 1e-5
 
 
 def test_probe_softmax_unchanged_by_centring():
