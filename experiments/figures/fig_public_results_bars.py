@@ -25,33 +25,29 @@ NEXT_TAGS = {
 }
 
 
+def _summary() -> dict:
+    """The deduplicated Bach evaluation (220 estimation / 20 search / 60 final):
+    guarded SR at the search-20 layer against the dimension-matched K1 control, and
+    deltaD on the same 60 prompts. Revision 2026-09-17: replaces the pooled80 raw
+    layer-scan numbers this figure used before."""
+    s = json.loads((REPO / "results/public_dedup_bach/summary.json").read_text())["models"]
+    for m in MODELS:
+        r = s[m]
+        if not isinstance(r.get("sr_replace"), float) or not isinstance(r.get("deltaD_replace"), float):
+            raise SystemExit(f"dedup Bach cell {m} incomplete; refusing to draw a placeholder")
+    return s
+
+
 def load_next_pitch() -> tuple[np.ndarray, np.ndarray]:
-    root = REPO / "results/reanalysis/c1_public_next_pitch_bach_pooled80"
-    repl, ctrl = [], []
-    for model in MODELS:
-        path = next((root / NEXT_TAGS[model]).glob("next_pitch_*.json"))
-        data = json.loads(path.read_text())
-        tests = {row["cond"]: row for row in data["tests"]}
-        clean = tests["edit"]["log_ratio_clean"]
-        repl.append(tests["edit"]["log_ratio"] - clean)
-        ctrl.append(tests["k1"]["log_ratio"] - clean)
-    return np.asarray(repl), np.asarray(ctrl)
+    s = _summary()
+    return (np.asarray([s[m]["deltaD_replace"] for m in MODELS]),
+            np.asarray([s[m]["deltaD_k1"] for m in MODELS]))
 
 
 def load_success_rates() -> tuple[np.ndarray, np.ndarray]:
-    path = REPO / "results/layerwise_public_bach_pooled80_dedup_all.csv"
-    by_model: dict[str, list[dict[str, str]]] = {m: [] for m in MODELS}
-    with path.open() as f:
-        for row in csv.DictReader(f):
-            if row["model"] in by_model:
-                by_model[row["model"]].append(row)
-
-    repl, ctrl = [], []
-    for model in MODELS:
-        best = max(by_model[model], key=lambda r: float(r["M_edit"]))
-        repl.append(100.0 * float(best["SR_replace"]))
-        ctrl.append(100.0 * float(best["SR_random"]))
-    return np.asarray(repl), np.asarray(ctrl)
+    s = _summary()
+    return (np.asarray([100.0 * s[m]["sr_replace"] for m in MODELS]),
+            np.asarray([100.0 * s[m]["sr_k1"] for m in MODELS]))
 
 
 def style_axis(ax) -> None:
