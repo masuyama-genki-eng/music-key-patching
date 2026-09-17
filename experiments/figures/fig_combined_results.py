@@ -84,12 +84,12 @@ def panel(ax, labels, repl, ctrl, ylabel, title, fmt, ylim=None, rng=None, ctrl_
     yl = ylim or (min(0.0, float(np.min(ctrl)) * 1.3), top * 1.32)
     ax.set_xticks(x, labels); ax.set_xlim(x[0] - 0.72, x[-1] + 0.72); ax.set_ylim(*yl)
     ax.set_ylabel(ylabel, fontsize=7.6, color=INK, labelpad=2.0)
-    ax.set_title(title, loc="left", fontsize=7.6, fontweight="bold", color=INK, pad=4.0)
+    ax.set_title(title, loc="left", fontsize=7.2, fontweight="bold", color=INK, pad=3.0)
     for bars in (b1, b2):
         for bar in bars:
             v = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2, max(v, 0) + (yl[1] - yl[0]) * 0.03,
-                    fmt.format(v), ha="center", va="bottom", fontsize=5.8, color=INK)
+                    fmt.format(v), ha="center", va="bottom", fontsize=5.6, color=INK)
     return b1, b2
 
 
@@ -104,14 +104,14 @@ def draw(out_base: Path, width_mm: float, height_mm: float, with_range: bool) ->
     pl, psr, psrc, pdd, pddc = public()
     rng = seed_range() if with_range else None
     fig, ax = plt.subplots(2, 2, figsize=(width_mm * MM, height_mm * MM))
-    panel(ax[0, 0], ol, osr, osrc, "SR (%)", "(a) Ours: continuation", "{:.1f}", rng=rng, ctrl_label="Random subspace")
-    panel(ax[0, 1], ol, odd, oddc, r"$\delta D$", "(b) Ours: before sampling", "{:.3f}", ctrl_label="Random subspace")
-    panel(ax[1, 0], pl, psr, psrc, "SR (%)", "(c) Public, Bach: continuation", "{:.1f}", ctrl_label="Random subspace")
-    panel(ax[1, 1], pl, pdd, pddc, r"$\delta D$", "(d) Public, Bach: before sampling", "{:.3f}", ctrl_label="Random subspace")
+    panel(ax[0, 0], ol, osr, osrc, "SR (%)", "(a) Ours: SR", "{:.1f}", rng=rng, ctrl_label="Random subspace")
+    panel(ax[0, 1], ol, odd, oddc, r"$\delta D$", "(b) Ours: $\\delta D$", "{:.3f}", ctrl_label="Random subspace")
+    panel(ax[1, 0], pl, psr, psrc, "SR (%)", "(c) Public models, Bach: SR", "{:.1f}", ctrl_label="Random subspace")
+    panel(ax[1, 1], pl, pdd, pddc, r"$\delta D$", "(d) Public models, Bach: $\\delta D$", "{:.3f}", ctrl_label="Random subspace")
     h, l = ax[0, 0].get_legend_handles_labels()
     fig.legend(h, l, loc="upper center", bbox_to_anchor=(0.53, 1.005), ncol=2, frameon=False, fontsize=6.8,
                handlelength=1.2, columnspacing=1.6)
-    fig.subplots_adjust(left=0.10, right=0.985, bottom=0.09, top=0.88, wspace=0.34, hspace=0.62)
+    fig.subplots_adjust(left=0.10, right=0.985, bottom=0.09, top=0.88, wspace=0.34, hspace=0.48)
     for suf in (".pdf", ".png"):
         fig.savefig(out_base.with_suffix(suf), bbox_inches="tight", pad_inches=0.02, facecolor="white", dpi=500)
     plt.close(fig)
