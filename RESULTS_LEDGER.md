@@ -2174,3 +2174,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/ceiling.json`, `results/ceiling.md`
 - note: major: stays=0.580 chance=0.0328; minor: stays=0.840 chance=0.0000
 
+## 2026-09-18T01:02:52+09:00 — CONFIRMATORY held-out sweep R-Aug_s0 L4
+- git: `89bf79601f9719a00922404c75c28036f549e907`
+- config_hash: `889e519c0e236277a98c77dd7c30156a2c21ddb6c0de6aee8272d64cb7d38647`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/parts/confirmatory_L4_rank23.parquet`, `results/confirmatory/R-Aug_s0/verdict_rank23.json`
+- note: edit: guarded=0.368 sig=12/12
+
+## 2026-09-18T01:36:11+09:00 — CONFIRMATORY held-out sweep R-Aug_s0_minor L4
+- git: `89bf79601f9719a00922404c75c28036f549e907+DIRTY`
+- config_hash: `b594c5ebbae2fd7eaeacbec62940345f0befa25037aef53a68f7f00fa3ecb0f6`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/parts/confirmatory_L4_rank23.parquet`, `results/confirmatory/R-Aug_s0_minor/verdict_rank23.json`
+- note: edit: guarded=0.461 sig=12/12
+
+## 2026-09-18T01:36:45+09:00 — T4 rank-23 summary
+- git: `89bf79601f9719a00922404c75c28036f549e907+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: [7]
+- artifacts: `results/rank23.json`, `results/rank23.md`
+- note: major: r23 0.3682 vs r24 0.3555; minor: r23 0.4609 vs r24 0.4945
+
