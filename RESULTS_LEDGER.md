@@ -2104,3 +2104,10 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - seeds: n/a
 - artifacts: none (140 files removed from `results/figures/`, including `supp/`, `pianoroll*/` demo renders, the superseded paper figures and their `.meta.json` provenance files)
 - note: HOUSEKEEPING, NOT A RUN. The ten figures the two manuscripts use were first copied into `paper/` and both documents' \graphicspath set to `{./}`, so `paper/` is self-contained; verified by building both with `results/figures/` absent (main 5 pages, supplement 18 pages, no missing-file warnings). Earlier ledger entries name paths under `results/figures/` that no longer exist; every one of them is regenerable from the surviving artifacts under `results/` with `experiments/figures/make_figures.py`, `experiments/figures/supp_figures.py`, `experiments/figures/fig2_layerwise.py`, `experiments/reanalysis/supp_reanalysis_figures.py`, `experiments/reanalysis/public_layer_gap.py` and `experiments/figures/pianoroll_figure.py` (no GPU, minutes). `paper/fig1.pdf` is the one exception: it is hand-drawn, has no generating script, and is not tracked by git.
+## 2026-09-17T23:12:26+09:00 — Dedup Bach (220/20/60): layer selection on search-20 from pooled80 rows
+- git: `13b9edb47412e0718f63c0ca41adbd579ddeb8da+DIRTY`
+- config_hash: `dd350fed7d4294a620a96185aa3f682a30e940aa95c9ceec9d317c6f9f98bb7f`
+- seeds: []
+- artifacts: `results/public_dedup_bach/layer_selection_search20.json`
+- note: AMT-12L: L8 (pooled80 L8); MMT: L5 (pooled80 L5); REMI+: L5 (pooled80 L5)
+
