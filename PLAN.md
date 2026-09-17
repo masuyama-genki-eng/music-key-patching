@@ -124,3 +124,25 @@ Phase 1e  T3 fit（CPU/GPU 数分）→ AMT ‖ MMT ‖ REMI+
 5. **T3 の範囲**: 必須 = Bach 3 モデル PC24（1.2 h）。残差変種（+1.2 h）と Pop 3 モデル（+1.5 h）は「時間があれば」の扱いで、Phase 1d の後に着手可否を改めて聞く形でよいか。
 6. **30 分超ジョブの確認方式**: 本 PLAN の見積提示で一括確認とするか、投入ごとに確認するか。
 7. Table 2 の `\scriptsize` を `\tabfont`（9pt）に上げてよいか（行が増えるので T6 の削減量に影響）。
+
+---
+
+## 7. 承認と確定事項（2026-09-17、Phase 1 開始前に記録）
+
+PLAN c87c6b9 は承認された。§6 への回答:
+
+1. **D1/D3 → (a) 再生成**、次の規則で D3 も同時に解消する。**この規則は集計を行う前にここに書いてコミットする。**
+   - pooled80 の 80 曲（`stage1_layer_scan.json` の `prompt_names`、3 モデルで同一・chorale ID 昇順）を、**ID 昇順の先頭 20 曲 = search、残り 60 曲 = final** に分ける。search = chor001, chor005, chor006, chor007, chor010, chor013, chor016, chor017, chor020, chor022, chor024, chor026, chor027, chor028, chor029, chor030, chor031, chor032, chor033, chor036。
+   - 既存 stage-1 走査の per-prompt 行（`stage1_layer_rows.json`、80 曲 × 全層 × 12 調 × {edit, k1_norm}）を **search 20 曲だけ**で再集計し、各モデルの edit margin（edit − K1-norm）ピーク層を選ぶ。走査の対照が K1-norm しか無いことは承知の上で選択にはそれを使う。
+   - 選んだ層で **final 60 曲**を再生成: replacement, K1（次元一致、本文 3.3 に合わせる）, K1-norm。NLL ガードは凍結の参照割当と閾値（AMT-12L / MMT / REMI+ → `music-medium-800k`, 0.8489）。**継続トークンを保存する。**
+   - Fig. 4 右の δD も同じ 60 曲・同じ層・K1 対照で再計算する。
+   - 20 曲でのピークが 8/5/5 と違えば **20 曲の結果に従う**。80 曲走査は補足に「exploratory layer profile（raw key-hit, K1-norm）」として残す。
+   - 本文 3.3「Evaluation prompts」と Fig. 4 キャプションを 220/20/60 の実体に書き換える案を T6 で出す。4.5 節の数値と δD は再生成値に置換。
+2. **D6** → `baseline: author WIP 2026-09-17`（44d6147）として単独コミット済み。以後 WIP は混ぜない。
+3. **T1 層走査** → `v_probe + k1_r24`、8 層（12.8 h）。選択基準は本文と同じ **edit margin**（探索プロンプトのみ）。補足 §23 の層 4 固定 4 走行は「transfer 条件」として残し、再選択結果と両方報告する。
+4. **R-Aug_s1 長調** → 09-10 の replacement と K1 を再利用。欠けるアーム（K1-norm、短調）のみ追加タグで実行。AMENDMENT 3 の許容通過は `results/seed_robustness.md` に明記。
+5. **T3 残差変種・Pop** → 再確認不要。GPU が空いた時のみの低優先ジョブ。**9/20 終業までに完了・検査通過したものだけ**論文に入れる。
+6. **30 分超ジョブ** → PLAN 記載分は一括承認。止まる条件は「実測が見積の 1.5 倍超」「失敗/OOM」「PLAN にないジョブ」。進捗は各ジョブ完了時に 1 行。
+7. **Table 2** → `\small`（9pt）。収まらなければ、列名略記 → AMT-24L/36L 行を本文 1 文＋補足へ、の順。
+
+追加指示: D2 の `verdict.json` 読み替え、D4/D5 の追加専用オプションは了解。**以後の全ジョブで継続トークンを保存する。**実行順は D1 再生成 ‖ T0(+T2) ‖ T4 → T1 走査（夜間）→ T1 最終テスト → T3 必須分。T0 が 4 組の目標値を再現するまで T1 の数値は暫定。補足に「Deduplicated Bach evaluation (220/20/60)」節の下書きを T6 で追加し、§1・§7・§26・§32 の「final prompts は target estimation に含まれる」記述を Table 1 セル限定に修正する。
