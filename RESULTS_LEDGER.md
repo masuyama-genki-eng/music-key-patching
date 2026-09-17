@@ -2111,3 +2111,45 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/public_dedup_bach/layer_selection_search20.json`
 - note: AMT-12L: L8 (pooled80 L8); MMT: L5 (pooled80 L5); REMI+: L5 (pooled80 L5)
 
+## 2026-09-17T23:18:54+09:00 — CONFIRMATORY next-pitch R-Aug_s0 L4
+- git: `5a7bbb9f4d294993065cc1eaff30b9c578fd110b+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/next_pitch_L4_t0.parquet`, `results/confirmatory/R-Aug_s0/next_pitch_t0.json`
+- note: D_edit=0.6953 vs D_k1=0.0410; 12/12 sig
+
+## 2026-09-17T23:20:06+09:00 — CONFIRMATORY next-pitch R-Aug_s0 L4
+- git: `5a7bbb9f4d294993065cc1eaff30b9c578fd110b+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/next_pitch_L4_rank23.parquet`, `results/confirmatory/R-Aug_s0/next_pitch_rank23.json`
+- note: D_edit=0.6933 vs D_k1=0.0582; 12/12 sig
+
+## 2026-09-17T23:21:00+09:00 — CONFIRMATORY next-pitch R-Aug_s0_minor L4
+- git: `0bdaa09fa41d10762a48ef10d20e7bc374d23dea+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/next_pitch_L4_t0.parquet`, `results/confirmatory/R-Aug_s0_minor/next_pitch_t0.json`
+- note: D_edit=0.3094 vs D_k1=0.0261; 12/12 sig
+
+## 2026-09-17T23:21:55+09:00 — CONFIRMATORY next-pitch R-Aug_s0_minor L4
+- git: `b00bea660706ee1b180accbe0f81a8c8d7eee499+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/next_pitch_L4_rank23.parquet`, `results/confirmatory/R-Aug_s0_minor/next_pitch_rank23.json`
+- note: D_edit=0.3086 vs D_k1=0.0274; 12/12 sig
+
+## 2026-09-17T23:40:56+09:00 — T3 public pitch-class subspace fit (music-small-800k, L8)
+- git: `ba71f593f7d268d1724c93b0a07f550e3ebf1f2f+DIRTY`
+- config_hash: `fe1b960252adf6d6b81350a1ecd35ea33c76c0dc3a2c74ec092f8f95f07389e7`
+- seeds: [0]
+- artifacts: `results/public_pc_control/music-small-800k/pc_fit.json`
+- note: lambda=0.1; overlap 0.1195 vs null 0.0313; ranks {'V': 24, 'V_pc24': 22, 'V_res': 24}
+
+## 2026-09-17T23:42:33+09:00 — T3 public pitch-class subspace fit (music-small-800k, L8)
+- git: `ba71f593f7d268d1724c93b0a07f550e3ebf1f2f+DIRTY`
+- config_hash: `fe1b960252adf6d6b81350a1ecd35ea33c76c0dc3a2c74ec092f8f95f07389e7`
+- seeds: [0]
+- artifacts: `results/public_pc_control/music-small-800k/pc_fit.json`
+- note: lambda=0.1; overlap 0.1195 vs null 0.0313; ranks {'V': 24, 'V_pc24': 22, 'V_res': 24}
+

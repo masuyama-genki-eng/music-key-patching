@@ -145,7 +145,10 @@ def main() -> None:
         Q, _ = np.linalg.qr(rng.standard_normal((V.shape[0], 24)))
         null.append(overlap(V, Q))
 
-    for name, rows in (("pc24", W24), ("res", V_res.T)):
+    # the sweep takes the row space of what it is handed; hand it the rank-trimmed
+    # basis (two windows' rows can be near-collinear, AMT gives rank 22 of 24), so
+    # its random control is matched to the rank that actually carries the fit
+    for name, rows in (("pc24", V_pc24.T), ("res", V_res.T)):
         d = outdir / name; d.mkdir(exist_ok=True)
         np.savez(d / "probe_weights.npz", **{f"layer_{l}": rows.astype(np.float32) for l in range(n_layers)})
         shutil.copy(Path(args.artifacts_dir) / "class_means.npz", d / "class_means.npz")
