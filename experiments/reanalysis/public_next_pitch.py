@@ -56,6 +56,10 @@ def main() -> None:
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--n-prompts", type=int, default=60)
+    ap.add_argument("--prompt-names-json", default="",
+                    help="json with a 'final_prompts' list of chorale names: restrict the "
+                         "corpus to exactly those pieces before building prompts (dedup "
+                         "Bach; asserts the built set equals the list)")
     ap.add_argument("--skip-prompts", type=int, default=0,
                     help="skip the first k prompts of the chorale-ID-ordered list "
                          "(dedup Bach: 20 search prompts skipped, 60 final kept; "
@@ -74,8 +78,16 @@ def main() -> None:
     model = adapter.load(args.model, device)
     chorales, _ = load_corpus_local(Path(args.scores) / "kern",
                                     Path(args.analyses) / ANALYSES_SUBDIR)
-    prompts = build_prompts(adapter, chorales, args.skip_prompts + args.n_prompts,
-                            max_tokens=adapter.context_length(model) - 8)[args.skip_prompts:]
+    if args.prompt_names_json:
+        want = json.loads(Path(args.prompt_names_json).read_text())["final_prompts"]
+        chorales = [ch for ch in chorales if ch["name"] in set(want)]
+        prompts = build_prompts(adapter, chorales, len(want),
+                                max_tokens=adapter.context_length(model) - 8)
+        got = [pr["name"] for pr in prompts]
+        assert got == sorted(want), f"prompt set differs from the list: {set(got) ^ set(want)}"
+    else:
+        prompts = build_prompts(adapter, chorales, args.skip_prompts + args.n_prompts,
+                                max_tokens=adapter.context_length(model) - 8)[args.skip_prompts:]
     log.info("%s L%d: %d prompts", short, args.layer, len(prompts))
 
     adir = Path(args.artifacts_dir) if args.artifacts_dir else REPO / "results/mwild" / short

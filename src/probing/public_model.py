@@ -25,7 +25,8 @@ log = logging.getLogger("public_model")
 def extract_activations(adapter: PublicModelAdapter, model, chorales: list[dict],
                         device: str, per_seq: int, min_event: int, seed: int,
                         ctx: int | None = None,
-                        probe_at: str = "predict_pitch") -> dict:
+                        probe_at: str = "predict_pitch",
+                        hist_len: int = 64) -> dict:
     """Residual-stream activations of the public model, with the local key label of
     the event at each sampled position.
 
@@ -77,7 +78,7 @@ def extract_activations(adapter: PublicModelAdapter, model, chorales: list[dict]
         seq_idx.extend([si] * len(take))
         # pitch history for the C3 input baselines, at the SAME positions
         for i in take:
-            pitches_hist.append([events[j][2] for j in range(max(0, i - 64), i + 1)])
+            pitches_hist.append([events[j][2] for j in range(max(0, i - hist_len), i + 1)])
         kept += 1
         if kept % 50 == 0:
             log.info("  %d/%d chorales", kept, len(chorales))
