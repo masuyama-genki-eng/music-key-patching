@@ -35,6 +35,7 @@ from src.publicmodels import get_adapter
 from src.publicmodels.pop909 import load_pop909_part
 from src.publicmodels.corpus import chorale_to_events
 from src.utils.ledger import append_entry, snapshot
+from experiments.public_models.public_edit_sweep import build_prompts
 
 log = logging.getLogger("public_guard")
 
@@ -64,6 +65,11 @@ def main() -> None:
                         "keeps its artifacts in a separate results tree")
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
+    ap.add_argument("--exclude-bach-prompts", action="store_true",
+                    help="Bach only: remove the stage-1 search and stage-2 final "
+                         "prompt pieces before freezing the natural-modulation guard")
+    ap.add_argument("--n-prompts-stage1", type=int, default=20)
+    ap.add_argument("--n-prompts-stage2", type=int, default=60)
     ap.add_argument("--window-events", type=int, default=16,
                     help="note events either side of a modulation")
     ap.add_argument("--percentile", type=float, default=90.0)
@@ -109,6 +115,34 @@ def main() -> None:
     else:
         chorales, _ = load_corpus_local(Path(args.scores) / "kern",
                                         Path(args.analyses) / ANALYSES_SUBDIR)
+    split_info = {"initial_n_pieces": len(chorales)}
+    if args.exclude_bach_prompts:
+        if args.corpus != "bach":
+            raise SystemExit("--exclude-bach-prompts is only defined for Bach")
+        # The guard does not generate continuations, but for a deduplicated Bach
+        # run its estimation set should match the probe's: exclude the same prompt
+        # pieces used for layer search and final evaluation. Bach prompts are short
+        # enough that public_edit_sweep's token cap is inert for these checkpoints.
+        prompts = build_prompts(adapter, chorales,
+                                args.n_prompts_stage1 + args.n_prompts_stage2,
+                                max_tokens=None)
+        if len(prompts) < args.n_prompts_stage1 + args.n_prompts_stage2:
+            raise SystemExit("not enough Bach prompts to reconstruct the search/final split")
+        search_names = [p["name"] for p in prompts[:args.n_prompts_stage1]]
+        final_names = [p["name"] for p in
+                       prompts[args.n_prompts_stage1:
+                               args.n_prompts_stage1 + args.n_prompts_stage2]]
+        excluded = set(search_names + final_names)
+        chorales = [ch for ch in chorales if ch["name"] not in excluded]
+        split_info.update({
+            "excluded_stage1_search_names": search_names,
+            "excluded_stage2_final_names": final_names,
+            "n_excluded_prompt_pieces": len(excluded),
+            "estimation_piece_names": [ch["name"] for ch in chorales],
+        })
+        log.info("Bach dedup guard split: excluded %d prompt pieces; %d remain",
+                 len(excluded), len(chorales))
+    split_info["estimation_n_pieces"] = len(chorales)
     log.info("measuring natural-modulation NLL rises on %d chorales with %s",
              len(chorales), ref_checkpoint)
 
@@ -183,6 +217,7 @@ def main() -> None:
         "corpus": args.corpus,
         "reference_model": ref_checkpoint,
         "target_model": target_checkpoint,
+        "split_info": split_info,
         "presentation": ("time-shifted clips of 3W notes around each key change "
                          "(pop modulations sit past the 100 s vocabulary ceiling)"
                          if args.corpus == "pop909" else "whole pieces"),

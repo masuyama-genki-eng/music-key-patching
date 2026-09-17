@@ -35,7 +35,8 @@ class HookSubspaceEditor:
     def __init__(self, V: torch.Tensor, mu_target: torch.Tensor | None,
                  mode: str = "replace", from_position: int | None = None,
                  token_mask: torch.Tensor | None = None,
-                 mask_kind: str | None = None):
+                 mask_kind: str | None = None,
+                 norm_ref: torch.Tensor | None = None):
         """token_mask, added by ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (C2), is
         an optional (T,) or (B, T) boolean over the window saying which positions
         may be written. It defaults to None and the unmasked path below is the one
@@ -45,6 +46,11 @@ class HookSubspaceEditor:
         assert mode in ("replace", "sham")
         Q, _ = torch.linalg.qr(V)
         self.V = Q[:, : V.shape[1]]
+        if norm_ref is not None:
+            R, _ = torch.linalg.qr(norm_ref)
+            self.norm_ref = R[:, : norm_ref.shape[1]]
+        else:
+            self.norm_ref = None
         self.mu_t = mu_target
         self.mode = mode
         self.from_position = from_position
@@ -63,7 +69,15 @@ class HookSubspaceEditor:
             edited = h
         else:
             target = (self.mu_t @ self.V) @ self.V.T
-            edited = h - comp + target[None, None, :]
+            delta = target[None, None, :] - comp
+            if self.norm_ref is not None:
+                ref_comp = (h @ self.norm_ref) @ self.norm_ref.T
+                ref_target = (self.mu_t @ self.norm_ref) @ self.norm_ref.T
+                ref_delta = ref_target[None, None, :] - ref_comp
+                scale = ref_delta.norm(dim=-1, keepdim=True) / \
+                    delta.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+                delta = delta * scale
+            edited = h + delta
         if self.token_mask is not None:
             m = self.token_mask.to(h.device)
             if m.dim() == 1:

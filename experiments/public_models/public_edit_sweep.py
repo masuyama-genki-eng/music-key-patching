@@ -49,6 +49,13 @@ log = logging.getLogger("public_sweep")
 MAJOR_TARGETS = list(range(12))
 
 
+def artifact_label(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(REPO))
+    except ValueError:
+        return str(path)
+
+
 def build_prompts(adapter, chorales: list[dict], n: int,
                   frac: float = 0.5, max_tokens: int | None = None) -> list[dict]:
     """Key-stable prefixes: take a chorale's opening while its analysed key is still
@@ -156,6 +163,16 @@ def main() -> None:
                          "(default: results/mwild/<short>)")
     ap.add_argument("--tag", default="",
                     help="suffix for stage-2 output files, e.g. _balanced")
+    ap.add_argument("--outdir", default=None,
+                    help="override sweep output directory; use for corrected/smoke "
+                         "runs so committed artifacts are not overwritten")
+    ap.add_argument("--control", choices=["k1", "k1_norm"], default="k1",
+                    help="random-subspace control. k1 is the legacy rank-matched "
+                         "control; k1_norm additionally matches the replacement "
+                         "displacement norm at each position")
+    ap.add_argument("--save-stage1-rows", action="store_true",
+                    help="stage 1 only: save per-continuation rows, without tokens, "
+                         "for layerwise figures and paired resampling")
     ap.add_argument("--position-kinds", default="pitch,timing",
                     help="AMENDMENT 2: which token families to restrict to; "
                          "'instrument' is REMI-only and was added as a follow-up")
@@ -192,8 +209,9 @@ def main() -> None:
                          "(it is corpus-owned) and neither --ref-model nor the "
                          "corpus config supplied one")
     short = adapter.artifact_name(checkpoint)
-    outdir = REPO / ("results/mwild_sweep_pop909" if args.corpus == "pop909"
-                     else "results/mwild_sweep") / short
+    outdir = Path(args.outdir) if args.outdir else \
+        REPO / ("results/mwild_sweep_pop909" if args.corpus == "pop909"
+                else "results/mwild_sweep") / short
     outdir.mkdir(parents=True, exist_ok=True)
     gen_kw = dict(temperature=args.temperature, top_p=args.top_p)
 
@@ -234,12 +252,17 @@ def main() -> None:
         return (torch.from_numpy(V).float().to(device),
                 torch.from_numpy(mu).float().to(device))
 
-    def run(li: int, tgt: int | None, mode: str, k1: bool = False,
+    def run(li: int, tgt: int | None, mode: str, control: str | None = None,
             mask_kind: str | None = None) -> list[dict]:
         V, mu = basis_and_means(li)
-        if k1:
+        norm_ref = None
+        if control is not None:
+            if control not in ("k1", "k1_norm"):
+                raise ValueError(control)
+            V_ref = V
             V = torch.from_numpy(random_matched(V.cpu().numpy(),
                                                 args.seed + 31 * li)).to(device)
+            norm_ref = V_ref if control == "k1_norm" else None
         rows = []
         for pi, p in enumerate(prompts):
             ids = torch.tensor([p["ids"]], device=device)
@@ -249,7 +272,7 @@ def main() -> None:
             if mode != "clean":
                 ed = HookSubspaceEditor(V, mu[tgt] if tgt is not None else None,
                                       mode="sham" if mode == "sham" else "replace",
-                                      mask_kind=mask_kind)
+                                      mask_kind=mask_kind, norm_ref=norm_ref)
             out = adapter.generate(model, ids, args.n_new, li, ed, rng=rng, **gen_kw)
             cont = out[0, ids.shape[1]:].tolist()
             pitches = adapter.decode_pitches(cont)
@@ -282,6 +305,7 @@ def main() -> None:
     # ---------------- stage 1: which layer, if any, moves the key?
     if args.stage == 1:
         scan_path = outdir / "stage1_layer_scan.json"
+        row_path = outdir / "stage1_layer_rows.json"
         todo = ([int(x) for x in args.layers.split(",")] if args.layers
                 else list(range(n_layers)))
         bad = [li for li in todo if not 0 <= li < n_layers]
@@ -296,36 +320,67 @@ def main() -> None:
             todo = [li for li in todo if li not in done]
             log.info("extending an existing scan: %d layers already done, %d to go",
                      len(done), len(todo))
+        stage1_rows = []
+        if args.save_stage1_rows and row_path.exists():
+            stage1_rows = json.loads(row_path.read_text()).get("rows", [])
+
+        note = ("layer selected on stage-1 prompts; stage 2 evaluates on a "
+                "DISJOINT prompt set" if args.n_prompts_stage2 > 0 else
+                "pooled-prompt layerwise diagnostic; this artifact is not a "
+                "disjoint final-test evaluation")
+
+        def write_stage1_state() -> dict:
+            prof.sort(key=lambda r: r["layer"])
+            best = max(prof, key=lambda r: r["tkr_edit"] - r["tkr_control"])
+            out = {"stage": 1, "model": checkpoint, "corpus": args.corpus,
+                   "n_prompts": len(prompts), "profile": prof,
+                   "best_layer": best["layer"],
+                   "layers_scanned": [r["layer"] for r in prof],
+                   "all_layers": n_layers,
+                   "control": args.control,
+                   "prompt_names": [p["name"] for p in prompts],
+                   "note": note}
+            scan_path.write_text(json.dumps(out, indent=2))
+            snapshot(scan_path, vars(args), seeds=[args.seed])
+            if args.save_stage1_rows:
+                row_path.write_text(json.dumps({"rows": stage1_rows}, indent=2))
+                snapshot(row_path, vars(args), seeds=[args.seed])
+            return best
+
         for li in todo:
             rows = [r for t in MAJOR_TARGETS for r in run(li, t, "edit")]
-            k1r = [r for t in MAJOR_TARGETS for r in run(li, t, "edit", k1=True)]
+            ctrl = [r for t in MAJOR_TARGETS
+                    for r in run(li, t, "edit", control=args.control)]
             tkr = float(np.mean([bool(r["tkr"]) for r in rows]))
-            tkr_k1 = float(np.mean([bool(r["tkr"]) for r in k1r]))
+            tkr_ctrl = float(np.mean([bool(r["tkr"]) for r in ctrl]))
             ikr_t = float(np.mean([r["ikr_target"] for r in rows]))
             ikr_s = float(np.mean([r["ikr_src"] for r in rows]))
-            prof.append({"layer": li, "tkr_edit": tkr, "tkr_k1": tkr_k1,
-                         "ikr_target": ikr_t, "ikr_src": ikr_s})
-            log.info("L%-2d  TKR edit %.3f  K1 %.3f | IKR target %.3f src %.3f",
-                     li, tkr, tkr_k1, ikr_t, ikr_s)
-        prof.sort(key=lambda r: r["layer"])
-        best = max(prof, key=lambda r: r["tkr_edit"] - r["tkr_k1"])
-        out = {"stage": 1, "model": checkpoint, "corpus": args.corpus, "n_prompts": len(prompts),
-               "profile": prof, "best_layer": best["layer"],
-               "layers_scanned": [r["layer"] for r in prof],
-               "all_layers": n_layers,
-               "note": "layer selected on stage-1 prompts; stage 2 evaluates on a "
-                       "DISJOINT prompt set"}
-        scan_path.write_text(json.dumps(out, indent=2))
-        snapshot(scan_path, vars(args), seeds=[args.seed])
-        log.info("stage 1: best layer L%d (edit %.3f vs K1 %.3f)", best["layer"],
-                 best["tkr_edit"], best["tkr_k1"])
+            rec = {"layer": li, "control": args.control, "tkr_edit": tkr,
+                   "tkr_control": tkr_ctrl, f"tkr_{args.control}": tkr_ctrl,
+                   "ikr_target": ikr_t, "ikr_src": ikr_s}
+            if args.control == "k1":
+                rec["tkr_k1"] = tkr_ctrl
+            prof.append(rec)
+            if args.save_stage1_rows:
+                for cond, these in (("edit", rows), (args.control, ctrl)):
+                    for r in these:
+                        r = dict(r)
+                        r["cond"] = cond
+                        r.pop("cont", None)
+                        stage1_rows.append(r)
+            log.info("L%-2d  TKR edit %.3f  %s %.3f | IKR target %.3f src %.3f",
+                     li, tkr, args.control, tkr_ctrl, ikr_t, ikr_s)
+            best = write_stage1_state()
+        best = write_stage1_state()
+        log.info("stage 1: best layer L%d (edit %.3f vs %s %.3f)", best["layer"],
+                 best["tkr_edit"], args.control, best["tkr_control"])
         if not args.no_ledger:
             append_entry(stage=f"M-WILD intervention stage 1 ({short})",
                          config=vars(args), seeds=[args.seed],
-                         artifacts=[str((outdir / "stage1_layer_scan.json").relative_to(REPO))],
+                         artifacts=[artifact_label(scan_path)],
                          note=f"layer scan on {len(prompts)} held-in prompts; best L"
-                              f"{best['layer']} TKR {best['tkr_edit']:.3f} vs K1 "
-                              f"{best['tkr_k1']:.3f}")
+                              f"{best['layer']} TKR {best['tkr_edit']:.3f} vs "
+                              f"{args.control} {best['tkr_control']:.3f}")
         return
 
     # ---------------- stage 2: the chosen layer, judged on prompts it never saw
@@ -411,16 +466,16 @@ def main() -> None:
              float(np.mean(list(clean_nll.values()))))
 
     out_rows = []
-    conds = [("edit", False, None), ("k1", True, None)]
+    conds = [("edit", None, None), (args.control, args.control, None)]
     if args.positions:
         # C2: the same edit, restricted to one token family at a time. The
         # unrestricted arms stay in the same run so the three share their clean
         # twins, their sampling seeds and their guard exactly.
-        conds += [(f"edit_{k}", False, k)
+        conds += [(f"edit_{k}", None, k)
                   for k in args.position_kinds.split(",")]
-    for cond, k1, mask_kind in conds:
+    for cond, control, mask_kind in conds:
         for tgt in MAJOR_TARGETS:
-            rows = run(layer, tgt, "edit", k1=k1, mask_kind=mask_kind)
+            rows = run(layer, tgt, "edit", control=control, mask_kind=mask_kind)
             for r, n in zip(rows, nll_of(rows)):
                 r["cond"] = cond
                 r["nll_excess"] = float(n - clean_nll[r["prompt"]])
@@ -434,7 +489,7 @@ def main() -> None:
                      float(np.mean([r["success"] for r in rows])))
 
     df_e = [r for r in out_rows if r["cond"] == "edit"]
-    df_k = [r for r in out_rows if r["cond"] == "k1"]
+    df_k = [r for r in out_rows if r["cond"] == args.control]
 
     # DR-H3, unchanged: per target, edit vs its matched random control, paired by
     # prompt, Holm-corrected across the 12 targets. >= 8/12 significant supports it.
@@ -446,22 +501,25 @@ def main() -> None:
         t = wilcoxon_rank_biserial(np.array([r["success"] for r in e], float),
                                    np.array([r["success"] for r in k], float),
                                    alternative="greater")
+        ctrl_rate = float(np.mean([r["success"] for r in k]))
+        ctrl_key = "tkr_k1" if args.control == "k1" else "tkr_k1_norm"
         pvals.append(t["p"])
         per_target.append({"target": tgt,
                            "tkr_edit": float(np.mean([r["success"] for r in e])),
-                           "tkr_k1": float(np.mean([r["success"] for r in k])), **t})
+                           "tkr_control": ctrl_rate, ctrl_key: ctrl_rate, **t})
     for rec, p_adj in zip(per_target, holm_correct(pvals)):
         rec["p_holm"] = p_adj
-        rec["sig"] = bool(p_adj < 0.05 and rec["tkr_edit"] > rec["tkr_k1"])
+        rec["sig"] = bool(p_adj < 0.05 and rec["tkr_edit"] > rec["tkr_control"])
     n_sig = sum(r["sig"] for r in per_target)
 
     res = {
         "stage": 2, "model": checkpoint, "corpus": args.corpus, "layer": layer, "delta_ppl": delta,
         "n_prompts": len(prompts), "guard_reference": ref_checkpoint,
+        "control": args.control,
         "tkr_edit_guarded": float(np.mean([r["success"] for r in df_e])),
-        "tkr_k1_guarded": float(np.mean([r["success"] for r in df_k])),
+        "tkr_control_guarded": float(np.mean([r["success"] for r in df_k])),
         "tkr_edit_raw": float(np.mean([bool(r["tkr"]) for r in df_e])),
-        "tkr_k1_raw": float(np.mean([bool(r["tkr"]) for r in df_k])),
+        "tkr_control_raw": float(np.mean([bool(r["tkr"]) for r in df_k])),
         "guard_pass_edit": float(np.mean([r["guard_pass"] for r in df_e])),
         "ikr_target_edit": float(np.mean([r["ikr_target"] for r in df_e])),
         "ikr_src_edit": float(np.mean([r["ikr_src"] for r in df_e])),
@@ -470,6 +528,12 @@ def main() -> None:
         "DR_H3_supported": bool(n_sig >= 8),
         "rows": out_rows,
     }
+    if args.control == "k1":
+        res["tkr_k1_guarded"] = res["tkr_control_guarded"]
+        res["tkr_k1_raw"] = res["tkr_control_raw"]
+    else:
+        res["tkr_k1_norm_guarded"] = res["tkr_control_guarded"]
+        res["tkr_k1_norm_raw"] = res["tkr_control_raw"]
     if args.positions:
         # each restricted arm against the SAME random control, paired by prompt,
         # and the share of positions the mask covers (the analogue of the main
@@ -497,13 +561,17 @@ def main() -> None:
                     np.array([r["success"] for r in c], float),
                     np.array([r["success"] for r in k], float),
                     alternative="greater")
+                ctrl_rate = float(np.mean([r["success"] for r in k]))
                 pv2.append(t["p"])
                 pt2.append({"target": tgt,
                             "tkr_arm": float(np.mean([r["success"] for r in c])),
-                            "tkr_k1": float(np.mean([r["success"] for r in k])), **t})
+                            "tkr_control": ctrl_rate,
+                            ("tkr_k1" if args.control == "k1" else "tkr_k1_norm"):
+                                ctrl_rate,
+                            **t})
             for rec, q in zip(pt2, holm_correct(pv2)):
                 rec["p_holm"] = q
-                rec["sig"] = bool(q < 0.05 and rec["tkr_arm"] > rec["tkr_k1"])
+                rec["sig"] = bool(q < 0.05 and rec["tkr_arm"] > rec["tkr_control"])
             res["positions"][cond] = {
                 "guarded": float(np.mean([r["success"] for r in df_c])),
                 "raw": float(np.mean([bool(r["tkr"]) for r in df_c])),
@@ -520,20 +588,20 @@ def main() -> None:
                  {k: round(v, 3) for k, v in shares.items()})
     (outdir / f"stage2_eval{args.tag}.json").write_text(json.dumps(res, indent=2, default=float))
     snapshot(outdir / f"stage2_eval{args.tag}.json", vars(args), seeds=[args.seed])
-    log.info("STAGE 2 (L%d, held-out): guarded TKR edit %.3f vs K1 %.3f (raw %.3f vs "
+    log.info("STAGE 2 (L%d, held-out): guarded TKR edit %.3f vs %s %.3f (raw %.3f vs "
              "%.3f) | guard pass %.0f%% | IKR target %.3f src %.3f | DR-H3 %s (%d/12)",
-             layer, res["tkr_edit_guarded"], res["tkr_k1_guarded"],
-             res["tkr_edit_raw"], res["tkr_k1_raw"], 100 * res["guard_pass_edit"],
+             layer, res["tkr_edit_guarded"], args.control, res["tkr_control_guarded"],
+             res["tkr_edit_raw"], res["tkr_control_raw"], 100 * res["guard_pass_edit"],
              res["ikr_target_edit"], res["ikr_src_edit"],
              "SUPPORTED" if res["DR_H3_supported"] else "not supported",
              res["n_sig_targets"])
     if not args.no_ledger:
         append_entry(stage=f"M-WILD intervention stage 2 ({short})", config=vars(args),
                      seeds=[args.seed],
-                     artifacts=[str((outdir / f"stage2_eval{args.tag}.json").relative_to(REPO))],
+                     artifacts=[artifact_label(outdir / f"stage2_eval{args.tag}.json")],
                      note=f"L{layer} chosen on disjoint prompts; guarded TKR "
-                          f"{res['tkr_edit_guarded']:.3f} vs K1 "
-                          f"{res['tkr_k1_guarded']:.3f} on {len(prompts)} held-out "
+                          f"{res['tkr_edit_guarded']:.3f} vs {args.control} "
+                          f"{res['tkr_control_guarded']:.3f} on {len(prompts)} held-out "
                           f"prompts; DR-H3 supported={res['DR_H3_supported']} "
                           f"({res['n_sig_targets']}/12); guard ref {ref_checkpoint}")
 

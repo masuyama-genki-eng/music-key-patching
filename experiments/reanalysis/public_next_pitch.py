@@ -186,11 +186,17 @@ def main() -> None:
 
     outdir = REPO / args.outdir
     outdir.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(outdir / f"next_pitch_{short}_L{args.layer}.parquet")
+    rows_path = outdir / f"next_pitch_{short}_L{args.layer}.parquet"
+    try:
+        df.to_parquet(rows_path)
+    except ImportError:
+        rows_path = outdir / f"next_pitch_{short}_L{args.layer}.csv"
+        df.to_csv(rows_path, index=False)
     (outdir / f"next_pitch_{short}_L{args.layer}.json").write_text(json.dumps(
         {"model": args.model, "layer": args.layer, "n_prompts": len(prompts),
          "means": tab.to_dict(), "tests": recs, "edit_vs_k1": edit_vs_k1,
          "verdict": verdict,
+         "rows": str(rows_path.relative_to(REPO)),
          "note": "forward pass only; the layer is the sweep's, not re-searched"},
         indent=2))
     log.info("wrote %s", outdir / f"next_pitch_{short}_L{args.layer}.json")

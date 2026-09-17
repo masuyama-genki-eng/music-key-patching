@@ -521,7 +521,7 @@ all of them control or special codes, concentrated in one prompt of twelve.
 % 同じランで、推定器が人手で注釈された調を回復する頻度も測る。これは我々が報告する
 % すべての絶対的な率に上限を与える（音符数 8/16/32/58/80/160 に対し、コラールは
 % 0.398/0.593/0.740/0.830/0.853/—、pop は 0.243/0.327/0.380/0.418/0.540/0.598）。
-% 上限はコーパスによって異なるので、表2のコラールのセルと pop のセルは別々の天井に
+% 上限はコーパスによって異なるので、表1のコラールのセルと pop のセルは別々の天井に
 % 対して読むことになる。上限は編集−統制のマージンには一切触れない。統制も同じやり方で
 % 推定しているからである。
 %
@@ -563,7 +563,7 @@ pop      & $0.243$ & $0.327$ & $0.380$ & $0.418$ & $0.540$ & $0.598$\\
 \end{tabular}
 \end{center}
 
-The caps differ by corpus, so a chorale cell and a pop cell of Table~2 are read against
+The caps differ by corpus, so a chorale cell and a pop cell of Table~1 are read against
 different ceilings. They do not touch any edit-minus-control margin, because the
 control is estimated the same way.
 
@@ -619,7 +619,7 @@ differences of success rates against the dimension-matched control at the same l
 and not success rates: the replacement beats its control by $0.030$ and $0.044$ at
 layers $0$ and $1$, then by $0.193$, $0.258$, $0.303$, $0.259$, $0.232$ and $0.228$ at
 layers $2$--$7$. The key is readable at layers $0$--$1$, where writing to it barely
-works. The main text's Fig.~2 plots these gains, and its layer-$4$ value of $0.303$ is a
+works. The main text's Fig.~3 plots these gains, and its layer-$4$ value of $0.303$ is a
 gain over that control on the $100$ search prompts, not the final test's success rate of
 $0.3555$.
 
@@ -931,7 +931,7 @@ writing an alien target.}
 % 同等の値が宣言されず、全セルが240ステップで走った。その結果が、まさにその理由付けが
 % 防ぐために書かれた不均衡である（AMT-12L: 240ステップ・80音・編集率 0.479 ／
 % AMT-36L: 240・79・0.540 ／ REMI: 240・57・0.610 ／ MMT: 240・240・0.701）。
-% 率は表2が報告する均衡条件のものである。MMT は REMI の4倍の音楽を聴き、最も高い率を
+% 率は表1が報告する均衡条件のものである。MMT は REMI の4倍の音楽を聴き、最も高い率を
 % 持つ。この順序が共通の長さで生き残ることは、我々には示せない。保存された行は各継続の
 % 音符数は持つが音符そのものを持たないので、共通の長さでの再採点にはセルの再生成が必要
 % であり、しかもセルの内側では音符数がステップ予算で固定されている——10パーセンタイルと
@@ -988,7 +988,7 @@ MMT     & $240$ & $240$ & $0.701$\\
 \end{tabular}
 \end{center}
 
-Rates are the balanced condition Table~2 reports. MMT hears four times the music REMI
+Rates are the balanced condition Table~1 reports. MMT hears four times the music REMI
 does, and has the highest rate. We cannot show that
 this ordering survives a common length. The stored rows carry each continuation's note
 count but not its notes, so re-scoring at a common length needs the cells regenerated,
@@ -1761,7 +1761,7 @@ rather than assume the common practice.
 \section{The public comparison uses a common measurement \normalfont\textit{(main Sec.~4.5)}}
 \label{sec:public}
 % 【日本語訳】公開モデルの比較は共通の測定になっているか（本文4.5節）
-% 表2のモデル横断の行が意味を持つのは、音符数えベースラインが各トークン化で同じことを
+% 表1のモデル横断の行が意味を持つのは、音符数えベースラインが各トークン化で同じことを
 % 意味している場合だけである。実際にそうなっている。窓はトークンではなく音符イベントで
 % 数える。5つのチェックポイントすべてが同じ300曲のコラールを同じ35,890のサンプル位置で
 % 読む。そしてピッチクラスヒストグラムの決定的な関数である Krumhansl–Schmuckler の
@@ -1776,7 +1776,7 @@ rather than assume the common practice.
 % ので、完全一致として採点するのではなく比較から除外する。
 %
 
-Table~2's cross-model rows are only meaningful if the note-counting baseline means the
+Table~1's cross-model rows are only meaningful if the note-counting baseline means the
 same thing for each tokenization. It does. The window is counted in note events, not
 tokens; all five checkpoints read the same $300$ chorales at the same $35{,}890$ sampled
 positions; and the Krumhansl--Schmuckler baselines, which are a deterministic function of
@@ -2047,10 +2047,10 @@ afterwards.
 \label{sec:public-layers}
 
 % 【日本語訳】公開モデルの層をまたいだ read–use gap（本文4.4節、4.5節）
-% 本文の図2は我々自身のモデルについて、生のプローブ精度が第1層で飽和するのにpatching gainは
+% 本文の図3は我々自身のモデルについて、生のプローブ精度が第1層で飽和するのにpatching gainは
 % 第2層以降でしか上がらないことを示している。そこには弱点があり、我々はそれを隠さない。
 % 我々のモデルでは、音符数えに対する統制補正後のマージンはpatching gainとほぼ並走するので、
-% 図2の乖離は生の精度についてのものであってマージンについてのものではない。
+% 図3の乖離は生の精度についてのものであってマージンについてのものではない。
 % 公開チェックポイントでは事情が異なり、そちらのほうが強い。生成は一切していない。
 % 層別のプローブと層スキャンはどちらも既存の artifact であり、ここで同じ軸に載せただけである。
 % AMT-small の Bach では、patching gain（率ではなく率の差）は第8層で頂点（+0.287）になるのに、
@@ -2063,7 +2063,7 @@ afterwards.
 % 240 継続（20プロンプト × 12標的）しかない。図の帯は Wilson の95%区間で、第0層と
 % 第8層、第11層と第8層は明確に分離するが、隣接する層の細かい上下は読み過ぎるべきでない。
 %
-The main text's Fig.~2 shows the two controlled measures across the layers of our own
+The main text's Fig.~3 shows the two controlled measures across the layers of our own
 model, and it records a limitation we do not hide: there the probe margin over note
 counting rises where the edit margin rises and the two peak at the same layer~$4$, so
 what the panel shows is that a positive probe margin does not fix the strength of the
@@ -2087,6 +2087,17 @@ rates; the band is the Wilson interval on the replacement's own rate, shifted on
 by subtracting the control, and each point rests on $240$ continuations.}
 \label{fig:supp-public-layers}
 \end{figure}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.98\textwidth]{fig_public_layerwise_bach_pooled80_dedup_stacked.pdf}
+\caption{\textbf{S9c} \textit{(main Secs.~4.4, 4.5)}. Deduplicated pooled-80 Bach
+layerwise profiles for three public checkpoints. Probe margin and edit margin are
+shown on separate rows for AMT-12L, MMT, and REMI+, using the same public-model layer
+scan data as the main-text public-model discussion. Shaded bands show uncertainty
+intervals where available.}
+\label{fig:supp-public-layers-three}
+\end{figure*}
 
 On AMT small over Bach the patching gain, a difference of rates against the
 dimension-matched control and not a rate itself, peaks at layer~$8$ at $+0.287$, while
@@ -2316,7 +2327,7 @@ and claim no ordering between the modes on this measure.
 % 割り当ては、どれかが走る前に書面で固定されていた（凍結§3: small→medium、
 % medium→large、large→medium）。したがってこのランを断ることは、事前登録の遵守ではなく
 % そこからの逸脱だったことになる。このランはその割り当てのもとで既に行われ、そのセルは
-% 表2に報告されている。
+% 表1に報告されている。
 % 均衡再推定は AMT×pop についてのみ指定されていた。AMT が +0.078 得たのを見た後で、
 % 既に使った分割の上で MMT と REMI について走らせることは、解析をその数値への効果で選ぶ
 % ことになる。それらのセルは直接推定のままとし、それは、それらを使う唯一の主張にとって
@@ -2331,7 +2342,7 @@ the assignment for all three targets was fixed in writing before any of them ran
 §3: small$\rightarrow$medium, medium$\rightarrow$large, large$\rightarrow$medium), so
 declining the run would have been a deviation from the pre-registration rather than
 adherence to it. The run has since been made under that assignment and its cell is
-reported in Table~2.
+reported in Table~1.
 
 The balanced re-estimation was specified for AMT $\times$ pop only. Running it for MMT
 and REMI after seeing AMT improve by $+0.078$ under it, on a split already spent, would
