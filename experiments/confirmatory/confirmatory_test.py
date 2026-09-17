@@ -33,7 +33,7 @@ from src.eval.guard import guarded_success
 from src.intervene import sweep as SW
 from src.intervene.edit import SubspaceEditor
 from src.intervene.sweep import Prompt
-from src.intervene.subspaces import mu_targets_from_means, v_probe
+from src.intervene.subspaces import mu_targets_from_means, v_probe, v_probe_centered
 from src.probing.extract import load_model
 from src.tokenizer.vocab import VOCAB
 from src.utils.ledger import append_entry, snapshot
@@ -110,6 +110,17 @@ def main() -> None:
     ap.add_argument("--tag", default="",
                     help="suffix for this run's artifacts, so an added-arms run "
                          "cannot overwrite a ledgered one")
+    ap.add_argument("--basis", choices=["rank24", "rank23"], default="rank24",
+                    help="rank23 = row space of the row-centred probe weights, i.e. "
+                         "V without the softmax-invariant direction (revision T4). "
+                         "K1 is rank-matched to whichever basis is chosen.")
+    ap.add_argument("--save-conts", action="store_true",
+                    help="write every generated continuation (token ids) to "
+                         "parts/conts_L<layer><tag>.json.gz, incl. the clean twins")
+    ap.add_argument("--keep-clean-rows", action="store_true",
+                    help="score the unedited (clean) continuations that the K2 gate "
+                         "already generated and keep them in the parquet as "
+                         "cond='clean' (excluded from every edit statistic)")
     ap.add_argument("--mode", choices=["major", "minor"], default="major",
                     help="minor = pre-registered secondary condition "
                          "(AMENDMENT 3): stable-minor prompts, minor targets, "
@@ -136,12 +147,15 @@ def main() -> None:
              rows_used[0], rows_used[-1])
     pw = np.load(Path(args.probing_dir) / "probe_weights.npz")
     cm = np.load(Path(args.probing_dir) / "class_means.npz")
-    V = v_probe(pw[f"layer_{args.layer}"], rank=24)
+    V = (v_probe(pw[f"layer_{args.layer}"], rank=24) if args.basis == "rank24"
+         else v_probe_centered(pw[f"layer_{args.layer}"], rank=23))
+    log.info("basis %s: V is %s", args.basis, V.shape)
     mus = mu_targets_from_means(cm[f"layer_{args.layer}"])
     K1 = SW.k1_basis(V, GEN_SEED + 31 * args.layer)          # frozen formula
 
     run_cfg = {"freeze": "docs/CONFIRMATORY_FREEZE.md @ 0d621e4", "model": name,
                "layer": args.layer, "gen_seed": GEN_SEED, "arms": args.arms,
+               "basis": args.basis, "rank": int(V.shape[1]),
                "prompt_rows": [rows_used[0], rows_used[-1]], "gen": gen_cfg}
 
     def gen(editor_fn, mask_fn):
@@ -184,9 +198,11 @@ def main() -> None:
                  "(%d differing prompts, all within %.0e)", bad, GATE_LOGIT_TOL)
     else:
         log.info("K2 gate PASSED (100/100 bit-identical)")
-    _, clean_ppl = SW.rows_for_condition({"cond": "clean", "method": None,
-                                          "layer": None, "target_key": None},
-                                         prompts, clean, mref, device, None)
+    clean_rows, clean_ppl = SW.rows_for_condition({"cond": "clean", "method": None,
+                                                   "layer": None, "target_key": None},
+                                                  prompts, clean, mref, device, None)
+    saved_conts = {"clean": {str(i): list(map(int, c)) for i, c in enumerate(clean)}} \
+        if args.save_conts else None
 
     # ---------------- arms
     # k1      : rank-matched random subspace (pre-registered control)
@@ -215,10 +231,30 @@ def main() -> None:
         for tgt in targets:
             log.info("%s target %d", cond, tgt)
             conts = gen(make_editor_fn(tgt), mask_fn)
+            if saved_conts is not None:
+                saved_conts[f"{cond}/{tgt}"] = {str(i): list(map(int, c))
+                                                for i, c in enumerate(conts)}
             rows, _ = SW.rows_for_condition(
                 {"cond": cond, "method": "confirmatory", "layer": args.layer,
                  "target_key": tgt}, prompts, conts, mref, device, clean_ppl)
             all_rows.extend(rows)
+    if args.keep_clean_rows:
+        # the clean twins, scored like every other row; their target_key is the
+        # prompt's own key so they never pair with an edit row, and every edit
+        # statistic below filters on cond explicitly
+        for r in clean_rows:
+            r["target_key"] = r["src_key"]
+            r["mref_ppl_excess"] = 0.0            # a twin's excess over itself
+            r["tkr_strict"] = (bool(r["est_key"] == r["src_key"])
+                               if r["est_key"] is not None else None)
+        all_rows.extend(clean_rows)
+    if saved_conts is not None:
+        import gzip
+        with gzip.open(outdir / "parts" / f"conts_L{args.layer}{args.tag}.json.gz",
+                       "wt") as fh:
+            json.dump({"prompt_rows": run_cfg["prompt_rows"], "gen_seed": GEN_SEED,
+                       "prompts": {str(i): list(map(int, p.ids)) for i, p in enumerate(prompts)},
+                       "conts": saved_conts}, fh)
     df = pd.DataFrame(all_rows)
     df["guard_pass"] = df["mref_ppl_excess"] <= delta
     df["succ"] = guarded_success(df["tkr_strict"], df["mref_ppl_excess"], delta)
@@ -306,7 +342,8 @@ def main() -> None:
             stage=f"CONFIRMATORY held-out sweep {name} L{args.layer}",
             config=run_cfg, seeds=[GEN_SEED],
             artifacts=[str((outdir / f).resolve().relative_to(REPO)) for f in
-                       (f"parts/confirmatory_L{args.layer}.parquet", "verdict.json")],
+                       (f"parts/confirmatory_L{args.layer}{args.tag}.parquet",
+                        f"verdict{args.tag}.json")],
             note="; ".join(f"{c}: guarded={verdict['conditions'][c]['pooled_guarded_tkr']:.3f} "
                            f"sig={verdict['conditions'][c]['n_sig_holm']}/12"
                            for c in arms))

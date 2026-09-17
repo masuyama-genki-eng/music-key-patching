@@ -51,6 +51,20 @@ def orthonormal_rows(M: np.ndarray, rank: int) -> np.ndarray:
 def v_probe(probe_W: np.ndarray, rank: int = 24) -> np.ndarray:
     return orthonormal_rows(probe_W, rank)
 
+def v_probe_centered(probe_W: np.ndarray, rank: int = 23) -> np.ndarray:
+    """Row space of the probe weights WITHOUT the softmax-invariant direction.
+
+    A 24-class softmax is unchanged by adding one vector to every class weight, so
+    the row space of W holds one direction, v = W^T (W W^T)^{-1} 1, along which the
+    probe reads nothing. Centring the rows, Wc = W - mean_rows(W), removes exactly
+    that direction: the row space of Wc is {W^T c : c ⊥ 1}, and <W^T c, v> = c^T 1 = 0,
+    so span(Wc) = span(W) ∩ v^⊥, of rank 23. This is the rank-23 variant the paper's
+    Limitations named as untested (2026-09-17, revision task T4); v_probe is untouched.
+    """
+    Wc = probe_W - probe_W.mean(axis=0, keepdims=True)
+    return orthonormal_rows(Wc, rank)
+
+
 def v_mean(class_means: np.ndarray, rank: int = 24) -> np.ndarray:
     mu = class_means - class_means.mean(0, keepdims=True)
     return orthonormal_rows(mu, rank)
