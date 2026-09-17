@@ -180,6 +180,21 @@ def main() -> None:
                     help="AMENDMENT 1 (C2): also run the edit restricted to pitch "
                          "positions and to timing positions. Off by default, so "
                          "every earlier stage-2 run reproduces unchanged.")
+    # Deduplicated Bach evaluation (revision 2026-09-17, PLAN.md section 7). All
+    # four are additive: unset, the script behaves exactly as before.
+    ap.add_argument("--stage2-layer", type=int, default=None,
+                    help="force the stage-2 layer instead of reading it from "
+                         "<outdir>/stage1_layer_scan.json (the dedup run selects its "
+                         "layer in results/public_dedup_bach/layer_selection_search20.json)")
+    ap.add_argument("--guard-path", default=None,
+                    help="frozen guard json to use (default: <outdir>/delta_ppl.json, "
+                         "or the pop909 one); lets a new outdir reuse the frozen budget")
+    ap.add_argument("--extra-control", choices=["k1", "k1_norm"], default=None,
+                    help="a second random control run in the same stage-2 pass, "
+                         "sharing the clean twins and sampling seeds")
+    ap.add_argument("--save-conts", action="store_true",
+                    help="write every stage-2 continuation (token ids), incl. the "
+                         "clean twins, to <outdir>/stage2_conts<tag>.json.gz")
     ap.add_argument("--temperature", type=float, default=1.0)
     ap.add_argument("--top-p", type=float, default=0.95)
     ap.add_argument("--seed", type=int, default=0)
@@ -384,10 +399,15 @@ def main() -> None:
         return
 
     # ---------------- stage 2: the chosen layer, judged on prompts it never saw
-    scan = json.loads((outdir / "stage1_layer_scan.json").read_text())
-    layer = int(scan["best_layer"])
-    guard_path = (REPO / "results/mwild_sweep_pop909/delta_ppl.json"
-                  if args.corpus == "pop909" else outdir / "delta_ppl.json")
+    if args.stage2_layer is not None:
+        layer = int(args.stage2_layer)
+        log.info("stage 2: layer L%d forced by --stage2-layer", layer)
+    else:
+        scan = json.loads((outdir / "stage1_layer_scan.json").read_text())
+        layer = int(scan["best_layer"])
+    guard_path = (Path(args.guard_path) if args.guard_path else
+                  (REPO / "results/mwild_sweep_pop909/delta_ppl.json"
+                   if args.corpus == "pop909" else outdir / "delta_ppl.json"))
     if not guard_path.exists():
         raise SystemExit("frozen guard missing — run experiments/public_models/public_quality_guard.py first "
                          "(the budget must be fixed before any edit is scored)")
@@ -462,11 +482,15 @@ def main() -> None:
     # the prompt costs.
     clean_rows = run(layer, None, "clean")
     clean_nll = {r["prompt"]: n for r, n in zip(clean_rows, nll_of(clean_rows))}
+    saved_conts = ({"clean": {str(r["prompt"]): r["cont"] for r in clean_rows}}
+                   if args.save_conts else None)
     log.info("clean twins scored (mean reference NLL %.3f)",
              float(np.mean(list(clean_nll.values()))))
 
     out_rows = []
     conds = [("edit", None, None), (args.control, args.control, None)]
+    if args.extra_control and args.extra_control != args.control:
+        conds.append((args.extra_control, args.extra_control, None))
     if args.positions:
         # C2: the same edit, restricted to one token family at a time. The
         # unrestricted arms stay in the same run so the three share their clean
@@ -481,6 +505,8 @@ def main() -> None:
                 r["nll_excess"] = float(n - clean_nll[r["prompt"]])
                 r["guard_pass"] = bool(r["nll_excess"] <= delta)
                 r["success"] = bool(guarded_success(r["tkr"], r["nll_excess"], delta))
+                if saved_conts is not None:
+                    saved_conts.setdefault(f"{cond}/{tgt}", {})[str(r["prompt"])] = r["cont"]
                 r.pop("cont", None)               # not needed past this point
             out_rows.extend(rows)
             log.info("  %-4s T%-2d  TKR %.3f  guard %3.0f%%  guarded %.3f", cond, tgt,
@@ -528,6 +554,36 @@ def main() -> None:
         "DR_H3_supported": bool(n_sig >= 8),
         "rows": out_rows,
     }
+    res["prompt_names"] = [p["name"] for p in prompts]
+    res["stage2_layer_forced"] = args.stage2_layer is not None
+    res["guard_path"] = str(guard_path)
+    if args.extra_control and args.extra_control != args.control:
+        df_x = [r for r in out_rows if r["cond"] == args.extra_control]
+        res[f"tkr_{args.extra_control}_guarded"] = float(np.mean([r["success"] for r in df_x]))
+        res[f"tkr_{args.extra_control}_raw"] = float(np.mean([bool(r["tkr"]) for r in df_x]))
+        px, ptx = [], []
+        for tgt in MAJOR_TARGETS:
+            e = sorted([r for r in df_e if r["target"] == tgt], key=lambda r: r["prompt"])
+            k = sorted([r for r in df_x if r["target"] == tgt], key=lambda r: r["prompt"])
+            assert [r["prompt"] for r in e] == [r["prompt"] for r in k], "pairing broken"
+            t = wilcoxon_rank_biserial(np.array([r["success"] for r in e], float),
+                                       np.array([r["success"] for r in k], float),
+                                       alternative="greater")
+            px.append(t["p"])
+            ptx.append({"target": tgt, "tkr_edit": float(np.mean([r["success"] for r in e])),
+                        "tkr_control": float(np.mean([r["success"] for r in k])), **t})
+        for rec, q in zip(ptx, holm_correct(px)):
+            rec["p_holm"] = q
+            rec["sig"] = bool(q < 0.05 and rec["tkr_edit"] > rec["tkr_control"])
+        res[f"edit_vs_{args.extra_control}"] = {"per_target": ptx,
+                                                "n_sig_targets": sum(r["sig"] for r in ptx)}
+    if saved_conts is not None:
+        import gzip
+        with gzip.open(outdir / f"stage2_conts{args.tag}.json.gz", "wt") as fh:
+            json.dump({"layer": layer, "seed": args.seed,
+                       "prompt_names": res["prompt_names"],
+                       "prompts": {str(i): p["ids"] for i, p in enumerate(prompts)},
+                       "conts": saved_conts}, fh)
     if args.control == "k1":
         res["tkr_k1_guarded"] = res["tkr_control_guarded"]
         res["tkr_k1_raw"] = res["tkr_control_raw"]

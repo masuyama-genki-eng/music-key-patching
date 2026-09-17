@@ -56,6 +56,10 @@ def main() -> None:
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
     ap.add_argument("--analyses", default=str(REPO / "data/When-in-Rome"))
     ap.add_argument("--n-prompts", type=int, default=60)
+    ap.add_argument("--skip-prompts", type=int, default=0,
+                    help="skip the first k prompts of the chorale-ID-ordered list "
+                         "(dedup Bach: 20 search prompts skipped, 60 final kept; "
+                         "revision 2026-09-17). Default 0 = previous behaviour.")
     ap.add_argument("--rank", type=int, default=24)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--artifacts-dir", default="")
@@ -70,8 +74,8 @@ def main() -> None:
     model = adapter.load(args.model, device)
     chorales, _ = load_corpus_local(Path(args.scores) / "kern",
                                     Path(args.analyses) / ANALYSES_SUBDIR)
-    prompts = build_prompts(adapter, chorales, args.n_prompts,
-                            max_tokens=adapter.context_length(model) - 8)
+    prompts = build_prompts(adapter, chorales, args.skip_prompts + args.n_prompts,
+                            max_tokens=adapter.context_length(model) - 8)[args.skip_prompts:]
     log.info("%s L%d: %d prompts", short, args.layer, len(prompts))
 
     adir = Path(args.artifacts_dir) if args.artifacts_dir else REPO / "results/mwild" / short
@@ -194,6 +198,7 @@ def main() -> None:
         df.to_csv(rows_path, index=False)
     (outdir / f"next_pitch_{short}_L{args.layer}.json").write_text(json.dumps(
         {"model": args.model, "layer": args.layer, "n_prompts": len(prompts),
+         "skip_prompts": args.skip_prompts, "prompt_names": [p["name"] for p in prompts],
          "means": tab.to_dict(), "tests": recs, "edit_vs_k1": edit_vs_k1,
          "verdict": verdict,
          "rows": str(rows_path.relative_to(REPO)),
