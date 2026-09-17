@@ -2195,3 +2195,52 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/rank23.json`, `results/rank23.md`
 - note: major: r23 0.3682 vs r24 0.3555; minor: r23 0.4609 vs r24 0.4945
 
+## 2026-09-18T02:29:55+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1`
+- config_hash: `82e97dae45b66cbe319bd3861ff04c02f03664902356c999364b1cd202c1c7e6`
+- seeds: [0]
+- artifacts: `results/public_dedup_bach/music-small-800k/stage2_eval.json`
+- note: L8 chosen on disjoint prompts; guarded TKR 0.506 vs k1 0.058 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T02:56:41+09:00 — M-WILD intervention stage 2 (mmt-lmd-ape)
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1+DIRTY`
+- config_hash: `c67a0f605432515f45edc4348740906d08f76d870cf9ae322ce7e241db30938b`
+- seeds: [0]
+- artifacts: `results/public_dedup_bach/mmt-lmd-ape/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.694 vs k1 0.069 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T03:17:01+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1+DIRTY`
+- config_hash: `fce8acac0a83c9ea39f5cc80ca7c010a17cb4b6a7f16fdb53e97b4af3502c9b5`
+- seeds: [0]
+- artifacts: `results/public_dedup_bach/remi-lmd-remi/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.644 vs k1 0.072 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T03:17:11+09:00 — Re-analysis 11: pre-generation logits, music-small-800k L8
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1+DIRTY`
+- config_hash: `927a64303bcdd2efb8bb57544818c379b3ccebd66e7ee91cea3314c8a1910453`
+- seeds: [0]
+- artifacts: `results/public_dedup_bach/next_pitch/amt/next_pitch_music-small-800k_L8.json`
+- note: the edit shifts the public model's FIRST decision toward the installed key, before any note is sampled: the mechanism shown on the synthetic model reaches a public checkpoint
+
+## 2026-09-18T03:17:17+09:00 — Re-analysis 11: pre-generation logits, mmt-lmd-ape L5
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1+DIRTY`
+- config_hash: `5768f4a163579be28b1b7dc147b6156ba05a81734b3dd88d6cf2cb3906bf7345`
+- seeds: [0]
+- artifacts: `results/public_dedup_bach/next_pitch/mmt/next_pitch_mmt-lmd-ape_L5.json`
+- note: both the edit and a random subspace shift the first decision; the shift is not specific to the key subspace here
+
+## 2026-09-18T03:17:21+09:00 — Re-analysis 11: pre-generation logits, remi-lmd-remi L5
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1+DIRTY`
+- config_hash: `e64c41b8a55ab509267ad967f8032499f7ffbc55a781b7a7b977e1ae98ae8dcc`
+- seeds: [0]
+- artifacts: `results/public_dedup_bach/next_pitch/remi/next_pitch_remi-lmd-remi_L5.json`
+- note: both the edit and a random subspace shift the first decision; the shift is not specific to the key subspace here
+
+## 2026-09-18T03:17:42+09:00 — Dedup Bach summary (final-60 cells)
+- git: `c432d43eddb75c0827d5e45ce9aa91d3584b8cc1+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: []
+- artifacts: `results/public_dedup_bach/summary.json`, `results/public_dedup_bach/summary.md`
+- note: AMT-12L: SR 0.5055555555555555; MMT: SR 0.6944444444444444; REMI+: SR 0.6444444444444445
+
