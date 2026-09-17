@@ -1,8 +1,10 @@
 """Main-result bars for the ICASSP paper.
 
-The left panel reports the final continuation success rate (SR) already frozen
-in the manuscript. The right panel reports the before-sampling next-pitch shift
-from the ledgered next_pitch artifacts. No error bars are drawn because no
+The left panel reports the final continuation success rate (SR) read from the
+ledgered confirmatory verdicts (replacement, and the K1-norm control matched in
+dimension and displacement); the right panel reports the before-sampling
+next-pitch shift from the ledgered next_pitch artifacts. Nothing is typed in
+(revision 2026-09-17: the SR values used to be literals). No error bars are drawn because no
 paired confidence intervals are reported for these four displayed aggregates.
 """
 from __future__ import annotations
@@ -37,6 +39,14 @@ def load_next_pitch() -> tuple[np.ndarray, np.ndarray]:
     return repl, ctrl
 
 
+def load_success_rates() -> tuple[np.ndarray, np.ndarray]:
+    major = json.loads((REPO / "results/confirmatory/R-Aug_s0/verdict.json").read_text())
+    minor = json.loads((REPO / "results/confirmatory/R-Aug_s0_minor/verdict.json").read_text())
+    repl = np.array([100.0 * v["conditions"]["edit"]["pooled_guarded_tkr"] for v in (major, minor)])
+    ctrl = np.array([100.0 * v["edit_vs_k1norm"]["pooled_k1_norm"] for v in (major, minor)])
+    return repl, ctrl
+
+
 def style_axis(ax) -> None:
     ax.set_facecolor("white")
     ax.yaxis.grid(True, color=GRID, lw=0.7, ls=(0, (3, 3)))
@@ -63,8 +73,7 @@ def draw(out_base: Path, width_mm: float, height_mm: float) -> None:
     })
 
     delta_repl, delta_ctrl = load_next_pitch()
-    sr_repl = np.array([35.5, 49.5])
-    sr_ctrl = np.array([5.6, 2.6])
+    sr_repl, sr_ctrl = load_success_rates()
 
     fig, axes = plt.subplots(1, 2, figsize=(width_mm * MM, height_mm * MM))
     modes = ["Major", "Minor"]
