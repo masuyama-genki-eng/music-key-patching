@@ -2153,3 +2153,24 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/public_pc_control/music-small-800k/pc_fit.json`
 - note: lambda=0.1; overlap 0.1195 vs null 0.0313; ranks {'V': 24, 'V_pc24': 22, 'V_res': 24}
 
+## 2026-09-18T00:29:12+09:00 — CONFIRMATORY held-out sweep R-Aug_s0 L4
+- git: `595b7233d126431a230a036fa781331274f635e9`
+- config_hash: `6965a835f731322afffd53a4b7b21f6e03bfb3630611789ec7768b45f872bbd1`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0/parts/confirmatory_L4_t0.parquet`, `results/confirmatory/R-Aug_s0/verdict_t0.json`
+- note: edit: guarded=0.355 sig=12/12
+
+## 2026-09-18T00:29:20+09:00 — CONFIRMATORY held-out sweep R-Aug_s0_minor L4
+- git: `595b7233d126431a230a036fa781331274f635e9+DIRTY`
+- config_hash: `669a3029938e8f99deae34d019bdcbf2d113ec55f6944d95f6b45ecf16dc3544`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s0_minor/parts/confirmatory_L4_t0.parquet`, `results/confirmatory/R-Aug_s0_minor/verdict_t0.json`
+- note: edit: guarded=0.495 sig=12/12
+
+## 2026-09-18T00:29:31+09:00 — T2 ceiling: KS on the unedited continuations
+- git: `595b7233d126431a230a036fa781331274f635e9+DIRTY`
+- config_hash: `dd32854ba850b63edc48432af361b94294d6fa579d20b18833049f2b7a614799`
+- seeds: []
+- artifacts: `results/ceiling.json`, `results/ceiling.md`
+- note: major: stays=0.580 chance=0.0328; minor: stays=0.840 chance=0.0000
+
