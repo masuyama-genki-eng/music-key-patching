@@ -32,7 +32,7 @@ import torch.nn.functional as F
 
 from src.analysis.stats import holm_correct, wilcoxon_rank_biserial
 from src.intervene import sweep as SW
-from src.intervene.subspaces import mu_targets_from_means, v_probe
+from src.intervene.subspaces import mu_targets_from_means, v_probe, v_probe_centered
 from src.probing.extract import load_model
 from src.tokenizer.vocab import VOCAB
 from src.utils.ledger import append_entry, snapshot
@@ -75,6 +75,11 @@ def main() -> None:
     ap.add_argument("--layer", type=int, default=4)
     ap.add_argument("--n-prompts", type=int, default=100)
     ap.add_argument("--no-ledger", action="store_true")
+    ap.add_argument("--tag", default="",
+                    help="suffix for this run's artifacts (revision 2026-09-17), so a "
+                         "reproduction cannot overwrite the ledgered next_pitch.json")
+    ap.add_argument("--basis", choices=["rank24", "rank23"], default="rank24",
+                    help="rank23 = V without the softmax-invariant direction (T4)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -93,9 +98,11 @@ def main() -> None:
         [t + 12 for t in MAJOR_TARGETS]
     pw = np.load(Path(args.probing_dir) / "probe_weights.npz")
     cm = np.load(Path(args.probing_dir) / "class_means.npz")
-    V = v_probe(pw[f"layer_{args.layer}"], rank=24)
+    V = (v_probe(pw[f"layer_{args.layer}"], rank=24) if args.basis == "rank24"
+         else v_probe_centered(pw[f"layer_{args.layer}"], rank=23))
     mus = mu_targets_from_means(cm[f"layer_{args.layer}"])
     K1 = SW.k1_basis(V, confirm.GEN_SEED + 31 * args.layer)   # same frozen basis
+    log.info("basis %s: V is %s", args.basis, V.shape)
     masks = {k: diatonic_mask(k) for k in range(24)}   # both modes
 
     def pitch_probs(prompt, editor):
@@ -126,7 +133,7 @@ def main() -> None:
             log.info("%d/%d prompts", pi + 1, len(prompts))
     df = pd.DataFrame(rows)
     df["identity"] = df["target_key"] == df["src_key"]
-    df.to_parquet(outdir / f"next_pitch_L{args.layer}.parquet")
+    df.to_parquet(outdir / f"next_pitch_L{args.layer}{args.tag}.parquet")
 
     # frozen primary statistic: D(cond) = delta_key(cond) - delta_key(clean)
     piv = df.pivot_table(index=["prompt_idx", "target_key", "src_key", "identity"],
@@ -150,6 +157,7 @@ def main() -> None:
     nip = pv[~pv["identity"]]
     out = {"freeze": "docs/CONFIRMATORY_FREEZE.md @ 0d621e4", "model": name,
            "layer": args.layer, "prompt_rows": [rows_used[0], rows_used[-1]],
+           "basis": args.basis, "rank": int(V.shape[1]),
            "per_target": recs,
            "n_sig_holm": sum(1 for r in recs if r["p_holm"] < .05),
            "pooled": {
@@ -159,8 +167,8 @@ def main() -> None:
                "mean_dP_target_k1": float((nip["k1"] - nip["clean"]).mean()),
                "mean_p_target_clean": float(nip["clean"].mean()),
            }}
-    (outdir / "next_pitch.json").write_text(json.dumps(out, indent=2, default=float))
-    for f in (f"next_pitch_L{args.layer}.parquet", "next_pitch.json"):
+    (outdir / f"next_pitch{args.tag}.json").write_text(json.dumps(out, indent=2, default=float))
+    for f in (f"next_pitch_L{args.layer}{args.tag}.parquet", f"next_pitch{args.tag}.json"):
         snapshot(outdir / f, out | {"metric": "frozen"}, seeds=[confirm.GEN_SEED])
     log.info("next-pitch: D_edit %.4f vs D_k1 %.4f | %d/12 Holm-significant",
              out["pooled"]["mean_D_edit"], out["pooled"]["mean_D_k1"],
@@ -169,8 +177,8 @@ def main() -> None:
         append_entry(stage=f"CONFIRMATORY next-pitch {name} L{args.layer}",
                      config={"freeze": out["freeze"]}, seeds=[confirm.GEN_SEED],
                      artifacts=[str((outdir / f).resolve().relative_to(REPO)) for f in
-                                (f"next_pitch_L{args.layer}.parquet",
-                                 "next_pitch.json")],
+                                (f"next_pitch_L{args.layer}{args.tag}.parquet",
+                                 f"next_pitch{args.tag}.json")],
                      note=f"D_edit={out['pooled']['mean_D_edit']:.4f} vs "
                           f"D_k1={out['pooled']['mean_D_k1']:.4f}; "
                           f"{out['n_sig_holm']}/12 sig")
