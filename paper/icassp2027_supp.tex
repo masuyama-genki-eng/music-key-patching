@@ -594,6 +594,9 @@ compared within a corpus and not across.}
 \label{fig:supp-ceiling}
 \end{figure}
 
+% 【日本語訳】介入無しのとき推定器は何を返すか（改稿 T2）: 最終テストの無介入継続に KS を掛けると、
+% プロンプト調に一致する率は長調 0.580・短調 0.840、同モードの他調のいずれか（1 調あたり）は
+% 0.033・0.000 で、これが介入無しの偶然水準。artifact results/ceiling.json。
 \textbf{What the estimator says when nothing is written.} The unedited continuations
 of the final test, the same clean twins the likelihood criterion compares against, give
 the two reference points a success rate lacks on its own (T2 of the revision). The
@@ -1257,6 +1260,9 @@ described above is a property of the major keys. And $V$ captures only $5.2\%$ o
 energy of $\mu_\kappa$ on average: it is a thin slice of the class means, not a summary of
 them.
 
+% 【日本語訳】softmax 不変方向（rank 23）（改稿 T4）: W の行空間には確率を変えない 1 方向 v がある。
+% 行を中心化した W の行空間 = span(W) ∩ v⊥ で置換し直すと長調 0.3682（rank 24: 0.3555）、
+% 短調 0.4609（0.4945）、12/12。区間は重なり、δD も不変。artifact results/rank23.json。
 \textbf{The softmax-invariant direction (rank $23$).} A $24$-class softmax is unchanged
 when the same vector is added to every class weight, so the row space of $W_\ell$ holds
 one direction, $v = W_\ell^{\top}(W_\ell W_\ell^{\top})^{-1}\mathbf{1}$, along which the
@@ -1377,6 +1383,10 @@ pitch-class history that the network computes is not ruled out, and $V$ itself c
 a probe trained on pooled positions, so a position-specific subspace remains untested as
 in \S\ref{sec:position}.
 
+% 【日本語訳】公開モデルでの同じ対照（改稿 T3）: 220 曲で回帰を当て直し（窓 7・222 音、λ は search 20 曲で選択）、
+% rank 22 の音高クラス部分空間を通して final 60 曲に書き込む。REMI+ は不活性（0.075 対 K1 0.071）、
+% AMT-12L 0.178（5/12）、MMT 0.319（12/12）。いずれも V を通した置換（0.506 / 0.694 / 0.644）を大きく下回るが、
+% 「不活性」と言えるのは自作モデルと REMI+ だけ。artifact results/public_pc_control.json。
 \textbf{The same control on public models.} The regression was refitted on each Bach
 checkpoint's activations at its deduplicated layer (\S\ref{sec:dedup}), on the $220$
 estimation chorales with $\lambda$ chosen on the $20$ search chorales, using the
@@ -1912,6 +1922,10 @@ for calling the effect independent of the training run. It is not independent, a
 run reported in the main text is the highest of the three; the three-seed mean is
 $0.2555$.
 
+% 【日本語訳】モデルごとに層を再選択（改稿 T1）: 表 S13 は層 4 を持ち越した transfer 条件。改稿では 6 モデル全部に
+% 主モデルと同じ手順（探索 100 プロンプトの層走査 → edit margin 最大の層 → 凍結最終テスト両モード + 次ピッチ）を
+% 適用した。長調 0.279 ± 0.042（0.231–0.355）、短調 0.366 ± 0.076（0.280–0.495）、全 12 セル 12/12。
+% 主モデルは両モードで最大。R-Aug_s1 長調のみ K2 ゲートが許容付き通過。artifact results/seed_robustness.json。
 \textbf{Re-selecting the layer per model (revision T1).} Table~\ref{tab:supp-seeds} is a
 \emph{transfer} condition: layer~$4$ was carried over from the main model. The revision
 instead gave every model the main model's full procedure, a search-stage layer scan on
