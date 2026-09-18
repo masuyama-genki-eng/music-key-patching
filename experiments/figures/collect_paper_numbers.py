@@ -920,6 +920,76 @@ def main() -> None:
             "major_target_mass_clean": r4(pj["mean_p_target_clean"]) if pj else "MISSING",
         }
 
+    # ---- revision 2026-09-17 (T1-T4, dedup Bach): every number the revised
+    # manuscript quotes, from the artifacts the revision produced
+    rev = {}
+    sr = load("results/seed_robustness.json")
+    if sr and sr["n_complete_major"] == 6 and sr["n_complete_minor"] == 6:
+        for mode in ("major", "minor"):
+            vals = [m[mode]["sr_replace"] for m in sr["models"]]
+            kn = [m[mode].get("sr_k1_norm", 0.0) for m in sr["models"]]
+            k1 = [m[mode]["sr_k1"] for m in sr["models"]]
+            dd = [m[f"{mode}_next_pitch"]["deltaD_edit"] for m in sr["models"]]
+            a = sr["aggregate"][f"{mode}_sr_replace"]
+            rev[f"t1_{mode}"] = {"sr_min": r3(min(vals)), "sr_max": r3(max(vals)),
+                                 "sr_mean": r3(a["mean"]), "sr_sd": r3(a["sd"]),
+                                 "control_max": r3(max(kn + k1)), "k1_norm_max": r3(max(kn)),
+                                 "deltaD_min": r3(min(dd)), "deltaD_max": r3(max(dd)),
+                                 "deltaD_mean": r3(sr["aggregate"][f"{mode}_deltaD_edit"]["mean"]),
+                                 "per_model": {m["model"]: {"layer": m["selected_layer"],
+                                                            "sr": r4(m[mode]["sr_replace"]),
+                                                            "k1": r4(m[mode]["sr_k1"]),
+                                                            "k1_norm": r4(m[mode].get("sr_k1_norm", float("nan"))),
+                                                            "deltaD": r4(m[f"{mode}_next_pitch"]["deltaD_edit"]),
+                                                            "deltaD_k1": r4(m[f"{mode}_next_pitch"]["deltaD_k1"])}
+                                               for m in sr["models"]}}
+            for reg in ("R-Aug", "R-NoAug"):
+                a2 = sr["aggregate"].get(f"{mode}_sr_replace_{reg}")
+                if a2: rev[f"t1_{mode}"][f"sr_mean_{reg}"] = r3(a2["mean"]); rev[f"t1_{mode}"][f"sr_sd_{reg}"] = r3(a2["sd"])
+    ce = load("results/ceiling.json")
+    if ce:
+        for mode, r in ce["modes"].items():
+            rev[f"t2_{mode}"] = {"stays_in_prompt_key": r3(r["a_est_equals_prompt_key"]),
+                                 "chance_other_key": r3(r["b_mean_rate_other_same_mode_key"]),
+                                 "n": r["n_clean"]}
+    rk = load("results/rank23.json")
+    if rk:
+        for mode, r in rk["modes"].items():
+            rev[f"t4_{mode}"] = {b: {"sr": r4(v["sr_replace"]), "sr3": r3(v["sr_replace"]), "k1": r4(v["sr_k1"]),
+                                     "k1_norm": r4(v["sr_k1_norm"]), "deltaD": r4(v["deltaD_edit"]),
+                                     "deltaD_k1": r4(v["deltaD_k1"]), "guard": r3(v["guard_pass"]),
+                                     "bca": [r3(v["bca_diff_vs_k1"][0]), r3(v["bca_diff_vs_k1"][1])]}
+                                 for b, v in r.items()}
+    dd = load("results/public_dedup_bach/summary.json")
+    if dd:
+        for m, r in dd["models"].items():
+            if isinstance(r.get("sr_replace"), float):
+                rev[f"dedup_{m}"] = {"layer": r["layer"], "sr": r3(r["sr_replace"]), "sr_raw": r4(r["sr_replace_raw"]),
+                                     "k1": r3(r["sr_k1"]), "k1_norm": r3(r["sr_k1_norm"]), "guard_pass": r3(r["guard_pass_replace"]),
+                                     "deltaD": f"{r['deltaD_replace']:+.3f}", "deltaD_k1": f"{r['deltaD_k1']:+.3f}",
+                                     "n_sig": r["n_sig_vs_k1"], "pooled80_raw_edit": r3(r["pooled80_raw_edit_at_layer"]),
+                                     "pooled80_raw_k1_norm": r3(r["pooled80_raw_k1_norm_at_layer"])}
+    pc = load("results/public_pc_control.json")
+    if pc:
+        for m, r in pc["models"].items():
+            if isinstance(r.get("pc24"), dict):
+                rev[f"pc_{m}"] = {"sr_pc": r3(r["pc24"]["sr"]), "k1": r3(r["pc24"]["sr_k1"]), "k1_norm": r3(r["pc24"]["sr_k1_norm"]),
+                                  "n_sig": r["pc24"]["n_sig_vs_k1"], "lambda": r["lambda"],
+                                  "r2_7": f"{r['r2_search']['7']:.2f}", "r2_222": f"{r['r2_search']['222']:.2f}",
+                                  "rank": r["ranks"]["V_pc24"], "overlap": r3(r["overlap_V_pc"]), "overlap_random": r3(r["overlap_V_random"])}
+                if isinstance(r.get("res"), dict):
+                    rev[f"pc_{m}"]["sr_res"] = r3(r["res"]["sr"]); rev[f"pc_{m}"]["res_k1"] = r3(r["res"]["sr_k1"])
+    # probe margin at the dedup layers, from the balanced 220-estimation layer-wise CSV
+    csvp = REPO / "results/layerwise_public_bach_pooled80_dedup_all.csv"
+    if csvp.exists() and dd:
+        dfc = pd.read_csv(csvp)
+        for m, r in dd["models"].items():
+            row = dfc[(dfc.model == m) & (dfc.layer == r["layer"])]
+            if len(row):
+                rev.setdefault(f"dedup_{m}", {})["M_probe"] = f"{float(row.iloc[0].M_probe):+.3f}"
+    if rev:
+        re_out["revision_2026_09"] = rev
+
     if re_out:
         out["reanalysis"] = re_out
 

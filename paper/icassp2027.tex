@@ -106,13 +106,9 @@ Clarifying this link is important for interpreting the mechanisms behind music g
 % Activation steeringは，目標属性に対応する方向を内部活性に加えることで生成結果を変化させる．
 % 音楽生成モデルについても，activation steeringを用いて音楽属性を制御する研究が行われている．
 % このように，内部活性から音楽情報を読み取る方法と，内部活性を変更して生成結果を制御する方法の両方が研究されている．
-Linear probing is used to analyze internal representations, and activation steering is used to control model outputs.
-At each layer, a Transformer computes a vector during generation, which we call an internal activation.
-A linear probe learns a classifier that predicts an attribute from an internal activation, and its performance shows how easily information about the attribute can be read from the activation~\cite{alain2017probes,belinkov2022probing}.
-Studies on music generation models have also used linear probing to analyze musical attributes~\cite{syntheory2024,ma2024root,mimidi2026}.
-Activation steering changes an internal activation by adding a direction associated with a target attribute~\cite{li2023iti,zou2023repe}.
-Studies on music generation models have also used activation steering to control musical attributes~\cite{smitin2024,musicrfm2026,singh2026discovering,mimidi2026}.
-Prior work has therefore studied both reading musical information from internal activations and controlling generated music by modifying those activations.
+Two tools connect internal activations, the vectors a Transformer computes at each layer during generation, to musical attributes.
+A linear probe predicts an attribute from an activation, and its accuracy shows how easily the attribute can be read out~\cite{alain2017probes,belinkov2022probing}; music studies have probed musical attributes this way~\cite{syntheory2024,ma2024root,mimidi2026}.
+Activation steering adds a direction associated with a target attribute to the activation to control the output~\cite{li2023iti,zou2023repe}, and has been applied to musical attributes as well~\cite{smitin2024,musicrfm2026,singh2026discovering,mimidi2026}.
 
 % 問題
 % しかし，線形プロービングとactivation steeringだけでは，内部の属性情報が実際の生成に使われているかを十分に検証できない．
@@ -379,8 +375,8 @@ For the synthetic-model experiments, the intervention layer is selected on promp
 The final test uses $100$ major-key and $100$ minor-key prompts held out from probing.
 For each prompt, we intervene toward the $11$ other keys of the same mode, giving $1{,}100$ continuations per mode.
 Each continuation is sampled once with temperature 1.0 and top-$p$ 0.95 for 384 tokens, and the KS estimator is applied once to the pitch-class histogram of the whole continuation, truncated at the end-of-piece token or after 16 bars.
-For the public-model Bach evaluation in Fig.~\ref{fig:public-results}, probes and target-key means are estimated from $220$ chorales, and the other $80$ chorales are used for evaluation.
-The additional public-model continuation cells in Table~\ref{tab:public-extra} use $20$ search prompts for layer selection, $60$ held-out final prompts, and $12$ major target keys.
+For the deduplicated public-model Bach evaluation (Table~\ref{tab:public-extra}a), probes and target-key means are estimated from $220$ chorales; of the remaining $80$, the first $20$ by chorale number select the layer and the other $60$ are the final prompts, with $12$ major target keys.
+The additional cells in Table~\ref{tab:public-extra}b,c use $20$ search and $60$ held-out prompts, with target means estimated from all pieces of the corpus.
 For all continuation tests, we group continuations by target key and compare target-key replacement with each comparison condition using a one-sided Wilcoxon signed-rank test on paired prompts, with Holm correction over the $12$ target keys applied separately to each comparison~\cite{holm1979}.
 
 % IV. 結果
@@ -420,6 +416,9 @@ Replacement reaches $35.5\%$ in major and $49.5\%$ in minor, compared with $5.6\
 It substantially exceeds the random-subspace replacement in both modes and shows a significant improvement for all $12$ target keys.
 The same pattern appears in the \emph{pitch-in-scale rate}, and the replacement stays above every comparison condition at each threshold from $0.2$ to no threshold at all.
 The effect therefore does not depend on the key estimator or on the particular likelihood threshold.
+Across all six trained models, each at the layer selected on its own search prompts, replacement reaches $0.231$--$0.355$ in major and $0.280$--$0.495$ in minor (means $0.279$ and $0.366$) against at most $0.056$ for the matched control, significant for all $12$ keys in every model; the main model is the strongest run.
+Without intervention, the estimator returns the prompt's key for $0.580$ of major and $0.840$ of minor continuations and a given other key for $0.033$ and $0.000$.
+Removing from $V_\ell$ the one direction that leaves the probe softmax unchanged (rank $23$) gives $0.368$ and $0.461$.
 
 % この効果は，直近の音高クラス頻度の線形な符号化によるものでもない．
 % 同じ目標値を，直近の音高クラスヒストグラムを予測するように当てはめた部分空間を通して書き込むと，成功率はmajorで0.027，minorで0.003にとどまり，同じ次元のランダム対照と区別できない．
@@ -471,49 +470,47 @@ Additional token-position controls indicate that the effective positions are tho
 % ただしAMT-12Lではサンプリング前の変化は小さく，次音高分布への即時的な変化は弱い一方で，反復介入は継続生成全体に影響する．
 % 全層走査では効果は一様でなく，AMT-12LとREMI+ではedit marginのピークとprobe marginのピークが一致しない．
 % PopおよびAMTのモデルサイズ比較に関する追加の継続生成結果はTable~\ref{tab:public-extra}にまとめる．
-To test whether the same pattern appears in public models trained on real music, we repeat the two evaluations from Fig.~\ref{fig:main-results} on the deduplicated Bach evaluation.
-Replacement yields higher continuation success rates than the dimension-matched random-subspace replacement in AMT-12L, REMI+, and MMT (Fig.~\ref{fig:public-results}, left).
-It also shifts the next-pitch log ratio before sampling in the same evaluation (Fig.~\ref{fig:public-results}, right).
+To test whether the same pattern appears in public models trained on real music, we repeat the two evaluations from Fig.~\ref{fig:main-results} on the deduplicated Bach evaluation (Table~\ref{tab:public-extra}a).
+At the layer selected on the search chorales, replacement exceeds the dimension-matched random-subspace replacement on all $12$ target keys in AMT-12L, MMT, and REMI+, and shifts the next-pitch log ratio before sampling on the same $60$ prompts.
 The before-sampling shift is small in AMT-12L, indicating that the immediate next-pitch distribution changes weakly even though repeated intervention still affects the generated continuation.
+Writing the same target through a subspace fitted to the recent pitch-class histogram ($\mathrm{SR}_{\mathrm{pc}}$) reaches $0.075$ in REMI+ and $0.178$ in AMT-12L but $0.319$ in MMT, so the pitch-class control that is inert in our model is not inert in every public model, although it stays well below replacement through $V_\ell$ in all three.
 The associated all-layer scans are non-uniform.
 In AMT-12L, the edit-margin peak is layer~$8$ while the probe-margin peak is layer~$9$, and in REMI+ they peak at layers~$5$ and $1$.
 These results support the same conclusion as Fig.~\ref{fig:layers}.
 Probe performance and intervention effects should be measured separately.
-Additional continuation cells for Pop and AMT model sizes are summarized in Table~\ref{tab:public-extra}.
+Additional continuation cells for AMT model sizes and Pop are summarized in Table~\ref{tab:public-extra}b,c.
 
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\columnwidth]{fig4_public_results_bars.pdf}
-% 公開モデルのBach評価で，継続生成とサンプリング前予測の二つの結果を示す．
-\caption{Public-model Bach evaluation.
-The left panel shows continuation success rate (SR) at each model's peak edit-margin layer, and the right panel shows before-sampling next-pitch shift $\delta D$.}
-  \label{fig:public-results}
-\end{figure}
 
 \begin{table}[!ht]
 \centering
-\scriptsize
-\setlength{\tabcolsep}{2.4pt}
-% 公開モデルの追加の継続生成条件を示す．
-% $\mathrm{SR}_{\mathrm{random}}$は，対応するrandom-subspace replacementのsuccess rateである．
-% Keysは，target-key replacementがrandom-subspace replacementを有意に上回った目標調の数を表す．
-\caption{Additional public-model continuation cells.
-$\mathrm{SR}_{\mathrm{random}}$ is the success rate of the corresponding random-subspace replacement.
-Keys counts target keys where target-key replacement significantly exceeds the random-subspace replacement.}
+\small
+\setlength{\tabcolsep}{2.2pt}
+% (a) 重複除去した Bach 評価：推定 220 曲，層選択 20 曲，最終 60 曲．尤度基準付き SR を次元一致ランダム対照と比較し，
+% 同じ 60 曲でサンプリング前の変化 δD と，音高クラス頻度部分空間を通した書き込み SR_pc を示す．
+% (b)(c) 20 探索・60 保持プロンプトの追加セル．Keys は replacement が random を有意に上回った目標調の数．
+\caption{Public-model continuation cells.
+(a) Deduplicated Bach evaluation: $220$ estimation chorales, layer selected on $20$ search chorales, $60$ final prompts, with $\delta D$ on the same prompts and $\mathrm{SR}_{\mathrm{pc}}$ for writing through a pitch-class-frequency subspace.
+(b, c) Additional cells with $20$ search and $60$ held-out prompts.
+$\mathrm{SR}_{\mathrm{rand}}$ is the dimension-matched random-subspace replacement, and Keys counts target keys where replacement significantly exceeds it.}
 \label{tab:public-extra}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}llrrrr@{}}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
 \toprule
-Setting & Model & $M_{\mathrm{probe}}$ & $\mathrm{SR}_{\mathrm{replace}}$ & $\mathrm{SR}_{\mathrm{random}}$ & Keys\\
+Model & $M_{\mathrm{probe}}$ & SR & $\mathrm{SR}_{\mathrm{rand}}$ & $\delta D$ & $\mathrm{SR}_{\mathrm{pc}}$ & Keys\\
 \midrule
-\multicolumn{6}{@{}l}{\textit{Bach AMT size comparison}}\\
-Bach & AMT-12L & $+0.196$ & $0.479$ & $0.061$ & $12/12$\\
-Bach & AMT-24L & $+0.213$ & $0.557$ & $0.057$ & $12/12$\\
-Bach & AMT-36L & $+0.203$ & $0.540$ & $0.056$ & $12/12$\\
+\multicolumn{7}{@{}l}{\textit{(a) Bach, deduplicated}}\\
+AMT-12L & $+0.145$ & $0.506$ & $0.058$ & $+0.030$ & $0.178$ & $12/12$\\
+MMT     & $+0.083$ & $0.694$ & $0.069$ & $+1.048$ & $0.319$ & $12/12$\\
+REMI+   & $+0.115$ & $0.644$ & $0.072$ & $+0.742$ & $0.075$ & $12/12$\\
 \addlinespace[2pt]
-\multicolumn{6}{@{}l}{\textit{Pop model comparison}}\\
-Pop & AMT-12L & $+0.132$ & $0.212$ & $0.056$ & $9/12$\\
-Pop & MMT & $-0.060$ & $0.360$ & $0.064$ & $12/12$\\
-Pop & REMI+ & $-0.022$ & $0.393$ & $0.061$ & $12/12$\\
+\multicolumn{7}{@{}l}{\textit{(b) Bach, AMT size comparison}}\\
+AMT-12L & $+0.196$ & $0.479$ & $0.061$ & --- & --- & $12/12$\\
+AMT-24L & $+0.213$ & $0.557$ & $0.057$ & --- & --- & $12/12$\\
+AMT-36L & $+0.203$ & $0.540$ & $0.056$ & --- & --- & $12/12$\\
+\addlinespace[2pt]
+\multicolumn{7}{@{}l}{\textit{(c) Pop}}\\
+AMT-12L & $+0.132$ & $0.212$ & $0.056$ & --- & --- & $9/12$\\
+MMT     & $-0.060$ & $0.360$ & $0.064$ & --- & --- & $12/12$\\
+REMI+   & $-0.022$ & $0.393$ & $0.061$ & --- & --- & $12/12$\\
 \bottomrule
 \end{tabular*}
 \end{table}
@@ -528,7 +525,6 @@ Pop & REMI+ & $-0.022$ & $0.393$ & $0.061$ & $12/12$\\
 % $V_\ell$はプローブで定義された部分空間なので，すべての調情報を含むとは限らず，調以外の情報も含みうる．また$W_\ell$の行空間にはsoftmax予測に影響しない1方向が含まれる．この方向を除いた場合の生成結果は未検証である．
 Our conclusions are limited to the tested models, data, and interventions, and do not establish human-like understanding of key.
 The synthetic generator uses key as a latent variable, which may make key representations easier to learn than in real music.
-The main run is the run with the highest success rate among the three augmented seeds.
 Replacement shows that the identified component affects generation, but not that it is necessary for tonal prediction.
 The layer scans are exploratory, without corrected tests of between-layer differences, and both measures peak at the same layer in our model.
 The before-sampling evaluation covers only three Bach public models.
@@ -536,8 +532,6 @@ The other public-model cells are continuation-only.
 Because key-estimation accuracy and continuation length differ across corpora and tokenizers, each public model should be interpreted relative to its own matched random-subspace replacement.
 The reference-model likelihood criterion is not a perceptual-quality measure, and we did not run a listening test.
 Finally, as a probe-defined subspace, $V_\ell$ need not contain all key information in $h_\ell(t)$ and may include information unrelated to key.
-The row space of $W_\ell$ also contains one direction that leaves the probe softmax unchanged.
-The edit component along this direction was 9--24\% as large as the component along the other 23 directions, and we have not tested whether removing it changes generation.
 
 \section{Conclusion}
 % 本研究では，音楽Transformerが調を表現し，生成中にそれを使っているかを検証した．
