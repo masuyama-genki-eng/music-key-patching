@@ -2426,3 +2426,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/seed_robustness.json`, `results/seed_robustness.md`
 - note: complete: major 6/6, minor 6/6
 
+## 2026-09-18T20:31:28+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `d6b0fdfaca45cdf698a10e91d8db837716f1cacb`
+- config_hash: `ac64c3b674d1a3ba95427784defe0cecc2df4b93edb93c655fe7bf18b41aa77f`
+- seeds: [0]
+- artifacts: `results/public_pc_control/music-small-800k/sweep_pc24/stage2_eval.json`
+- note: L8 chosen on disjoint prompts; guarded TKR 0.178 vs k1 0.067 on 60 held-out prompts; DR-H3 supported=False (5/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T20:58:31+09:00 — M-WILD intervention stage 2 (mmt-lmd-ape)
+- git: `d6b0fdfaca45cdf698a10e91d8db837716f1cacb+DIRTY`
+- config_hash: `1b74a90f2b8ef4a30fa8f2678febf023ed9b89e8f94990e1cb75b94296e26fc5`
+- seeds: [0]
+- artifacts: `results/public_pc_control/mmt-lmd-ape/sweep_pc24/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.319 vs k1 0.056 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T21:18:45+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `d6b0fdfaca45cdf698a10e91d8db837716f1cacb+DIRTY`
+- config_hash: `49bc7cf8e8b63e9adbb23bd320e075b4e0baba27d271836c31acfae8e185da9a`
+- seeds: [0]
+- artifacts: `results/public_pc_control/remi-lmd-remi/sweep_pc24/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.075 vs k1 0.071 on 60 held-out prompts; DR-H3 supported=False (0/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T21:19:33+09:00 — T3 public pitch-class control summary
+- git: `d6b0fdfaca45cdf698a10e91d8db837716f1cacb+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: []
+- artifacts: `results/public_pc_control.json`, `results/public_pc_control.md`
+- note: see md
+
