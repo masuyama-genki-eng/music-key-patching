@@ -2244,3 +2244,185 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/public_dedup_bach/summary.json`, `results/public_dedup_bach/summary.md`
 - note: AMT-12L: SR 0.5055555555555555; MMT: SR 0.6944444444444444; REMI+: SR 0.6444444444444445
 
+## 2026-09-18T06:06:52+09:00 — P4 sweep R-Aug_s2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153`
+- config_hash: `87d0f7fdf18a13cad97a9745743f15fc10ed8ad395086b7a2732cc26c0184145`
+- seeds: [0]
+- artifacts: `results/sweep/R-Aug_s2/parts`
+- note: 192 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-09-18T08:56:37+09:00 — P4 sweep R-NoAug_s0
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `ea2075bb67a5fa2d2aba2f3378c8b774aa5d2085a40fdebc13168126f59047c7`
+- seeds: [0]
+- artifacts: `results/sweep/R-NoAug_s0/parts`
+- note: 192 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-09-18T11:46:25+09:00 — P4 sweep R-NoAug_s1
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `cc7904fd89cb8250722ba0ecd5e7e9418c62d7fbd4d1fb0b348e0ea86f26cf24`
+- seeds: [0]
+- artifacts: `results/sweep/R-NoAug_s1/parts`
+- note: 192 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-09-18T14:35:57+09:00 — P4 sweep R-NoAug_s2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `f362315ca148cd5bd3dd6f4bd7e0edb9dd0ac70d2188f1e2ebdcfba50e6f682b`
+- seeds: [0]
+- artifacts: `results/sweep/R-NoAug_s2/parts`
+- note: 192 new condition parts; K2 gate=passed; delta_ppl=0.6127
+
+## 2026-09-18T15:09:25+09:00 — CONFIRMATORY held-out sweep R-Aug_s1_minor L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `a9bd5c5efd3c97c85b5fbd6edc894bcb4378f083b667e4a7af86b31d2c846854`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s1_minor/parts/confirmatory_L2_t1.parquet`, `results/confirmatory/R-Aug_s1_minor/verdict_t1.json`
+- note: edit: guarded=0.392 sig=12/12
+
+## 2026-09-18T15:09:31+09:00 — CONFIRMATORY next-pitch R-Aug_s1 L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s1/next_pitch_L2_t1.parquet`, `results/confirmatory/R-Aug_s1/next_pitch_t1.json`
+- note: D_edit=0.5183 vs D_k1=0.0274; 12/12 sig
+
+## 2026-09-18T15:09:37+09:00 — CONFIRMATORY next-pitch R-Aug_s1_minor L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s1_minor/next_pitch_L2_t1.parquet`, `results/confirmatory/R-Aug_s1_minor/next_pitch_t1.json`
+- note: D_edit=0.2300 vs D_k1=0.0105; 12/12 sig
+
+## 2026-09-18T15:43:05+09:00 — CONFIRMATORY held-out sweep R-Aug_s2 L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `5fb32f1e49a8738f5fd7aaa62f0673dbb793b1f23e21a27bd8bcb92a66fcb158`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s2/parts/confirmatory_L2_t1.parquet`, `results/confirmatory/R-Aug_s2/verdict_t1.json`
+- note: edit: guarded=0.231 sig=12/12
+
+## 2026-09-18T15:43:11+09:00 — CONFIRMATORY next-pitch R-Aug_s2 L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s2/next_pitch_L2_t1.parquet`, `results/confirmatory/R-Aug_s2/next_pitch_t1.json`
+- note: D_edit=0.3704 vs D_k1=0.0103; 12/12 sig
+
+## 2026-09-18T16:16:38+09:00 — CONFIRMATORY held-out sweep R-Aug_s2_minor L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `3c88d43e88bd8c625e2ff4e207d1d23d0a950e909dd7431721547440470e267a`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s2_minor/parts/confirmatory_L2_t1.parquet`, `results/confirmatory/R-Aug_s2_minor/verdict_t1.json`
+- note: edit: guarded=0.301 sig=12/12
+
+## 2026-09-18T16:16:44+09:00 — CONFIRMATORY next-pitch R-Aug_s2_minor L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-Aug_s2_minor/next_pitch_L2_t1.parquet`, `results/confirmatory/R-Aug_s2_minor/next_pitch_t1.json`
+- note: D_edit=0.1728 vs D_k1=0.0084; 12/12 sig
+
+## 2026-09-18T16:50:10+09:00 — CONFIRMATORY held-out sweep R-NoAug_s0 L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `9b6df53937353713f49d14da4592c279551bde303badaba5fa58636dcd104316`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s0/parts/confirmatory_L4_t1.parquet`, `results/confirmatory/R-NoAug_s0/verdict_t1.json`
+- note: edit: guarded=0.263 sig=12/12
+
+## 2026-09-18T16:50:16+09:00 — CONFIRMATORY next-pitch R-NoAug_s0 L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s0/next_pitch_L4_t1.parquet`, `results/confirmatory/R-NoAug_s0/next_pitch_t1.json`
+- note: D_edit=0.6452 vs D_k1=0.0488; 12/12 sig
+
+## 2026-09-18T17:23:41+09:00 — CONFIRMATORY held-out sweep R-NoAug_s0_minor L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `5c258817639da22b23b49e19b0de451dc994bbbfd9a6d7dec41b8a0c172e1bb1`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s0_minor/parts/confirmatory_L4_t1.parquet`, `results/confirmatory/R-NoAug_s0_minor/verdict_t1.json`
+- note: edit: guarded=0.367 sig=12/12
+
+## 2026-09-18T17:23:47+09:00 — CONFIRMATORY next-pitch R-NoAug_s0_minor L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s0_minor/next_pitch_L4_t1.parquet`, `results/confirmatory/R-NoAug_s0_minor/next_pitch_t1.json`
+- note: D_edit=0.2920 vs D_k1=0.0272; 12/12 sig
+
+## 2026-09-18T17:57:06+09:00 — CONFIRMATORY held-out sweep R-NoAug_s1 L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `eb6478235284e7cc17d7a24d471fdc6c0547c208645298b4e846665ad1e20c33`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s1/parts/confirmatory_L4_t1.parquet`, `results/confirmatory/R-NoAug_s1/verdict_t1.json`
+- note: edit: guarded=0.264 sig=12/12
+
+## 2026-09-18T17:57:12+09:00 — CONFIRMATORY next-pitch R-NoAug_s1 L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s1/next_pitch_L4_t1.parquet`, `results/confirmatory/R-NoAug_s1/next_pitch_t1.json`
+- note: D_edit=0.5866 vs D_k1=0.0273; 12/12 sig
+
+## 2026-09-18T18:30:33+09:00 — CONFIRMATORY held-out sweep R-NoAug_s1_minor L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `7edcb7d1e1039370902ecadcfdc7371003c3162fa337e2266f57ba4320d1f416`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s1_minor/parts/confirmatory_L4_t1.parquet`, `results/confirmatory/R-NoAug_s1_minor/verdict_t1.json`
+- note: edit: guarded=0.280 sig=12/12
+
+## 2026-09-18T18:30:40+09:00 — CONFIRMATORY next-pitch R-NoAug_s1_minor L4
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s1_minor/next_pitch_L4_t1.parquet`, `results/confirmatory/R-NoAug_s1_minor/next_pitch_t1.json`
+- note: D_edit=0.2556 vs D_k1=0.0139; 12/12 sig
+
+## 2026-09-18T19:03:58+09:00 — CONFIRMATORY held-out sweep R-NoAug_s2 L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `3899a84cd14a07b1f0e8db543b7d1566e0b9d71ed9eed2b68df113b20f4b359f`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s2/parts/confirmatory_L2_t1.parquet`, `results/confirmatory/R-NoAug_s2/verdict_t1.json`
+- note: edit: guarded=0.270 sig=12/12
+
+## 2026-09-18T19:04:04+09:00 — CONFIRMATORY next-pitch R-NoAug_s2 L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s2/next_pitch_L2_t1.parquet`, `results/confirmatory/R-NoAug_s2/next_pitch_t1.json`
+- note: D_edit=0.4938 vs D_k1=0.0195; 12/12 sig
+
+## 2026-09-18T19:37:28+09:00 — CONFIRMATORY held-out sweep R-NoAug_s2_minor L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `1e0083619eb93474fc329addc4d2f8e69826d5edf61265e5d65ddd8cf428d58d`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s2_minor/parts/confirmatory_L2_t1.parquet`, `results/confirmatory/R-NoAug_s2_minor/verdict_t1.json`
+- note: edit: guarded=0.362 sig=12/12
+
+## 2026-09-18T19:37:34+09:00 — CONFIRMATORY next-pitch R-NoAug_s2_minor L2
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `2cdac39b6cf2a7ec32c6b29487c2963f3d9bb7be38f93e23244d8ec47bd48946`
+- seeds: [7]
+- artifacts: `results/confirmatory/R-NoAug_s2_minor/next_pitch_L2_t1.parquet`, `results/confirmatory/R-NoAug_s2_minor/next_pitch_t1.json`
+- note: D_edit=0.2386 vs D_k1=0.0089; 12/12 sig
+
+## 2026-09-18T19:37:37+09:00 — T3 public pitch-class subspace fit (mmt-lmd-ape, L5)
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `940b4bd725b5ad4e96eb512e70be54edf7f610ef682796608de9a09dd261a577`
+- seeds: [0]
+- artifacts: `results/public_pc_control/mmt-lmd-ape/pc_fit.json`
+- note: lambda=0.1; overlap 0.1422 vs null 0.0468; ranks {'V': 24, 'V_pc24': 22, 'V_res': 24}
+
+## 2026-09-18T19:37:40+09:00 — T3 public pitch-class subspace fit (remi-lmd-remi, L5)
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `0cfbd806cdf70e42194c7914be80fb7e6a62709cd81d6a4cd707122c2150170e`
+- seeds: [0]
+- artifacts: `results/public_pc_control/remi-lmd-remi/pc_fit.json`
+- note: lambda=0.01; overlap 0.0581 vs null 0.0466; ranks {'V': 24, 'V_pc24': 22, 'V_res': 24}
+
+## 2026-09-18T19:38:41+09:00 — T1 seed robustness aggregate
+- git: `ee90ac03e91b488e3b863430e842f9b0dad5c153+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: []
+- artifacts: `results/seed_robustness.json`, `results/seed_robustness.md`
+- note: complete: major 6/6, minor 6/6
+
