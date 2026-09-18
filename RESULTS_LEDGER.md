@@ -2454,3 +2454,31 @@ entries. Entries are appended by `src/utils/ledger.py::append_entry` or by hand.
 - artifacts: `results/public_pc_control.json`, `results/public_pc_control.md`
 - note: see md
 
+## 2026-09-18T22:12:32+09:00 — M-WILD intervention stage 2 (music-small-800k)
+- git: `496da5ca73a8436f38cc3f80fcd63e4040d21eb2`
+- config_hash: `ddb8b904a5817a4016750e83901e726432a52648272f99f8b4b79efa45732a55`
+- seeds: [0]
+- artifacts: `results/public_pc_control/music-small-800k/sweep_res/stage2_eval.json`
+- note: L8 chosen on disjoint prompts; guarded TKR 0.106 vs k1 0.058 on 60 held-out prompts; DR-H3 supported=False (1/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T22:39:02+09:00 — M-WILD intervention stage 2 (mmt-lmd-ape)
+- git: `496da5ca73a8436f38cc3f80fcd63e4040d21eb2+DIRTY`
+- config_hash: `0323c31bebdbae7997ee82fd81c571dc2149755f1804107c2c2481fcf562035f`
+- seeds: [0]
+- artifacts: `results/public_pc_control/mmt-lmd-ape/sweep_res/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.453 vs k1 0.069 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T22:59:13+09:00 — M-WILD intervention stage 2 (remi-lmd-remi)
+- git: `496da5ca73a8436f38cc3f80fcd63e4040d21eb2+DIRTY`
+- config_hash: `2bc185e15c94023164265b4cdcf9060f53f9cafebd2acb8d3633d73982031245`
+- seeds: [0]
+- artifacts: `results/public_pc_control/remi-lmd-remi/sweep_res/stage2_eval.json`
+- note: L5 chosen on disjoint prompts; guarded TKR 0.567 vs k1 0.072 on 60 held-out prompts; DR-H3 supported=True (12/12); guard ref stanford-crfm/music-medium-800k
+
+## 2026-09-18T22:59:30+09:00 — T3 public pitch-class control summary
+- git: `496da5ca73a8436f38cc3f80fcd63e4040d21eb2+DIRTY`
+- config_hash: `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`
+- seeds: []
+- artifacts: `results/public_pc_control.json`, `results/public_pc_control.md`
+- note: see md
+
