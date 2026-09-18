@@ -89,6 +89,19 @@ Is the key estimator a favourable choice?
 Does minor scoring higher make the result unstable?
  & \ref{sec:minor} & The estimator is better at minor. Against each mode's own
    ceiling the gap is $+0.015$, and one pitch-in-scale definition reverses.\\
+Does the effect survive on other training runs?
+ & \ref{sec:seeds} & All six models, each at its own selected layer, beat their
+   controls on $12/12$ keys; the rates span $0.231$--$0.355$ (major) and the main
+   run is the strongest.\\
+Are the public Bach cells selected and reported on the same prompts?
+ & \ref{sec:dedup} & They were; regenerated with a $220/20/60$ split and the
+   likelihood guard they read $0.506$, $0.694$ and $0.644$ against K1 $\le 0.072$.\\
+Does removing the softmax-invariant direction change the result?
+ & \ref{sec:geometry} & Rank $23$ gives $0.368$ and $0.461$ against $0.355$ and
+   $0.495$, intervals overlapping.\\
+What does the estimator return with no intervention?
+ & \ref{sec:estimator-ceiling} & The prompt's key for $0.580$ (major) and $0.840$
+   (minor) of untouched continuations, and a given other key for $0.033$ and $0.000$.\\
 Is the position result an artefact of our tokenization?
  & \ref{sec:public-positions} & Two public schemes agree that the pitch token itself
    is inert, and in each the effect sits on the structural token before a pitch is
@@ -177,7 +190,11 @@ augmentation, not in data.
 sample. On Bach that sample is built by transposing each chorale through all twelve
 tonics, because the $300$ chorales contain no F$\sharp$ major and no D$\sharp$ minor
 at all and a direct mean would leave those two targets as zero vectors. The split is
-by original chorale, so a piece's transpositions never straddle train and test.
+by original chorale, so a piece's transpositions never straddle train and test. In the
+cells of the main text's Table~1(b, c) that balanced sample is drawn from all $300$
+chorales, so the $60$ final prompts contribute to the targets they are then judged
+against; the deduplicated evaluation of \S\ref{sec:dedup} (Table~1(a)) removes the $80$
+prompt chorales from estimation first.
 \item \emph{The transposition reference.} Transposing the prompt itself is a
 behavioural reference condition, not a training or estimation step (Table~1).
 \end{itemize}
@@ -577,6 +594,17 @@ compared within a corpus and not across.}
 \label{fig:supp-ceiling}
 \end{figure}
 
+\textbf{What the estimator says when nothing is written.} The unedited continuations
+of the final test, the same clean twins the likelihood criterion compares against, give
+the two reference points a success rate lacks on its own (T2 of the revision). The
+estimator returns the prompt's own key for $0.580$ of the major and $0.840$ of the minor
+continuations, so an untouched continuation is not reliably ``home'' in major and the
+replacement is not fighting an inert baseline there. Averaged over the eleven other keys
+of the same mode, a given target is returned for $0.033$ of untouched major continuations
+and $0.000$ of minor ones, below the uniform $1/12$; this is the chance level a
+target-key hit has with no intervention, and it is what the matched controls sit near.
+Artifact: \texttt{results/ceiling.json}.
+
 \section{Search stage and final test \normalfont\textit{(main Sec.~3.3)}}
 
 % 【日本語訳】探索段階と最終テスト（本文3.3節）
@@ -625,7 +653,9 @@ $0.3555$.
 
 \textbf{Estimation condition.} Per-key targets come from a key-balanced sample, built
 by transposing each piece through all twelve keys and splitting by original piece so
-transpositions never straddle. On Bach this is forced: no F$\sharp$ major and no
+transpositions never straddle. For the cells of Table~1(b, c) the sample includes the
+prompt chorales; only the deduplicated evaluation (\S\ref{sec:dedup}) estimates on
+chorales that are never prompts. On Bach this is forced: no F$\sharp$ major and no
 D$\sharp$ minor occur, so a direct estimate leaves those two targets as zero vectors
 and the F$\sharp$ major cell scores exactly $0$: edit $0.365$ with $11/12$ keys
 separating for the $12$-layer model, and $0.439$ with $11/12$ for the $24$-layer one,
@@ -1227,6 +1257,19 @@ described above is a property of the major keys. And $V$ captures only $5.2\%$ o
 energy of $\mu_\kappa$ on average: it is a thin slice of the class means, not a summary of
 them.
 
+\textbf{The softmax-invariant direction (rank $23$).} A $24$-class softmax is unchanged
+when the same vector is added to every class weight, so the row space of $W_\ell$ holds
+one direction, $v = W_\ell^{\top}(W_\ell W_\ell^{\top})^{-1}\mathbf{1}$, along which the
+probe reads nothing; the edit component along it was $9$--$24\%$ of the component along
+the other $23$ directions across layers. Removing it, i.e. taking the row space of the
+row-centred weights (which is exactly $\operatorname{span}(W_\ell)\cap v^{\perp}$), and
+re-running the frozen final test with a rank-matched control gives $0.3682$ in major
+against $0.3555$ with rank $24$, and $0.4609$ in minor against $0.4945$ (K1 $0.0355$ and
+$0.0036$, $12/12$ keys in both), with the before-sampling shift unchanged at
+$+0.6933$ and $+0.3086$. The paired intervals against K1 overlap ($[0.303,0.366]$ vs.
+$[0.285,0.347]$ in major; $[0.422,0.491]$ vs. $[0.458,0.528]$ in minor), so the effect
+does not depend on that direction. Artifact: \texttt{results/rank23.json}.
+
 \section{The subspace is not a linear image of pitch-class frequency \normalfont\textit{(main Secs.~4.1, 4.2)}}
 \label{sec:pitchclass}
 
@@ -1333,6 +1376,22 @@ Two limits apply. The regression is linear, so a nonlinear function of the
 pitch-class history that the network computes is not ruled out, and $V$ itself comes from
 a probe trained on pooled positions, so a position-specific subspace remains untested as
 in \S\ref{sec:position}.
+
+\textbf{The same control on public models.} The regression was refitted on each Bach
+checkpoint's activations at its deduplicated layer (\S\ref{sec:dedup}), on the $220$
+estimation chorales with $\lambda$ chosen on the $20$ search chorales, using the
+own-model windows converted to note events ($7$ and $222$ preceding notes, at $2.31$
+tokens per note), and the target mean was written through the resulting rank-$22$
+subspace on the $60$ final prompts with the frozen guard. The fits are comparable to
+ours ($R^2$ $0.71$/$0.78$ for AMT-12L, $0.70$/$0.69$ for MMT, $0.68$/$0.79$ for REMI+;
+overlap with $V$ $0.119$, $0.142$ and $0.058$ against random $0.031$--$0.047$). The
+outcome is not uniform. In REMI+ the pitch-class write is inert as in our model
+($0.075$ against K1 $0.071$, $0/12$ keys). In AMT-12L it reaches $0.178$ against
+$0.067$ ($5/12$), and in MMT $0.319$ against $0.056$ ($12/12$). In all three it stays
+far below replacement through $V$ ($0.506$, $0.694$, $0.644$), so the objection that
+the edit \emph{is} a pitch-class-frequency write still fails, but the stronger
+statement, that the pitch-class subspace is causally inert, holds for our model and
+REMI+ and not for MMT. Artifact: \texttt{results/public\_pc\_control.json}.
 
 \begin{figure*}[!t]
 \centering
@@ -1853,6 +1912,51 @@ for calling the effect independent of the training run. It is not independent, a
 run reported in the main text is the highest of the three; the three-seed mean is
 $0.2555$.
 
+\textbf{Re-selecting the layer per model (revision T1).} Table~\ref{tab:supp-seeds} is a
+\emph{transfer} condition: layer~$4$ was carried over from the main model. The revision
+instead gave every model the main model's full procedure, a search-stage layer scan on
+the $100$ search prompts ($V$ against a rank-matched random subspace at all eight
+layers), the layer with the largest guarded edit margin, then the frozen final test in
+both modes with K1 and K1-norm, and the before-sampling test, with continuations saved.
+The margin rule and the guarded-SR rule pick the same layer for four models and differ
+for R-NoAug\_s0 (L4 vs.\ L5) and R-NoAug\_s2 (L2 vs.\ L4); the margin rule was fixed in
+advance and is used. R-Aug\_s1's major run is the one from 2026-09-10, whose K2 sham
+gate passed only under a tolerance (one prompt of $100$ differed in output, with every
+logit within $10^{-4}$); every other gate passed bit-identically.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S13b} \textit{(main Sec.~4.2)}. The final test on all six models at the
+layer each one's own search sweep selects. Controls are K1 (dimension-matched) and K1-norm
+(also displacement-matched); every cell separates from K1 on $12/12$ keys.}
+\label{tab:supp-seeds-reselect}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+ & & \multicolumn{4}{c}{major} & \multicolumn{4}{c}{minor}\\
+model & L & SR & K1 & K1-n & $\delta D$ & SR & K1 & K1-n & $\delta D$\\
+\midrule
+R-Aug\_s0 & 4 & $0.3555$ & $0.0391$ & $0.0564$ & $+0.6953$ & $0.4945$ & $0.0027$ & $0.0264$ & $+0.3094$\\
+R-Aug\_s1 & 2 & $0.2891$ & $0.0164$ & $0.0218$ & $+0.5183$ & $0.3918$ & $0.0009$ & $0.0036$ & $+0.2300$\\
+R-Aug\_s2 & 2 & $0.2309$ & $0.0273$ & $0.0245$ & $+0.3704$ & $0.3009$ & $0.0009$ & $0.0045$ & $+0.1728$\\
+R-NoAug\_s0 & 4 & $0.2627$ & $0.0364$ & $0.0445$ & $+0.6452$ & $0.3673$ & $0.0091$ & $0.0136$ & $+0.2920$\\
+R-NoAug\_s1 & 4 & $0.2636$ & $0.0218$ & $0.0236$ & $+0.5866$ & $0.2800$ & $0.0027$ & $0.0055$ & $+0.2556$\\
+R-NoAug\_s2 & 2 & $0.2700$ & $0.0255$ & $0.0300$ & $+0.4938$ & $0.3618$ & $0.0009$ & $0.0027$ & $+0.2386$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With the layer re-selected, the six runs give $0.279 \pm 0.042$ in major ($0.231$ to
+$0.355$) and $0.366 \pm 0.076$ in minor ($0.280$ to $0.495$); the three augmented seeds
+alone give $0.292 \pm 0.062$ and the three unaugmented ones $0.265 \pm 0.004$. The main
+model is the strongest run in both modes, as the main text now says, and its
+before-sampling shift is likewise the largest ($0.370$ to $0.695$ in major, $0.173$ to
+$0.309$ in minor). No control exceeds $0.056$ in major or $0.026$ in minor, and every
+model separates from its control on all $12$ keys in both modes, so the qualitative claim
+holds on every training run while the particular rate does not transfer. Artifact:
+\texttt{results/seed\_robustness.json}.
+
 What does hold across every run is the comparison the paper is built on. The edit beats
 its displacement-matched control by between $5.9$ and $10.0$ times in all four models,
 and no control exceeds $0.0564$ anywhere. The claim that survives is qualitative, that
@@ -1991,7 +2095,12 @@ answered.
 The size of the shift is not comparable across models. Our own model
 separates the two keys by $0.695$ against $0.041$ for its control; here the separation
 is $0.014$ of a log ratio. The claim this licenses is that the edit acts before
-sampling in a public model too, not that it acts as strongly.
+sampling in a public model too, not that it acts as strongly. The numbers in this
+section are the original $60$-prompt cells, whose targets were estimated with the prompt
+chorales included; the deduplicated re-run on the $60$ final chorales of
+\S\ref{sec:dedup} gives $+0.030$ against $+0.003$ for AMT-12L, $+1.048$ against
+$+0.070$ for MMT and $+0.742$ against $+0.031$ for REMI+, and those are the values the
+main text's Table~1(a) reports.
 
 % 【日本語訳】3つのチェックポイントすべてで（追記 2026-09-10）
 % ひとつのチェックポイントはひとつのチェックポイントにすぎないので、Bach で編集した
@@ -2091,11 +2200,13 @@ by subtracting the control, and each point rests on $240$ continuations.}
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.98\textwidth]{fig_public_layerwise_bach_pooled80_dedup_stacked.pdf}
-\caption{\textbf{S9c} \textit{(main Secs.~4.4, 4.5)}. Deduplicated pooled-80 Bach
-layerwise profiles for three public checkpoints. Probe margin and edit margin are
-shown on separate rows for AMT-12L, MMT, and REMI+, using the same public-model layer
-scan data as the main-text public-model discussion. Shaded bands show uncertainty
-intervals where available.}
+\caption{\textbf{S9c} \textit{(main Secs.~4.4, 4.5)}. Exploratory layer profiles for
+three public checkpoints with probes and means estimated on the $220$ chorales that are
+never prompts. The edit row is the raw key-hit rate against a K1-norm control on all
+$80$ prompt chorales (the $20$ search and the $60$ final ones pooled), with no
+likelihood guard; it is what the search step of \S\ref{sec:dedup} selects the layer
+from (on the $20$ search chorales only), not a final-test number. Shaded bands show
+uncertainty intervals where available.}
 \label{fig:supp-public-layers-three}
 \end{figure*}
 
@@ -2193,6 +2304,70 @@ pitch token itself does nothing, and the positions that carry the effect are the
 structural tokens immediately before a pitch is chosen: bar and note-length tokens in
 our scheme, time and duration in AMT, and the instrument token in REMI. An intervention that
 worked by pushing on pitch probabilities would behave the other way around in all three.
+
+\section{Deduplicated Bach evaluation (220/20/60) \normalfont\textit{(main Secs.~3.3, 4.5)}}
+\label{sec:dedup}
+
+% 【日本語訳】重複除去した Bach 評価（220/20/60）（本文3.3節、4.5節）
+% 本文の公開モデル Bach セル（旧 Fig. 4）は、80 曲のプールで層を選び同じ 80 曲で報告し、
+% その SR は尤度基準無しの生一致率、対照は K1-norm だった。本文 3.3 の記述と一致しない
+% ので、規則を先に固定して再生成した：80 曲を chorale 番号昇順で先頭 20 曲 = search、
+% 残り 60 曲 = final に分け、既存走査行を search 20 曲だけで再集計して edit margin の
+% ピーク層を選び（L8 / L5 / L5、pooled80 と同じ）、final 60 曲で replacement・K1・K1-norm
+% を凍結ガード付きで再生成、継続トークンを保存、δD も同じ 60 曲で再計算した。
+% 結果は AMT-12L 0.506 / K1 0.058、MMT 0.694 / 0.069、REMI+ 0.644 / 0.072（全て 12/12）、
+% δD は +0.030 / +1.048 / +0.742。生一致率（0.485 / 0.824 / 0.660）はガード付きより
+% MMT で大きく下がり、AMT では上がる。80 曲走査は S9c に探索的プロファイルとして残す。
+%
+The public-model Bach cells the main text formerly showed as a figure came from a
+layer scan on $80$ pooled prompt chorales: the layer was selected on those $80$ and
+reported on the same $80$, the success rate was the raw key-hit rate with no likelihood
+guard, and the control was K1-norm. None of that matched what Sec.~3.3 said about
+public models, and the continuations had not been stored, so the cells were regenerated
+under a rule written down before any number was recomputed (\texttt{PLAN.md}, commit
+\texttt{13b9edb}).
+
+\textbf{Rule.} Probes and per-key means come from the $220$ chorales that are never
+prompts (\S\ref{sec:public}). The $80$ prompt chorales are listed in chorale-number
+order; the first $20$ are the search set and the remaining $60$ the final set. The
+layer is the one with the largest edit margin (edit $-$ K1-norm, the only control the
+existing scan has) on the search $20$ alone, re-aggregated from the stored per-prompt
+rows; it is L8 for AMT-12L and L5 for MMT and REMI+, the same layers the pooled scan
+had chosen. At that layer the $60$ final chorales were regenerated with replacement, K1
+and K1-norm sharing clean twins and sampling seeds, scored with the frozen Bach guard
+($0.8489$ nats under \texttt{music-medium-800k}), with every continuation saved, and
+the before-sampling test was run on the same $60$ with K1.
+
+\begin{table}[!t]
+\centering
+\caption{\textbf{S20} \textit{(main Secs.~3.3, 4.5)}. The final-$60$ cells. SR is
+likelihood-guarded; ``raw'' is the key-hit rate before the guard. $\delta D$ is the
+before-sampling log-ratio shift on the same prompts. The last column is the raw key-hit
+rate the pooled-$80$ scan gave at the same layer (edit / K1-norm), for reading only.}
+\label{tab:supp-dedup}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+model & L & SR & raw & K1 & K1-norm & guard pass & $\delta D$ (K1) & pooled-80 raw\\
+\midrule
+AMT-12L & 8 & $0.506$ & $0.5056$ & $0.058$ & $0.076$ & $1.000$ & $+0.030$ ($+0.003$) & $0.485$ / $0.069$\\
+MMT     & 5 & $0.694$ & $0.8125$ & $0.069$ & $0.082$ & $0.856$ & $+1.048$ ($+0.070$) & $0.824$ / $0.093$\\
+REMI+   & 5 & $0.644$ & $0.6625$ & $0.072$ & $0.093$ & $0.972$ & $+0.742$ ($+0.031$) & $0.660$ / $0.089$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three cells separate from K1 and from K1-norm on $12/12$ keys, and every
+before-sampling shift is significant ($r \ge 0.89$, $p \le 1.2\times10^{-9}$). The
+guard matters most for MMT, whose raw rate of $0.812$ falls to $0.694$ because $0.144$
+of its edited continuations exceed the likelihood budget; AMT's guard passes every
+continuation. Read against the pooled scan, AMT-12L's guarded $0.506$ sits beside the
+exploratory raw $0.485$ and REMI+'s $0.644$ beside $0.660$, so selecting and reporting
+on the same prompts had inflated little there, while MMT's headline drops from $0.824$
+to $0.694$ once the guard is applied. These are the numbers Table~1(a) of the main text reports; the pooled-$80$
+profiles remain in Fig.~\ref{fig:supp-public-layers-three} as exploratory.
+Artifacts: \texttt{results/public\_dedup\_bach/}.
 
 \section{The note-length token, not the bar boundary \normalfont\textit{(main Sec.~4.4)}}
 \label{sec:bardur}
@@ -2396,9 +2571,12 @@ directions, and we summarize both directions here rather than only the favourabl
 %
 \textbf{Five findings weaken what the paper says.} The first is the most serious.
 Across training seeds the edit reaches $0.3555$,
-$0.2182$ and $0.1927$, a standard deviation of $0.0876$ where we had pre-registered
-$0.03$ as the bar for calling the effect independent of the training run, and the run
-reported in the main text is the strongest of the three (\S\ref{sec:seeds}). The
+$0.2182$ and $0.1927$ with layer~$4$ carried over, a standard deviation of $0.0876$
+where we had pre-registered $0.03$ as the bar for calling the effect independent of the
+training run; with each model's layer re-selected on its own search prompts the six runs
+give $0.279 \pm 0.042$ in major and $0.366 \pm 0.076$ in minor, still with the main
+text's run the strongest in both modes (\S\ref{sec:seeds}). The spread is real; what
+survives it is that every run beats its control on every key. The
 second: minor's advantage over major is the measurement, not the edit. Read against
 each mode's own transposition ceiling the gap falls from $+0.139$ to $+0.015$, and the
 pitch-in-scale definition that produced part of it reverses when minor is held to the seven
