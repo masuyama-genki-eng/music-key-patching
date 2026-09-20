@@ -82,7 +82,7 @@ Under a pre-specified criterion, 35.5\% of continuations in major and 49.5\% in 
 Continuation effects are also observed in public models trained on real music, and a deduplicated Bach evaluation shows shifts before sampling in three public models.
 The strength of these effects varies across layers and models even when key information is readily decodable.
 Therefore, probe performance alone does not determine the effect of the replacement.
-These results show that music Transformers represent replaceable key information that affects generation.
+These results show that music Transformers represent replaceable key information that affects generation, and that probe accuracy and edit margin should be reported together.
 \end{abstract}
 
 \begin{keywords}
@@ -542,6 +542,7 @@ We asked whether music Transformers represent musical key and use it during gene
 Replacing the key representation shifts next-pitch prediction toward the target key before any new note is sampled and increases target-key following in the generated continuation.
 However, probe performance alone does not determine the effect of an intervention, whose strength varies across layers and models.
 Reading information from an internal representation and using it during generation must therefore be measured separately.
+A practical consequence is that a probe result should be accompanied by the edit margin of the same subspace before it is read as evidence of use.
 
 \clearpage
 \bibliographystyle{IEEEbib}

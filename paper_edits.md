@@ -26,7 +26,7 @@ Not changed: Abstract, Conclusion (candidate sentences below, for the authors to
 Fig. 1–3, Sec. 2.1, 3.1, 3.2, 4.1, 4.3, 4.4. `spconf.sty` and margins untouched; no font
 below 9 pt (`\small` in a 10 pt article = 9 pt; `\scriptsize` is gone).
 
-## Candidate sentences (authors' choice — none inserted)
+## Candidate sentences (authors delegated the choice on 2026-09-20: Abstract A and Conclusion B inserted; +1 line each)
 
 Abstract, last sentence (replace "These results show that music Transformers represent replaceable key information that affects generation."):
 - A. "These results show that music Transformers represent replaceable key information that affects generation, and that probe accuracy and edit margin should be reported together."
