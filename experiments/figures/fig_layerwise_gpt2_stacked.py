@@ -11,32 +11,37 @@ import pandas as pd
 REPO = Path(__file__).resolve().parents[2]
 MM = 1.0 / 25.4
 INK = "#1A1A1A"
-FRAME = "#8A8A8A"
-GRID = "#D9D9D9"
-PURPLE = "#6A3D9A"
-PINK = "#E7298A"
+ZERO = "#8C8C8C"
+COL_PROBE = "#4477AA"
+COL_EDIT = "#AA3377"
 
 
-def nice_limits(lo: float, hi: float, zero: bool = True) -> tuple[float, float]:
-    if zero:
-        lo = min(lo, 0.0)
-        hi = max(hi, 0.0)
-    span = max(hi - lo, 1e-6)
-    pad = 0.12 * span
-    return lo - pad, hi + pad
-
-
-def style_axis(ax, show_x: bool) -> None:
+def style_axis(ax) -> None:
     ax.set_facecolor("white")
-    ax.yaxis.grid(True, color=GRID, lw=0.7, ls=(0, (3, 3)))
-    ax.xaxis.grid(False)
-    ax.tick_params(colors=INK, labelsize=7.0, length=2.6, color=FRAME,
-                   width=0.75, pad=1.5)
-    if not show_x:
-        ax.tick_params(labelbottom=False)
-    for side in ("top", "bottom", "left", "right"):
-        ax.spines[side].set_color(FRAME)
-        ax.spines[side].set_linewidth(0.75)
+    ax.grid(False)
+    ax.tick_params(colors=INK, length=2.5, width=0.6, pad=1.5,
+                   direction="out")
+    ax.spines["left"].set_color(INK)
+    ax.spines["bottom"].set_color(INK)
+    ax.spines["left"].set_linewidth(0.6)
+    ax.spines["bottom"].set_linewidth(0.6)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+
+def panel(ax, x, mean, lo, hi, color, label, ylabel, ylim) -> None:
+    from matplotlib.ticker import MultipleLocator
+
+    ax.axhline(0.0, color=ZERO, lw=0.6, ls=(0, (3, 2)), zorder=0)
+    ax.fill_between(x, lo, hi, color=color, alpha=0.20, lw=0, zorder=1)
+    ax.plot(x, mean, color=color, lw=1.2, marker="o", ms=3.5,
+            mew=0, zorder=2)
+    ax.set_ylabel(ylabel, labelpad=2.0)
+    ax.set_ylim(*ylim)
+    ax.yaxis.set_major_locator(MultipleLocator(0.1))
+    ax.text(0.0, 1.02, label, transform=ax.transAxes, ha="left",
+            va="bottom")
+    style_axis(ax)
 
 
 def draw(csv_path: Path, out_base: Path, width_mm: float,
@@ -44,11 +49,26 @@ def draw(csv_path: Path, out_base: Path, width_mm: float,
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
 
     matplotlib.rcParams.update({
-        "font.family": "serif",
-        "font.serif": ["DejaVu Serif"],
-        "mathtext.fontset": "dejavuserif",
+        "font.family": "STIXGeneral",
+        "mathtext.fontset": "stix",
+        "font.size": 8,
+        "axes.labelsize": 8,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+        "legend.fontsize": 7,
+        "axes.linewidth": 0.6,
+        "xtick.major.width": 0.6,
+        "ytick.major.width": 0.6,
+        "xtick.major.size": 2.5,
+        "ytick.major.size": 2.5,
+        "xtick.direction": "out",
+        "ytick.direction": "out",
+        "axes.spines.top": False,
+        "axes.spines.right": False,
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
     })
@@ -60,43 +80,42 @@ def draw(csv_path: Path, out_base: Path, width_mm: float,
                              sharex=True)
     axp, axe = axes
 
-    axp.fill_between(x, df["M_probe_ci_low"], df["M_probe_ci_high"],
-                     color=PURPLE, alpha=0.28, lw=0, zorder=1)
-    axp.plot(x, df["M_probe_ci_low"], color=PURPLE, lw=0.45, alpha=0.35, zorder=2)
-    axp.plot(x, df["M_probe_ci_high"], color=PURPLE, lw=0.45, alpha=0.35, zorder=2)
-    axp.plot(x, df["M_probe"], "-^", color=PURPLE, lw=1.2, ms=3.4, zorder=3)
-    axp.axhline(0.0, color="#BFBFBF", lw=0.8, zorder=2)
+    panel(axp, x, df["M_probe"].to_numpy(),
+          df["M_probe_ci_low"].to_numpy(),
+          df["M_probe_ci_high"].to_numpy(),
+          COL_PROBE, r"$\mathbf{(a)}$ Probe margin",
+          r"$M_{\mathrm{probe}}$", (-0.28, 0.13))
+    panel(axe, x, df["M_edit"].to_numpy(),
+          df["M_edit_ci_low"].to_numpy(),
+          df["M_edit_ci_high"].to_numpy(),
+          COL_EDIT, r"$\mathbf{(b)}$ Edit margin",
+          r"$M_{\mathrm{edit}}$", (-0.04, 0.37))
 
-    axe.fill_between(x, df["M_edit_ci_low"], df["M_edit_ci_high"],
-                     color=PINK, alpha=0.24, lw=0, zorder=1)
-    axe.plot(x, df["M_edit_ci_low"], color=PINK, lw=0.45, alpha=0.35, zorder=2)
-    axe.plot(x, df["M_edit_ci_high"], color=PINK, lw=0.45, alpha=0.35, zorder=2)
-    axe.plot(x, df["M_edit"], "-s", color=PINK, lw=1.2, ms=3.4, zorder=3)
-    axe.axhline(0.0, color="#BFBFBF", lw=0.8, zorder=2)
+    axp.tick_params(axis="x", length=0, labelbottom=False)
+    axe.set_xlabel("Layer", labelpad=1.0)
+    axe.set_xticks(x)
+    axe.set_xticklabels([str(int(v)) for v in x])
+    axe.set_xlim(x[0] - 0.4, x[-1] + 0.4)
 
-    p_lim = nice_limits(float(np.nanmin(df[["M_probe", "M_probe_ci_low"]].to_numpy())),
-                        float(np.nanmax(df[["M_probe", "M_probe_ci_high"]].to_numpy())))
-    e_lim = nice_limits(float(np.nanmin(df["M_edit_ci_low"])),
-                        float(np.nanmax(df["M_edit_ci_high"])))
-    axp.set_ylim(*p_lim)
-    axe.set_ylim(*e_lim)
+    probe_handles = [
+        Line2D([], [], color=COL_PROBE, lw=1.2, marker="o", ms=3.5,
+               mew=0, label="Mean"),
+        Patch(facecolor=COL_PROBE, alpha=0.20, label="95% CI"),
+    ]
+    edit_handles = [
+        Line2D([], [], color=COL_EDIT, lw=1.2, marker="o", ms=3.5,
+               mew=0, label="Mean"),
+        Patch(facecolor=COL_EDIT, alpha=0.20, label="95% CI"),
+    ]
+    axp.legend(handles=probe_handles, loc="lower right", frameon=False,
+               handlelength=1.6, borderaxespad=0.3, labelspacing=0.3)
+    axe.legend(handles=edit_handles, loc="lower right",
+               bbox_to_anchor=(1.0, 0.04), frameon=False,
+               handlelength=1.6, borderaxespad=0.3, labelspacing=0.3)
 
-    for ax, show_x in ((axp, False), (axe, True)):
-        style_axis(ax, show_x)
-        ax.set_xlim(x[0] - 0.35, x[-1] + 0.35)
-        ax.set_xticks(x)
-        ax.set_xticklabels([str(int(v)) for v in x])
-
-    axp.set_title("(a) Probe margin", loc="left", fontsize=8.0,
-                  fontweight="bold", color=INK, pad=4.0)
-    axe.set_title("(b) Edit margin", loc="left", fontsize=8.0,
-                  fontweight="bold", color=INK, pad=4.0)
-    axp.set_ylabel(r"$M_{\mathrm{probe}}$", fontsize=8.0, color=INK, labelpad=2.0)
-    axe.set_ylabel(r"$M_{\mathrm{edit}}$", fontsize=8.0, color=INK, labelpad=2.0)
-    axe.set_xlabel("Layer", fontsize=8.0, color=INK, labelpad=1.0)
-
-    fig.subplots_adjust(left=0.13, right=0.985, top=0.955, bottom=0.13,
-                        hspace=0.42)
+    fig.align_ylabels()
+    fig.subplots_adjust(left=0.17, right=0.98, top=0.94, bottom=0.11,
+                        hspace=0.36)
     for suffix in (".pdf", ".png"):
         fig.savefig(out_base.with_suffix(suffix), bbox_inches="tight",
                     pad_inches=0.02, facecolor="white", dpi=500)
@@ -109,7 +128,7 @@ def main() -> None:
     ap.add_argument("--outdir", default=str(REPO / "results/figures"))
     ap.add_argument("--name", default="fig3_layerwise_gpt2_stacked")
     ap.add_argument("--width-mm", type=float, default=86.0)
-    ap.add_argument("--height-mm", type=float, default=62.0)
+    ap.add_argument("--height-mm", type=float, default=68.0)
     args = ap.parse_args()
 
     outdir = Path(args.outdir)
