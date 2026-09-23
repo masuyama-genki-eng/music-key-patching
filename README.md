@@ -1,8 +1,5 @@
 # Do Music Transformers Represent and Use Musical Key?
 
-Code accompanying the manuscript by Genki Masuyama, Keigo Sakurai, Ren Togo,
-Takahiro Ogawa, and Miki Haseyama (Hokkaido University).
-
 ![Overview of the study](figure1.png)
 
 Symbolic music Transformers can generate note sequences without ever receiving
