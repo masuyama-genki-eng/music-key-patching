@@ -1,4 +1,4 @@
-# Tokenizer (SPEC §1.2). LEAK-FREE: no key/chord/roman/degree tokens, ever.
+# Tokenizer (protocol). LEAK-FREE: no key/chord/roman/degree tokens, ever.
 # Must stay in sync with src/tokenizer/vocab.py (tests/test_core.py::test_vocab_no_leak).
 pitch_min: 21          # A0
 pitch_max: 108         # C8

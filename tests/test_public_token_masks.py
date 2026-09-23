@@ -1,8 +1,8 @@
-"""Token-type masks for the public schemes (AMENDMENT 1, experiment C2).
+"""Token-type masks for the public schemes.
 
 The masks decide which positions a public-model edit writes to, so a wrong one
 would silently produce a position result about the wrong positions. These tests
-pin the three properties the amendment promised: the two sets are disjoint, they
+pin the three properties we need: the two sets are disjoint, they
 cover the note-bearing structure of the scheme, and a mask of all-True leaves the
 unmasked edit bit-identical.
 """

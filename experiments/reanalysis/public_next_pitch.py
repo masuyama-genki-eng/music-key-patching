@@ -97,11 +97,9 @@ def main() -> None:
     Vt = torch.from_numpy(V).float().to(device)
     K1 = torch.from_numpy(random_matched(V, args.seed + 31 * args.layer)).to(device)
 
-    # the note-token block, folded over instruments to twelve pitch classes
-    # 2026-09-09 (AMENDMENT 1, C1): the pitch-class folding was written inline for
-    # the flat AMT head, which crashes on REMI (model.net returns a tensor, not an
-    # HF output) and cannot express MMT's separate pitch field at all. It now lives
-    # in each adapter as next_pitch_class_mass, so this script is scheme-agnostic.
+    # The note-token block, folded over instruments to twelve pitch classes.
+    # Pitch-class folding lives in each adapter as next_pitch_class_mass, so this
+    # script stays scheme-agnostic across AMT, REMI, and MMT.
 
     def next_pc(prompt_ids: list[int], basis, tgt: int | None):
         ids = torch.tensor([prompt_ids], device=device)
@@ -187,11 +185,9 @@ def main() -> None:
         pd.DataFrame(recs).to_string(index=False),
     )
 
-    # 2026-09-09 (AMENDMENT 1, C1): the frozen reading is a CONTRAST -- "the ratio
-    # moves under the edit and not under the random control" -- but the block above
-    # only tests each condition against no edit. On a checkpoint where the control
-    # also moves a little, that pair of tests cannot say whether the edit is doing
-    # something different, so the direct paired comparison is added here. The
+    # The reading is a contrast: the ratio should move under the edit and not under
+    # the random control. The block above only tests each condition against no edit,
+    # so we also add the direct paired comparison. The
     # existing per-condition tests and verdict strings are untouched.
     se = df[df.cond == "edit"].groupby("prompt").log_ratio.mean()
     sk = df[df.cond == "k1"].groupby("prompt").log_ratio.mean()

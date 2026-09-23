@@ -1,4 +1,4 @@
-"""D-REAL kern parser tests (SPEC §1.3). No corpus needed: synthetic kern text."""
+"""D-REAL kern parser tests (protocol). No corpus needed: synthetic kern text."""
 
 import os
 import sys

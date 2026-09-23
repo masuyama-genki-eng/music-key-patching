@@ -35,10 +35,9 @@ BAR, POS1 = VOCAB["BAR"], VOCAB["POS_1"]
 PITCH_LO, PITCH_HI = VOCAB["PITCH_21"], VOCAB["PITCH_108"]
 MAJOR_TARGETS = list(range(12))
 MAJOR_PCS = np.array([0, 2, 4, 5, 7, 9, 11])
-# AMENDMENT 3 (F2): the minor scale set is not invented here. It is the one the
-# in-key measure already uses for minor, DIATONIC_MINOR_UNION in src/eval/keyest.py,
-# so the generation-free reading and the note-counting measure agree on what minor
-# means. The major path below is unchanged.
+# The minor scale set is the one already used by the in-key measure,
+# DIATONIC_MINOR_UNION in src/eval/keyest.py. This keeps the generation-free
+# reading and the note-counting measure aligned.
 from src.eval.keyest import DIATONIC_MINOR_UNION
 
 MINOR_PCS = np.array(sorted(DIATONIC_MINOR_UNION))
@@ -61,8 +60,7 @@ def main() -> None:
         "--mode",
         choices=["major", "minor"],
         default="major",
-        help="AMENDMENT 3 (F2): minor runs the same test with the "
-        "minor scale set and the minor prompts",
+        help="minor runs the same test with the minor scale set and prompts",
     )
     ap.add_argument("--model-dir", default=str(REPO / "results/models/R-Aug_s0"))
     ap.add_argument("--probing-dir", default=str(REPO / "results/probing/R-Aug_s0"))
@@ -167,7 +165,7 @@ def main() -> None:
     ).reset_index()
     nip = pv[~pv["identity"]]
     out = {
-        "freeze": "docs/CONFIRMATORY_FREEZE.md @ 0d621e4",
+        "freeze": "held-out final-test protocol",
         "model": name,
         "layer": args.layer,
         "prompt_rows": [rows_used[0], rows_used[-1]],

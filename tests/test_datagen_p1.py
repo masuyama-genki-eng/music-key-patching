@@ -1,4 +1,4 @@
-"""P1 gates: token-length range (SPEC §1.1), pivot emission, modulation markers."""
+"""P1 gates: token-length range (protocol), pivot emission, modulation markers."""
 
 import os
 import sys
@@ -9,7 +9,7 @@ from src.datagen.generator import GenConfig, Key, generate_piece
 
 
 def test_token_length_within_spec_range():
-    """SPEC §1.1: 256-512 tokens. Also must fit model ctx=512."""
+    """protocol: 256-512 tokens. Also must fit model ctx=512."""
     for seed in range(100):
         tokens, labels, _ = generate_piece(GenConfig(seed=seed))
         assert 256 <= len(tokens) <= 512, f"seed={seed}: {len(tokens)} tokens"

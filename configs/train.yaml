@@ -6,11 +6,11 @@ model:
   ctx: 512
   dropout: 0.1
 
-regimes:                       # operated variable (SPEC §2.1)
+regimes:                       # operated variable (protocol)
   R-NoAug: { transpose_aug: false, seeds: [0, 1, 2] }   # seed 2 added 2026-07-12
   R-Aug:   { transpose_aug: true,  seeds: [0, 1, 2] }   # (DR-H2b seed-level power)
 
-m_ref:                         # SPEC §2.2: separate seed AND separate data split
+m_ref:                         # protocol: separate seed AND separate data split
   seed: 100
   split_seed: 100
 

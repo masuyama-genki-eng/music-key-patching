@@ -1,4 +1,4 @@
-"""Held-out K4 ceiling (freeze AMENDMENT 2 @ 2d61966, committed before this run).
+"""Held-out K4 ceiling reference.
 
 K4 transposes the prompt itself so its key becomes the target — what full
 behavioral control looks like — and we score raw strict TKR. The guard is
@@ -49,7 +49,7 @@ def main() -> None:
         "--mode",
         choices=["major", "minor"],
         default="major",
-        help="minor = AMENDMENT 3 secondary condition",
+        help="minor = secondary held-out condition",
     )
     args = ap.parse_args()
     logging.basicConfig(
@@ -59,7 +59,7 @@ def main() -> None:
     from src.probing.extract import load_model
 
     name = Path(args.model_dir).name
-    if args.mode == "minor":  # AMENDMENT 3 artifact tree
+    if args.mode == "minor":  # secondary-condition artifact tree
         name = f"{name}_minor"
     outdir = REPO / "results/confirmatory" / name
     gen_cfg = yaml.safe_load(Path(args.gen_config).read_text())
@@ -107,7 +107,7 @@ def main() -> None:
     v = json.loads((outdir / "verdict.json").read_text())
     edit = v["conditions"]["edit"]["pooled_guarded_tkr"]
     out = {
-        "freeze": "AMENDMENT 2 @ 2d61966",
+        "freeze": "held-out K4 ceiling protocol",
         "model": name,
         "prompt_rows": [rows_used[0], rows_used[-1]],
         "k4_raw_tkr_nonidentity": raw_ni,
@@ -123,7 +123,7 @@ def main() -> None:
     log.info("K4 raw (non-identity) %.4f | edit/K4 = %.4f", raw_ni, out["edit_over_k4"])
     if not args.no_ledger:
         append_entry(
-            stage=f"CONFIRMATORY K4 ceiling {name} (AMENDMENT 2)",
+            stage=f"CONFIRMATORY K4 ceiling {name}",
             config=vars(args),
             seeds=[confirm.GEN_SEED],
             artifacts=[

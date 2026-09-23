@@ -1,4 +1,4 @@
-"""M-WILD (SPEC §2.3): does a PUBLIC model trained on REAL music carry a key state
+"""M-WILD (protocol): does a PUBLIC model trained on REAL music carry a key state
 that beats the pitch surface — where ours, trained on synthetic music, did not?
 
 The decisive comparison is `music-small` (12 layers, d=768) against our own
@@ -7,10 +7,9 @@ protocol is the SAME as Phase A and D-REAL — same chorales, same human local-k
 labels, same C1 selectivity control, same C3 input baselines, same DR-H1 rule — so
 the only thing that changes is the model.
 
-Prediction, stated before running (CHANGELOG 2026-07-14): if the real-trained model
-clears the surface baseline, our negative D-REAL is distribution shift, not a limit
-of the method. If it does not, the sharper conclusion is that for key specifically a
-hand-designed estimator is simply hard to beat from internal state.
+Purpose: if the real-trained model clears the surface baseline, the negative
+D-REAL result reflects distribution shift rather than a limit of the method.
+If it does not, key may be especially hard to beat with an internal-state probe.
 
 Usage: .venv/bin/python experiments/public_models/public_probe.py [--model stanford-crfm/music-small-800k]
 """
@@ -93,8 +92,8 @@ def main() -> None:
     short = adapter.artifact_name(checkpoint)
     # probe_at MUST be in the path: the two conventions are different measurements, and
     # a shared path silently overwrites one with the other (this bit us once already in
-    # the D-REAL probe — CHANGELOG 2026-07-15). predict_pitch keeps the original,
-    # unsuffixed location so existing artifacts and their ledger entries stay valid.
+    # the D-REAL probe). predict_pitch keeps the original, unsuffixed location
+    # so existing artifacts and their ledger entries stay valid.
     outdir = (
         REPO
         / ("results/mwild_pop909" if args.corpus == "pop909" else "results/mwild")
@@ -122,8 +121,8 @@ def main() -> None:
     )
 
     if args.corpus == "pop909":
-        # TRAIN split only: the probe and the per-key means may never see the
-        # search or final pieces (docs/CROSS_CORPUS_FREEZE.md §3)
+        # TRAIN split only: the probe and per-key means may never see the search
+        # or final pieces.
         pc = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())
         chorales, match_stats = load_pop909_part(
             REPO / pc["corpus"]["root"],

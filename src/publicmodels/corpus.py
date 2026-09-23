@@ -18,7 +18,7 @@ from src.tokenizer.vocab import pitch_of
 # A quarter is four sixteenths, so 0.25 s per sixteenth is a quarter of 1.0 s, and a
 # beat divided into twelve makes a sixteenth exactly three steps -- the chorales land
 # on the grid with no quantisation at all (verified over 40 chorales: every pitch and
-# note preserved, onset error 0.0 ms; docs/CROSS_CORPUS_FREEZE.md AMENDMENT 7).
+# note preserved, onset error 0.0 ms).
 DEFAULT_SECONDS_PER_16TH = 0.25
 
 

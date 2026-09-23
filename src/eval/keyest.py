@@ -1,4 +1,4 @@
-"""Krumhansl-Schmuckler key estimation (SPEC: C3 input baseline + TKR evaluation).
+"""Krumhansl-Schmuckler key estimation (the protocol: C3 input baseline + TKR evaluation).
 
 Own implementation (unit-tested) so evaluation does not depend on music21.
 Profiles: Krumhansl & Kessler (1982).
@@ -77,7 +77,7 @@ DIATONIC_MINOR_UNION = {0, 2, 3, 5, 7, 8, 9, 10, 11}  # natural+harmonic+melodic
 
 
 def in_key_ratio(pitches: list[int], key_index: int) -> float:
-    """IKR (SPEC B3). Minor uses the union of minor scale forms (documented choice)."""
+    """IKR (the evaluation protocol). Minor uses the union of minor scale forms (documented choice)."""
     if not pitches:
         return 0.0
     tonic, minor = key_index % 12, key_index >= 12

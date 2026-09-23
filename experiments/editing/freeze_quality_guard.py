@@ -1,4 +1,4 @@
-"""P4 step 0 (SPEC §4.3 + CLAUDE.md P4 gate): freeze the delta_PPL musicality budget
+"""P4 step 0 (protocol gate): freeze the delta_PPL musicality budget
 BEFORE any subspace construction or edit run, and ledger it.
 
 delta_PPL = P90 of { PPL(post-modulation window) - PPL(pre-modulation window) }
@@ -48,7 +48,7 @@ def main() -> None:
     if out.exists():
         raise SystemExit(
             f"{out} already exists — the frozen guard must not be "
-            "recomputed (SPEC §4.3). Delete manually only if no "
+            "recomputed (protocol). Delete manually only if no "
             "intervention run has consumed it, and ledger the reason."
         )
     out.parent.mkdir(parents=True, exist_ok=True)

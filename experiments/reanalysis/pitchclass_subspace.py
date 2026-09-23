@@ -171,7 +171,7 @@ def stage_fit(args) -> None:
     V_res, rres = orthonormal(resid.T)
 
     ov = {
-        "freeze": "docs/ADDITIONAL_EXPERIMENTS_FREEZE.md",
+        "freeze": "additional-analysis protocol",
         "lambda_selection": {
             "candidates": {str(k): v for k, v in scores.items()},
             "chosen": best,
@@ -199,7 +199,7 @@ def stage_fit(args) -> None:
     if not args.no_ledger:
         append_entry(
             stage="EXP A stage 1: pitch-class regression subspaces "
-            "(freeze ADDITIONAL_EXPERIMENTS_FREEZE.md)",
+            "(freeze additional-analysis protocol)",
             config=vars(args) | {"lambda": best},
             seeds=[0],
             artifacts=[

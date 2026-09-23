@@ -16,8 +16,8 @@ the next event's six fields jointly. Two consequences, both load-bearing:
   EVENT coordinates, with the key label of event i. Same shape as the Anticipatory
   convention but derived from THIS model's forward pass (music_x_transformers.py:
   the to_logits list all consume one x), not copied.
-- EDIT DENSITY: one hidden state per note, against Anticipatory's three — recorded
-  per run as edits_per_bar, never equalised (docs/CROSS_CORPUS_FREEZE.md §5).
+- EDIT DENSITY: one hidden state per note, against Anticipatory's three; recorded
+  per run as edits_per_bar and never equalized across tokenizations.
 
 RESIDUAL STREAM. x-transformers carries the stream through each sublayer's
 `Residual` module (`x = residual_fn(out, residual)`), so the output of layer l's
@@ -68,11 +68,10 @@ class MMTAdapter(PublicModelAdapter):
     name = "mmt"
     compound = True
     default_checkpoint = "data/mmt-checkpoints/mmt/lmd/ape"
-    # None ON PURPOSE: the quality-guard reference is a property of the CORPUS
-    # (docs/CROSS_CORPUS_FREEZE.md §4 — one reference serves every generated model
-    # on that corpus), and it is an ANTICIPATORY checkpoint, which this adapter
-    # could not even load. The corpus config names it; a run that reaches for an
-    # adapter-level default here must fail loudly instead.
+    # None on purpose: the quality-guard reference is a corpus-level choice and
+    # uses an Anticipatory checkpoint, which this adapter cannot load. The corpus
+    # config names it; a run that reaches for an adapter-level default here must
+    # fail loudly instead.
     reference_checkpoint = None
 
     def __init__(self) -> None:

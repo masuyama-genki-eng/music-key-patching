@@ -1,7 +1,7 @@
-"""Phase B evaluation metrics (SPEC §4.3): TKR, IKR_target/src, specificity matrix,
+"""Phase B evaluation metrics (protocol): TKR, IKR_target/src, specificity matrix,
 fifths-distance curve. Pure functions over decoded continuations; no I/O.
 
-TKR is reported in TWO variants (SPEC §4.3 note on the measured KS limitation —
+TKR is reported in TWO variants (protocol note on the measured KS limitation —
 all clean-piece misses were fifths-distance-1 confusions):
   strict   — estimated key == target key exactly
   tolerant — estimated key is the target, or closely related to it
@@ -43,7 +43,7 @@ def key_relation(a: int, b: int) -> str:
 
 def closely_related(a: int, b: int) -> bool:
     """Key indices 0..23: fifths-distance <= 1 same-mode, relative, or parallel
-    (SPEC §4.3's tolerant set)."""
+    (protocol's tolerant set)."""
     return key_relation(a, b) != "other"
 
 
@@ -82,7 +82,7 @@ def ikr_pair(pitches: list[int], target: int, src: int) -> dict:
 
 def specificity_matrix(rows: list[dict]) -> np.ndarray:
     """rows: {'target_tonic': 0..11, 'est_key': 0..23|None}. Returns (12, 24) counts
-    of estimated keys per target tonic (major targets; SPEC B2 primary)."""
+    of estimated keys per target tonic (major targets; the evaluation protocol primary)."""
     m = np.zeros((12, 24), dtype=np.int64)
     for r in rows:
         if r["est_key"] is not None:
@@ -105,7 +105,7 @@ def fifths_curve(rows: list[dict], src_tonic_key: str = "src_tonic") -> dict[int
 
 # ---------------------------------------------------------------- grammar stats
 def grammar_stats(pitches: list[int], token_strs: list[str]) -> dict:
-    """Secondary guard (SPEC B3): register violations + extreme repetition."""
+    """Secondary guard (the evaluation protocol): register violations + extreme repetition."""
     if not pitches:
         return {"range_violation_rate": 0.0, "extreme_repeat_rate": 0.0, "n_pitches": 0}
     # D-SYN voicing lives in [40, 88]; outside = register violation

@@ -1,6 +1,6 @@
 """D-REAL: Bach chorales (**kern) -> our leak-free token vocabulary + key labels.
 
-SPEC §1.3. Ecological validation of the probe ONLY (secondary result): the model
+Ecological validation of the probe only: the model
 never sees real music in training; we ask whether the key subspace found on D-SYN
 still decodes the key of real chorales better than the input-surface baseline.
 
@@ -29,8 +29,7 @@ from pathlib import Path
 
 from src.tokenizer.vocab import DUR_MAX, PITCH_MAX, PITCH_MIN, POS_RES, VOCAB
 
-# Corpus layout. Both corpora are fetched at run time and are NOT redistributed
-# here; the licence verdicts are recorded in RESULTS_LEDGER.md (2026-07-13).
+# Corpus layout. Both corpora are fetched at run time and are not redistributed.
 SCORES_URL = "https://github.com/craigsapp/bach-370-chorales.git"  # CC BY-NC-SA 4.0
 ANALYSES_URL = "https://github.com/MarkGotham/When-in-Rome.git"  # CC BY-SA 4.0
 ANALYSES_SUBDIR = "Corpus/Early_Choral/Bach,_Johann_Sebastian/Chorales"

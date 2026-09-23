@@ -1,6 +1,6 @@
-"""Subspace editing and generation for a PUBLIC pre-trained model (SPEC §2.3).
+"""Subspace editing and generation for a PUBLIC pre-trained model (protocol).
 
-Same edit as our own models (SPEC §4.2), h <- h - P_V h + P_V mu_target, but applied
+Same edit as our own models (protocol), h <- h - P_V h + P_V mu_target, but applied
 by forward hook on the block the adapter names, rather than through our TonalGPT
 `editors` argument. Sampling itself lives on the adapter (`adapter.generate`),
 because it is token-scheme-specific; the move was proven token-identical for the
@@ -29,8 +29,7 @@ log = logging.getLogger("public_model_edit")
 class HookSubspaceEditor:
     """Forward hook on a transformer block: replaces the key component of the residual
     stream from `from_position` onward. mode='sham' returns x untouched after doing
-    the projection, because (x - c) + c is not bit-exact in floating point (the same
-    reasoning as our own editor; see CHANGELOG 2026-07-11)."""
+    the projection, because (x - c) + c is not bit-exact in floating point."""
 
     def __init__(
         self,
@@ -41,7 +40,7 @@ class HookSubspaceEditor:
         token_mask: torch.Tensor | None = None,
         mask_kind: str | None = None,
     ):
-        """token_mask, added by ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (C2), is
+        """token_mask, added by the token-mask extension, is
         an optional (T,) or (B, T) boolean over the window saying which positions
         may be written. It defaults to None and the unmasked path below is the one
         that existed before, unchanged, so every earlier public-model run is

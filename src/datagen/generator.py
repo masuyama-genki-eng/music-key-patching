@@ -1,6 +1,6 @@
 """D-SYN generator: functional-harmony sequences with per-token ground-truth key labels.
 
-SPEC §1.1. Deterministic under seed. Implements:
+Deterministic under seed. Implements:
   - T -> S -> D -> T grammar with substitutions (major and harmonic-minor keys)
   - modulations: pivot-chord / direct / sequential, fifths-distance stratified
   - SATB block voicing (nearest-voicing continuity) + optional diatonic melody
@@ -12,8 +12,8 @@ apart (documented simplification).
 
 P1 revisions (2026-07-11, before any data was generated or trained on):
   - n_bars is sampled per piece from [n_bars_min, n_bars_max] so token length stays
-    within SPEC §1.1's 256-512 (the P0 default of 24 fixed bars + melody gave 554
-    tokens, exceeding both the SPEC range and ctx=512).
+    within protocol's 256-512 (the P0 default of 24 fixed bars + melody gave 554
+    tokens, exceeding both the protocol range and ctx=512).
   - pivot-chord modulations now EMIT the pivot chord as the first chord of the
     modulation bar (P0 starter recorded it in `events` only, so pivot was
     indistinguishable from direct in the token stream). The pivot triad is diatonic
@@ -101,7 +101,7 @@ def voice_chord(
 # ---------------------------------------------------------------- generator
 @dataclasses.dataclass
 class GenConfig:
-    n_bars_min: int = 12  # 12..22 bars -> 278..508 tokens (SPEC: 256-512)
+    n_bars_min: int = 12  # 12..22 bars -> 278..508 tokens (protocol range: 256-512)
     n_bars_max: int = 22
     chords_per_bar: int = 2
     p_modulate: float = 0.35  # probability the piece modulates at all
@@ -155,8 +155,8 @@ def generate_piece(cfg: GenConfig):
     def _mark(
         mtype: str, old: Key, new: Key, bar: int, target_fifths: int | None = None
     ) -> None:
-        """A marker event. `target_fifths` is the fifths distance of the SAMPLED
-        target — the quantity SPEC §1.1 stratifies on. It is not recoverable from
+        """A marker event. `target_fifths` is the fifths distance of the sampled
+        target used for stratification. It is not recoverable from
         from/to on a sequential modulation, whose marks record intermediate steps."""
         events.append(
             {
@@ -210,7 +210,7 @@ def generate_piece(cfg: GenConfig):
                 # one abrupt shift and is indistinguishable from `direct` in the token
                 # stream. Calling it sequential inflated that count by ~2x in the corpus
                 # statistics (nothing else — the tokens are identical either way). It is
-                # now labelled as what it is; see CHANGELOG 2026-07-14.
+                # now labelled as what it is.
                 _mark(
                     "sequential" if half != interval else "direct_from_sequential",
                     old,

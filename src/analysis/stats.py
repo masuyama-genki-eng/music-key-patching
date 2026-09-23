@@ -1,5 +1,5 @@
-"""Statistics utilities (SPEC §6): sequence-level BCa bootstrap, Wilcoxon + Holm,
-rank-biserial effect size. analysis/ reads only results/ artifacts (SPEC §7.5);
+"""Statistics utilities (protocol): sequence-level BCa bootstrap, Wilcoxon + Holm,
+rank-biserial effect size. analysis/ reads only results/ artifacts (protocol);
 this module is pure computation with no I/O.
 """
 
@@ -16,7 +16,7 @@ def bca_ci(
 
     units: array of unit indices (0..S-1) is implicit; stat_fn receives an index
     array into the units and returns a scalar. Resampling is at the unit
-    (=sequence) level per SPEC §6.
+    (=sequence) level per protocol.
     """
     rng = np.random.default_rng(seed)
     S = len(units)
@@ -69,7 +69,7 @@ def wilcoxon_rank_biserial(
 
 
 def holm_correct(pvals: list[float]) -> list[float]:
-    """Holm step-down adjusted p-values (SPEC §6)."""
+    """Holm step-down adjusted p-values (protocol)."""
     p = np.asarray(pvals, float)
     order = np.argsort(p)
     m = len(p)

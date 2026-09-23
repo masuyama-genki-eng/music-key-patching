@@ -1,4 +1,4 @@
-"""Append-only run ledger (SPEC §7.1). Never edits past entries — append only.
+"""Append-only run ledger (protocol). Never edits past entries — append only.
 
 Every logged run records: datetime, git hash, config hash, seeds, artifact paths.
 Result files themselves also get a sidecar snapshot (config + git hash) via snapshot().

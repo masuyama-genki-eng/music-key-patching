@@ -1,4 +1,4 @@
-"""Musicality guard (SPEC §4.3): M-REF continuation perplexity budget.
+"""Musicality guard (protocol): M-REF continuation perplexity budget.
 
 delta_PPL is FROZEN before any intervention run (P4 gate) as the 90th percentile of
 the natural post-modulation perplexity-rise distribution on D-SYN val:
@@ -43,7 +43,7 @@ def guarded_success(key_hit, ppl_excess, delta_ppl):
       computed (an empty continuation), and treating "not measurable" as "passed"
       would let the least musical outputs through.
     * The budget is inclusive: excess EQUAL to delta passes, matching the frozen
-      rule "<= delta_ppl" in SPEC 4.3.
+      rule "<= delta_ppl" used throughout the protocol.
 
     Accepts scalars or numpy/pandas arrays; returns the same shape as bool.
     """

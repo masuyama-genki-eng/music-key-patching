@@ -1,4 +1,4 @@
-"""P2 gate: SPEC §2.1 quality-gate values, computed and ledgered BEFORE any
+"""P2 gate: protocol quality-gate values, computed and ledgered BEFORE any
 intervention work.
 
 Per model (R-Aug_s*, R-NoAug_s*, M-REF_s*):
@@ -9,7 +9,7 @@ Per model (R-Aug_s*, R-NoAug_s*, M-REF_s*):
   2. unconditional-generation in-key ratio: sample n pieces from BOS, KS-estimate
      each piece's key from its pitches, compute IKR under that key. The SAME
      procedure applied to D-SYN val pieces gives the reference distribution.
-     Divergence threshold (SPEC: set from val stats after training, before
+     Divergence threshold (the protocol: set from val stats after training, before
      interventions): PASS if gen mean IKR >= val_mean - 3 * val_std.
 
 Outputs results/quality_gate/quality_gate.json (+ per-model generation stats) and a
@@ -226,7 +226,7 @@ def main() -> None:
 
     if not args.no_ledger:
         append_entry(
-            stage="P2 quality gate (SPEC §2.1)",
+            stage="P2 quality gate (protocol)",
             config={
                 "gen": gen_cfg,
                 "n_gen": args.n_gen,

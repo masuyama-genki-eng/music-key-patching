@@ -1,4 +1,4 @@
-"""Probing a public pre-trained music model (SPEC §2.3, "M-WILD").
+"""Probing a public pre-trained music model (protocol, "M-WILD").
 
 The model never saw our synthetic corpus and we did not train it. The question is the
 same one we ask of our own models: is the key linearly readable from the residual

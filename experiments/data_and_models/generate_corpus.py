@@ -1,4 +1,4 @@
-"""P1: generate D-SYN corpus (SPEC §1.1) — train/val/test parquet + corpus stats.
+"""P1: generate D-SYN corpus (protocol) — train/val/test parquet + corpus stats.
 
 Idempotent: a split whose parquet + meta exist with the current config hash is
 skipped. Deterministic: piece_seed = base_seed + SPLIT_OFFSET[split] + idx, so any
@@ -45,7 +45,7 @@ def _rel(path: Path) -> str:
         return str(path)
 
 
-# Disjoint seed ranges per split; ref_* are the M-REF training split (SPEC §2.2:
+# Disjoint seed ranges per split; ref_* are the M-REF training split (protocol:
 # separate seed AND separate data split from M-CTRL).
 SPLIT_OFFSET = {
     "train": 0,
@@ -99,8 +99,8 @@ def _make_row(args: tuple[int, int, dict]) -> dict:
         "initial_key": labels[0],
         "n_key_changes": len(marks),
         "mod_types": [m["modulation"] for m in marks],
-        # The STRATIFIED quantity is the fifths distance of the sampled TARGET (SPEC
-        # §1.1), counted ONCE PER MODULATION. Two subtleties, both of which skewed this
+        # The stratified quantity is the fifths distance of the sampled target,
+        # counted once per modulation. Two subtleties, both of which skewed this
         # histogram until 2026-07-14 (tokens were never affected):
         #   - deriving it from from/to logs the distance of each realized STEP, which
         #     for a halved sequential modulation is not the target's;
@@ -170,7 +170,7 @@ def main() -> None:
     ap.add_argument(
         "--no-ledger",
         action="store_true",
-        help="smoke tests only: do not append to RESULTS_LEDGER",
+        help="smoke tests only: do not append to run ledger",
     )
     args = ap.parse_args()
 

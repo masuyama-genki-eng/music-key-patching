@@ -8,7 +8,7 @@ max_beat 64. That shared provenance is the point: MMT against this baseline vari
 TOKENIZATION with the training data and the architecture held fixed, which the
 original Pop Music Transformer could never have given (different corpus, different
 architecture, TF 1.x, and chord tokens in one checkpoint — dropped, see
-docs/GENRE_EXTENSION_AUDIT.md).
+genre-extension audit).
 
 LEAK-FREEDOM, verified in the shipped encoding rather than assumed: the vocabulary
 holds nine event types — start/end-of-song, start/end-of-track, beat, position,
@@ -58,8 +58,7 @@ class RemiAdapter(PublicModelAdapter):
     name = "remi"
     compound = False
     default_checkpoint = "data/mmt-checkpoints/mmt/lmd/remi"
-    # None: the guard reference belongs to the CORPUS, not to a model
-    # (docs/CROSS_CORPUS_FREEZE.md §4)
+    # None: the guard reference belongs to the corpus, not to a model.
     reference_checkpoint = None
 
     def __init__(self) -> None:
@@ -261,8 +260,8 @@ class RemiAdapter(PublicModelAdapter):
             elif ev.startswith(("beat_", "position_", "duration_")):
                 timing[i] = True
             elif ev.startswith("instrument_"):
-                # AMENDMENT 2: the step at which the pitch is about to be chosen,
-                # which is where this scheme's probe reads the key. Neither of the
+                # The step at which the pitch is about to be chosen, which is
+                # where this scheme's probe reads the key. Neither of the
                 # other two families covers it, which is the candidate explanation
                 # for both of them coming out null.
                 instrument[i] = True

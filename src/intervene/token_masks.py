@@ -1,4 +1,4 @@
-"""Token-type masks for the edit, and masked generation (SPEC §4.2, experiment H).
+"""Token-type masks for the edit, and masked generation (protocol, experiment H).
 
 The sustained edit writes the key value into every position it generates. Residual-
 stream statistics differ by token type, so writing a type-averaged value at every
@@ -33,8 +33,8 @@ MASKS = {
     ),
     "pitch": lambda ids: (ids >= PITCH_LO) & (ids <= PITCH_HI),
     "bar_dur": lambda ids: (ids == BAR) | ((ids >= DUR_LO) & (ids <= DUR_HI)),
-    # AMENDMENT 3 (F1): bar_dur bundles a bar delimiter that is 0.043 of positions
-    # with a duration token that is 0.433, and the corpus writes
+    # bar_dur bundles a bar delimiter that is 0.043 of positions with a duration
+    # token that is 0.433, and the corpus writes
     # BAR POS (PITCH DUR)+, so DUR is the step whose next token is a PITCH for
     # every note but the first of a chord. Separating them decides whether the
     # causal site is the bar boundary or the step before a pitch. The four masks

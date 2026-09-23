@@ -1,5 +1,5 @@
 """M-WILD musicality guard: freeze delta_PPL for the public model, BEFORE any edit
-result is reported (the same discipline as SPEC §4.3 for our own models).
+result is reported, matching the discipline used for our own models.
 
 Reference model. Our own guard used M-REF: same architecture, disjoint seed AND data
 split, so it never shares weights with the model under test. For a public checkpoint we
@@ -98,8 +98,8 @@ def main() -> None:
     target_checkpoint = args.target_model or adapter.default_checkpoint
     short = adapter.artifact_name(target_checkpoint)
 
-    # the pop909 budget is a property of the CORPUS (one reference, one budget,
-    # serving every generated model — freeze §4), so it lives at the corpus level;
+    # The pop909 budget is a corpus-level choice: one reference and one budget
+    # serve every generated model, so it lives at the corpus level.
     # the Bach budgets predate that design and stay keyed per target model
     if args.out:
         out = Path(args.out)
@@ -110,7 +110,7 @@ def main() -> None:
     if out.exists():
         raise SystemExit(
             f"{out} exists — a frozen budget must not be recomputed after "
-            "edit results exist (SPEC §4.3). Delete by hand only if no "
+            "edit results exist (protocol). Delete by hand only if no "
             "edit run has consumed it, and ledger the reason."
         )
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -190,8 +190,8 @@ def main() -> None:
             # TIME-SHIFTED CLIP — 3W notes of context either side, re-anchored to
             # t=0 — which fits both the 100 s ceiling and the reference's context.
             # The estimation rule itself (P90 of the W-note window rise) is the
-            # frozen one; only the presentation changes, and that is recorded in
-            # the artifact's deviation note and the CHANGELOG.
+            # frozen one; only the presentation changes, and the artifact records
+            # that deviation.
             for m in range(1, len(labels)):
                 if labels[m] == labels[m - 1]:
                     continue
@@ -227,7 +227,8 @@ def main() -> None:
             else "whole pieces"
         ),
         "deviation_note": (
-            "SPEC §4.3 specifies M-REF: same architecture, disjoint seed AND data split. "
+            "The synthetic-model reference uses the same architecture with disjoint "
+            "seed and data split. "
             "A public checkpoint has no such twin, so the reference is a DIFFERENT public "
             "checkpoint (medium judging small): different weights and capacity, shared "
             "tokenizer. Not circular; recorded as a deviation."

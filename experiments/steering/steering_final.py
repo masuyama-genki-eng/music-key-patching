@@ -1,4 +1,4 @@
-"""Steering FINAL TEST (docs/STEERING_FREEZE.md §9): frozen picks, held-out prompts.
+"""Steering FINAL TEST (steering protocol): frozen picks, held-out prompts.
 
 Same 100 holdout prompts, same GEN_SEED, same guard, same statistics as install's
 final test, so every comparison is paired at the prompt level against the ledgered
@@ -6,7 +6,7 @@ install rows in results/confirmatory/<model>/parts/confirmatory_L4.parquet.
 Refuses to run without frozen_picks.json (written after the search stage and
 committed) — hyperparameters cannot leak from this run back into themselves.
 
-Measures per condition (freeze §6): guarded and unguarded SR; the estimator's
+Measures per condition: guarded and unguarded SR; the estimator's
 verdict breakdown; in-key note shares; per-target paired Wilcoxon against install
 (one-sided, install > steering, Holm across the 12 keys; the opposite direction,
 if observed, is reported with a two-sided p as well); and a prompt-level BCa CI on

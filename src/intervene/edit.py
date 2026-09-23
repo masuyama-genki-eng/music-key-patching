@@ -1,4 +1,4 @@
-"""Subspace edit for key-state intervention (SPEC §4.2).
+"""Subspace edit for key-state intervention (protocol).
 
 Edit: h <- h - P_V h + P_V mu_target,  P_V = V V^T with V (d x r) orthonormal.
 K2 sham edit: h <- h - P_V h + P_V h. Mathematically the identity, and it is computed
@@ -11,9 +11,8 @@ unfalsifiable: it then passes for any V, any layer, any position.
 Floating-point note: `(x - comp) + comp` is not bit-identical to x in fp
 (non-associativity), and the forward LOGITS do differ by ~1e-5. That does not reach the
 generated tokens: the honest sham was measured token-bit-identical to the clean run on
-24 real prompts at the real gate layer (CHANGELOG 2026-07-16). So the sweep gate
-compares tokens with exact equality, while the unit test compares logits with a
-tolerance. See CHANGELOG 2026-07-11 and 2026-07-16.
+24 real prompts at the real gate layer. The sweep gate compares tokens with exact
+equality, while the unit test compares logits with a tolerance.
 """
 
 from __future__ import annotations
@@ -130,7 +129,7 @@ class SubspaceEditor:
             return edited
         if self.until_position is None and self.token_mask is None:
             # Sustained path, kept in the exact slice-assign form the K2
-            # bit-identity gate was validated against (CHANGELOG 2026-07-16).
+            # bit-identity gate was validated against.
             out = x.clone()
             out[:, self.from_position :, :] = edited[:, self.from_position :, :]
             return out

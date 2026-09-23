@@ -1,4 +1,4 @@
-"""M-CTRL: GPT-2 style decoder (SPEC §2.1). L=8, H=8, d=512, ctx=512 by default."""
+"""M-CTRL: GPT-2 style decoder (protocol). L=8, H=8, d=512, ctx=512 by default."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class Block(nn.Module):
 
 class TonalGPT(nn.Module):
     """Residual-stream activations are exposed per block via `capture=True` or
-    modified via `editors` (SPEC §4 subspace edits attach here, not via global hooks,
+    modified via `editors` (protocol subspace edits attach here, not via global hooks,
     to keep edit application order explicit and testable)."""
 
     def __init__(

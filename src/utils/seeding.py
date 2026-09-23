@@ -1,4 +1,4 @@
-"""Deterministic seeding across numpy / torch / python (SPEC §7.4: seeds fixed in configs)."""
+"""Deterministic seeding across numpy / torch / python (protocol: seeds fixed in configs)."""
 
 from __future__ import annotations
 

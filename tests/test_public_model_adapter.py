@@ -36,9 +36,8 @@ def test_registry_returns_an_adapter(name):
     assert isinstance(a, PublicModelAdapter)
     assert a.name == name
     assert a.default_checkpoint
-    # the guard reference is either a DIFFERENT checkpoint, or None — meaning it is
-    # a property of the corpus (docs/CROSS_CORPUS_FREEZE.md §4) and lives in the
-    # corpus config, never defaulting to anything on the model axis
+    # The guard reference is either a different checkpoint, or None, meaning it
+    # lives in the corpus config and never defaults on the model axis.
     if a.reference_checkpoint is not None:
         assert a.default_checkpoint != a.reference_checkpoint
 

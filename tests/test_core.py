@@ -63,7 +63,7 @@ def test_ks_round_trip_no_modulation():
     """KS has DOCUMENTED confusions with closely related keys (dominant/subdominant:
     fifths distance 1; relative major/minor). Diagnosed in-container 2026-07-11:
     seed=0 is perfectly diatonic Bb major but KS picks F major because degree-V roots
-    outnumber the tonic pc — estimator limitation, not a generator bug (SPEC §4.3 note).
+    outnumber the tonic pc — estimator limitation, not a generator bug (protocol note).
     Honest criteria: every miss must be closely related; exact recovery >= 60%."""
     hits, total = 0, 0
     for seed in range(40):
@@ -138,7 +138,7 @@ def test_guarded_success_treats_unmeasurable_as_failure():
 def test_guarded_success_budget_is_inclusive():
     from src.eval.guard import guarded_success
 
-    assert guarded_success(True, 0.6, 0.6) is True, "SPEC 4.3 says <= delta"
+    assert guarded_success(True, 0.6, 0.6) is True, "guard uses <= delta"
     assert guarded_success(True, 0.6000001, 0.6) is False
 
 

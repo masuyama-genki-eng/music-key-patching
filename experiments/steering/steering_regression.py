@@ -1,4 +1,4 @@
-"""Regression gate before any steering run (docs/STEERING_FREEZE.md §12).
+"""Regression gate before any steering run (steering protocol).
 
 Three checks, none of which touches a ledgered artifact:
   1. install's frozen headline numbers recompute from the confirmatory parquet
@@ -128,7 +128,7 @@ def main() -> None:
     # DETERMINISTIC, and may differ from clean on at most 1% of prompts, with the
     # count recorded. The logit-tolerance form of the property is pinned in
     # tests/test_sham_identity.py. Adjusted BEFORE any steering number existed
-    # (the gate itself blocked the first attempt); CHANGELOG 2026-08-22.
+    # (the gate itself blocked the first attempt).
     ok2 = (sham == sham2) and n_diff <= 1
     out["sham_deterministic"] = sham == sham2
     out["sham_vs_clean_mismatches"] = n_diff

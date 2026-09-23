@@ -1,4 +1,4 @@
-"""Held-out replacement and random/position controls — the held-out confirmatory test (docs/CONFIRMATORY_FREEZE.md).
+"""Held-out replacement and random/position controls — the held-out confirmatory test (held-out final-test protocol).
 
 Everything here executes choices frozen in commit 0d621e4, which predates this
 run. Prompts are the first 100 stable-major pieces at test.parquet rows >= 6000
@@ -58,7 +58,7 @@ def select_prompts_holdout(
     """First n stable pieces of the given mode at rows >= HOLDOUT_START.
 
     mode="major" is the frozen rule of the primary final test (0d621e4).
-    mode="minor" is the pre-registered secondary condition (AMENDMENT 3):
+    mode="minor" is the pre-registered secondary condition:
     same rule with the mode flipped (stable pieces whose key is 12..23).
     A piece is stable-major or stable-minor, never both, so the two prompt
     sets cannot overlap."""
@@ -119,8 +119,7 @@ def main() -> None:
         "--mode",
         choices=["major", "minor"],
         default="major",
-        help="minor = pre-registered secondary condition "
-        "(AMENDMENT 3): stable-minor prompts, minor targets, "
+        help="minor = pre-registered secondary condition: stable-minor prompts, minor targets, "
         "artifacts under <model>_minor/",
     )
     args = ap.parse_args()
@@ -129,7 +128,7 @@ def main() -> None:
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"
     name = Path(args.model_dir).name
-    if args.mode == "minor":  # AMENDMENT 3: separate artifact
+    if args.mode == "minor":  # separate artifact tree for the secondary condition
         name = f"{name}_minor"  # tree; never overwrite the
     outdir = REPO / "results/confirmatory" / name  # primary (major) verdict
     (outdir / "parts").mkdir(parents=True, exist_ok=True)
@@ -156,7 +155,7 @@ def main() -> None:
     K1 = SW.k1_basis(V, GEN_SEED + 31 * args.layer)  # frozen formula
 
     run_cfg = {
-        "freeze": "docs/CONFIRMATORY_FREEZE.md @ 0d621e4",
+        "freeze": "held-out final-test protocol",
         "model": name,
         "layer": args.layer,
         "gen_seed": GEN_SEED,
@@ -200,7 +199,7 @@ def main() -> None:
     # ---------------- arms
     # k1      : rank-matched random subspace (pre-registered control)
     # k1_norm : same basis, perturbation rescaled to the edit's magnitude
-    #           (freeze AMENDMENT 1 — excludes a magnitude explanation)
+    #           to exclude a magnitude-only explanation
     Vt = torch.from_numpy(V).float().to(device)
     all_rows = []
     arms = {k: ARMS[k] for k in args.arms.split(",")}

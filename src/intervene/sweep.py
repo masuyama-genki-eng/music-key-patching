@@ -1,8 +1,8 @@
-"""Phase B intervention sweep machinery (SPEC §4.2): prompts, conditions, rows.
+"""Phase B intervention sweep machinery (protocol): prompts, conditions, rows.
 
 A condition = (subspace method, layer, target key) or a control (K1/K3/K4/clean).
 For every prompt the CLEAN twin shares the generation rng seed, so edit-vs-clean
-is paired at the prompt level (SPEC §6 pairing).
+is paired at the prompt level (protocol pairing).
 """
 
 from __future__ import annotations

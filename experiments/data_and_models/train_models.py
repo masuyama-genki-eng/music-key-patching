@@ -1,4 +1,4 @@
-"""P2: train M-CTRL (R-Aug/R-NoAug × seeds) and M-REF sequentially (SPEC §2).
+"""P2: train M-CTRL (R-Aug/R-NoAug × seeds) and M-REF sequentially (protocol).
 
 M-REF uses the ref_train/ref_val split (separate seed range) and its own seed.
 Idempotent: finished runs (final.pt + matching config hash) are skipped, so the
@@ -37,7 +37,7 @@ def main() -> None:
     ap.add_argument(
         "--no-ledger",
         action="store_true",
-        help="smoke tests only: do not append to RESULTS_LEDGER",
+        help="smoke tests only: do not append to run ledger",
     )
     args = ap.parse_args()
 
@@ -73,7 +73,7 @@ def main() -> None:
     for regime, rc in cfg["regimes"].items():
         for seed in rc["seeds"]:
             add(f"{regime}_s{seed}", regime, seed, "train.parquet", "val.parquet")
-    # M-REF: R-Aug regime (decision recorded in CHANGELOG), separate seed + split
+    # M-REF: R-Aug regime, separate seed and split
     add(
         f"M-REF_s{cfg['m_ref']['seed']}",
         "R-Aug",

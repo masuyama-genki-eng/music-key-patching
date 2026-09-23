@@ -195,7 +195,7 @@ def main() -> None:
 
     ni = df[~df["identity"]]
     verdict = {
-        "freeze": "docs/ADDITIONAL_EXPERIMENTS_FREEZE.md",
+        "freeze": "additional-analysis protocol",
         "mode": args.mode,
         "layer": LAYER,
         "prompt_rows": [rows_used[0], rows_used[-1]],
@@ -283,7 +283,7 @@ def main() -> None:
     if not args.no_ledger:
         append_entry(
             stage=f"EXP A stage 2: pitch-class subspace edits, {args.mode} "
-            f"(freeze ADDITIONAL_EXPERIMENTS_FREEZE.md)",
+            f"(freeze additional-analysis protocol)",
             config=vars(args),
             seeds=[confirm.GEN_SEED],
             artifacts=[

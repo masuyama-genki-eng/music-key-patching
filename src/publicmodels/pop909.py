@@ -309,7 +309,7 @@ def load_pop909_part(
 ) -> tuple[list[dict], dict]:
     """Load one split part ("train" | "search" | "final"). The probe, the per-key
     means and the guard budget are allowed TRAIN only; layer/hyperparameter choices
-    SEARCH only; FINAL is touched once (docs/CROSS_CORPUS_FREEZE.md §3)."""
+    use SEARCH only; FINAL is touched once."""
     assert part in ("train", "search", "final"), part
     pieces, stats = load_pop909(root, min_labeled_events)
     parts = split_pieces([q["name"] for q in pieces], seed, frac)

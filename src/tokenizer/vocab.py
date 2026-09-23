@@ -1,4 +1,4 @@
-"""Vocabulary for TonalWM. LEAK-FREE BY CONSTRUCTION (SPEC §1.2).
+"""Vocabulary for TonalWM. LEAK-FREE BY CONSTRUCTION (protocol).
 
 Only BAR / POS / PITCH(absolute MIDI) / DUR / specials. No key, chord, roman-numeral,
 or scale-degree tokens may ever be added: test_vocab_no_leak.py enforces this.

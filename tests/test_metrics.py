@@ -1,4 +1,4 @@
-"""Unit tests for Phase B metrics (SPEC §4.3)."""
+"""Unit tests for Phase B metrics (protocol)."""
 
 import os
 import sys

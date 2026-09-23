@@ -198,8 +198,8 @@ class PublicModelAdapter(ABC):
                     if editor is not None:
                         off = max(0, ids.shape[1] - ctx)
                         editor.from_position = max(0, plen - off)
-                        # AMENDMENT 1 (C2): a position-restricted edit needs its
-                        # mask recomputed as the window slides, because which
+                        # A position-restricted edit needs its mask recomputed as
+                        # the window slides, because which
                         # positions carry a pitch depends on the tokens present.
                         # No-op unless mask_kind was set.
                         if getattr(editor, "mask_kind", None) is not None:
@@ -234,7 +234,7 @@ class PublicModelAdapter(ABC):
         two must be disjoint, and their union is what the unmasked edit writes to.
 
         Optional and defaults to refusing, so adapters written before
-        ADDITIONAL_EXPERIMENTS_FREEZE AMENDMENT 1 (C2) are unaffected. A compound
+        the token-mask extension are unaffected. A compound
         scheme cannot implement it, because every field is emitted at every step
         and "a pitch position" names no position -- that refusal is a result, not
         a gap.
@@ -248,7 +248,7 @@ class PublicModelAdapter(ABC):
         NEXT token, from one forward pass with nothing sampled.
 
         Optional and defaults to refusing, so the three adapters that existed
-        before AMENDMENT 1 keep behaving exactly as they did. Each scheme has to
+        older adapters keep behaving exactly as they did. Each scheme has to
         implement it itself because the head structure differs: the flat schemes
         put pitch inside one vocabulary, while a compound scheme has a separate
         pitch field. Used by the pre-generation reading of experiment C1.

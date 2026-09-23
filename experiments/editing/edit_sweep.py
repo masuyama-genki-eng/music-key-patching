@@ -88,7 +88,7 @@ def main() -> None:
     if not guard_path.exists():
         raise SystemExit(
             "frozen guard missing — run experiments/editing/freeze_quality_guard.py first "
-            "(SPEC §4.3 requires delta_PPL frozen before any edit run)"
+            "(protocol requires delta_PPL frozen before any edit run)"
         )
     delta_ppl = json.loads(guard_path.read_text())["delta_ppl"]
 

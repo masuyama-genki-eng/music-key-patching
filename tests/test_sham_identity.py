@@ -1,4 +1,4 @@
-"""P0/P4 gate (SPEC §4.2 K2): sham edit must reproduce clean output BIT-EXACTLY.
+"""P0/P4 gate (protocol K2): sham edit must reproduce clean output BIT-EXACTLY.
 
 This doubles as the implementation-correctness gate for the editor plumbing: if the
 sham path is not bit-identical, real-edit effects cannot be attributed to the edit.

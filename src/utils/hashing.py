@@ -1,4 +1,4 @@
-"""Content hashing for ledger entries and result provenance (CLAUDE.md rule 2)."""
+"""Content hashing for ledger entries and result provenance (release metadata rule)."""
 
 from __future__ import annotations
 

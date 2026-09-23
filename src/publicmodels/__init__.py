@@ -1,4 +1,4 @@
-"""Adapters for public pre-trained music models (SPEC §2.3, "M-WILD").
+"""Adapters for public pre-trained music models (protocol, "M-WILD").
 
 Probing and editing a public checkpoint needs two model-specific things: its token
 scheme (how a score becomes token ids, and where in the stream the model chooses a

@@ -1,9 +1,9 @@
-"""Training for M-CTRL (R-Aug / R-NoAug) and M-REF (SPEC §2).
+"""Training for M-CTRL (R-Aug / R-NoAug) and M-REF (protocol).
 
 One invocation trains ONE model (regime, seed, split) — see experiments/data_and_models/train_models.py.
 Deterministic under (config, seed). Resumable from the latest checkpoint; a finished
 run (final.pt + matching config hash) is skipped. Every finished run is ledgered with
-final val loss / perplexity / top-1 (SPEC §2.1 requires these in the LEDGER).
+final val loss / perplexity / top-1 (protocol requires these in the LEDGER).
 
 R-Aug: per-sequence uniform transposition k ∈ {0..11} applied in token-id space
 (PITCH ids are contiguous). Generator pitches lie in [40, 88], so +11 stays inside

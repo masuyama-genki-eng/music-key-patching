@@ -1,11 +1,11 @@
-# D-SYN corpus (SPEC §1.1). Deterministic: piece_seed = base_seed + split_offset + idx
+# D-SYN corpus (protocol). Deterministic: piece_seed = base_seed + split_offset + idx
 # (offsets in experiments/data_and_models/generate_corpus.py; M-REF split range reserved for P2).
 n_train: 200000
 n_val: 10000
 n_test: 10000
-n_ref_train: 200000     # M-REF split (SPEC §2.2: separate seed range AND split)
+n_ref_train: 200000     # M-REF split (protocol: separate seed range AND split)
 n_ref_val: 10000
-n_bars_min: 12          # 12..22 bars -> 278..508 tokens, inside SPEC §1.1's 256-512
+n_bars_min: 12          # 12..22 bars -> 278..508 tokens, inside protocol's 256-512
 n_bars_max: 22          # (P0 stub had fixed 24 bars = 554 tokens > ctx 512; fixed in P1
                         #  before any generation/training run — see git history)
 chords_per_bar: 2

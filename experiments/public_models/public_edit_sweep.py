@@ -4,14 +4,14 @@ REAL music change the key it composes in?
 The probe says a real-trained model carries a key state that beats the pitch surface
 (experiments/public_models/public_probe.py). This asks the Othello-GPT question of it: is that state USED?
 
-Design, fixed before running (CHANGELOG 2026-07-14):
+Design, fixed before running:
   * Prompts     : Bach chorales, key-stable prefix (first half), disjoint sets for
                   layer selection (stage 1) and evaluation (stage 2), so the layer is
                   never chosen on the data it is then judged on.
   * Subspace    : V-PROBE — the row space of the probe we fit on this model.
   * Guard       : a DIFFERENT public model (music-medium) as M-REF. delta_PPL is the
                   90th percentile of the NLL rise across NATURAL modulations in the
-                  chorales, frozen BEFORE any edit runs — the same rule as SPEC §4.3.
+                  chorales, frozen BEFORE any edit runs — the same guard rule.
   * Controls    : K1 rank/norm-matched random subspace; K2 sham (bit-identical gate).
   * Metric      : TKR (KS estimate of the continuation's key == injected key) and IKR,
                   both computed on whatever pitches the model actually emits.
@@ -175,7 +175,7 @@ def main() -> None:
         "--layers",
         default=None,
         help="stage 1 only: comma-separated layer subset to scan, e.g. "
-        "0,2,4 (SPEC §8 strided fallback). Default: every layer. A "
+        "0,2,4. Default: every layer. A "
         "later run may add layers; the scan file keeps the union.",
     )
     ap.add_argument(
@@ -184,7 +184,7 @@ def main() -> None:
         default="bach",
         help="evaluation corpus; pop909 draws stage-1 prompts from the "
         "SEARCH split and stage-2 prompts from the FINAL split "
-        "(docs/CROSS_CORPUS_FREEZE.md §3) and keeps artifacts in a "
+        "and keeps artifacts in a "
         "separate results tree",
     )
     ap.add_argument("--scores", default=str(REPO / "data/bach-370-chorales"))
@@ -217,8 +217,8 @@ def main() -> None:
     adapter = get_adapter(args.adapter)
     checkpoint = args.model or adapter.default_checkpoint
     if args.corpus == "pop909":
-        # the reference is a property of the CORPUS: one checkpoint, one adapter,
-        # serving every generated model on it (docs/CROSS_CORPUS_FREEZE.md §4)
+        # The reference is a corpus-level choice: one checkpoint and adapter serve
+        # every generated model evaluated on that corpus.
         gr = yaml.safe_load((REPO / "configs/pop909.yaml").read_text())[
             "guard_reference"
         ]
@@ -481,8 +481,7 @@ def main() -> None:
         raise SystemExit(
             f"guard corpus mismatch: the budget was frozen on {frozen_corpus!r} but "
             f"this run scores {args.corpus!r}. A perplexity budget does not transfer "
-            "between corpora; freeze one for this corpus first "
-            "(docs/CROSS_CORPUS_FREEZE.md §4)."
+            "between corpora; freeze one for this corpus first."
         )
     frozen_ref = guard.get("reference_model")
     if frozen_ref and frozen_ref != ref_checkpoint:
