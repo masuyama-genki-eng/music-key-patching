@@ -3,7 +3,7 @@
 Code accompanying the manuscript by Genki Masuyama, Keigo Sakurai, Ren Togo,
 Takahiro Ogawa, and Miki Haseyama (Hokkaido University).
 
-[![Overview of the study](figure1.png)](figure1.pdf)
+![Overview of the study](figure1.png)
 
 This distribution contains the main paper's experiment code, shared libraries,
 configuration, and tests. It contains no datasets, trained weights, computed
@@ -11,8 +11,6 @@ results, manuscript files, drawing scripts, demos, or additional studies.
 
 The current manuscript reports the main intervention results as Fig. 2, the
 main layerwise comparison as Fig. 3, and public-model results as Table 1.
-Older development notes and scripts may still use the previous numbering, where
-the main continuation table was Table 1 and the public-model table was Table 2.
 
 ## Installation and checks
 
@@ -91,9 +89,7 @@ test uses the paper's frozen layer 4 and separate major/minor prompt sets:
 for mode in major minor; do
   python experiments/confirmatory/confirmatory_test.py --mode "$mode"
   python experiments/confirmatory/next_pitch_test.py --mode "$mode"
-  python experiments/confirmatory/k4_ceiling.py --mode "$mode"
 done
-python experiments/reanalysis/threshold_sensitivity.py
 
 python experiments/reanalysis/pitchclass_subspace.py --stage fit
 python experiments/reanalysis/pitchclass_edit.py --mode major
@@ -106,27 +102,8 @@ training pieces and selects its ridge penalty on search prompts. It writes
 `results/reanalysis/a_pitchclass/{subspaces.npz,fit_report.json}`; the edit runs
 write `verdict_major.json` and `verdict_minor.json` there.
 
-The current main paper no longer has a separate replacement-versus-addition
-section. The archived steering scripts still reproduce the supplementary
-addition comparisons under the same search-prompt, reference-budget, and final
-prompt rules:
-
-```bash
-python experiments/steering/steering_regression.py
-python experiments/steering/s_bar.py
-python experiments/steering/steering_sweep.py --condition B
-python experiments/steering/steering_sweep.py --condition C
-python experiments/steering/freeze_picks.py
-python experiments/steering/steering_final.py --mode major
-python experiments/steering/steering_final.py --mode minor
-```
-
-`freeze_picks.py` selects from search results only, refuses incomplete grids or
-ambiguous maxima, and saves `results/steering/R-Aug_s0/frozen_picks.json` before
-the final addition runs. B matches replacement's displacement at each position;
-C searches a layer and fixed scale. The archived settings are B: layer 3 and
-C: layer 2, scale 2. Record actual choices from a new training run rather than
-selecting them from final outcomes.
+Additional robustness checks are available in `confirmatory/k4_ceiling.py`,
+`reanalysis/threshold_sensitivity.py`, and `experiments/steering/`.
 
 ## Public data and checkpoints
 
