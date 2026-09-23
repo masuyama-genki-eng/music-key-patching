@@ -9,6 +9,11 @@ This distribution contains the main paper's experiment code, shared libraries,
 configuration, and tests. It contains no datasets, trained weights, computed
 results, manuscript files, drawing scripts, demos, or additional studies.
 
+The current manuscript reports the main intervention results as Fig. 2, the
+main layerwise comparison as Fig. 3, and public-model results as Table 1.
+Older development notes and scripts may still use the previous numbering, where
+the main continuation table was Table 1 and the public-model table was Table 2.
+
 ## Installation and checks
 
 Use Python 3.12 and run commands from this directory:
@@ -37,13 +42,13 @@ generation. Its temporary files are removed afterward.
 | Paper component | Entry point under `experiments/` |
 |---|---|
 | Secs. 3.1–3.2: synthetic data and trained decoders | `data_and_models/generate_corpus.py`, `train_models.py`, `quality_gate.py` |
-| Secs. 2.1, 4.1: linear probes, piece-label controls, note-history baselines | `probing/probe_key.py`, `window_matched_baseline.py` |
-| Secs. 2.2, 4.2: replacement and random/position controls, Table 1 | `editing/freeze_quality_guard.py`, `edit_sweep.py`, `confirmatory/confirmatory_test.py` |
-| Sec. 4.2: transposed-prompt ceiling and threshold sensitivity | `confirmatory/k4_ceiling.py`, `reanalysis/threshold_sensitivity.py` |
-| Sec. 4.3: next-pitch prediction and pitch-class controls | `confirmatory/next_pitch_test.py`, `reanalysis/pitchclass_subspace.py`, `pitchclass_edit.py` |
-| Sec. 4.4: numerical layer profiles | `editing/layer_profile.py` (CSV only) |
-| Sec. 4.5: public models and Table 2 | `public_models/`, `real_music/pop909_label_gate.py`, `reanalysis/public_next_pitch.py` |
-| Sec. 4.6: replacement versus addition | `steering/` (matched addition B and fixed-scale addition C) |
+| Secs. 2.1, 4.1: linear probes and note-history baselines | `probing/probe_key.py`, `window_matched_baseline.py` |
+| Secs. 2.2, 4.2 and Fig. 2 left: continuation SR after replacement | `editing/freeze_quality_guard.py`, `edit_sweep.py`, `confirmatory/confirmatory_test.py` |
+| Sec. 4.3 and Fig. 2 right: before-sampling next-pitch shift | `confirmatory/next_pitch_test.py` |
+| Sec. 4.4 and Fig. 3: layerwise probe/edit margins | `editing/layer_profile.py` (CSV only) |
+| Sec. 4.4: token-position and pitch-class controls | `reanalysis/pitchclass_subspace.py`, `reanalysis/pitchclass_edit.py` |
+| Sec. 4.5 and Table 1: public models | `public_models/`, `real_music/pop909_label_gate.py`, `reanalysis/public_next_pitch.py` |
+| Supplementary robustness checks | `confirmatory/k4_ceiling.py`, `reanalysis/threshold_sensitivity.py`, `steering/` |
 
 ## Synthetic experiments
 
@@ -101,8 +106,10 @@ training pieces and selects its ridge penalty on search prompts. It writes
 `results/reanalysis/a_pitchclass/{subspaces.npz,fit_report.json}`; the edit runs
 write `verdict_major.json` and `verdict_minor.json` there.
 
-Addition comparisons use the same search prompts, reference budget, and final
-prompt rule:
+The current main paper no longer has a separate replacement-versus-addition
+section. The archived steering scripts still reproduce the supplementary
+addition comparisons under the same search-prompt, reference-budget, and final
+prompt rules:
 
 ```bash
 python experiments/steering/steering_regression.py
@@ -117,7 +124,7 @@ python experiments/steering/steering_final.py --mode minor
 `freeze_picks.py` selects from search results only, refuses incomplete grids or
 ambiguous maxima, and saves `results/steering/R-Aug_s0/frozen_picks.json` before
 the final addition runs. B matches replacement's displacement at each position;
-C searches a layer and fixed scale. The paper's settings are B: layer 3 and
+C searches a layer and fixed scale. The archived settings are B: layer 3 and
 C: layer 2, scale 2. Record actual choices from a new training run rather than
 selecting them from final outcomes.
 
