@@ -227,9 +227,11 @@ pre-registration exists to prevent, and the cell's value is small — the scale 
 the weakest generalization axis in the design, and the ladder's first two rungs
 (.479, .557) already carry it.
 
-So Table 2 reports the large probe (+.203, which needs no reference model) and leaves
-the edit blank, with the caption saying which kind of blank it is. The cell belongs to
-the journal version, where a larger reference can be trained or obtained.
+At this freeze point, the then-current public-model table was to report the large
+probe (+.203), which needs no reference model, and leave the edit blank, with the
+caption saying which kind of blank it is. Later manuscript revisions renumbered the
+public-model table as Table 1 and added further public-model cells; see
+`results/PROVENANCE.md` for the current paper mapping.
 
 ---
 

@@ -1,20 +1,27 @@
-# REPRO.md — 追加実験 A〜E の前提となる再現確認
+# REPRO.md — 本文主要値の再現確認
 
-指示書 §0.3 の要求「新条件を走らせる前に、既存の Table 1 主要値が ±0.01 以内で
-再現することを確認」に対する記録。2026-09-09 実施。
+当初は「追加実験を走らせる前に、旧 Table 1 の主要値が ±0.01 以内で再現すること」
+を確認するための記録だった。現在の本文では、主モデルの主要値は Table ではなく
+Fig. 2 に置かれ、Table 1 は公開モデルの結果をまとめる表になっている。
+このファイルは、現在の Fig. 2 と関連する本文主要値が artifact から再計算できることの
+確認記録として読む。
 
 ## 1. 再現確認の結果（全項目 合格）
 
-台帳済み artifact から丸めを再計算した値と、論文 Table 1 の記載値の比較。
+台帳済み artifact から丸めを再計算した値と、現在の本文記載値の比較。
 
 | 量 | 論文 | artifact 実測 | 差 | 判定 |
 |---|---|---|---|---|
-| 置換 SR（長調） | 0.355 | 0.3555 | +0.0005 | OK |
-| 置換 SR（短調） | 0.495 | 0.4945 | −0.0005 | OK |
-| 変位一致ランダム対照（長調） | 0.056 | 0.0564 | +0.0004 | OK |
-| 変位一致ランダム対照（短調） | 0.026 | 0.0264 | +0.0004 | OK |
-| 移調参照（長調） | 0.648 | 0.6482 | +0.0002 | OK |
-| 移調参照（短調） | 0.877 | 0.8773 | +0.0003 | OK |
+| Fig. 2左: 置換 SR（長調） | 0.355 | 0.3555 | +0.0005 | OK |
+| Fig. 2左: 置換 SR（短調） | 0.495 | 0.4945 | −0.0005 | OK |
+| Fig. 2左: 変位一致ランダム対照（長調） | 0.056 | 0.0564 | +0.0004 | OK |
+| Fig. 2左: 変位一致ランダム対照（短調） | 0.026 | 0.0264 | +0.0004 | OK |
+| Fig. 2右: 置換 $\delta D$（長調） | 0.695 | 0.6953 | +0.0003 | OK |
+| Fig. 2右: 置換 $\delta D$（短調） | 0.309 | 0.3094 | +0.0004 | OK |
+| Fig. 2右: ランダム対照 $\delta D$（長調） | 0.041 | 0.0410 | +0.0000 | OK |
+| Fig. 2右: ランダム対照 $\delta D$（短調） | 0.026 | 0.0261 | +0.0001 | OK |
+| 尤度基準なし SR（長調） | 0.410 | 0.4100 | +0.0000 | OK |
+| 尤度基準なし SR（短調） | 0.617 | 0.6173 | +0.0003 | OK |
 
 差はすべて ±0.001 以内（要求は ±0.01）。**論文の値は3桁丸めであり、実測との差は
 丸めのみに由来する**（丸め誤りの前歴があるため、値は毎回 artifact から
@@ -22,10 +29,11 @@
 
 根拠 artifact:
 - `results/confirmatory/R-Aug_s0/verdict.json` — `conditions.edit.pooled_guarded_tkr`,
-  `edit_vs_k1norm.pooled_k1_norm`
+  `edit_vs_k1norm.pooled_k1_norm`, `conditions.edit.raw_tkr`
 - `results/confirmatory/R-Aug_s0_minor/verdict.json` — 同上（短調）
-- `results/confirmatory/R-Aug_s0/k4_ceiling.json`,
-  `results/confirmatory/R-Aug_s0_minor/k4_ceiling.json` — `k4_raw_tkr_nonidentity`
+- `results/confirmatory/R-Aug_s0/next_pitch.json`,
+  `results/confirmatory/R-Aug_s0_minor/next_pitch.json` — `pooled.mean_D_edit`,
+  `pooled.mean_D_k1`
 
 再現コマンド（本ファイルの表を生成したもの）:
 
@@ -35,10 +43,13 @@ cd <REPO_ROOT>   # = the directory this repository is checked out into
 import json
 for mode, sub in (("major","R-Aug_s0"), ("minor","R-Aug_s0_minor")):
     v = json.load(open(f"results/confirmatory/{sub}/verdict.json"))
-    k4 = json.load(open(f"results/confirmatory/{sub}/k4_ceiling.json"))
-    print(mode, f"{v['conditions']['edit']['pooled_guarded_tkr']:.4f}",
+    n = json.load(open(f"results/confirmatory/{sub}/next_pitch.json"))
+    print(mode,
+          f"{v['conditions']['edit']['pooled_guarded_tkr']:.4f}",
           f"{v['edit_vs_k1norm']['pooled_k1_norm']:.4f}",
-          f"{k4['k4_raw_tkr_nonidentity']:.4f}")
+          f"{v['conditions']['edit']['raw_tkr']:.4f}",
+          f"{n['pooled']['mean_D_edit']:.4f}",
+          f"{n['pooled']['mean_D_k1']:.4f}")
 EOF
 ```
 
@@ -46,7 +57,7 @@ EOF
 
 ```bash
 .venv/bin/python experiments/figures/collect_paper_numbers.py --check-tex
-# -> untraceable across both documents: 0   (2026-09-09 時点)
+# expected: untraceable across both documents: 0
 ```
 
 さらに、パイプライン自体の非退行はリポジトリ側の回帰ゲートが担保している

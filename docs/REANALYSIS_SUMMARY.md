@@ -28,8 +28,9 @@ and re-derive anything before it enters the paper.
 | 12c | Does a one-shot edit persist? | **strengthens, with caveats** | `a12c/decay.json` |
 
 Also settled: the final test regenerates **exactly** (est_key and success identical on
-1.0000 of 2,400 rows in each mode, SR 0.3555 and 0.4945 reproduced), and the missing
-Table 2 cell was run — AMT-36L on Bach reaches 0.540 against 0.056, 12/12 targets.
+1.0000 of 2,400 rows in each mode, SR 0.3555 and 0.4945 reproduced), and the public
+AMT-size cell now reported in Table 1 was run — AMT-36L on Bach reaches 0.540 against
+0.056, 12/12 targets.
 
 ## Results that weaken the claim
 
