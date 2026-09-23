@@ -6,7 +6,9 @@ probes:
 split: by_sequence             # train/val/test split at sequence level
 metric: macro_f1_24            # + tonic-12 / mode-2 decomposition
 controls:
-  c1_shuffle: true             # selectivity: labels shuffled within sequence
+  c1_shuffle: true             # C1a selectivity: labels shuffled within sequence.
+                               # The probe margin subtracts C1b (per-piece random
+                               # relabeling), scored against the true labels.
   c2_untrained: true           # same probe on randomly initialized M-CTRL
   c3_windows: [8, 16, 32, 64]  # input baselines: PC-histogram LR + KS per window
 ambiguity:

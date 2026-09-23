@@ -12,7 +12,8 @@ protocol:
   n_prompts: 100                       # per condition, >= SPEC minimum
   layers: all                          # stride 1 (fallback: stride 2 + peak refinement, ledger it)
 controls:
-  k1_random_matched: true              # rank/norm-matched random subspace
+  k1_random_matched: true              # rank-matched random subspace (K1); the k1_norm
+                                       # arm additionally matches displacement
   k2_sham: true                        # must be bit-identical to clean
   k3_layer_shuffle: true
   k4_transposed_prompt: true           # behavioral upper reference

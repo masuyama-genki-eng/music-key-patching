@@ -18,8 +18,8 @@ The manuscript uses the following main-paper structure.
 | paper item | content | primary artifacts |
 |---|---|---|
 | Sec. 4.1, Key Readability | Probe margin against note-counting baselines | `results/probing/R-Aug_s0/`, `results/layerwise_read_use_ours.csv` |
-| Fig. 2 left, Sec. 4.2 | Continuation success rate (SR) after repeated replacement from bar 9 | `results/confirmatory/R-Aug_s0{,_minor}/verdict.json` |
-| Fig. 2 right, Sec. 4.3 | Before-sampling next-pitch shift `delta D` | `results/confirmatory/R-Aug_s0{,_minor}/next_pitch.json` |
+| Fig. 2a, Sec. 4.2 | Continuation success rate (SR) after repeated replacement from bar 9 | `results/confirmatory/R-Aug_s0{,_minor}/verdict.json` |
+| Fig. 2b, Sec. 4.3 | Before-sampling next-pitch shift `delta D` | `results/confirmatory/R-Aug_s0{,_minor}/next_pitch.json` |
 | Fig. 3, Sec. 4.4 | Layerwise probe and edit margins for the main model | `results/layerwise_read_use_ours.csv` |
 | Sec. 4.4 | Token-position-restricted replacement | `results/confirmatory/R-Aug_s0{,_minor}/verdict.json` |
 | Table 1, Sec. 4.5 | Public-model Bach, AMT-size, and Pop results | `results/public_dedup_bach/`, `results/mwild_sweep*/`, `results/mwild*/` |
@@ -30,8 +30,9 @@ file; artifacts are produced by the ledgered runs recorded in `RESULTS_LEDGER.md
 
 ## Headline Results
 
-For the main model, target-key replacement at layer 4 makes generated continuations
-follow the target key in 35.5% of major-key prompts and 49.5% of minor-key prompts.
+For the main model, target-key replacement at layer 4 (layers are indexed from 0, so
+this is the fifth of eight blocks) makes generated continuations follow the target key
+in 35.5% of major-key prompts and 49.5% of minor-key prompts.
 The random-subspace control matched in both dimension and displacement reaches 5.6%
 and 2.6%. Without the likelihood criterion, the same rows give raw key-match rates
 of 41.0% and 61.7%.
@@ -48,9 +49,12 @@ the strongest run in both modes; the paper reports this explicitly rather than
 treating the six-model range as if the main model were typical.
 
 Public-model evaluations use the same distinction between readability and causal
-effect. On Bach, AMT-12L, MMT, and REMI+ all beat their own random controls on all
-12 target keys. On Pop, MMT and REMI+ still show a continuation effect even though
-their probe margins are negative relative to the note-counting baseline.
+effect. The five public checkpoints are the 12-, 24-, and 36-layer Anticipatory Music
+Transformer models, MMT, and the REMI-representation baseline released with MMT,
+which this repository and the paper label REMI+. On Bach, AMT-12L, MMT, and REMI+ all
+beat their own random controls on all 12 target keys. On Pop, MMT and REMI+ still
+show a continuation effect even though their probe margins are negative relative to
+the note-counting baseline.
 
 ## Layout
 
@@ -123,6 +127,7 @@ the paper trace back to artifacts.
 |---|---|
 | `paper/fig2_main_results_bars.pdf` | `experiments/figures/fig_main_results_bars.py` |
 | `paper/fig3.pdf` | `experiments/figures/fig_layerwise_gpt2_stacked.py` |
+| `paper/table_public_layerwise_bach_pooled80_dedup.tex` (supplement) | `experiments/figures/table_public_layerwise_from_csv.py` |
 | public-model summaries | `experiments/figures/collect_paper_numbers.py` and `results/PROVENANCE.md` |
 
 Some exploratory scripts may exist locally under `experiments/figures/`; only the

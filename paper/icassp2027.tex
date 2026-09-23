@@ -1,18 +1,15 @@
 \documentclass{article}
 \usepackage{spconf,amsmath,graphicx}
 \usepackage[T1]{fontenc}
-\usepackage{amssymb,booktabs,array,tabularx}
+\usepackage{amssymb,booktabs}
 \usepackage{enumitem}
 
 \usepackage{cite}
 \usepackage[hidelinks]{hyperref}
 
 \usepackage{url}
-\usepackage[table]{xcolor}
-\definecolor{analysisblue}{RGB}{235,244,250}
 \newcommand{\tabfont}{\fontsize{9}{10.5}\selectfont}  
 \graphicspath{{../results/figures/}}
-\usepackage{pifont}
 
 \renewcommand{\topfraction}{0.92}
 \renewcommand{\bottomfraction}{0.85}
@@ -118,7 +115,7 @@ Studies on music generation models have used activation steering to control musi
 % したがって，属性情報を内部から読み取れるかだけでなく，その情報を別の属性に対応する情報へ置き換えたときに生成結果が変化するかを検証する必要がある．
 However, linear probing and activation steering alone do not fully test whether internal attribute information is actually used for generation.
 A probe may accurately predict an attribute without showing that the model uses this information to generate the next output~\cite{belinkov2022probing}.
-Activation steering also keeps information about the original attribute while adding a direction associated with the target attribute~\cite{li2023iti,zou2023repe}.
+Activation steering also keeps information about the original attribute while adding the target direction.
 As a result, the effects of the original and target attributes can remain mixed, making it difficult to separate their effects from the generated output alone.
 Therefore, we need to test not only whether attribute information can be read from internal activations but also whether replacing it with information for another attribute changes the generated output.
 
@@ -166,7 +163,7 @@ Its strength varies across layers and models even when key information is readil
 \section{Method}
 % まず線形プロービングにより，調情報を読み出せる内部表現を同定する．
 % 次にactivation patchingにより，その表現を変更したときに生成音楽が変化するかを検証する．
-We first use linear probing to identify internal representations from which key information can be read, and then use activation patching to test whether changing these representations affects the generated music.
+We first identify key-related representations by linear probing, then edit them by activation patching.
 
 \subsection{Linear Probing}
 \label{sec:probe}
@@ -186,8 +183,8 @@ p_\ell(t) = \operatorname{softmax}\left( W_\ell h_\ell(t) + b_\ell \right),
 \label{eq:probe}
 \end{equation}
 where $W_\ell \in \mathbb{R}^{24 \times d}$ and $b_\ell \in \mathbb{R}^{24}$ are the probe parameters.
-We train only the probe and keep the parameters of the generation model fixed.
-This linear probe allows us to quantify how linearly accessible key information is at the output of each layer.
+We train only the probe, on standardized activations, and fold the standardization back into $W_\ell$ and $b_\ell$ so that Eq.~\eqref{eq:probe} applies to raw activations.
+The parameters of the generation model stay fixed, and we index layers from $0$.
 
 \subsection{Activation Patching}
 \label{sec:patching}
@@ -216,7 +213,6 @@ h'_\ell(t) = \left(I - P_{V_\ell}\right) h_\ell(t)
 \label{eq:edit}
 \end{equation}
 The first term retains only the component orthogonal to the subspace, and the second writes in the target-key component. Eq.~\eqref{eq:edit} therefore combines linear concept erasure~\cite{ravfogel2020inlp,leace2023} with mean patching~\cite{wang2023ioi,zhang2024patching}.
-This lets us test during generation whether the model uses the representation identified by linear probing.
 
 \section{Experimental Setup}
 \label{sec:setup}
@@ -238,17 +234,17 @@ This lets us test during generation whether the model uses the representation id
 % Bachでは220曲，Popでは学習用の633曲でプローブと目標調の平均活性を求める．
 % パッチングでは，両コーパスとも20曲で介入層を選び，60曲を最終テストのpromptとする．
 We use synthetic music for the main experiments, generating each piece from a functional-harmony grammar that labels every token with its key.
-We realize each bar as two four-voice block chords plus a melody note, and draw every pitch from the triads and scale tones of the current key.
-We allow key changes only at bar boundaries, and $35\%$ of pieces contain one.
+We realize each bar as two four-voice block chords, each carrying a melody note, and draw every pitch from the triads and scale tones of the current key.
+We allow key changes only at bar boundaries, and $35\%$ of pieces contain at least one.
 We produce $200{,}000$ pieces to train the generation model and $10{,}000$ analysis pieces for probing and patching.
-The first 6,000 pieces are split by piece into probe training and held-out test pieces.
+The first 6,000 pieces are split by piece into probe training, validation, and test pieces.
 For patching, the same 6,000 pieces provide the target-key mean activations and the search prompts that select the intervention layer, and the final test prompts come from the remaining pieces.
 Separate pieces are generated to calibrate the likelihood threshold and to train the reference model (Sec.~\ref{sec:eval}).
-The vocabulary includes bars, positions, absolute MIDI pitches, and note lengths, but no key or chord symbols.
+The vocabulary includes bars, positions, absolute MIDI pitches, note lengths, and start- and end-of-piece markers, but no key or chord symbols.
 Each note is encoded as a pitch token followed by a length token.
 The generation model is therefore trained without key supervision, and key labels are used only in the analysis.
 To test whether the findings extend to real music, we apply the same probing and patching to public models, using datasets with human key annotations.
-We use $300$ Bach chorales from When in Rome~\cite{gotham2023wir} and $905$ of the $909$ songs in POP909-CL~\cite{pop909cl2026}, excluding four songs with missing or inconsistent annotations.
+We use $300$ Bach chorales with Roman-numeral analyses from When in Rome~\cite{gotham2023wir} and $905$ of the $909$ songs in POP909-CL~\cite{pop909cl2026}, excluding four songs with missing or inconsistent annotations.
 On Bach, $220$ chorales train the probes and provide the target-key means, and on Pop a $633$-song training split does the same.
 For patching, $20$ pieces select the intervention layer and $60$ serve as final test prompts in each corpus.
 
@@ -260,25 +256,23 @@ For patching, $20$ pieces select the intervention layer and $60$ serve as final 
 % AMTでは12層，24層，36層の3つのcheckpointを用いる．
 % さらに，MMTと，MMTとともに公開されたREMI baselineを用いる．
 We train six $8$-layer GPT-2-style~\cite{radford2019gpt2} decoders with $512$-dimensional activations and about $25$M parameters, combining two augmentation regimes (with and without transposition to all keys) with three seeds each.
-We fix one of them before evaluation and report the main results on it, calling it the main model.
+We fix one of them, the augmented regime with seed $0$, before evaluation and report the main results on it, calling it the main model.
 It turned out to be the strongest of the six.
 For evaluation on real music, we use five public models.
 These include $12$-, $24$-, and $36$-layer Anticipatory Music Transformer (AMT) checkpoints~\cite{thickstun2023anticipatory}.
-We further use the Multitrack Music Transformer (MMT)~\cite{dong2023mmt} and the REMI+ baseline~\cite{vonrutte2023figaro} released with MMT.
+We further use the Multitrack Music Transformer (MMT) and the REMI baseline released with it~\cite{dong2023mmt}, which we call REMI+.
 
 \subsection{Evaluation Protocol}
 \label{sec:eval}
 % 評価では，二つの研究質問を検証する．
 % RQ1：調の情報は，先行する音高から推定できる範囲を超えて，内部活性から読み取れるか？
 % RQ2：内部の調関連成分を目標調のものに置き換えると，同程度のランダム部分空間の対照よりも，サンプリング前の次音高予測と生成された続きが目標調へ変化するか？
-% 観測された効果に対する別の説明を検証するため，統制実験を行う．
 % すべての評価基準と閾値はfinal testの前に固定する．
 We structure the evaluation around two research questions.
 \begin{itemize}
     \item \textbf{RQ1.} Can key information be read from internal activations beyond what can be inferred from preceding pitches?
     \item \textbf{RQ2.} Does replacing the internal key-related component with that of a target key shift both before-sampling pitch predictions and generated continuations toward the target key more than a matched random-subspace control?
 \end{itemize}
-We use control experiments to test alternative explanations of the observed effect.
 All evaluation criteria and thresholds are fixed before the final test.
 
 \noindent\textbf{RQ1.}
@@ -293,9 +287,9 @@ All evaluation criteria and thresholds are fixed before the final test.
 We evaluate the probe using macro-$F_1$.
 To test whether this performance can be explained by preceding pitches, we compare it with note-counting baselines.
 The baselines count the $12$ pitch classes in preceding pitch tokens and predict the key using logistic regression or
-Krumhansl--Schmuckler (KS) matching~\cite{krumhansl1982,krumhansl1990,temperley1999ks}.
-KS matching correlates the $12$-bin pitch-class count vector with the $24$ key profiles and predicts the best match.
-We evaluate multiple context lengths and use the strongest baseline.
+Krumhansl--Schmuckler (KS) matching~\cite{krumhansl1982,krumhansl1990}.
+KS matching correlates the $12$-bin pitch-class count vector with the $24$ Krumhansl--Kessler key profiles and predicts the best match.
+We evaluate context lengths from $8$ to $512$ tokens and their concatenations, and use the strongest baseline, which concatenates the $16$- and $512$-token histograms.
 To control for probe capacity, we also train the same probe on a control task with random piece-level key labels~\cite{hewitt2019control}.
 We define the \emph{probe margin} as
 \begin{equation}
@@ -305,8 +299,8 @@ M_{\mathrm{probe}}
 -F_1^{\mathrm{note}},
 \label{eq:probe-margin}
 \end{equation}
-where $F_1^{\mathrm{probe}}$ is the macro-$F_1$ for true key labels, $F_1^{\mathrm{control}}$ is that for random labels, and $F_1^{\mathrm{note}}$ is that of the strongest note-counting baseline.
-We regard the margin as positive when the lower bound of its piece-level bootstrap $95\%$ confidence interval is above zero.
+where $F_1^{\mathrm{probe}}$ is the macro-$F_1$ for true key labels, $F_1^{\mathrm{control}}$ is that of the control probe against the true labels, and $F_1^{\mathrm{note}}$ is that of the strongest note-counting baseline.
+We regard the margin as positive when the lower bound of its piece-level BCa bootstrap $95\%$ confidence interval is above zero.
 
 \noindent\textbf{RQ2.}
 % 各介入についてsuccess rate（SR）を求める．
@@ -337,7 +331,7 @@ between the replacement continuation $y'$ and the original continuation $y$ gene
 We calibrate $\tau$ in each corpus as the 90th percentile of the cost that the reference model assigns to annotated key changes, measured between the 24-token windows before and after each change.
 This places $90\%$ of natural key changes within $\tau$, which is $0.613$ on synthetic music.
 For public models, the reference is a checkpoint other than the scored one (AMT-24L, or AMT-36L when we score AMT-24L and on Pop), and $E$ is a difference in mean negative log-likelihood rather than in perplexity.
-The same calibration gives $\tau = 0.85$ on Bach and $1.12$ on Pop.
+The same procedure, with windows of $16$ note events, gives $\tau = 0.85$ on Bach and $1.12$ on Pop.
 The criterion measures plausibility under a reference model, not perceived quality.
 
 To measure the effect specific to the key-related subspace, we define the \emph{edit margin} as
@@ -350,7 +344,7 @@ M_{\mathrm{edit}}
 \label{eq:edit_margin}
 \end{equation}
 where $\mathrm{SR}_{\mathrm{replace}}$ and $\mathrm{SR}_{\mathrm{random}}$ are the success rates of target-key replacement and dimension-matched random-subspace control, respectively.
-In the continuation test on the main model (Fig.~\ref{fig:main-results}, left), the random-subspace control is additionally matched in displacement to the target-key replacement at every position.
+In the continuation test on the main model (Fig.~\ref{fig:main-results}a), the random-subspace control is additionally matched in displacement to the target-key replacement at every position.
 The layer scans used to select the intervention layer (Fig.~\ref{fig:layers}), the next-pitch test, and the public-model evaluations use the dimension-matched random-subspace control.
 
 \noindent\textbf{Next-pitch test.}
@@ -377,8 +371,8 @@ D = \log m(\kappa^*) - \log m(\kappa_0),
 % 次に，効果が直近の音高クラス頻度の線形な像でないことを確かめるため，$h_\ell(t)$から直近16トークンと512トークンのL1正規化した12次元音高クラスヒストグラムをリッジ回帰で予測し，その重みの行空間（ランク22）を対照部分空間とする．
 % 同じ目標値をこの部分空間を通して書き込み（SR_pc），その対照には同じランクと変位のランダム部分空間を用いる．②
 % さらに，層ごとにprobe marginとedit marginを比較し，トークン位置については位置を限定した編集で効果が生じる場所を調べる．③
-First, we measure the \emph{pitch-in-scale rate}, the fraction of generated notes belonging to the target-key scale, to test whether the result depends on the KS estimator.
-Second, to test whether the effect is a linear image of recent pitch-class frequency~\cite{mimidi2026}, we fit ridge regressions from $h_\ell(t)$ to the L1-normalized 12-bin pitch-class histograms of the last 16 and 512 tokens and take the row space of the weights (rank 22) as a control subspace.
+First, we measure the \emph{pitch-in-scale rate}, the fraction of generated notes belonging to the target-key scale, taking the union of the three minor forms for minor targets, to test whether the result depends on the KS estimator.
+Second, to test whether the effect is a linear image of recent pitch-class frequency~\cite{mimidi2026}, we fit ridge regressions from $h_\ell(t)$ to the L1-normalized 12-bin pitch-class histograms of the last 16 and 512 tokens, or 7 and 222 notes for the public models, and take the row space of the weights (rank 22, each L1-normalized target being rank-deficient by one) as a control subspace.
 We write the same target through this subspace ($\mathrm{SR}_{\mathrm{pc}}$) and compare it with a random subspace of the same rank and displacement.
 Third, we compare probe margin and edit margin across layers, and use token-type-selective edits to test which positions carry the intervention effect.
 
@@ -388,9 +382,9 @@ Third, we compare probe margin and edit margin across layers, and use token-type
 % 公開モデルでは12の長調を目標調とする．
 % 各続きは1回サンプリングし（temperature 1.0，top-$p$ 0.95，384トークン），end-of-pieceトークンまたは16小節で打ち切った続き全体の音高クラスヒストグラムにKS推定器を適用する．
 % 目標調ごとに，replacementと各比較条件を対応するprompt上の片側Wilcoxon符号順位検定で比較し，12調にわたるHolm補正を比較ごとに適用する．
-The search prompts give layer~$4$ for both modes on the main model, and we repeat the selection for each of the other trained models.
+The search prompts, which are major-key, give layer~$4$ on the main model, and we use the same layer for minor prompts and repeat the selection for each of the other trained models.
 The final test uses $100$ major-key and $100$ minor-key prompts, and we intervene toward the $11$ other keys of the same mode, giving $1{,}100$ continuations per mode.
-For the public models, the target keys are the $12$ major keys.
+For the public models, the target keys are the $12$ major keys, including the prompt's own key where the two coincide.
 We sample each continuation once with temperature 1.0 and top-$p$ 0.95 for 384 tokens and apply the KS estimator to the pitch-class histogram of the whole continuation, truncated at the end-of-piece token or after 16 bars.
 Per target key, we compare replacement with each comparison condition by a one-sided Wilcoxon signed-rank test on paired prompts, with Holm correction over the $12$ target keys applied separately to each comparison~\cite{holm1979}.
 
@@ -418,7 +412,7 @@ After correcting for the control task, the probe margin is $+0.071$, with a boot
 % 左は継続生成のsuccess rate（SR），右はサンプリング前の次音高分布の変化$\delta D$を示す．
 % エラーバーは曲単位のブートストラップ95\%信頼区間である．
 \caption{Main effects of target-key replacement at the intervention layer (layer~$4$) of the main model.
-The left panel shows continuation success rate (SR), and the right panel shows before-sampling next-pitch shift $\delta D$.
+(a) shows continuation success rate (SR) and (b) the before-sampling next-pitch shift $\delta D$.
 Error bars are piece-level bootstrap $95\%$ confidence intervals.}
   \label{fig:main-results}
 \end{figure}
@@ -437,14 +431,13 @@ Error bars are piece-level bootstrap $95\%$ confidence intervals.}
 % $V_\ell$からプローブの出力を変えない1方向を除いても（rank 23），replacementは36.8\%と46.1\%に達する．（評価プロトコル記述なし）
 % したがって，モデルは続きを生成する際に，置き換えた成分の調情報を使っている．
 Target-key replacement makes the generated continuation follow the target key.
-In the main model, replacement reaches $35.5\%$ in major and $49.5\%$ in minor, whereas the random-subspace control matched in dimension and displacement reaches $5.6\%$ and $2.6\%$ (Fig.~\ref{fig:main-results}, left).
+In the main model, replacement reaches $35.5\%$ in major and $49.5\%$ in minor, whereas the random-subspace control matched in dimension and displacement reaches $5.6\%$ and $2.6\%$ (Fig.~\ref{fig:main-results}a).
 Replacement beats the control significantly for all $12$ target keys.
 The same pattern appears in the \emph{pitch-in-scale rate}, and replacement stays above every control at every likelihood threshold from $0.2$ up to no threshold.
 Without the likelihood criterion, replacement reaches $41.0\%$ and $61.7\%$.
 The effect therefore depends neither on the key estimator nor on the likelihood threshold.
 In all six trained models, replacement reaches $23.1$--$35.5\%$ in major and $28.0$--$49.5\%$ in minor against a matched control of at most $5.6\%$, and beats it significantly for all $12$ keys in every model.
 Unedited continuations keep the prompt's key in $58.0\%$ of major and $84.0\%$ of minor cases and reach any given other key in only $3.3\%$ and $0.0\%$.
-Replacement far exceeds these rates.
 When we remove from $V_\ell$ the one direction that does not change the probe output (rank $23$), replacement still reaches $36.8\%$ and $46.1\%$.
 The model therefore uses the key information in the replaced component when it generates continuations.
 
@@ -464,7 +457,7 @@ The part of $V_\ell$ that pitch-class frequency does not explain therefore carri
 % Replacementは両旋法とも12の目標調すべてで対照を有意に上回る．
 % この時点でモデルは新しい音符をまだサンプリングしていないため，自分の出力から目標調を読み取ることはできない．
 % したがってこの変化は置換そのものによる．（③の統制条件の結果）
-Replacement also changes the next-pitch distribution before the model samples any new note (Fig.~\ref{fig:main-results}, right).
+Replacement also changes the next-pitch distribution before the model samples any new note (Fig.~\ref{fig:main-results}b).
 At the first intervention position, replacement moves the log ratio $D$ in Eq.~\eqref{eq:logratio} toward the target key far more than the dimension-matched random-subspace control does.
 Replacement beats the control significantly for all $12$ target keys in both modes.
 Because the model has not yet sampled any new note, it cannot have inferred the target key from its own output.
@@ -492,9 +485,9 @@ Shaded bands are piece-level bootstrap $95\%$ confidence intervals.}
 The effect of replacement depends on both the layer and the token position.
 Across layers, probe margin changes little once positive, whereas edit margin rises from layer~$2$ and peaks at layer~$4$ (Fig.~\ref{fig:layers}).
 Even among layers where the probe reads key well, the effect of the edit therefore varies.
-Within layer~$4$, we restrict the edit to one token type.
+Within layer~$4$, we restrict the edit to selected token types.
 When we write only at pitch inputs, which predict the next duration, the success rate is $3.5\%$ and $0.0\%$ for major and minor prompts.
-When we write only at note-length inputs, which precede a pitch decision, it is $23.3\%$ and $21.2\%$, compared with $35.5\%$ and $49.5\%$ for all positions.
+When we write only at bar and note-length inputs, which precede a pitch decision, it is $23.3\%$ and $21.2\%$, compared with $35.5\%$ and $49.5\%$ for all positions.
 The positions immediately preceding a pitch decision therefore carry the effect.
 
 \subsection{Public Models}
@@ -534,7 +527,7 @@ $\ell$: edited layer.
 Keys: target keys on which $\mathrm{SR}_{\mathrm{replace}}$ significantly exceeds $\mathrm{SR}_{\mathrm{random}}$.
 Each model is compared only with its own control.
 All SR values are percentages.
-Target-key means are estimated from the whole corpus in (b) and (c).}
+Probes and target-key means are estimated from the whole corpus in (b) and (c), where $M_{\mathrm{probe}}$ is taken at each model's best probe layer rather than at $\ell$.}
 \label{tab:public-extra}
 \begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrrrrrr@{}}
 \toprule
